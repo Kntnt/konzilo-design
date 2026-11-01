@@ -22,7 +22,7 @@ Records the token, role and plate model, its decisions and open questions.
 7. **CSS mechanics.** A plate kind is a class or attribute that redeclares the context roles, which works in every browser; nothing depends on style queries or `if()`. Each plate also sets `color-scheme`.
 8. **Propagation.** Brand colour → ramps → plate kinds → every component. Base size or ratio → type steps → type roles. Density → space steps → space roles. Corner profile → radii. No component changes.
 9. **Component tokens** only where a component has a genuinely independent decision; most have none.
-10. **Lumos and Blueprint.** Lumos for Astro uses the same mechanism (theme classes); keep the mechanism, not the dependency, and replace its live derivations with generated values, which Blueprint's Q367 already allows. Blueprint calls a plate a Surface; reuse that English name, with *platta* in Swedish.
+10. **Lumos and Blueprint.** Lumos for Astro uses the same mechanism (theme classes); the mechanism is a plain CSS pattern, and the design system has no ties to Lumos (principles.md, *decided* 2026-11-01; Blueprint's Q367), with generated values in place of Lumos's live derivations. Blueprint calls a plate a Surface (Q314, Q370); reuse that English name, with *platta* in Swedish.
 
 **Presented** in the reference implementation (Swedish, with a live demonstration: brand colour, mode, type, density and corners driving the plates, and a contrast table). In it a yellow brand turns the dark brand plate olive in dark mode, the known yellow-to-brown effect; worth raising with the plate kinds.
 
