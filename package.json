@@ -1,0 +1,13 @@
+{
+  "name": "@kntnt/konzilo-design",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=22" },
+  "scripts": { "test": "node --test" },
+  "bin": { "konzilo-design": "./bin/konzilo-design.js" },
+  "exports": {
+    "./generator": "./src/generator/index.js",
+    "./css": "./src/css/index.js"
+  }
+}
