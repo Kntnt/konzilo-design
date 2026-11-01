@@ -45,7 +45,7 @@ Both forms redeclare all roles and set the native `color-scheme` property from t
 
 ### Surface kinds and local mode
 
-These eight kind names and their meanings are **decided**, not questions to reopen (plates.md §4 and “Decided with the owner”, points 1–2). The selector syntax above remains proposed.
+These eight kind names and their meanings, and the two rank tints added on 2026-11-01, are **decided**, not questions to reopen (plates.md §4 and “Decided with the owner”, points 1–2). The selector syntax above remains proposed.
 
 | Name | What it is | Source | Status | Reason |
 |---|---|---|---|---|
@@ -57,6 +57,8 @@ These eight kind names and their meanings are **decided**, not questions to reop
 | `accent` | Brand fill for buttons and small marks | plates.md §4 | Working name from spec; decided kind | Shares the accent concept with its context role, in a different scope. |
 | `picture-light` | Image treatment with light polarity and tested overlay or text Surface | plates.md §4 | Working name from spec; decided kind | Describes the image context's polarity, not an unchecked image brightness. |
 | `picture-dark` | Image treatment with dark polarity and tested overlay or text Surface | plates.md §4 | Working name from spec; decided kind | Completes the approved picture pair. |
+| `tint-secondary` | The secondary brand colour's tint, following the mode; present only with a secondary | plates.md, decided point 7 | Decided 2026-11-01 | Names the family first, then the rank, as the brand-colour keys do. |
+| `tint-tertiary` | The tertiary brand colour's tint, following the mode; present only with a tertiary | plates.md, decided point 7 | Decided 2026-11-01 | Completes the rank tints. |
 | `data-kn-mode="light"` | Explicit local light-mode selection; also usable at the root | plates.md §4; proposed here | Proposed here | Uses mode for the selection and leaves polarity for the result. |
 | `data-kn-mode="dark"` | Explicit local dark-mode selection; also usable at the root | plates.md §4; proposed here | Proposed here | Keeps the two mode values together under one attribute. |
 | `.kn-mode-light` | Class alternative for explicit light mode | plates.md §7; proposed here | Proposed here | Follows the class alternative if the owner chooses that syntax. |

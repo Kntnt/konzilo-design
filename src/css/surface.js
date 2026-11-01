@@ -1,4 +1,4 @@
-import { KINDS, ROLES } from '../generator/surface.js';
+import { ROLES } from '../generator/surface.js';
 
 const pair = (light, dark) => light === dark ? light : `light-dark(${light}, ${dark})`;
 
@@ -15,7 +15,7 @@ export function surfaceCss(surfaces) {
     ':where([data-kn-mode="light"]) {\n  --kn-mode: light;\n  color-scheme: light;\n}',
     ':where([data-kn-mode="dark"]) {\n  --kn-mode: dark;\n  color-scheme: dark;\n}',
   ];
-  for (const kind of KINDS) {
+  for (const kind of Object.keys(surfaces)) {
     const { light, dark } = surfaces[kind];
     const selector = kind === 'page' ? ':root,\n[data-kn-surface="page"]' : `[data-kn-surface="${kind}"]`;
     const polarity = light.polarity === dark.polarity ? light.polarity : 'var(--kn-mode)';

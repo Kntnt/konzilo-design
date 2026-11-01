@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import {
-  resolve, defaultInputs, contrast, KINDS, MODES, ROLES, ROLE_TARGETS, STEPS,
+  resolve, defaultInputs, contrast, KINDS, MODES, ROLES, ROLE_TARGETS, STEPS, kindsFor, LIGHT_CEILING, ramps, hexToOklch,
   solveRole, checkContrast, validateDesignFile, shadowsForSurface, pictureContrast,
 } from '../src/generator/index.js';
 import { emitCss } from '../src/css/index.js';
@@ -16,11 +16,12 @@ test('every kind and mode passes all required pairs for the example, yellow and 
     validateDesignFile(file);
     assert.equal(checkContrast(file.resolved), true);
     assert.equal(file.resolved['contrast-check'].status, 'passed');
-    assert.deepEqual(Object.keys(file.resolved.surfaces), KINDS);
-    for (const kind of KINDS) for (const mode of MODES) {
+    const kinds = kindsFor(inputs['brand-colors']);
+    assert.deepEqual(Object.keys(file.resolved.surfaces), kinds);
+    for (const kind of kinds) for (const mode of MODES) {
       const surface = file.resolved.surfaces[kind][mode];
       assert.deepEqual(Object.keys(surface.roles), ROLES);
-      assert.equal(surface.polarity, ['page', 'raised', 'tint'].includes(kind) ? mode : kind === 'picture-light' ? 'light' : 'dark');
+      assert.equal(surface.polarity, ['page', 'raised'].includes(kind) || kind.startsWith('tint') ? mode : kind === 'picture-light' ? 'light' : 'dark');
       for (const [role, pair] of Object.entries(file.resolved['contrast-check'].matrix[kind][mode].pairs)) {
         assert.equal(pair.target, ROLE_TARGETS[role]);
         assert.ok(pair.passed && pair.ratio >= pair.target, `${kind}/${mode}/${role}`);
@@ -31,7 +32,7 @@ test('every kind and mode passes all required pairs for the example, yellow and 
   }
 });
 
-test('recipes preserve rank use; tertiary only changes the tint decorative border', async () => {
+test('recipes preserve rank use; each further brand colour adds its own tint and changes nothing else', async () => {
   const inputs = { 'brand-colors': { primary: '#168b83', secondary: '#c76532' } };
   const two = await resolve(inputs);
   const three = await resolve({ 'brand-colors': { ...inputs['brand-colors'], tertiary: '#8646b0' } });
@@ -40,10 +41,18 @@ test('recipes preserve rank use; tertiary only changes the tint decorative borde
     assert.match(a.recipes.link, /^primary-/);
     assert.match(a.recipes.accent, /^secondary-/);
     assert.match(a.recipes.focus, /^secondary-/);
-    for (const role of ROLES) if (kind !== 'tint' || role !== 'border') assert.equal(a.roles[role], b.roles[role]);
+    for (const role of ROLES) assert.equal(a.roles[role], b.roles[role]);
   }
-  assert.equal(three.surfaces.tint.light.recipes.border, 'tertiary-200');
-  assert.equal(three.surfaces.tint.dark.recipes.border, 'tertiary-800');
+  assert.deepEqual(Object.keys(two.surfaces), [...KINDS, 'tint-secondary']);
+  assert.deepEqual(Object.keys(three.surfaces), [...KINDS, 'tint-secondary', 'tint-tertiary']);
+  assert.deepEqual(Object.keys((await resolve(defaultInputs())).surfaces), KINDS);
+  for (const [kind, rank] of [['tint', 'primary'], ['tint-secondary', 'secondary'], ['tint-tertiary', 'tertiary']]) {
+    assert.equal(three.surfaces[kind].light.recipes.background, `${rank}-100`);
+    assert.equal(three.surfaces[kind].dark.recipes.background, `${rank}-900`);
+    assert.equal(three.surfaces[kind].light.recipes.border, `${rank}-200`);
+    assert.match(three.surfaces[kind].light.recipes.link, /^primary-/);
+    assert.match(three.surfaces[kind].light.recipes.focus, /^secondary-/);
+  }
   assert.match((await resolve(defaultInputs())).surfaces.page.light.recipes.focus, /^primary-/);
 });
 
@@ -131,13 +140,13 @@ test('CSS mode selection inherits independently of fixed polarity, and Surface c
   // Each local declaration replaces the inherited mode, at any depth, including
   // the root. A Surface reads that mode directly, never an ancestor selector.
   assert.ok(!/data-kn-mode[^}]+\[data-kn-surface/s.test(css));
-  for (const kind of KINDS) {
+  for (const kind of kindsFor({ primary: true })) {
     const body = css.match(new RegExp(`\\[data-kn-surface="${kind}"\\] \\{([^}]+)\\}`))[1];
     for (const role of ROLES) assert.match(body, new RegExp(`--kn-${role}:`));
     for (const name of ['header', 'header-panel', 'panel', 'page', 'box', 'box-lifted']) assert.match(body, new RegExp(`--kn-shadow-${name}:`));
     assert.ok(body.includes('background: var(--kn-background);'));
     assert.ok(body.includes('color: var(--kn-text);'));
-    if (['page', 'raised', 'tint'].includes(kind)) {
+    if (['page', 'raised'].includes(kind) || kind.startsWith('tint')) {
       assert.match(body, /--kn-polarity: var\(--kn-mode\);/);
       assert.match(body, /color-scheme: var\(--kn-mode\);/);
       assert.match(body, /--kn-background: light-dark\(/);
@@ -147,4 +156,21 @@ test('CSS mode selection inherits independently of fixed polarity, and Surface c
   assert.match(css, /:root,\s*\[data-kn-surface="page"\]/);
   assert.ok([...css.matchAll(/--[a-z][a-z0-9-]*/g)].every(([name]) => name.startsWith('--kn-')));
   assert.ok([...css.matchAll(/\[(data-[a-z-]+)/g)].every(([, name]) => name.startsWith('data-kn-')));
+});
+
+test('the light steps of brand ramps have a chroma ceiling; step 300 and the grays keep theirs', () => {
+  const loud = ramps({ primary: '#168b83', secondary: '#d9a514' }, 0);
+  for (const name of ['primary', 'secondary']) for (const [step, cap] of Object.entries(LIGHT_CEILING)) {
+    assert.ok(hexToOklch(loud[name][step]).C <= cap + 0.002, `${name}-${step}`);
+  }
+  assert.ok(hexToOklch(loud.primary[300]).C > LIGHT_CEILING[200]);
+  // A muted seed's light steps lie under the ceiling and do not change.
+  const calm = ramps({ primary: '#3a4f7a' }, 0);
+  for (const step of [100, 200]) assert.ok(hexToOklch(calm.primary[step]).C < LIGHT_CEILING[step]);
+});
+
+test('the CSS carries every rank tint present, and only those', async () => {
+  const css = await emitCss(await design({ 'brand-colors': { primary: '#168b83', secondary: '#c76532' } }));
+  assert.ok(css.includes('[data-kn-surface="tint-secondary"]'));
+  assert.ok(!css.includes('[data-kn-surface="tint-tertiary"]'));
 });

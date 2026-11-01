@@ -2,6 +2,10 @@ import { hexToOklch, fitChroma, oklchToHex, contrast, rgbToHex, hexToRgb } from 
 
 export const STEPS = Object.freeze([100, 200, 300, 400, 500, 600, 700, 800, 900, 950]);
 export const TARGETS = Object.freeze([1.12, 1.4, 2, 3.2, 4.8, 6, 8, 11, 16, 18.5]);
+// The light steps that carry tint backgrounds and their borders get a chroma ceiling, so a loud
+// seed gives a calm tint (owner, 2026-11-01). Step 300 is left alone: it is a foreground on dark
+// Surfaces (links, focus, muted text), where the seed's full colour belongs.
+export const LIGHT_CEILING = Object.freeze({ 100: 0.03, 200: 0.06 });
 
 export function solveLightness(H, C, target, page = '#ffffff', factor = 1) {
   let lo = 0, hi = hexToOklch(page).L;
@@ -16,13 +20,13 @@ export function solveLightness(H, C, target, page = '#ffffff', factor = 1) {
 
 // Low-level tuning options preserve the generic ramp algorithm; they are not tool inputs.
 export function ramp(seedHex, options = {}) {
-  const o = { chromaScale: 1, tint: 1, page: '#ffffff', chroma: null, hue: null, anchor: true, ...options };
+  const o = { chromaScale: 1, tint: 1, page: '#ffffff', chroma: null, hue: null, anchor: true, ceiling: {}, ...options };
   const seed = hexToOklch(seedHex);
   const H = o.hue ?? seed.H, C = o.chroma ?? seed.C * o.chromaScale;
   const out = STEPS.map((step, i) => {
     const f = step <= 300 ? o.tint : 1;
     const L = solveLightness(H, C, TARGETS[i], o.page, f);
-    const c = fitChroma(L, C, H) * f;
+    const c = Math.min(fitChroma(L, C, H) * f, o.ceiling[step] ?? Infinity);
     return { step, hex: oklchToHex(L, c, H), L, C: c, H, anchor: false };
   });
   if (o.anchor) {
@@ -36,7 +40,7 @@ export function ramp(seedHex, options = {}) {
 }
 
 export function ramps(brandColors, temperature) {
-  const entries = Object.entries(brandColors).map(([name, seed]) => [name, ramp(seed)]);
+  const entries = Object.entries(brandColors).map(([name, seed]) => [name, ramp(seed, { ceiling: LIGHT_CEILING })]);
   // A neutral midpoint, cooling towards blue or warming towards yellow independently of the brand.
   entries.push(['gray', ramp('#808080', {
     chroma: Math.abs(temperature) / 100 * 0.02,

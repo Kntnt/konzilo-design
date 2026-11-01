@@ -25,7 +25,7 @@ try {
     await checkFingerprint(file);
     validateDesignFile(file);
     checkContrast(file.resolved);
-    process.stdout.write('Inputs fingerprint matches. Surface contrast check passed (8 kinds × 2 modes).\n');
+    process.stdout.write(`Inputs fingerprint matches. Surface contrast check passed (${Object.keys(file.resolved.surfaces).length} kinds × 2 modes).\n`);
   }
 } catch (error) {
   process.stderr.write(`${error.message}\n`);

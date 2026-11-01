@@ -35,4 +35,9 @@ Records the token, role and plate model, its decisions and open questions.
 5. **Names:** *platta* and *plattsort* in Swedish, Surface in English. The role names here were working names; the name list in names.md settled them on 2026-11-01, with the prefix `kn-`.
 6. **Source:** the token tool sets the inputs and runs the generator; its JSON state is the source and CSS the output. A DTCG export only when something needs it.
 
+***Decided*** 2026-11-01, after comparing both side by side in a live page built on the generator:
+
+7. **A tint per brand colour:** besides `tint` (the primary's), `tint-secondary` and `tint-tertiary`, each generated only when that brand colour exists, following the mode like `tint`, with the same recipe on its own colour's ramp, and checked like every kind. Links keep the primary and focus the secondary on all of them. Without them a site with two brand colours has only one tint, and its second colour's cards and callouts fall back to grey.
+8. **Calm tints:** the brand ramps' light steps 100 and 200, which carry tint backgrounds and their borders, have a chroma ceiling, so a loud seed (a teal, a yellow) gives a calm tint, while a muted seed's tints stay as they are. Step 300, a foreground on dark Surfaces, keeps the seed's colour.
+
 **Still open:** a yellow brand's dark plate turns olive in dark mode, for the generator to solve; the components, which the owner defines next.

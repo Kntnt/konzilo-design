@@ -57,8 +57,8 @@
   "resolved": {
     "ramps": {
       "primary": {
-        "100": "#bafff7",
-        "200": "#87ebe1",
+        "100": "#daf6f3",
+        "200": "#a9e4dd",
         "300": "#62c8be",
         "400": "#359f97",
         "500": "#168b83",
@@ -246,10 +246,10 @@
         "light": {
           "polarity": "light",
           "roles": {
-            "background": "#bafff7",
+            "background": "#daf6f3",
             "text": "#222222",
             "text-muted": "#636363",
-            "border": "#87ebe1",
+            "border": "#a9e4dd",
             "border-strong": "#168b83",
             "link": "#004540",
             "accent": "#007069",
@@ -328,7 +328,7 @@
           "roles": {
             "background": "#004540",
             "text": "#ffffff",
-            "text-muted": "#87ebe1",
+            "text-muted": "#a9e4dd",
             "border": "#005b55",
             "border-strong": "#359f97",
             "link": "#62c8be",
@@ -367,7 +367,7 @@
           "roles": {
             "background": "#004540",
             "text": "#ffffff",
-            "text-muted": "#87ebe1",
+            "text-muted": "#a9e4dd",
             "border": "#005b55",
             "border-strong": "#359f97",
             "link": "#62c8be",
@@ -491,7 +491,7 @@
             "text-muted": "#dadada",
             "border": "#3d3d3d",
             "border-strong": "#b8b8b8",
-            "link": "#87ebe1",
+            "link": "#a9e4dd",
             "accent": "#62c8be",
             "focus": "#62c8be",
             "success": "#8feea4",
@@ -555,7 +555,7 @@
             "text-muted": "#dadada",
             "border": "#3d3d3d",
             "border-strong": "#b8b8b8",
-            "link": "#87ebe1",
+            "link": "#a9e4dd",
             "accent": "#62c8be",
             "focus": "#62c8be",
             "success": "#8feea4",
@@ -1370,80 +1370,80 @@
             "pairs": {
               "text": {
                 "foreground": "#222222",
-                "background": "#bafff7",
-                "ratio": 14.193903761599865,
+                "background": "#daf6f3",
+                "ratio": 13.983819485692516,
                 "target": 4.5,
                 "passed": true,
                 "samples": {}
               },
               "text-muted": {
                 "foreground": "#636363",
-                "background": "#bafff7",
-                "ratio": 5.359817444970336,
+                "background": "#daf6f3",
+                "ratio": 5.280486671292097,
                 "target": 4.5,
                 "passed": true,
                 "samples": {}
               },
               "border": {
-                "foreground": "#87ebe1",
-                "background": "#bafff7",
-                "ratio": 1.2489300854994636,
+                "foreground": "#a9e4dd",
+                "background": "#daf6f3",
+                "ratio": 1.2447422199377316,
                 "target": 0,
                 "passed": true,
                 "samples": {}
               },
               "border-strong": {
                 "foreground": "#168b83",
-                "background": "#bafff7",
-                "ratio": 3.7062845007786747,
+                "background": "#daf6f3",
+                "ratio": 3.651427703893858,
                 "target": 3,
                 "passed": true,
                 "samples": {}
               },
               "link": {
                 "foreground": "#004540",
-                "background": "#bafff7",
-                "ratio": 9.730991203656682,
+                "background": "#daf6f3",
+                "ratio": 9.58696259283774,
                 "target": 4.5,
                 "passed": true,
                 "samples": {}
               },
               "accent": {
                 "foreground": "#007069",
-                "background": "#bafff7",
-                "ratio": 5.319917670241425,
+                "background": "#daf6f3",
+                "ratio": 5.241177453990064,
                 "target": 3,
                 "passed": true,
                 "samples": {}
               },
               "focus": {
                 "foreground": "#007069",
-                "background": "#bafff7",
-                "ratio": 5.319917670241425,
+                "background": "#daf6f3",
+                "ratio": 5.241177453990064,
                 "target": 3,
                 "passed": true,
                 "samples": {}
               },
               "success": {
                 "foreground": "#007432",
-                "background": "#bafff7",
-                "ratio": 5.2860518494008,
+                "background": "#daf6f3",
+                "ratio": 5.207812881894591,
                 "target": 4.5,
                 "passed": true,
                 "samples": {}
               },
               "warning": {
                 "foreground": "#895a00",
-                "background": "#bafff7",
-                "ratio": 5.3131490049409384,
+                "background": "#daf6f3",
+                "ratio": 5.2345089718507705,
                 "target": 4.5,
                 "passed": true,
                 "samples": {}
               },
               "error": {
                 "foreground": "#c53030",
-                "background": "#bafff7",
-                "ratio": 4.8794847876538805,
+                "background": "#daf6f3",
+                "ratio": 4.807263428003091,
                 "target": 4.5,
                 "passed": true,
                 "samples": {}
@@ -1549,9 +1549,9 @@
                 "samples": {}
               },
               "text-muted": {
-                "foreground": "#87ebe1",
+                "foreground": "#a9e4dd",
                 "background": "#004540",
-                "ratio": 7.791461921397411,
+                "ratio": 7.701966270026037,
                 "target": 4.5,
                 "passed": true,
                 "samples": {}
@@ -1634,9 +1634,9 @@
                 "samples": {}
               },
               "text-muted": {
-                "foreground": "#87ebe1",
+                "foreground": "#a9e4dd",
                 "background": "#004540",
-                "ratio": 7.791461921397411,
+                "ratio": 7.701966270026037,
                 "target": 4.5,
                 "passed": true,
                 "samples": {}
@@ -1917,9 +1917,9 @@
                 "samples": {}
               },
               "link": {
-                "foreground": "#87ebe1",
+                "foreground": "#a9e4dd",
                 "background": "#005b55",
-                "ratio": 5.70889986870528,
+                "ratio": 5.64332530548235,
                 "target": 4.5,
                 "passed": true,
                 "samples": {}
@@ -2027,9 +2027,9 @@
                 "samples": {}
               },
               "link": {
-                "foreground": "#87ebe1",
+                "foreground": "#a9e4dd",
                 "background": "#005b55",
-                "ratio": 5.70889986870528,
+                "ratio": 5.64332530548235,
                 "target": 4.5,
                 "passed": true,
                 "samples": {}

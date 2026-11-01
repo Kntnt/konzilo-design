@@ -76,8 +76,13 @@ can depart from its target, and hex quantisation also introduces small contrast
 differences. A ramp does not certify a Surface's contrast.
 
 Tool inputs have no chroma or tint dials: brand ramps use both factors at 1.
-`ramps(brandColors, temperature)` generates each supplied ranked brand and an
-unanchored grey ramp. Grey temperature runs from −100 (cool hue 260°) through
+Instead the brand ramps' light steps carry a chroma ceiling (`LIGHT_CEILING`:
+0.03 at step 100, 0.06 at 200), decided by the owner on 2026-11-01, so a loud seed
+gives a calm tint and its decorative border while a muted seed's light steps,
+already below the ceiling, stay as they are. Step 300 has none: it is a
+foreground on dark Surfaces. An anchored seed is kept exactly even on a light
+step. `ramps(brandColors, temperature)` generates each supplied ranked brand and
+an unanchored grey ramp. Grey temperature runs from −100 (cool hue 260°) through
 0 (achromatic) to 100 (warm hue 80°), with chroma `abs(temperature) × 0.0002`.
 This is an initial mapping, independent of brand hue. Resolved ramps store hex
 colours keyed by shade; no raw ramp custom properties are exported.
@@ -147,14 +152,17 @@ with the eleven context roles, a polarity, its six shadows and its frame colour.
 Each role is a recipe over the ramps (a ramp and step, or white or black).
 
 - **Polarity:** `brand`, `inverse`, `accent` and `picture-dark` are dark in both
-  modes; `picture-light` is light in both; `page`, `raised` and `tint` follow the
-  mode.
+  modes; `picture-light` is light in both; `page`, `raised` and the tints follow
+  the mode.
 - **Backgrounds:** page white (dark mode grey 950); raised grey 100 (900); tint
-  primary 100 (900); brand primary 800; inverse grey 950; accent primary 700;
+  primary 100 (900), and each rank tint its colour's 100 (900); brand primary 800; inverse grey 950; accent primary 700;
   the picture kinds a white or black scrim over the image.
+- **Rank tints:** `tint-secondary` and `tint-tertiary` exist only when that
+  brand colour does (`kindsFor(palette)`); each is the tint recipe on its own
+  colour's ramp, following the mode.
 - **Rank:** links and the brand Surfaces from the primary; `accent` and `focus`
-  from the secondary when there is one, else the primary; the tertiary only
-  colours the tint Surface's decorative border. Status roles come from fixed
+  from the secondary when there is one, else the primary, on every Surface,
+  the rank tints included. A tertiary feeds only its own tint. Status roles come from fixed
   green, amber and red seeds, ramped like the brand colours.
 - **Solving:** a recipe whose colour misses its target on that Surface moves
   along its own ramp to the nearest passing step (ties keep the polarity's
@@ -225,25 +233,21 @@ not typeface-specific tuning.
 - Typeface assets, weights, leading, tracking, feature settings and eyebrow/mono
   size policy need typeface recipes; no extra controls have been added for them.
 - A yellow primary's dark brand Surface still turns olive; no generic fix yet.
-- Light steps (100–300) take the seed's full chroma, so a saturated seed gives a
-  loud tint background (a teal seed gives `#bafff7`). A chroma ceiling for the
-  light steps is a candidate generic rule that leaves a muted seed's tints as
-  they are.
 - In dark mode `inverse` and `page` share grey 950, so an inverse band does not
   stand out from a dark page.
-- The reference design's tuning differs from these recipes on purpose in two
-  places: its strong borders on tinted and dark Surfaces equal the ordinary
-  border and miss 3:1, which the matrix now requires; and on its light tinted
-  Surfaces links and focus take the text colour, where these recipes take the
-  brand and secondary colours. Its light-step tints differ by a few units
-  (the missing tint and chroma dials). Everything else matches to within one
-  unit per channel.
-- The reference's light tint of the second brand colour has no decided kind.
+- The reference design's tuning differs from these recipes in two places. Its
+  strong borders on tinted and dark Surfaces equal the ordinary border and miss
+  3:1, which the matrix now requires. On its light tinted Surfaces links and
+  focus take the text colour, but only because its tool fell back to the text
+  colour where a plate named no link colour, not by a tuned choice; these
+  recipes keep the primary and secondary colours. Its light-step tints differ
+  by a few units. Everything else matches to within one unit per channel.
 - The component stage must assign frames, hairline fallbacks and Reading Area
   breakout behaviour; no component selectors are generated here.
 
 The comparable reference tuning was checked outside repository files: ten type
 styles, eight space steps, both radii and all six shadow strings matched from
 equivalent inputs, and of 35 compared role colours 14 matched exactly and all but
-the deliberate differences above within a few units. The automated tests retain only neutral values and generic
+the deliberate differences above within a few units. The reference's light tint
+of its second brand colour is now `tint-secondary`, within two units. The automated tests retain only neutral values and generic
 reference constants.

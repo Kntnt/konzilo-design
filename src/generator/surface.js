@@ -3,6 +3,9 @@ import { ramp, STEPS } from './ramps.js';
 import { resolveColor, shadowsForSurface } from './shadow.js';
 
 export const KINDS = Object.freeze(['page', 'raised', 'tint', 'brand', 'inverse', 'accent', 'picture-light', 'picture-dark']);
+// A tint per further brand colour (owner, 2026-11-01), generated only when that colour exists.
+export const RANK_TINTS = Object.freeze({ secondary: 'tint-secondary', tertiary: 'tint-tertiary' });
+export const kindsFor = (palette) => [...KINDS, ...Object.entries(RANK_TINTS).filter(([rank]) => palette[rank]).map(([, kind]) => kind)];
 export const MODES = Object.freeze(['light', 'dark']);
 export const ROLES = Object.freeze(['background', 'text', 'text-muted', 'border', 'border-strong', 'link', 'accent', 'focus', 'success', 'warning', 'error']);
 // Accent is also checked at 3:1, so it can carry non-text emphasis.
@@ -47,19 +50,20 @@ export function solveRole(recipe, palette, target, ratio, polarity) {
 
 function recipesFor(kind, mode, palette) {
   const accent = palette.secondary ? 'secondary' : 'primary';
+  const rank = kind === 'tint' ? 'primary' : kind.startsWith('tint-') ? kind.slice(5) : null;
   const polarity = ['brand', 'inverse', 'accent', 'picture-dark'].includes(kind) ? 'dark'
     : kind === 'picture-light' ? 'light' : mode;
   const dark = polarity === 'dark';
   const background = kind === 'accent' ? 'primary-700'
     : kind === 'brand' ? 'primary-800' : kind === 'inverse' ? 'gray-950'
     : kind.startsWith('picture-') ? (dark ? 'black' : 'white')
-    : kind === 'tint' ? ref('primary', dark ? 900 : 100)
+    : kind.startsWith('tint') ? ref(rank, dark ? 900 : 100)
     : kind === 'raised' ? ref('gray', dark ? 900 : 100) : dark ? 'gray-950' : 'white';
-  const family = kind === 'brand' || kind === 'tint' ? 'primary' : 'gray';
+  const family = kind === 'brand' ? 'primary' : kind.startsWith('tint') ? rank : 'gray';
   return { polarity, recipes: {
     background, text: dark ? 'white' : 'gray-900',
     'text-muted': dark ? ref(family, kind === 'brand' ? 200 : 300) : 'gray-600',
-    border: ref(kind === 'tint' && palette.tertiary ? 'tertiary' : family, dark ? kind === 'brand' ? 700 : 800 : 200),
+    border: ref(family, dark ? kind === 'brand' ? 700 : 800 : 200),
     'border-strong': ref(family, dark ? 400 : 500), link: ref('primary', dark ? 300 : 800),
     accent: ref(accent, dark ? 300 : 600), focus: ref(accent, dark ? 300 : 600),
     ...Object.fromEntries(Object.keys(STATUS_SEEDS).map((name) => [name, ref(name, dark ? 300 : 600)])),
@@ -70,7 +74,7 @@ export function surfaces(settings, palette) {
   const seeds = settings['brand-colors'];
   const status = Object.fromEntries(Object.entries(STATUS_SEEDS).map(([name, seed]) => [name, Object.fromEntries(ramp(seed).map(({ step, hex }) => [step, hex]))]));
   const all = { ...palette, ...status };
-  return Object.fromEntries(KINDS.map((kind) => [kind, Object.fromEntries(MODES.map((mode) => {
+  return Object.fromEntries(kindsFor(palette).map((kind) => [kind, Object.fromEntries(MODES.map((mode) => {
     const { polarity, recipes } = recipesFor(kind, mode, all);
     const surface = { polarity, roles: Object.fromEntries(Object.entries(recipes).map(([role, recipe]) => [role, color(recipe, all)])), recipes, adjustments: {} };
     if (kind.startsWith('picture-')) {
@@ -96,7 +100,7 @@ export function surfaces(settings, palette) {
 }
 
 export function contrastCheck(surfaces) {
-  const matrix = Object.fromEntries(KINDS.map((kind) => [kind, Object.fromEntries(MODES.map((mode) => [mode, {
+  const matrix = Object.fromEntries(Object.keys(surfaces).map((kind) => [kind, Object.fromEntries(MODES.map((mode) => [mode, {
     pairs: surfacePairs(surfaces[kind][mode]), adjustments: structuredClone(surfaces[kind][mode].adjustments),
   }]))]));
   const passed = Object.values(matrix).every((modes) => Object.values(modes).every(({ pairs }) => Object.values(pairs).every((pair) => pair.passed)));
@@ -108,7 +112,9 @@ export function contrastCheck(surfaces) {
 export function checkContrast(resolved) {
   const actual = contrastCheck(resolved.surfaces);
   if (resolved['contrast-check'].status !== 'passed' || actual.status !== 'passed') throw new Error('Surface contrast check failed');
-  for (const kind of KINDS) for (const mode of MODES) {
+  const kinds = Object.keys(resolved.surfaces);
+  if (Object.keys(resolved['contrast-check'].matrix).join() !== kinds.join()) throw new Error('Surface contrast check failed or stale: kinds differ');
+  for (const kind of kinds) for (const mode of MODES) {
     const stored = resolved['contrast-check'].matrix[kind][mode];
     const computed = actual.matrix[kind][mode];
     for (const role of Object.keys(ROLE_TARGETS)) {
