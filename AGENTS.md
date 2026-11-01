@@ -24,3 +24,4 @@ Precedence over any conflicting skill, README, or other doc unless the user over
 - `docs/spec/header.md` — read when working on header behaviour, responsive layout, identity, navigation or panels.
 - `docs/spec/plates.md` — read when working on tokens, roles, Surfaces, colour generation or contrast checks.
 - `docs/spec/tool.md` — read when working on the design tool, inputs, presentation, exports or design file consumption.
+- `docs/spec/names.md` — read when naming a token, role, Surface kind, width or design-file key, or writing CSS that uses them.

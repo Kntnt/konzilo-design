@@ -11,12 +11,29 @@ Records the design system, tool inputs, outputs and design file, with their stat
    - one to three brand colours, ranked primary, secondary, tertiary, and always a grey scale;
    - typefaces for body, display/headings, eyebrow and, for sites with code, monospace;
    - the body size, set as at the narrowest and widest window;
-   - a type scale (ratio), and for each heading level how many steps it climbs from the one below, for a faster progression where wanted; not a switch between two scales;
-   - shadows, from none through barely visible and very diffuse to a hard, solid outline, with the light's angle, the elevation (how far the shadow is cast) and the intensity; the fine sliders matter less than that range. Four sliders, each mapping straight onto CSS `box-shadow` values: hardness (solid outline to diffuse), angle (the light's direction), elevation (offset, and blur at the diffuse end) and strength (zero is off). Off by default; switching on starts from the reference design's tuned shadow, which the model must reproduce exactly. Every elevation (card, the layer shadow between header, page and footer, the megamenu) takes its shadow from the same four; at strength zero the hairline rule for layers takes over;
+   - a type scale (ratio), and for each heading level how many steps it climbs from the one below, for a faster progression where wanted; not a switch between two scales (*decided* 2026-11-01):
+     - The ratio is set at the narrowest and the widest window, like the body size, so headings close up on a phone and open out on a wide screen. Every size grows linearly between the two windows (`clamp()`, 320–1440px at the default setting) and stays fixed outside them: one scale with the same steps throughout and no breakpoint. With one ratio everywhere, the reference design's display heading would be 55px on a 320px phone; with 1.067 there and 1.125 on a wide screen it is 33px.
+     - Steps: h6 from body text, then h5, h4, h3, h2, h1 and display each from the level below; the lead above body text; small text below it. The reference design: 0, 1, 1, 1, 1, 3, 3; lead 1; small text 2 below.
+   - shadows, from none through barely visible and very diffuse to a hard, solid outline (*decided* 2026-11-01, after the owner tried a live model of it):
+     - Each elevation keeps the reference design's tuned shape, a near and a far shadow, inked with the shadow colour: the header over the page, the header over an open panel, a panel over the page, the page over the footer, a box, and a lifted box at twice the box's elevation.
+     - Four sliders transform every elevation alike, each mapping straight onto `box-shadow` values: strength scales the opacity, and zero is off; elevation scales distance, blur and spread; the light's angle turns the offset; hardness below the reference widens blur and spread up to double, and above it shrinks them to zero. At hardness 100 the shadow is a solid offset in the full shadow colour whatever the strength (the owner's expectation, for designs like the Tove and Oaknut WordPress themes). Hard shadows round to whole pixels.
+     - At the reference positions (strength 50, hardness 20, angle 0, elevation 50) the output is the reference design's shadows character for character.
+     - The shadow colour is the text colour by default, or one of the brand colours, grey or black.
+     - On a dark plate a shadow stays dark (*decided* 2026-11-01, after comparing it with the plate's light text colour and with a hairline): where the default text colour would be light, the shadow is black at three times the opacity. A light shadow there is only a faint glow, and a hard light offset merges with a white card. On a near-black plate even this fades, and the card shows because a raised plate is lighter than its ground. A shadow colour chosen explicitly is used as chosen.
+     - Where shadows fall is chosen per target: cards (later other raised components), the header, the megamenu, the page over the footer. A hard shadow suits cards, not the large layers (owner). A layer without a shadow is set off by the hairline, as at strength zero.
+     - Off by default; switching on starts from the reference.
+   - a frame, a setting of its own apart from the shadow (*decided* 2026-11-01): thickness 0–3px, none by default, and a colour, the shadow's by default; always solid, its corners from the corner slider. Which components take it is settled with the components. The thin grey lines of tables and fields are colour roles, not this;
    - one corner slider, from square through almost square (a few pixels) and discreet to clearly rounded;
    - one density slider, from very compact to very loose, with the default towards the looser side.
    Type and space are always fluid (`clamp()`); everything else follows from the inputs.
-3. **Lengths:** owner's belief, for the assistant to settle: rem wherever possible, pixels at most for the base font size.
+3. **Lengths** (the owner asked the assistant to settle it, and approved its proposal on 2026-11-01). A visitor who raises the browser's text size, instead of zooming, keeps that choice only where lengths are in rem or em; zoom works with any unit.
+   - The root gets no font size, not even in pixels, so the browser's setting holds. For nearly every visitor that is 16px, so nothing changes for them.
+   - rem for type sizes, space, widths, radii and breakpoints.
+   - Fluid values as `clamp(min, rem + vw, max)` between windows of 20rem and 90rem, 320px and 1440px at the default setting.
+   - em inside components, for parts that follow their own text: a button's padding, an icon beside text.
+   - px only for what is drawn rather than read: hairlines (1px), the frame (0–3px), focus rings (2px) and shadows. The header's T (24px) is a scroll distance, not a CSS length.
+   - line-height unitless, letter-spacing in em.
+   - The tool, the design file's `inputs` and the presentation speak in pixels at the default setting, as people think; the generated CSS writes rem, so 17–19px body text becomes `clamp(1.0625rem, 1.0268rem + 0.1786vw, 1.1875rem)`.
 4. **Two outputs:**
    - **For people:** a live site, or a PDF, that explains the whole (colours, scales, typefaces, shadows) and shows it applied to every component; personalised with the client's name and logo; delivered before any design sketch, to get approval of colours and style.
    - **For code:** the components, HTML and CSS, all of them with all their CSS, in a form a Konzilo site takes in simply and gets exactly what was decided.

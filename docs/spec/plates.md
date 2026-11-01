@@ -32,7 +32,7 @@ Records the token, role and plate model, its decisions and open questions.
 2. **Dark mode:** `brand` and `inverse` stay dark in both modes; `page`, `raised` and `tint` follow the mode; a plate may set an explicit local mode.
 3. **Generated, not live:** colours are generated and checked in the design tool, the CSS holds literal values, and the export stops on a failure. Fluid type and space stay explicit CSS relations.
 4. **Context roles:** the eleven in plates.md, point 3 (Roles) plus the polarity. Hover, active and other states get checked values when the components are defined.
-5. **Names:** *platta* and *plattsort* in Swedish, Surface in English. The role names here are working names; one name list is settled before anything enters the framework.
+5. **Names:** *platta* and *plattsort* in Swedish, Surface in English. The role names here were working names; the name list in names.md settled them on 2026-11-01, with the prefix `kn-`.
 6. **Source:** the token tool sets the inputs and runs the generator; its JSON state is the source and CSS the output. A DTCG export only when something needs it.
 
 **Still open:** a yellow brand's dark plate turns olive in dark mode, for the generator to solve; the components, which the owner defines next.

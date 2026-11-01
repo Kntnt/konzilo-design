@@ -16,4 +16,4 @@ Each point is marked **owner** (his statement), **proposed** (put to him, not co
 
 - ***Decided* (2026-11-01):** no ties to Lumos at all; Kntnt builds its own framework.
 - **Owner, leaning (2026-10-31):** drop the idea of using Lumos. Lumos may be a starting point and much may be reused from it, but Kntnt builds its own component library and CSS framework and does not depend on Lumos.
-- Not yet acted on. It touches Blueprint's uncommitted ADR 0035 (allowing Lumos as a base), whose three points the owner deferred.
+- Acted on 2026-11-01: Blueprint's Q367 and ADR 0035 now rule out ties to Lumos.
