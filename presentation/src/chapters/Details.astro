@@ -1,0 +1,26 @@
+---
+import { readFile } from 'node:fs/promises';
+import { resolved as r, t, num, date } from '../data.js';
+import { typeOrder, faceName, families, range, px } from '../words.js';
+const licences = await Promise.all(['LICENSE-mona-sans.txt', 'LICENSE-red-hat-mono.txt'].map((name) => readFile(`src/fonts/${name}`, 'utf8')));
+---
+<details><summary>{t('details.contrast')}</summary>
+  {Object.entries(r['contrast-check'].matrix).map(([kind, modes]) => <section>
+    <h2 data-kn-type="heading-3">{t(`surface.${kind}`)}</h2>
+    {Object.entries(modes).map(([mode, context]) => <div>
+      <h3 data-kn-type="heading-4">{t(`details.${mode}`)}</h3>
+      <div class="table-scroll"><table><thead><tr>{['pair', 'ratio', 'target'].map((key) => <th>{t(`details.${key}`)}</th>)}</tr></thead><tbody>
+        {Object.entries(context.pairs).map(([pair, value]) => <tr><th>{pair}</th><td>{num(value.ratio)}:1</td><td>{value.target ? `${num(value.target)}:1` : t('details.decorative')}</td></tr>)}
+      </tbody></table></div>
+    </div>)}
+  </section>)}
+</details>
+<details><summary>{t('details.type')}</summary><div class="table-scroll"><table><tbody>{typeOrder.map((style) => <tr><th>{t(`type.${style}`)}</th><td>{range(r.type[style].size)}</td></tr>)}</tbody></table></div></details>
+<details><summary>{t('details.space')}</summary><table><tbody>{Object.entries(r.space.steps).map(([step, value]) => <tr><th>{step}</th><td>{range(value)}</td></tr>)}</tbody></table></details>
+{['radius', 'shadow', 'layout'].map((kind) => <details><summary>{t(`details.${kind}`)}</summary><dl>{Object.entries(r[kind]).map(([name, value]) => <div><dt>{name}</dt><dd>{typeof value === 'object' ? range(value) : typeof value === 'number' ? px(value) : value}</dd></div>)}</dl></details>)}
+<details><summary>{t('details.fonts')}</summary>
+  {families.map((family) => <p>{faceName(family)}</p>)}
+  <p>{t('details.system-font')}</p>
+  {['Mona Sans', 'Red Hat Mono'].map((name, index) => <section><h2 data-kn-type="heading-4">{t('details.licence', { name })}</h2><pre>{licences[index]}</pre></section>)}
+</details>
+<details><summary>{t('details.record')}</summary><dl><dt>{t('details.fingerprint')}</dt><dd>{r['inputs-fingerprint']}</dd><dt>{t('details.date')}</dt><dd>{date}</dd></dl></details>

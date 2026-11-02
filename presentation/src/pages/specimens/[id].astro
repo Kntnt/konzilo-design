@@ -1,10 +1,7 @@
 ---
-import { ids, componentPages } from '../../catalog.js';
+import { ids } from '../../catalog.js';
 import { project, resolved, copy } from '../../data.js';
-import { coreCss } from '../../../../src/css/index.js';
 import Samples from '../../Samples.astro';
-import '../../../../src/components/index.css';
-import '../../../../src/fonts/fonts.css';
 import '../../specimen.css';
 export function getStaticPaths() {
   return ids
@@ -13,10 +10,10 @@ export function getStaticPaths() {
 }
 const { id } = Astro.params;
 const full =
-  /^(headers$|header-|footer|hero-|text-image|cta-band|band$|page$|preview$|overview$|responsive-)/.test(
+  /^(headers$|header-|footer|hero-|text-image|cta-band|band$|page$|preview$|overview$|responsive-|space-section$)/.test(
     id,
   );
-const stage = componentPages.find(([name]) => name === id)?.[3];
+
 ---
 
 <!doctype html>
@@ -25,13 +22,19 @@ const stage = componentPages.find(([name]) => name === id)?.[3];
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width" />
     <title>{id}</title>
-    <style id="kn-live-core" is:inline set:html={coreCss(resolved)} />
+    <style id="kn-live-core" is:inline />
   </head>
   <body data-kn-surface="page" data-specimen={id}>
-    <div class="sample-root" data-full={full || undefined} data-stage={stage}>
+    <div class="sample-root" data-full={full || undefined}>
       <Samples id={id} project={project} resolved={resolved} />
     </div>
     <script is:inline>
+      document.querySelectorAll('.kn-field[class*="is-"]').forEach((field) => {
+        const state = [...field.classList].find((name) => name.startsWith('is-'));
+        if (!state) return;
+        field.classList.remove(state);
+        field.querySelector('.kn-field-control,input')?.classList.add(state);
+      });
       window.addEventListener('message', (event) => {
         if (event.source !== parent || event.data?.type !== 'kn-design') return;
         document.getElementById('kn-live-core').textContent = event.data.css;

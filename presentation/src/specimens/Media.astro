@@ -43,3 +43,15 @@ const { landscapes, panorama } = context(project, resolved);
     ))}
   </div>
 )}
+
+{id === 'embed' && (
+  <script is:inline>
+    addEventListener('load', () => {
+      const example = document.querySelector('[data-embed-example="thumbnail"]');
+      example.querySelector('.kn-embed-consent').hidden = true;
+      example.querySelector('.kn-embed-thumbnail').hidden = false;
+      const original = example.querySelector('.kn-embed-original');
+      if (original) original.hidden = true;
+    });
+  </script>
+)}

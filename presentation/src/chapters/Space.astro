@@ -1,179 +1,30 @@
 ---
 import { resolved as r, inputs, t, num } from '../data.js';
-import { range, px } from '../words.js';
-import { SPACE_ROLES } from '../../../src/generator/space.js';
+import { range } from '../words.js';
 import Button from '../../../src/components/Button.astro';
 import Field from '../../../src/components/Field.astro';
+import Components from './Components.astro';
 const { id } = Astro.props;
 ---
-
-{id === 'spacing' && (
-  <div class="spacing-grid rail">
-    {Object.entries(r.space.steps).map(([step, value]) => (
-      <div>
-        <div>
-          <p data-kn-type="heading-5">{t('spacing.role-title', { step })}</p>
-          <p data-kn-type="small">
-            {Object.entries(SPACE_ROLES)
-              .filter(([, number]) => number === Number(step))
-              .map(([role]) => t(`space-role.${role}`))
-              .join(' / ') || t('spacing.scale-step')}
-          </p>
-        </div>
-        <div class="space-bars">
-          <i style={{ width: `${value.min}px` }}></i>
-          <i style={{ width: `${value.max}px` }}></i>
-        </div>
-        <p>{range(value)}</p>
-        <code>{`--kn-space-${step}`}</code>
-      </div>
-    ))}
+{id === 'space' && <>
+  <p class="prose">{t(inputs['density-profile'] < 35 ? 'space.compact' : inputs['density-profile'] > 70 ? 'space.loose' : 'space.balanced')}</p>
+  <Components specimens={['space-section']} />
+  <details><summary>{t('steps')}</summary><div class="spacing-steps">{Object.entries(r.space.steps).map(([step, value]) => <div><span>{step}</span><i style={{ width: `${value.max}px` }}></i><span>{range(value)}</span></div>)}</div></details>
+</>}
+{id === 'corners' && <>
+  <p>{t(inputs['corner-profile'] === 0 ? 'corners.square' : inputs['corner-profile'] < 60 ? 'corners.discreet' : 'corners.round')}</p>
+  <p>{t(r.frame.width ? 'frame.on' : 'frame.off', { width: num(r.frame.width) })}</p>
+  <div class="shape-grid">
+    <div class="shape-control"><Button>{t('shape.button')}</Button></div>
+    <div class="shape-control"><Field name="shape-field" label={t('shape.field')} value={t('shape.value')} /></div>
+    <div class="shape-object shape-card" data-kn-surface="tint"><h2 data-kn-type="heading-3">{t('shape.card')}</h2><p>{t('shape.card.text')}</p></div>
+    <div class="shape-object shape-panel" data-kn-surface="raised"><h2 data-kn-type="heading-3">{t('shape.panel')}</h2><p>{t('shape.panel.text')}</p></div>
   </div>
-)}
-{id === 'layout' && (
-  <div class="layout-diagram rail">
-    <div class="drawn-window">
-      <div class="window-top">
-        <i></i>
-        <i></i>
-        <i></i>
-        <span>{t('layout.window')}</span>
-      </div>
-      <div class="window-body">
-        <div
-          class="drawn-rail"
-          style={{ width: `${(r.layout.wide / 1440) * 100}%` }}
-        >
-          <p data-kn-type="heading-4">
-            {t('layout.wide')} · {px(r.layout.wide)}
-          </p>
-          <div
-            class="drawn-measure"
-            style={{ width: `${(r.layout.narrow / r.layout.wide) * 100}%` }}
-          >
-            <p>
-              {t('layout.narrow')} · {px(r.layout.narrow)}
-            </p>
-            <div></div>
-            <div></div>
-            <div></div>
-            <div></div>
-          </div>
-        </div>
-      </div>
-      <div class="window-dimensions">
-        <span>
-          {t('layout.margin')} · {px((1440 - r.layout.wide) / 2)}
-        </span>
-        <span>{t('layout.scale')}</span>
-        <span>
-          {t('layout.margin')} · {px((1440 - r.layout.wide) / 2)}
-        </span>
-      </div>
-    </div>
-    <p>{t('layout.margin-range', { value: range(r.layout['side-margin']) })}</p>
-  </div>
-)}
-{id === 'corners' && (
-  <div class="shape-specimens rail">
-    <div>
-      <div class="shape-object">
-        <Button>{t('shape.button')}</Button>
-        <Field
-          name="shape-field"
-          label={t('shape.field')}
-          value={t('shape.value')}
-        />
-      </div>
-      <p data-kn-type="heading-4">
-        {t('corners.control')} · {px(r.radius.control)}
-      </p>
-      <code>--kn-radius-control</code>
-    </div>
-    <div>
-      <div
-        class="shape-object shape-card"
-        data-kn-surface="tint"
-        style={{
-          borderRadius: 'var(--kn-radius-card)',
-          border: 'var(--kn-frame-width) solid var(--kn-frame-color)',
-        }}
-      >
-        <p data-kn-type="heading-3">{t('shape.card')}</p>
-        <p>{t('shape.card.text')}</p>
-        <a href="#next">{t('surface.link')}</a>
-      </div>
-      <p data-kn-type="heading-4">
-        {t('corners.card')} · {px(r.radius.card)}
-      </p>
-      <code>--kn-radius-card</code>
-    </div>
-    <div>
-      <div
-        class="shape-object shape-card"
-        data-kn-surface="raised"
-        style={{
-          border: '1px solid var(--kn-border-strong)',
-          borderRadius: 'var(--kn-radius-card)',
-        }}
-      >
-        <p data-kn-type="heading-3">{t('shape.panel')}</p>
-        <p>{t('shape.panel.text')}</p>
-      </div>
-      <p data-kn-type="heading-4">{t('frame.title.short')}</p>
-      <p>
-        {t(r.frame.width ? 'frame.text' : 'frame.off', {
-          width: num(r.frame.width),
-        })}
-      </p>
-    </div>
-  </div>
-)}
-{id === 'shadow' && (
-  <div class="shadow-specimens rail">
-    <div class="shadow-grid">
-      {Object.entries(r.shadow).map(([name]) => (
-        <div>
-          <div
-            class="shadow-box"
-            data-kn-surface="raised"
-            style={{ boxShadow: `var(--kn-shadow-${name})` }}
-          >
-            <p data-kn-type="heading-4">{t(`shadow.${name}`)}</p>
-          </div>
-          <code>{`--kn-shadow-${name}`}</code>
-        </div>
-      ))}
-    </div>
-    <p class="shadow-settings">
-      {t(inputs.shadow.strength ? 'shadow.settings.words' : 'shadow.off', {
-        strength: t(
-          inputs.shadow.strength < 25
-            ? 'shadow.strength.low'
-            : inputs.shadow.strength < 60
-              ? 'shadow.strength.medium'
-              : 'shadow.strength.high',
-        ),
-        hardness: t(
-          inputs.shadow.hardness < 30
-            ? 'shadow.hardness.soft'
-            : inputs.shadow.hardness < 70
-              ? 'shadow.hardness.medium'
-              : 'shadow.hardness.hard',
-        ),
-        angle: t(
-          inputs.shadow.angle < 0
-            ? 'shadow.angle.left'
-            : inputs.shadow.angle > 0
-              ? 'shadow.angle.right'
-              : 'shadow.angle.top',
-        ),
-        elevation: t(
-          inputs.shadow.elevation < 50
-            ? 'shadow.elevation.low'
-            : 'shadow.elevation.high',
-        ),
-      })}
-    </p>
-  </div>
-)}
+</>}
+{id === 'shadow' && <>
+  <p class="prose">{t(Object.values(r.shadow).some((value) => value !== 'none') ? 'shadow.on' : 'shadow.off')}</p>
+  <div class="shadow-grid">{Object.keys(r.shadow).map((name) => <div>
+    <div class="shadow-object" data-kn-surface="raised" style={{ boxShadow: `var(--kn-shadow-${name})` }}><h2 data-kn-type="heading-4">{t(`shadow.${name}`)}</h2></div>
+    <p data-kn-type="small">{t(`shadow.${name}.job`)}</p>
+  </div>)}</div>
+</>}

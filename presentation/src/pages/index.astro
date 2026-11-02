@@ -1,50 +1,77 @@
 ---
-import { resolved, copy, t, project } from '../data.js';
+import { resolved, copy, t, project, date } from '../data.js';
 import { pageList } from '../catalog.js';
-import { coreCss } from '../../../src/css/index.js';
+import { slug } from '../../../tool/presentation.js';
+import { runtimeKeys } from '../copy-runtime.js';
 import Sheet from '../layouts/Sheet.astro';
-import Introduction from '../chapters/Introduction.astro';
 import Colour from '../chapters/Colour.astro';
 import Typography from '../chapters/Typography.astro';
 import Space from '../chapters/Space.astro';
 import Components from '../chapters/Components.astro';
-import '../../../src/components/index.css';
-import '../../../src/fonts/fonts.css';
+import Details from '../chapters/Details.astro';
 import '../document.css';
-const pages = pageList(resolved);
+const pages = pageList();
+const chapters = [...new Set(pages.map((page) => page.chapter))];
+const runtimeCopy = Object.fromEntries(runtimeKeys.map((key) => [key, t(key)]));
+const config = { slug: slug(project.name), pages, project, date, type: resolved.type, lang: copy.lang, title: t('document.title'), filename: t('document.filename'), copy: runtimeCopy };
+const json = (value) => JSON.stringify(value).replaceAll('<', '\\u003c');
 ---
-
 <!doctype html>
 <html lang={copy.lang} data-kn-mode="light">
   <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; font-src data:; media-src data: blob:; frame-src 'self' about: blob:; connect-src 'none'; form-action 'none'; base-uri 'none'" />
     <title>{t('document.title')} · {project.name}</title>
-    <style is:inline set:html={coreCss(resolved)} />
   </head>
-  <body>
-    {pages.map((page) => (
-      <Sheet page={page}>
-        {page.opener || ['cover', 'contents', 'next'].includes(page.id) ? (
-          <Introduction page={page} pages={pages} />
-        ) : page.chapter === 'colour' ? (
-          <Colour id={page.id} />
-        ) : page.chapter === 'typography' ? (
-          <Typography id={page.id} />
-        ) : page.chapter === 'space' ? (
-          <Space id={page.id} />
-        ) : (
-          <Components page={page} />
-        )}
-      </Sheet>
-    ))}
-    <script
-      id="kn-document-copy"
-      type="application/json"
-      is:inline
-      set:html={JSON.stringify({ zoom: copy.zoom, lang: copy.lang }).replaceAll(
-        '<',
-        '\\u003c',
-      )}
-    />
+  <body data-kn-surface="page">
+    <header class="mobile-bar"><span>{t('document.title')}</span><button id="menu-toggle" type="button" aria-expanded="false" aria-controls="sidebar">{t('nav.menu')}</button></header>
+    <aside id="sidebar" data-kn-surface="raised">
+      <div class="sidebar-identity">{project.logo ? <img src={project.logo} alt={project.name} /> : <p data-kn-type="heading-4">{project.name}</p>}<p data-kn-type="small">{t('document.title')}</p></div>
+      <nav aria-label={t('nav.label')}>
+        {chapters.filter((chapter) => chapter !== 'comments').map((chapter) => {
+          const entries = pages.filter((page) => page.chapter === chapter);
+          return (
+            <div class="nav-chapter" data-nav-chapter={chapter}>
+              <a class="nav-chapter-link" href={`#${entries[0].id}`} data-nav-page={entries.length === 1 ? entries[0].id : undefined} data-kn-type="label">{t(`chapter.${chapter}`)}</a>
+              {entries.length > 1 && (
+                <div class="nav-pages">
+                  {entries.map((page) => <a href={`#${page.id}`} data-nav-page={page.id}>{t(`${page.id}.title`)}</a>)}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </nav>
+      <a class="nav-comments" href="#comments" data-nav-page="comments">{t('comments.title')}<span data-total-count>0</span></a>
+    </aside>
+    <main id="main">
+      {pages.map((page) => <Sheet page={page} pages={pages}>
+        {page.id === 'start' ? <div class="prose start-content">
+          {project.introduction && project.introduction.split(/\n\s*\n/).filter((part) => part.trim()).map((paragraph) => <p>{paragraph}</p>)}
+          <p>{t('start.how')}</p>
+          <a class="kn-button" data-kn-variant="filled" href="#colour-scale">{t('nav.start')}</a>
+        </div> : page.chapter === 'colour' ? <Colour id={page.id} /> : page.chapter === 'typography' ? <Typography id={page.id} /> : page.chapter === 'space' ? <Space id={page.id} /> : page.id === 'details' ? <Details /> : page.id === 'comments' ? <div class="prose">
+          <label class="reader-name">{t('comment.reader')}<input id="reader-name" autocomplete="name" /></label>
+          <div id="all-comments"></div>
+          <div class="comment-actions"><a id="mail-comments" class="kn-button" data-kn-variant="filled" href="mailto:">{t('comment.mail')}</a><button id="save-comments" type="button">{t('comment.save')}</button><button id="copy-comments" type="button">{t('comment.copy')}</button><button id="clear-comments" type="button">{t('comment.clear')}</button></div>
+          <p id="comment-feedback" role="status"></p><p data-kn-type="small">{t('comment.email-help')}</p>
+        </div> : <Components page={page} />}
+      </Sheet>)}
+    </main>
+    <button id="comment-toggle" class="comment-toggle" type="button" data-kn-surface="raised" aria-expanded="false" aria-controls="comment-panel">
+      <svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
+      <span class="comment-toggle-label">{t('comment')}</span>
+      <span class="comment-toggle-count" data-page-count hidden>0</span>
+    </button>
+    <aside id="comment-panel" class="comment-panel" data-kn-surface="raised" aria-label={t('comments')} hidden>
+      <header><h2 data-kn-type="heading-3">{t('comments')}</h2><button id="comment-close" type="button">{t('comment.close')}</button></header>
+      <p id="comment-context" data-kn-type="small"></p><p id="storage-status" data-kn-type="small" role="status"></p>
+      <div id="page-comments"></div>
+      <label for="comment-text">{t('comment.placeholder')}</label><textarea id="comment-text" rows="5"></textarea>
+      <button id="comment-add" type="button">{t('comment.add')}</button><p data-kn-type="small">{t('comment.draft')}</p>
+    </aside>
+    <script id="kn-document-data" type="application/json" is:inline set:html={json(config)} />
+    <script src="../reader.js"></script>
   </body>
 </html>

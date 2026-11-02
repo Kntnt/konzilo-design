@@ -1,33 +1,13 @@
 ---
+import { componentPages } from '../catalog.js';
 import { t } from '../data.js';
-const { page } = Astro.props;
----
+import Specimen from '../Specimen.astro';
+const { page, specimens } = Astro.props;
+const entry = componentPages.find(([id]) => id === page?.id);
+const defaults = specimens || entry?.[2] || [];
+const variants = entry?.[3] || [];
 
-{page.id !== 'responsive' ? (
-  <div class="frame-host" data-frame-host>
-    <iframe
-      data-specimen-frame={page.id}
-      data-stage-mode={page.stage}
-      title={t(`${page.id}.title`)}
-      width="1440"
-      height="562"
-    />
-  </div>
-) : (
-  <div class="responsive-comparison rail">
-    {['hero', 'grid', 'footer'].map((part) => (
-      <div>
-        <p data-kn-type="label">{t(`responsive.${part}`)}</p>
-        <div class="responsive-host">
-          <iframe
-            data-specimen-frame={`responsive-${part}`}
-            data-responsive-width="390"
-            title={t(`responsive.${part}`)}
-            width="390"
-            height="530"
-          />
-        </div>
-      </div>
-    ))}
-  </div>
-)}
+---
+{page?.id === 'header' && <p class="prose">{t('header.try')}</p>}
+{defaults.map((id) => <Specimen id={id} />)}
+{variants.length > 0 && <details class="variants"><summary>{t(page.id === 'buttons' ? 'states' : 'variants')}</summary>{variants.map((id) => <Specimen id={id} />)}</details>}

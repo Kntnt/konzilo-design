@@ -175,3 +175,50 @@ body {
   gap: 28px;
   padding-bottom: 24px;
 }
+
+/* Compositions stack inside narrow specimen viewports. */
+.sample-root {
+  padding-block: 24px;
+}
+.sample-root[data-full] {
+  padding-block: 0;
+}
+.text-image-stage {
+  height: auto;
+  min-height: 400px;
+  padding-block: 24px;
+}
+.article-specimen {
+  max-width: var(--kn-layout-narrow);
+  margin-inline: auto;
+}
+.consent-page-context {
+  width: 100%;
+  max-width: 520px;
+}
+.sample-icons {
+  height: auto;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  padding-block: 24px;
+}
+@media (width < 900px) {
+  .sample-pair, .sample-callouts {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto;
+    grid-auto-flow: row;
+    gap: var(--kn-space-component-gap);
+  }
+  .sample-state-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (width < 440px) {
+  .sample-state-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.sample-root:has(.kn-header):not(:has(.kn-page)),
+.sample-root:has(.kn-consent) {
+  min-height: 560px;
+}

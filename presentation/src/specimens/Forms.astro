@@ -17,7 +17,7 @@ const states = ['default', 'hover', 'focus', 'active', 'disabled'];
     data-kn-surface={id === 'form-brand' ? 'brand' : 'page'}
     class="sample-pad"
   >
-    <Form action="#contact" fields={fields.slice(0, 4)} columns={2}>
+    <Form action="#contact" fields={fields.slice(0, 4).map((field, index) => index === 1 ? { ...field, error: 'Enter a complete email address.' } : field)} columns={2}>
       <Button slot="actions" type="submit">
         Send request
       </Button>
@@ -100,6 +100,7 @@ const states = ['default', 'hover', 'focus', 'active', 'disabled'];
     id="specimen-consent"
     categories={categories}
     texts={consentTexts}
+    deferred
     reopenButton={false}
   />
 )}
@@ -144,5 +145,13 @@ const states = ['default', 'hover', 'focus', 'active', 'disabled'];
         <a href="#cookie-policy">Read about storage and privacy</a>
       </p>
     </BodyText>
+    <Button data-open-banner>Open privacy choices</Button>
   </div>
 )}
+
+<script>
+  document.addEventListener('click', (event) => {
+    if (!event.target.closest('[data-open-banner]')) return;
+    document.querySelector('.kn-consent')?.dispatchEvent(new Event('kn:consentbanneropen'));
+  });
+</script>

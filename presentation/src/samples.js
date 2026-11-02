@@ -27,10 +27,14 @@ export function pictures(ramps) {
         <path d="M-300 ${h + 300}V${h * 0.8}Q600 ${h * 0.25} 1300 ${h * 0.9}V${h + 300}Z" fill="${primary[300]}"/>`,
     ];
     const silhouette = portrait
-      ? `<ellipse cx="${440 + index * 35}" cy="${h * 0.32}" rx="${105 + index * 6}" ry="${h * 0.16}" fill="${primary[200]}"/>
-        <path d="M-300 ${h + 300}Q-100 ${h * 0.48} ${440 + index * 35} ${h * 0.48}T1300 ${h + 300}Z" fill="${primary[300]}"/>`
+      ? person(h, [500, 470, 530, 490][index], [0.42, 0.4, 0.44, 0.41][index])
       : shapes[index];
     return svg(width, height, primary[100], silhouette);
+  }
+  function person(h, x, y) {
+    const shoulders = h * (y + 0.22);
+    return `<circle cx="${x}" cy="${h * y}" r="${h * 0.12}" fill="${primary[200]}"/>
+      <path d="M${x - 300} ${h + 60}C${x - 300} ${shoulders + h * 0.14} ${x - 170} ${shoulders} ${x} ${shoulders}S${x + 300} ${shoulders + h * 0.14} ${x + 300} ${h + 60}Z" fill="${primary[200]}"/>`;
   }
   function svg(width, height, background, shapes) {
     const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 1000 ${(height / width) * 1000}"><rect width="1000" height="${(height / width) * 1000}" fill="${background}"/>${shapes}</svg>`;

@@ -4,7 +4,7 @@ import { resolve, checkFingerprint, checkContrast, validateInputs, validateDesig
 import { emitCss } from '../src/css/index.js';
 import { componentsCss } from '../src/css/components.js';
 
-const usage = 'Usage: konzilo-design resolve <file> | css <file> [-o out.css] | check <file> | components-css [-o out.css] | tool [file] [--port N] [--no-open] | pdf <file> [-o out.pdf]';
+const usage = 'Usage: konzilo-design resolve <file> | css <file> [-o out.css] | check <file> | components-css [-o out.css] | tool [file] [--port N] [--no-open] | presentation <file> [-o out.zip]';
 
 try {
   const [command, path, ...args] = process.argv.slice(2);
@@ -26,10 +26,10 @@ try {
     process.stdout.write(`Konzilo design tool: ${tool.url}\nDesign file: ${tool.path}\n`);
     const stop = async () => { await tool.close(); };
     process.once('SIGINT', stop); process.once('SIGTERM', stop);
-  } else if (command === 'pdf') {
+  } else if (command === 'presentation') {
     if (!path || !(args.length === 0 || (args.length === 2 && args[0] === '-o'))) throw new Error(usage);
-    const { createPdf } = await import('../tool/pdf.js');
-    const report = await createPdf(path, args[1]);
+    const { createPresentation } = await import('../tool/presentation.js');
+    const report = await createPresentation(path, args[1]);
     process.stdout.write(JSON.stringify(report, null, 2) + '\n');
   } else if (command === 'components-css') {
     if (path !== undefined && (path !== '-o' || args.length !== 1)) throw new Error(usage);

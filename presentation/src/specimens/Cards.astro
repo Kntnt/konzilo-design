@@ -16,18 +16,17 @@ const { list, people, landscapes } = context(project, resolved);
         text={item.text}
         href="#services"
         picture={{ src: landscapes[index], alt: 'A quiet abstract landscape' }}
-        surface={id === 'card' ? ['raised', 'tint', 'brand'][index] : undefined}
+        surface={id === 'card' ? 'raised' : undefined}
       />
     ))}
   </CardGrid>
 )}
 {id === 'card-person' && (
-  <CardGrid columns={4}>
+  <CardGrid columns={3}>
     {[
       'Team lead',
       'Project adviser',
       'Support specialist',
-      'Service adviser',
     ].map((heading, index) => (
       <Card
         heading={heading}
@@ -47,8 +46,8 @@ const { list, people, landscapes } = context(project, resolved);
     {list.map((item, index) => (
       <ContentCard
         {...item}
-        surface={['raised', 'tint', undefined][index]}
-        imageInset={index === 1}
+        surface="raised"
+        imageInset={false}
         cta={{ label: 'Read more', style: 'link', icon: '→' }}
       />
     ))}

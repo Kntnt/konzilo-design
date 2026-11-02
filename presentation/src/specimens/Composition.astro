@@ -13,6 +13,7 @@ import CardGrid from '../../../src/components/CardGrid.astro';
 import Form from '../../../src/components/Form.astro';
 import Table from '../../../src/components/Table.astro';
 import Callout from '../../../src/components/Callout.astro';
+import CtaBand from '../../../src/components/CtaBand.astro';
 import {
   sample,
   menu,
@@ -55,10 +56,35 @@ const { identity, landscapes, list } = context(project, resolved);
     />
   </div>
 )}
+{id === 'space-section' && (
+  <Fragment>
+    <Band surface="page">
+      <div class="sample-stack">
+        <HeadingGroup
+          eyebrow={sample.eyebrow}
+          heading="Practical support at every stage"
+          deck="From the first question to a clear delivery plan."
+          type="heading-2"
+        />
+        <CardGrid columns={3}>
+          {list.map((item) => (
+            <Card heading={item.title} text={item.text} href="#services" surface="raised" />
+          ))}
+        </CardGrid>
+      </div>
+    </Band>
+    <CtaBand surface="brand" heading="Agree on the next step" text="Describe what you need and we will help you make a plan.">
+      <LinkGroup>
+        <Button>{sample.action}</Button>
+      </LinkGroup>
+    </CtaBand>
+  </Fragment>
+)}
 {id === 'preview' && (
   <Page>
     <Header
       slot="header"
+      attachment="sticky"
       identity={identity}
       arrangement="A"
       menu={menu}
@@ -120,7 +146,7 @@ const { identity, landscapes, list } = context(project, resolved);
         </Form>
       </div>
     </Band>
-    <Footer slot="footer" bands={footerBands(project)} />
+    <Footer slot="footer" attachment="reveal" bands={footerBands(project)} />
   </Page>
 )}
 {id === 'responsive-hero' && (

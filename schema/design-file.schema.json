@@ -29,6 +29,45 @@
             "string",
             "null"
           ]
+        },
+        "introduction": {
+          "type": "string"
+        },
+        "contact": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "email": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
+        "explanations": {
+          "type": "object",
+          "properties": {
+            "colour": {
+              "type": "string"
+            },
+            "typefaces": {
+              "type": "string"
+            },
+            "type-scale": {
+              "type": "string"
+            },
+            "space-shape": {
+              "type": "string"
+            },
+            "shadow": {
+              "type": "string"
+            },
+            "components": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
         }
       },
       "required": [],

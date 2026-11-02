@@ -1,204 +1,62 @@
 ---
-import { resolved as r, inputs, t, num } from '../data.js';
-import {
-  faceName,
-  families,
-  rolesFor,
-  typeOrder,
-  px,
-  range,
-} from '../words.js';
-import { absoluteSteps } from '../../../tool/logic.js';
+import { resolved as r, inputs, t, num, copy } from '../data.js';
+import { faceName, families, rolesFor, typeOrder } from '../words.js';
+import Components from './Components.astro';
 const { id } = Astro.props;
-const roleFamily = (role) => r.typefaces[role] || r.typefaces.heading;
-const absolute = absoluteSteps(inputs.type.steps);
-const family = families[Number(id.slice(9))];
-const recipes = family
-  ? Object.entries(r.type).filter(([style]) => {
-      const role =
-        style === 'body' || style === 'lead' || style === 'small'
-          ? 'main'
-          : style === 'label'
-            ? 'label'
-            : style === 'mono'
-              ? 'monospace'
-              : style === 'display'
-                ? 'display'
-                : style === 'heading-1'
-                  ? 'heading-1'
-                  : 'heading';
-      return roleFamily(role) === family;
-    })
-  : [];
-const weights = [...new Set(recipes.map(([, recipe]) => recipe.weight))];
-const tuning = [
-  ...new Set(
-    recipes.flatMap(([, recipe]) =>
-      recipe.features ? [recipe.features.value] : [],
-    ),
-  ),
-];
+const main = r.typefaces.main;
+const otherFamilies = families.filter((family) => family !== main);
+const recipeFamily = (style) => {
+  if (['body', 'lead', 'small', 'eyebrow'].includes(style)) return r.typefaces.main;
+  if (style === 'label') return r.typefaces.label;
+  if (style === 'mono') return r.typefaces.monospace;
+  if (style === 'display') return r.typefaces.display;
+  if (style === 'heading-1') return r.typefaces['heading-1'] || r.typefaces.heading;
+  return r.typefaces.heading;
+};
+const recipes = Object.entries(r.type).filter(([style]) => recipeFamily(style) === main).map(([, recipe]) => recipe);
+const weights = [...new Set(recipes.map((recipe) => recipe.weight))];
+const tuning = recipes.find((recipe) => recipe.features)?.features;
+const characters = t('type.characters').split(/\s+/);
+const scale = (ratio) => t(Object.hasOwn(copy, `scale.${ratio}`) ? `scale.${ratio}` : 'scale.custom', { ratio: num(ratio, 3) });
 ---
-
-{id === 'typefaces' && (
-  <table class="values role-table rail">
-    <thead>
-      <tr>
-        {['role', 'typeface', 'type.sample', 'follows'].map((key) => (
-          <th>{t(key)}</th>
-        ))}
-      </tr>
-    </thead>
-    <tbody>
-      {['main', 'heading', 'heading-1', 'display', 'label', 'monospace'].map(
-        (role) => (
-          <tr>
-            <th>{t(role)}</th>
-            <td>{faceName(roleFamily(role))}</td>
-            <td
-              style={{ fontFamily: roleFamily(role) }}
-              data-kn-type={
-                role === 'main'
-                  ? 'body'
-                  : role === 'heading'
-                    ? 'heading-4'
-                    : role === 'monospace'
-                      ? 'mono'
-                      : role === 'display'
-                        ? 'heading-2'
-                        : role
-              }
-            >
-              {t('type.role-sample')}
-            </td>
-            <td>
-              {t(
-                inputs.typefaces[role]
-                  ? 'explicit'
-                  : role === 'monospace'
-                    ? 'typefaces.follows-system'
-                    : ['heading-1', 'display'].includes(role)
-                      ? 'typefaces.follows-heading'
-                      : role === 'label'
-                        ? 'typefaces.follows-label'
-                        : 'typefaces.follows-main',
-              )}
-            </td>
-          </tr>
-        ),
-      )}
-    </tbody>
-  </table>
-)}
-{id.startsWith('typeface-') && (
-  <div class="face-specimen rail" style={{ fontFamily: family }}>
-    <p class="face-name" style={{ fontFamily: family }}>
-      {faceName(family)}
-    </p>
-    <p class="alphabet">{t('typefaces.characters')}</p>
-    <div class="weight-specimens">
-      {weights.map((weight) => (
-        <p style={{ fontWeight: weight }}>
-          <span data-kn-type="small">{num(weight)}</span>{' '}
-          {t(`weight.${weight}`)}
-        </p>
-      ))}
-    </div>
-    {tuning.length > 0 && (
-      <div class="tuning">
-        <p data-kn-type="small">
-          {t('typefaces.tuning', {
-            features: tuning.join(', '),
-            size: num(20),
-          })}
-        </p>
-        <div>
-          <p style={{ fontFeatureSettings: 'normal' }}>
-            <span data-kn-type="label">{t('type.before')}</span>
-            {t('type.tuning-sample')}
-          </p>
-          <p style={{ fontFeatureSettings: tuning[0] }}>
-            <span data-kn-type="label">{t('type.after')}</span>
-            {t('type.tuning-sample')}
-          </p>
-        </div>
-      </div>
-    )}
+{id === 'main-typeface' && <div class="face" style={{ fontFamily: main }}>
+  <p class="face-name">{faceName(main)}</p>
+  <div class="alphabet">{characters.map((line) => <p>{line}</p>)}</div>
+  <div class="weights">{weights.map((weight) => <div>
+    <p class="weight-word" style={{ fontWeight: weight }}>{t(`weight.${weight}`)}</p>
+    <p data-kn-type="label">{num(weight)}</p>
+  </div>)}</div>
+  {tuning && <section class="tuning">
+    <p class="prose">{t('type.tuning')}</p>
+    <div class="tuning-pair">{['before', 'after'].map((state) => <div>
+      <p data-kn-type="label">{t(`type.${state}`)}</p>
+      <p class="tuning-sample" style={{ fontFeatureSettings: state === 'before' ? 'normal' : tuning.value }}>{t('type.tuning-sample')}</p>
+    </div>)}</div>
+  </section>}
+</div>}
+{id === 'type-scale' && <>
+  <p class="prose">{t('type.scale-explain', { narrow: scale(inputs.type.ratio.min), wide: scale(inputs.type.ratio.max) })}</p>
+  <div class="scale-control">
+    <label for="type-window">{t('type.slider')}</label>
+    <output id="type-window-value">{t('value.px', { value: num(1440) })}</output>
+    <input id="type-window" type="range" min="320" max="1440" value="1440" />
+    <span data-kn-type="small">{t('type.slider-min', { value: num(320) })}</span>
+    <span class="scale-end" data-kn-type="small">{t('type.slider-max', { value: num(1440) })}</span>
   </div>
-)}
-{id === 'type-scale' && (
-  <table class="values scale-table rail">
-    <thead>
-      <tr>
-        {[
-          'style',
-          'step',
-          'window.narrow',
-          'window.wide',
-          'line-height',
-          'weight',
-          'token',
-        ].map((key) => (
-          <th>{t(key)}</th>
-        ))}
-      </tr>
-    </thead>
-    <tbody>
-      {typeOrder.map((style) => (
-        <tr>
-          <th>{t(style)}</th>
-          <td>{num(absolute[style] || 0)}</td>
-          <td>{px(r.type[style].size.min)}</td>
-          <td>{px(r.type[style].size.max)}</td>
-          <td>{num(r.type[style]['line-height'])}</td>
-          <td>{num(r.type[style].weight)}</td>
-          <td>
-            <code>{`--kn-type-${style}-size`}</code>
-          </td>
-        </tr>
-      ))}
-    </tbody>
-  </table>
-)}
-{id === 'type-comparison' && (
-  <div class="type-comparison rail">
-    <div class="type-comparison-head">
-      <p data-kn-type="label">{t('window.narrow')}</p>
-      <p data-kn-type="label">{t('window.wide')}</p>
-    </div>
-    {typeOrder.map((style) => (
-      <div class="type-comparison-row">
-        {['min', 'max'].map((end) => (
-          <div>
-            <span data-kn-type="label">{t(style)}</span>
-            <p
-              data-kn-type={style}
-              style={{ fontSize: `${r.type[style].size[end]}px` }}
-            >
-              {t('type.comparison-sample')}
-            </p>
-          </div>
-        ))}
-      </div>
-    ))}
-  </div>
-)}
-{id === 'labels' && (
-  <div class="label-specimens rail">
-    <div data-kn-surface="tint">
-      <p data-kn-type="label">{t('labels.specimen')}</p>
-      <p data-kn-type="heading-1">{t('type.specimen')}</p>
-      <p data-kn-type="small">{t('labels.small')}</p>
-    </div>
-    <div class="value-notes">
-      {['label', 'small'].map((style) => (
-        <div>
-          <p data-kn-type="heading-4">{t(style)}</p>
-          <p>{t(`labels.${style}.role`)}</p>
-          <p>{range(r.type[style].size)}</p>
-          <code>{`--kn-type-${style}-size`}</code>
-        </div>
-      ))}
-    </div>
-  </div>
-)}
+  <div class="scale-lines">{typeOrder.map((style) => <div class="scale-line">
+    <p data-kn-type="small">{t(`type.${style}`)} · <output data-type-size={style}>{t('value.px', { value: num(r.type[style].size.max) })}</output></p>
+    <p data-kn-type={style} data-scale-style={style} style={{ fontSize: `${r.type[style].size.max}px` }}>{t('type.sample')}</p>
+  </div>)}</div>
+</>}
+{id === 'other-typefaces' && <>
+  {otherFamilies.length === 0 && <p>{t('type.other-none')}</p>}
+  {otherFamilies.map((family) => <section class="face face-other" style={{ fontFamily: family }}>
+    <h2 class="face-name" style={{ fontFamily: family }}>{faceName(family)}</h2>
+    <p class="face-where" style={{ fontFamily: main }}>{t('type.where', { roles: rolesFor(family) })}</p>
+    <div class="alphabet">{characters.map((line) => <p>{line}</p>)}</div>
+    {family === r.typefaces.label && <p class="face-sample" data-kn-type="label">{t('labels.sample')}</p>}
+    {family === r.typefaces.monospace && <pre class="code-sample"><code>{t('type.code')}</code></pre>}
+  </section>)}
+  {r.typefaces.label === main && <p class="face-sample" data-kn-type="label">{t('labels.sample')}</p>}
+</>}
+{id === 'typography-use' && <Components specimens={['article']} />}

@@ -8,7 +8,7 @@ Records the design system, tool inputs, outputs and design file, with their stat
 
 1. **A stand-alone design system**, its own repository with the tool, apart from the Konzilo core: download it, run it, tune colours and type, send the client the presentation, adjust, and export. Konzilo sites consume it; how is the assistant's proposal (below). Each site holds only its inputs and the components only it needs; Konzilo's plan, which gives each site its own design and components, changes by an ADR there. The generic decisions in this file move to the design system's repository.
 
-   **One tool, built 2026-11-02:** `konzilo-design tool [design-file]` opens the local editor with a fixed control column and a live preview of the real components. One to three colours, typefaces, type scale, shadows, frame, corners and density generate every token together. Save writes the complete design file; Create PDF saves first and produces the approval document. See `tool/README.md`.
+   **One tool:** `konzilo-design tool [design-file]` opens the local editor with a fixed control column and a live preview of the real components. One to three colours, typefaces, type scale, shadows, frame, corners and density generate every token together. Save writes the complete design file; a button makes the presentation for people (point 4). See `tool/README.md`.
 2. **Inputs:**
    - one to three brand colours, ranked primary, secondary, tertiary, and always a grey scale;
    - typefaces (*decided* 2026-11-02): one typeface throughout is the norm, as a rule a sans-serif and often Mona Sans, so the simple path must stay simple:
@@ -45,7 +45,12 @@ Records the design system, tool inputs, outputs and design file, with their stat
    - line-height unitless, letter-spacing in em.
    - The tool, the design file's `inputs` and the presentation speak in pixels at the default setting, as people think; the generated CSS writes rem, so 17–19px body text becomes `clamp(1.0625rem, 1.0268rem + 0.1786vw, 1.1875rem)`.
 4. **Two outputs:**
-   - **For people, built 2026-11-02:** a tagged 16:9 PDF with linked contents, chapters, colours and contrast, typography, space, shape, depth and the real components with their variants. Create PDF in the tool and `konzilo-design pdf <design-file>` use the same pipeline. The document applies the design to itself and supports name, light/dark logos and sibling copy overrides. It reports fit warnings without suppressing the PDF. See `presentation/README.md`.
+   - **For people** (*decided* by the owner, 2026-11-02, replacing a PDF, because a PDF renders shadows and the like badly and leaves little room to explain): the tool writes a ZIP archive holding one self-contained HTML file that opens in any browser, with nothing fetched from elsewhere, and is browsed page by page.
+     - **Progressive disclosure:** one page at a time. Colour first: the scale and its shades, then the colours on one another, light text on dark and the reverse, with the contrast ratios in fine print under each example instead of a large table. Typography next: the main typeface, the type scale and how it closes up and opens out with the window, the complementary typefaces, and examples in use. Then space, corners and shadow.
+     - **Components by theme:** header, footer, the page itself, then what goes on a page. A sensible selection is shown, not every combination, with the option to click for more variants. They are real and work as on a site.
+     - **Details last:** whatever specific data remains comes at the very end.
+     - **Written motivation:** per chapter, not per detail, the tool takes a text saying why a choice was made, for example why a typeface departs from a client's graphic standard. It is shown on its first applicable page and kept in the design file's `project`. The typeface and type-scale pages have separate explanations; space and shape share one, while shadow has its own.
+     - **Comments:** the reader can leave comments as they go. They are kept in the browser and leave as plain text, by mail or as a file, so the owner can read what the client thinks. No server is involved.
    - **For code:** the components, HTML and CSS, all of them with all their CSS, in a form a Konzilo site takes in simply and gets exactly what was decided.
 5. **The design file** (owner's idea; the assistant decided its form, 2026-11-01): the tool's settings produce one JSON file, the source, which is what is handed on; everything else is made from it.
    - `inputs`: what the tool's controls set, the only part a person changes, through the tool.
@@ -53,3 +58,38 @@ Records the design system, tool inputs, outputs and design file, with their stat
    - `resolved`: every value the generator derived (ramps, each plate kind's roles in light and dark mode, type and space steps as min and max, radii, shadows as finished CSS values), with the generator's version, a fingerprint of `inputs` and the contrast check's result.
    - Consumers read `resolved` and need no generator, so a consumer in another language (a future WordPress plugin setting a theme's values) never reimplements the colour maths, and every consumer gets the same values. A file whose `inputs` no longer match the fingerprint is refused. Consumers: the Konzilo package, the presentation, the export, later others. Its own plain format; a DTCG export only when something needs one.
 6. **Where:** the repository `Kntnt/konzilo-design` (private, created 2026-11-01), locally `~/Projects/konzilo-design`; Konzilo sites take it as a pinned package plus their design file, others take the export.
+
+## HTML presentation implementation (2026-11-02)
+
+The local button is **Create presentation**; it saves before packaging. The CLI
+`konzilo-design presentation <design-file> [-o out.zip]` resolves without changing
+the source. The former PDF command and renderer are removed. The default ZIP is
+`<stem>-presentation-<YYYY-MM-DD>.zip`, beside the source, stripping `.design`.
+It contains only `<project-name-slug>-<document.filename>.html`; the final filename
+word is a copy key. All assets are inline and the build needs no browser.
+
+The reader has 23 pages: Start, two colour pages, four typography pages, three
+space/shape pages, eleven component pages, Details and Comments. Hash routing
+preserves history. The desktop sidebar is 260 px; a menu replaces it below 900 px.
+The actual component specimens load lazily in independent real-width iframes.
+Shared CSS, fonts and scripts are held once and inserted at runtime. The full-page
+specimen scrolls in a 560 px viewport; ordinary specimens fit their content.
+Changing their width or mode reserves the stage height so surrounding content
+stays still. Reference data and additional variants are disclosed on request.
+
+Optional project fields are `introduction`, `contact: { name, email }` and
+`explanations: { colour, typefaces, type-scale, space-shape, shadow, components }`.
+They never enter the input fingerprint. Plain text is escaped; blank lines make
+paragraphs. The first page for each explanation is respectively colour scale,
+main typeface, type scale, space, shadow and header. Introduction and contact
+controls are in Client. Explanation controls finish their relevant section, with
+a small Components section for its one field.
+
+Comments, edits, reader name and drafts save as typed in browser localStorage,
+keyed by document identity and version. Inaccessible storage uses memory with a
+visible reminder. Export includes unsent drafts as readable UTF-8 plain text.
+Mail links above 1800 encoded characters use a short attachment note. Comments
+remain after export and are cleared only by an explicit confirmed action.
+The content security policy refuses network access, including third-party media;
+its local explanation remains interactive. See `presentation/README.md` for the
+copy override, offline asset and verification contracts.

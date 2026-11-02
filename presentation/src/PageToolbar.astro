@@ -1,0 +1,20 @@
+---
+import { t } from './data.js';
+const { width = true } = Astro.props;
+const widths = [['wide', 'window.wide'], ['768', 'window.tablet'], ['390', 'window.phone']];
+const modes = [['light', 'mode.light'], ['dark', 'mode.dark']];
+---
+<div class="page-toolbar">
+  {width && (
+    <div class="segmented" role="group" aria-label={t('window.label')} data-frame-width>
+      {widths.map(([value, key], index) => (
+        <button type="button" data-value={value} aria-pressed={String(index === 0)}>{t(key)}</button>
+      ))}
+    </div>
+  )}
+  <div class="segmented" role="group" aria-label={t('mode.label')} data-frame-mode>
+    {modes.map(([value, key], index) => (
+      <button type="button" data-value={value} aria-pressed={String(index === 0)}>{t(key)}</button>
+    ))}
+  </div>
+</div>

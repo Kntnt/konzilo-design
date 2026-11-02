@@ -70,11 +70,12 @@ presentation identity. CSS goes to stdout unless an output path is supplied. Che
 validates the file, the fingerprint and the Surface contrast check. Errors go to stderr with a nonzero exit status.
 
 `tool [file] [--port N] [--no-open]` starts the local editor on 127.0.0.1.
-A missing file starts with Mona Sans and is created on first save. `pdf <file>
-[-o out.pdf]` generates the same tagged 16:9 approval PDF without opening the UI.
-The default output is `<stem>-design-system-<YYYY-MM-DD>.pdf` beside the input.
+A missing file starts with Mona Sans and is created on first save. `presentation <file>
+[-o out.zip]` generates a ZIP holding one self-contained, browsable HTML presentation.
+The default output is `<stem>-presentation-<YYYY-MM-DD>.zip` beside the input.
+It needs no browser at runtime.
 See `tool/README.md` and `presentation/README.md` for controls, copy overrides,
-offline assets and print verification.
+offline assets, comments and browser verification.
 
 Optional `inputs.typefaces.heading-1` selects the first-heading stack and its
 own tuning; otherwise it follows `heading`. Optional `inputs.type.heading-1-color`
@@ -90,6 +91,13 @@ and the presentation embeds referenced files at build time. Identity never enter
 the inputs fingerprint.
 
 Optional `project.version` is a string with presentation/tool default `1.0`. It supplies the approval document version independently of `resolved.generator-version`; it never changes generated values or the inputs fingerprint.
+
+Optional `project.introduction`, `project.contact` (`name`, `email`) and
+`project.explanations` are presentation metadata only. Explanation keys are
+`colour`, `typefaces`, `type-scale`, `space-shape`, `shadow` and `components`.
+All leaves are strings. Blank lines separate paragraphs, with no markup. These
+fields are validated by the design-file schema and excluded from the input
+fingerprint and generated CSS. Unknown project and explanation keys are errors.
 
 ## Algorithms and storage
 

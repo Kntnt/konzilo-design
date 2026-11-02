@@ -7,9 +7,9 @@ import { columns, rows, questions } from '../samples.js';
 const { id } = Astro.props;
 ---
 
-{id === 'table' && (
-  <div class="sample-pair">
-    {['page', 'brand'].map((surface) => (
+{id.startsWith('table') && (
+  <div class:list={[id.endsWith('more') ? 'sample-pair' : 'sample-stack']}>
+    {(id === 'table' ? ['page'] : ['brand']).map((surface) => (
       <div data-kn-surface={surface} class="sample-pad">
         <Table
           caption="A clear delivery plan"
@@ -22,10 +22,10 @@ const { id } = Astro.props;
     ))}
   </div>
 )}
-{id === 'accordion' && (
+{id.startsWith('accordion') && (
   <div class="sample-stack">
-    <div class="sample-pair">
-      {['hairlines', 'boxes'].map((variant) => (
+    <div class:list={[id.endsWith('more') ? 'sample-pair' : 'sample-stack']}>
+      {(id === 'accordion' ? ['hairlines'] : ['boxes']).map((variant) => (
         <Accordion
           variant={variant}
           mode="multiple"
@@ -38,10 +38,10 @@ const { id } = Astro.props;
     </Quotation>
   </div>
 )}
-{id === 'callout' && (
-  <div class="sample-callouts">
-    {['filled', 'outlined'].flatMap((style) =>
-      ['info', 'success', 'warning', 'error'].map((variant, index) => (
+{id.startsWith('callout') && (
+  <div class:list={[id.endsWith('more') ? 'sample-callouts' : 'sample-stack']}>
+    {(id === 'callout' ? ['filled'] : ['filled', 'outlined']).flatMap((style) =>
+      (id === 'callout' ? ['info'] : ['info', 'success', 'warning', 'error']).map((variant, index) => (
         <Callout
           variant={variant}
           style={style}

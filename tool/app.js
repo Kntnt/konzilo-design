@@ -17,7 +17,7 @@ const form = document.getElementById('controls');
 const status = document.getElementById('status');
 const result = document.getElementById('result');
 const preview = document.getElementById('preview');
-const pdf = document.getElementById('pdf');
+const presentation = document.getElementById('presentation');
 const escapeHtml = (value) =>
   String(value ?? '').replace(
     /[&<>"']/g,
@@ -70,7 +70,9 @@ function field(label, path, type = 'text', options = {}) {
       ? ''
       : `min="${options.min}" max="${options.max}" step="${options.step || 1}"`;
   let control =
-    type === 'select'
+    type === 'textarea'
+      ? `<textarea ${attributes} rows="4"></textarea>`
+      : type === 'select'
       ? `<select ${attributes}>${optionsMarkup(options.choices)}</select>`
       : `<input ${attributes} type="${type}" ${limits}>`;
   if (type === 'color') {
@@ -118,7 +120,7 @@ function font(label, role, follow) {
       <select id="${id}" data-font="${role}" ${tip(help)}>${optionsMarkup(choices)}</select>
       <input aria-label="Installed typeface for ${label}" data-other="${role}"
         placeholder="Installed typeface name"
-        ${tip('Enter the exact name of a typeface installed on this computer. It is used in the preview and PDF.')} />
+        ${tip('Enter the exact name of a typeface installed on this computer. It is used in the preview and presentation.')} />
     </span>
   </label>`;
 }
@@ -156,6 +158,12 @@ function typeStepper(key) {
       ${tip('Move this style one step up. Other styles keep their absolute step; schema limits still apply.')}>+</button>
     <output class="size" data-size="${key}"></output>
   </div>`;
+}
+
+function explanation(key) {
+  return field('Why this choice (shown to the client)', `project.explanations.${key}`, 'textarea', {
+    tip: 'Optional. This explanation appears in the presentation. Blank lines make paragraphs.',
+  });
 }
 
 const logoNames = {};
@@ -201,6 +209,9 @@ form.innerHTML =
       field('Document version', 'project.version', 'text', {
         tip: 'The version shown on the cover and in the foot of every approval page.',
       }) +
+      field('Introduction', 'project.introduction', 'textarea', { tip: 'Optional introduction on the presentation’s Start page. Blank lines make paragraphs.' }) +
+      field('Contact name', 'project.contact.name') +
+      field('Contact email', 'project.contact.email', 'email') +
       logo('logo', 'Logo') +
       logo('logo-dark', 'Logo for dark backgrounds'),
   ) +
@@ -219,7 +230,7 @@ form.innerHTML =
       field('Tertiary', 'inputs.brand-colors.tertiary', 'color') +
       range('Grey temperature', 'inputs.gray-temperature', -100, 100, {
         tip: 'Makes neutral colours cooler or warmer, without changing the brand colours.',
-      }),
+      }) + explanation('colour'),
   ) +
   section(
     'Typefaces',
@@ -251,7 +262,7 @@ form.innerHTML =
         ],
         tip: 'Changes eyebrows, metadata and other labels together. Choosing monospace recommends Red Hat Mono when the system stack is still selected.',
       }) +
-      font('Monospace', 'monospace'),
+      font('Monospace', 'monospace') + explanation('typefaces'),
   ) +
   section(
     'Type scale',
@@ -271,7 +282,7 @@ form.innerHTML =
         tip: 'The ratio between type steps at the widest window. Higher ratios usually need fewer steps.',
       }) +
       typeNames.map(typeStepper).join('') +
-      '<p class="warning" id="scale-warning" role="status"></p>',
+      '<p class="warning" id="scale-warning" role="status"></p>' + explanation('type-scale'),
   ) +
   section(
     'Shadow',
@@ -302,7 +313,7 @@ form.innerHTML =
             tip: `Apply shadow to ${label.toLowerCase()}. Without it the component uses its hairline fallback.`,
           }),
         )
-        .join(''),
+        .join('') + explanation('shadow'),
   ) +
   section(
     'Frame',
@@ -322,9 +333,9 @@ form.innerHTML =
     range('Density', 'inputs.density-profile', 0, 100, {
       words: ['Very compact', 'Very loose'],
       tip: 'Changes the whole spacing scale together: component gaps, columns, padding and band rhythm.',
-    }),
-  );
-for (const id of ['save', 'pdf', 'viewport', 'mode']) {
+    }) + explanation('space-shape'),
+  ) + section('Components', explanation('components'));
+for (const id of ['save', 'presentation', 'viewport', 'mode']) {
   const control = document.getElementById(id);
   const holder = document.createElement('span');
   holder.innerHTML = '<span ' + tip(control.title) + '></span>';
@@ -405,7 +416,7 @@ function sync() {
     const error = contrastError(resolved['contrast-check']);
     if (error) throw new Error(error);
     valid = true;
-    pdf.disabled = generating;
+    presentation.disabled = generating;
     status.removeAttribute('title');
     status.textContent = `Contrast passed · ${Object.keys(resolved.surfaces).length} Surfaces, both modes`;
     preview.contentWindow?.postMessage(
@@ -442,7 +453,7 @@ function sync() {
         : '';
   } catch (error) {
     valid = false;
-    pdf.disabled = true;
+    presentation.disabled = true;
     status.textContent = error.message;
     status.title = error.message;
   }
@@ -619,32 +630,27 @@ document.getElementById('save').addEventListener('click', async () => {
     result.textContent = error.message;
   }
 });
-pdf.addEventListener('click', async () => {
+presentation.addEventListener('click', async () => {
   if (!valid || generating) return;
   generating = true;
-  pdf.disabled = true;
-  result.textContent = 'Saving, building document and creating PDF…';
+  presentation.disabled = true;
+  result.textContent = 'Saving and creating presentation…';
   try {
-    const saved = await request('/api/pdf');
+    const saved = await request('/api/presentation');
     result.replaceChildren();
     const link = document.createElement('a');
-    link.href = '/api/pdf-file';
+    link.href = '/api/presentation-file';
     link.target = '_blank';
     link.rel = 'noopener';
-    link.textContent = `PDF ready · ${saved.path}`;
+    link.textContent = `Presentation ready · ${saved.path}`;
     link.title = saved.path;
     result.append(link);
-    result.title =
-      saved.warnings
-        .map(
-          (warning) => `Page ${warning.page}: ${warning.problems.join('; ')}`,
-        )
-        .join('\n') || saved.path;
+    result.title = saved.path;
   } catch (error) {
     result.textContent = error.message;
   } finally {
     generating = false;
-    pdf.disabled = !valid;
+    presentation.disabled = !valid;
   }
 });
 function resize() {

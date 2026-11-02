@@ -10,7 +10,7 @@ import {
 import { spawn } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
 import { buildPresentation, repo } from './build.js';
-import { createPdf } from './pdf.js';
+import { createPresentation } from './presentation.js';
 import {
   defaultInputs,
   resolve,
@@ -96,7 +96,7 @@ export async function startTool({
   const previewDir = join(repo, 'node_modules/.cache/konzilo-tool');
   const { preview } = await buildPresentation({ output: previewDir });
   const token = randomBytes(24).toString('hex');
-  let lastPdf;
+  let lastPresentation;
   let busy = false;
   const mime = {
     '.html': 'text/html; charset=utf-8',
@@ -134,21 +134,21 @@ export async function startTool({
         res.end(preview);
         return;
       }
-      if (req.method === 'GET' && url.pathname === '/api/pdf-file') {
-        if (!lastPdf) {
-          json(404, { error: 'Create a PDF first.' });
+      if (req.method === 'GET' && url.pathname === '/api/presentation-file') {
+        if (!lastPresentation) {
+          json(404, { error: 'Create a presentation first.' });
           return;
         }
         res.writeHead(200, {
-          'Content-Type': 'application/pdf',
+          'Content-Type': 'text/html; charset=utf-8',
           'Content-Disposition': 'inline',
         });
-        res.end(await readFile(lastPdf));
+        res.end(lastPresentation);
         return;
       }
       if (
         req.method === 'POST' &&
-        ['/api/save', '/api/pdf'].includes(url.pathname)
+        ['/api/save', '/api/presentation'].includes(url.pathname)
       ) {
         if (
           req.headers['x-konzilo-token'] !== token ||
@@ -158,7 +158,7 @@ export async function startTool({
           return;
         }
         if (busy) {
-          json(409, { error: 'A PDF is already being created.' });
+          json(409, { error: 'A presentation is already being created.' });
           return;
         }
         let body = '';
@@ -176,9 +176,9 @@ export async function startTool({
         }
         busy = true;
         try {
-          const pdf = await createPdf(path);
-          lastPdf = pdf.path;
-          json(200, pdf);
+          const { html, ...report } = await createPresentation(path, undefined, { includeHtml: true });
+          lastPresentation = html;
+          json(200, report);
         } finally {
           busy = false;
         }

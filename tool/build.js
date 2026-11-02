@@ -2,6 +2,8 @@ import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { resolve } from 'node:path';
 import { inlineBuild } from '../presentation/inline.mjs';
+import { readFile } from 'node:fs/promises';
+import { resolve as resolveDesign, defaultInputs } from '../src/generator/index.js';
 export const repo = fileURLToPath(new URL('../', import.meta.url));
 let pending = Promise.resolve();
 export function buildPresentation({ designFile, output, date } = {}) {
@@ -36,7 +38,8 @@ export function buildPresentation({ designFile, output, date } = {}) {
       child.on('error', fail);
       child.on('exit', (code) => (code === 0 ? done() : fail(new Error(log))));
     });
-    return { directory, ...(await inlineBuild(directory)) };
+    const inputs = designFile ? JSON.parse(await readFile(designFile, 'utf8')).inputs : { ...defaultInputs(), typefaces: { ...defaultInputs().typefaces, main: 'Mona Sans' } };
+    return { directory, ...(await inlineBuild(directory, await resolveDesign(inputs))) };
   };
   const result = pending.then(job, job);
   pending = result.catch(() => {});

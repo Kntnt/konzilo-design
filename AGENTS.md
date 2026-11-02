@@ -28,5 +28,5 @@ Precedence over any conflicting skill, README, or other doc unless the user over
 - `docs/spec/names.md` — read when naming a token, role, Surface kind, width or design-file key, or writing CSS that uses them.
 - `docs/generator.md` — read when changing the generator, design-file schema, CSS emitter or CLI.
 - `gallery/` — live Astro component gallery; `npm run gallery` builds a self-contained `gallery/dist/index.html`.
-- `tool/README.md` — read when running or changing the local design tool, controls, saves or PDF command.
-- `presentation/README.md` — read when changing the approval document, copy overrides, specimens or print checks.
+- `tool/README.md` — read when running or changing the local design tool, controls, saves or presentation command.
+- `presentation/README.md` — read when changing the approval document, copy overrides, specimens, comments or offline browser checks.

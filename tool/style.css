@@ -68,7 +68,7 @@ button {
   min-height: 32px;
   color: #272b30;
 }
-#pdf {
+#presentation {
   background: #303b44;
   color: #fff;
   border-color: #303b44;
@@ -308,4 +308,19 @@ legend {
 }
 .g-control-tip[hidden] {
   display: none;
+}
+
+textarea {
+  width: 100%;
+  min-width: 0;
+  height: 96px;
+  resize: none;
+  font: inherit;
+  padding: 8px;
+  border: 1px solid #b5bcc4;
+  border-radius: 4px;
+}
+.field:has(textarea) {
+  margin-block: 12px;
+  align-items: start;
 }

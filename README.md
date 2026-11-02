@@ -4,7 +4,7 @@ A design system and the tool that makes it. A handful of inputs (one to three br
 grey scale, typefaces, body size, type scale, shadows, corners and density) produce a design
 file, and everything else is made from that file:
 
-- **a presentation** for people: a live site, printable as PDF, that explains the colours,
+- **a presentation** for people: a self-contained HTML document in a ZIP archive, that explains the colours,
   scales, typefaces and shadows and shows them on every component, made for one client
   before any design sketch;
 - **a package** for Konzilo sites: CSS and Astro components, pinned by the site, which turns
