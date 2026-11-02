@@ -1,11 +1,15 @@
+export const SYSTEM_SANS = 'system-ui, sans-serif';
+export const SYSTEM_MONOSPACE = 'ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace';
+
 const defaults = {
   'brand-colors': { primary: '#168b83' },
   'gray-temperature': 0,
-  typefaces: { body: 'system-ui, sans-serif', display: 'system-ui, sans-serif', eyebrow: 'system-ui, sans-serif' },
+  typefaces: { main: SYSTEM_SANS, monospace: SYSTEM_MONOSPACE },
   type: {
     'body-size': { min: 17, max: 19 },
     ratio: { min: 1.067, max: 1.125 },
-    steps: { 'heading-6': 0, 'heading-5': 1, 'heading-4': 1, 'heading-3': 1, 'heading-2': 1, 'heading-1': 3, display: 3, lead: 1, small: 2 },
+    steps: { 'heading-6': 0, 'heading-5': 1, 'heading-4': 1, 'heading-3': 1, 'heading-2': 1, 'heading-1': 3, display: 3, lead: 1, small: 2, label: 5 },
+    label: 'main',
   },
   shadow: { strength: 0, hardness: 20, angle: 0, elevation: 50, color: 'default', targets: { box: true, header: true, panel: true, page: true } },
   frame: { width: 0, color: 'default' },

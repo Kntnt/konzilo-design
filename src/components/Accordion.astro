@@ -1,0 +1,22 @@
+---
+import { nextId } from './ids.js';
+import type { HTMLAttributes } from 'astro/types';
+import type { FaqItem, Level } from './content-types';
+import AccordionItem from './AccordionItem.astro';
+import { groupAccordion } from './accordion.js';
+interface Props extends HTMLAttributes<'div'> {
+  mode?: 'single' | 'multiple';
+  items?: FaqItem[];
+  faq?: boolean;
+  variant?: 'hairlines' | 'boxes';
+  level?: Level;
+}
+const { mode = 'single', items = [], faq = false, variant = 'hairlines', level, class: className, ...attributes } = Astro.props;
+const name = mode === 'single' ? nextId('kn-accordion') : undefined;
+const content = groupAccordion((await Astro.slots.render('default')) ?? '', name);
+const structured = { '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: items.map(({ question, answer }) => ({ '@type': 'Question', name: question, acceptedAnswer: { '@type': 'Answer', text: answer } })) };
+---
+<div {...attributes} class:list={['kn-accordion', className]} data-kn-accordion-mode={mode} data-kn-variant={variant}>
+  {items.length > 0 ? items.map(({ question, answer }) => <AccordionItem label={question} name={name} level={level}><Fragment set:html={answer} /></AccordionItem>) : <Fragment set:html={content} />}
+</div>
+{faq && items.length > 0 && <script type="application/ld+json" is:inline set:html={JSON.stringify(structured).replace(/</g, '\\u003c')} />}

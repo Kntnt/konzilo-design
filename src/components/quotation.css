@@ -1,0 +1,9 @@
+@layer kn-components {
+  .kn-quotation { margin-block: 1.5em; margin-inline: 0; padding-inline-start: 1em; border-inline-start: 0.125rem solid var(--kn-accent); color: var(--kn-text); }
+  .kn-quotation > .kn-quotation-text { margin: 0; padding: 0; border: 0; color: var(--kn-text); font-weight: var(--kn-type-body-weight); }
+  .kn-quotation-text > :first-child { margin-block-start: 0; }
+  .kn-quotation-text > :last-child { margin-block-end: 0; }
+  .kn-quotation-attribution { margin-block-start: 0.75em; color: var(--kn-text-muted); }
+  .kn-quotation-name { color: var(--kn-text); }
+  .kn-quotation[data-kn-surface] { padding: var(--kn-space-plate); border: 0; border-radius: var(--kn-radius-card); }
+}

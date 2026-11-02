@@ -1,0 +1,6 @@
+@layer kn-components {
+  .kn-cta-band-content { display: flex; flex-wrap: wrap; align-items: center; gap: var(--kn-space-column-gap); }
+  .kn-cta-band-text { flex: 1 1 28rem; min-inline-size: 0; overflow-wrap: anywhere; }
+  .kn-cta-band-text > p { margin-block: var(--kn-space-component-gap) 0; color: var(--kn-text-muted); max-inline-size: var(--kn-layout-narrow); }
+  .kn-cta-band-actions { flex: 0 1 auto; min-inline-size: 0; }
+}

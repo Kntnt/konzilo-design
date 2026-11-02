@@ -1,0 +1,171 @@
+---
+import { resolved as r, inputs, t, num } from '../data.js';
+import { pictures } from '../samples.js';
+import Button from '../../../src/components/Button.astro';
+const { id } = Astro.props;
+const { landscape } = pictures(r.ramps);
+const ink = (hex) => {
+  const channels = hex
+    .slice(1)
+    .match(/../g)
+    .map((value) => parseInt(value, 16) / 255);
+  const linear = channels.map((value) =>
+    value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4,
+  );
+  return linear[0] * 0.2126 + linear[1] * 0.7152 + linear[2] * 0.0722 > 0.179
+    ? '#111111'
+    : '#ffffff';
+};
+const mode = id.endsWith('dark') ? 'dark' : 'light';
+const pairs = [
+  'text',
+  'text-muted',
+  'link',
+  'accent',
+  'border-strong',
+  'focus',
+  'button-text',
+];
+const surfaces = Object.keys(r.surfaces);
+const checked = Object.values(r['contrast-check'].matrix).flatMap((modes) =>
+  Object.values(modes[mode].pairs),
+);
+const passed = checked.every((pair) => pair.passed);
+// Pair related contexts only when extra brand tints would add a fourth row.
+const gridSurfaces = surfaces.map((kind) => [kind]);
+if (gridSurfaces.length > 12) {
+  const pictureIndex = gridSurfaces.findIndex(
+    ([kind]) => kind === 'picture-light',
+  );
+  gridSurfaces.splice(pictureIndex, 2, ['picture-light', 'picture-dark']);
+}
+if (gridSurfaces.length > 12) {
+  const tintIndex = gridSurfaces.findIndex(
+    ([kind]) => kind === 'tint-secondary',
+  );
+  gridSurfaces.splice(tintIndex, 2, ['tint-secondary', 'tint-tertiary']);
+}
+---
+
+{id === 'brand-colours' && (
+  <div class="brand-swatches">
+    {[
+      ...Object.entries(inputs['brand-colors']),
+      ['gray', r.ramps.gray[200]],
+    ].map(([rank, hex]) => (
+      <div
+        class:list={['brand-column', rank === 'gray' && 'neutral-column']}
+        style={{ background: hex, color: ink(hex) }}
+      >
+        <div>
+          <h3 data-kn-type="heading-2">{t(`colour.${rank}`)}</h3>
+          <p data-kn-type="mono">{hex}</p>
+        </div>
+        <p data-kn-type="lead">{t(`colour.${rank}.job`)}</p>
+      </div>
+    ))}
+  </div>
+)}
+{id === 'ramps' && (
+  <div
+    class="ramps rail"
+    style={{
+      '--ramp-height': `${Math.floor(350 / Object.keys(r.ramps).length)}px`,
+    }}
+  >
+    {Object.entries(r.ramps).map(([name, ramp]) => (
+      <div class="ramp-row">
+        <p data-kn-type="label">{t(`colour.${name}`)}</p>
+        <div class="ramp-cells">
+          {Object.entries(ramp).map(([step, hex]) => (
+            <div style={{ background: hex, color: ink(hex) }}>
+              <span data-kn-type="heading-5">{step}</span>
+              <span data-kn-type="mono">{hex}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    ))}
+    <div class="ramp-legend">
+      {['background', 'border', 'foreground'].map((role, index) => (
+        <p>
+          <span>{t(`ramp.range.${index}`)}</span>
+          {t(`ramp.${role}`)}
+        </p>
+      ))}
+    </div>
+  </div>
+)}
+{id.startsWith('surfaces-') && (
+  <div
+    class="surface-grid rail"
+    data-kn-mode={mode}
+    style={{ '--surface-rows': Math.ceil(gridSurfaces.length / 4) }}
+  >
+    {gridSurfaces.map((kinds) => (
+      <div class="surface-cell">
+        {kinds.map((kind) => (
+          <div
+            class="surface-plate"
+            data-kn-surface={kind}
+            style={
+              kind.startsWith('picture-')
+                ? { '--kn-picture-image': `url("${landscape}")` }
+                : undefined
+            }
+          >
+            <p data-kn-type="label">{t(`surface.${kind}`)}</p>
+            <p data-kn-type="heading-5">{t('surface.sample')}</p>
+            <p data-kn-type="small">
+              {t('surface.text')} <a href="#next">{t('surface.link')}</a>
+            </p>
+            <Button>{t('surface.button')}</Button>
+          </div>
+        ))}
+      </div>
+    ))}
+  </div>
+)}
+{id.startsWith('contrast-') && (
+  <div class="contrast-matrix rail">
+    <p class="contrast-summary">
+      {t(passed ? 'contrast.summary' : 'contrast.failed', {
+        count: num(checked.length),
+      })}
+    </p>
+    <table class="values contrast">
+      <thead>
+        <tr>
+          <th>{t('contrast.surface')}</th>
+          {pairs.map((pair) => (
+            <th>{t(`pair.${pair}`)}</th>
+          ))}
+        </tr>
+      </thead>
+      <tbody>
+        {surfaces.map((kind) => (
+          <tr>
+            <th>{t(`surface.${kind}`)}</th>
+            {pairs.map((pair) => {
+              const value = r['contrast-check'].matrix[kind][mode].pairs[pair];
+              return (
+                <td>
+                  <span>{num(value.ratio, 2)}:1</span>{' '}
+                  <small>
+                    {t(
+                      value.target === 3
+                        ? 'contrast.ui'
+                        : value.ratio >= 7
+                          ? 'contrast.aaa-short'
+                          : 'contrast.aa-short',
+                    )}
+                  </small>
+                </td>
+              );
+            })}
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+)}

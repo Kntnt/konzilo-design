@@ -1,0 +1,126 @@
+---
+import Field from '../../../src/components/Field.astro';
+import Button from '../../../src/components/Button.astro';
+import VisitorFilters from '../../../src/components/VisitorFilters.astro';
+import ContentLoop from '../../../src/components/ContentLoop.astro';
+import Breadcrumbs from '../../../src/components/Breadcrumbs.astro';
+import Pagination from '../../../src/components/Pagination.astro';
+import { context } from './context.js';
+const { id, project, resolved } = Astro.props;
+const { list } = context(project, resolved);
+const results = Array.from({ length: 12 }, (_, index) => ({
+  title: [
+    'Planning the first stage',
+    'Planning a useful review',
+    'Planning the delivery',
+  ][index % 3],
+  href: '#guide',
+  text: 'A practical guide to responsibilities, decisions and dates.',
+  filters: { topic: 'guides', year: '2026' },
+}));
+---
+
+{id === 'content-loop' && (
+  <div class="sample-stack">
+    <ContentLoop
+      items={list.map(({ picture, ...item }) => item)}
+      columns={3}
+      surface="raised"
+    />
+    <ContentLoop
+      presentation="rows"
+      images={false}
+      items={[
+        {
+          title: 'Service overview',
+          href: '#download',
+          kind: 'document',
+          fileType: 'PDF',
+          fileSize: '240 KB',
+          text: 'A short guide to the available services.',
+        },
+        { ...list[1], text: undefined, picture: undefined },
+      ]}
+    />
+  </div>
+)}
+{id === 'visitor-filters' && (
+  <div class="sample-results">
+    <VisitorFilters
+      for="resources"
+      search={{ label: 'Search resources', value: 'planning' }}
+      toggles={
+        id === 'visitor-filters'
+          ? [
+              {
+                name: 'topic',
+                label: 'Topics',
+                options: [
+                  { value: 'guides', label: 'Guides' },
+                  { value: 'reports', label: 'Reports' },
+                ],
+              },
+            ]
+          : []
+      }
+      select={
+        id === 'visitor-filters'
+          ? {
+              name: 'year',
+              label: 'Year',
+              options: [
+                { value: '', label: 'All years' },
+                { value: '2026', label: '2026' },
+              ],
+            }
+          : undefined
+      }
+      total={12}
+      pageSize={3}
+      countText="{count} results"
+    />
+    <ContentLoop
+      id="resources"
+      items={results.map(({ text, ...item }) => item)}
+      presentation="rows"
+      images={false}
+    />
+  </div>
+)}
+{id === 'breadcrumbs' && (
+  <div class="sample-stack breadcrumb-examples">
+    {['page', 'tint', 'brand'].map((surface) => (
+      <div class="sample-pad" data-kn-surface={surface}>
+        <Breadcrumbs
+          items={[
+            { label: 'Home', href: '#home' },
+            { label: 'Services', href: '#services' },
+            { label: 'Planning' },
+          ]}
+        />
+      </div>
+    ))}
+    <Pagination page={2} pages={8} href={(number) => `#page-${number}`} />
+  </div>
+)}
+
+{id === 'search' && (
+  <div class="search-results-composition">
+    <form class="search-results-query" role="search">
+      <Field
+        name="query"
+        type="search"
+        label="Search resources"
+        value="planning"
+      />
+      <Button type="submit">Search</Button>
+    </form>
+    <p data-kn-type="small">12 results for “planning”</p>
+    <ContentLoop
+      items={results.slice(0, 3)}
+      presentation="rows"
+      images={false}
+    />
+    <Pagination page={1} pages={4} href={(number) => `#results-${number}`} />
+  </div>
+)}

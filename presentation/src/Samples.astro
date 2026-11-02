@@ -1,0 +1,63 @@
+---
+import Frame from './specimens/Frame.astro';
+import Basics from './specimens/Basics.astro';
+import Bands from './specimens/Bands.astro';
+import Cards from './specimens/Cards.astro';
+import Media from './specimens/Media.astro';
+import Content from './specimens/Content.astro';
+import Finding from './specimens/Finding.astro';
+import Forms from './specimens/Forms.astro';
+import Composition from './specimens/Composition.astro';
+const { id } = Astro.props;
+const groups = [
+  [
+    Frame,
+    [
+      'page',
+      'band',
+      'reading-area',
+      'headers',
+      'header-a-menu',
+      'header-a-search',
+      'footer',
+      'footer-simple',
+    ],
+  ],
+  [Basics, ['body-text', 'buttons', 'links', 'icon']],
+  [
+    Bands,
+    [
+      'hero-picture',
+      'hero-plate',
+      'hero-typographic',
+      'hero-full-picture',
+      'text-image',
+      'text-image-start',
+      'cta-band',
+    ],
+  ],
+  [
+    Cards,
+    ['card', 'card-unplated', 'card-person', 'content-card', 'card-grid'],
+  ],
+  [Media, ['figure', 'embed']],
+  [Content, ['table', 'accordion', 'callout']],
+  [Finding, ['content-loop', 'visitor-filters', 'search', 'breadcrumbs']],
+  [
+    Forms,
+    [
+      'form',
+      'form-brand',
+      'form-more',
+      'form-states',
+      'consent-banner',
+      'consent-settings',
+      'consent-services',
+    ],
+  ],
+];
+const Component =
+  groups.find(([, ids]) => ids.includes(id))?.[0] || Composition;
+---
+
+<Component {...Astro.props} />

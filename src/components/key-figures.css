@@ -1,0 +1,13 @@
+@layer kn-components {
+  .kn-key-figures {
+    --kn-key-figures-minimum: 12rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, max(var(--kn-key-figures-minimum), calc((100% - 3 * var(--kn-space-column-gap)) / 4))), 1fr));
+    gap: var(--kn-space-column-gap);
+    margin: 0;
+  }
+  .kn-key-figures-item { display: flex; flex-direction: column; gap: calc(var(--kn-space-component-gap) / 2); padding-block-start: var(--kn-space-component-gap); border-block-start: 1px solid var(--kn-border); min-inline-size: 0; overflow-wrap: anywhere; }
+  .kn-key-figures-item > dd { margin: 0; }
+  .kn-key-figures-value { order: -1; font-variant-numeric: tabular-nums; }
+  .kn-key-figures-item > dt, .kn-key-figures-note { color: var(--kn-text-muted); }
+}

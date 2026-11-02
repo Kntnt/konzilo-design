@@ -1,0 +1,14 @@
+@layer kn-components {
+  .kn-sidenote {
+    --kn-sidenote-position: 0rem;
+    margin-block: var(--kn-space-component-gap);
+    margin-inline: 0;
+    padding-inline-start: var(--kn-space-component-gap);
+    border-inline-start: 1px solid var(--kn-border-strong);
+    color: var(--kn-text-muted);
+    overflow-wrap: anywhere;
+  }
+  .kn-sidenote :is(h1, h2, h3, h4, h5, h6) { margin-block: 0 0.35em; color: var(--kn-text); }
+  .kn-sidenote > :first-child { margin-block-start: 0; }
+  .kn-sidenote > :last-child { margin-block-end: 0; }
+}

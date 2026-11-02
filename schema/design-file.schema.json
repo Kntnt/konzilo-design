@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "urn:konzilo-design:design-file",
   "title": "Konzilo design file",
-  "description": "Numeric lengths are pixels at the default browser setting. Fluid min/max are narrow/wide-window endpoints. CSS is stored in rem; shadow and frame lengths remain px. Missing input leaves use generator defaults. All eight Surfaces have checked roles in both modes. Exports require a passing contrast matrix.",
+  "description": "Numeric lengths are pixels at the default browser setting. Fluid min/max are narrow/wide-window endpoints. CSS is stored in rem; shadow and frame lengths remain px. Missing input leaves use generator defaults. All generated Surfaces have checked roles in both modes. Exports require a passing contrast matrix.",
   "type": "object",
   "properties": {
     "inputs": {
@@ -14,7 +14,17 @@
         "name": {
           "type": "string"
         },
+        "version": {
+          "type": "string",
+          "default": "1.0"
+        },
         "logo": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "logo-dark": {
           "type": [
             "string",
             "null"
@@ -72,7 +82,17 @@
         "typefaces": {
           "type": "object",
           "properties": {
-            "body": {
+            "main": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9 ,\"'_-]+$"
+            },
+            "monospace": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9 ,\"'_-]+$"
+            },
+            "heading": {
               "type": "string",
               "minLength": 1,
               "pattern": "^[A-Za-z0-9 ,\"'_-]+$"
@@ -82,12 +102,7 @@
               "minLength": 1,
               "pattern": "^[A-Za-z0-9 ,\"'_-]+$"
             },
-            "eyebrow": {
-              "type": "string",
-              "minLength": 1,
-              "pattern": "^[A-Za-z0-9 ,\"'_-]+$"
-            },
-            "monospace": {
+            "heading-1": {
               "type": "string",
               "minLength": 1,
               "pattern": "^[A-Za-z0-9 ,\"'_-]+$"
@@ -180,10 +195,29 @@
                   "type": "integer",
                   "minimum": 0,
                   "maximum": 12
+                },
+                "label": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 12
                 }
               },
               "required": [],
               "additionalProperties": false
+            },
+            "label": {
+              "type": "string",
+              "enum": [
+                "main",
+                "monospace"
+              ]
+            },
+            "heading-1-color": {
+              "type": "string",
+              "enum": [
+                "text",
+                "accent"
+              ]
             }
           },
           "required": [],
@@ -311,6 +345,25 @@
         },
         "letter-spacing": {
           "type": "number"
+        },
+        "features": {
+          "type": "object",
+          "properties": {
+            "value": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9 ,\"_-]+$"
+            },
+            "from-window": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "value",
+            "from-window"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [
@@ -442,7 +495,7 @@
             "small": {
               "$ref": "#/$defs/recipe"
             },
-            "eyebrow": {
+            "label": {
               "$ref": "#/$defs/recipe"
             },
             "mono": {
@@ -460,7 +513,7 @@
             "lead",
             "body",
             "small",
-            "eyebrow",
+            "label",
             "mono"
           ],
           "additionalProperties": false
@@ -468,7 +521,17 @@
         "typefaces": {
           "type": "object",
           "properties": {
-            "body": {
+            "main": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9 ,\"'_-]+$"
+            },
+            "monospace": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9 ,\"'_-]+$"
+            },
+            "heading": {
               "type": "string",
               "minLength": 1,
               "pattern": "^[A-Za-z0-9 ,\"'_-]+$"
@@ -478,21 +541,23 @@
               "minLength": 1,
               "pattern": "^[A-Za-z0-9 ,\"'_-]+$"
             },
-            "eyebrow": {
+            "label": {
               "type": "string",
               "minLength": 1,
               "pattern": "^[A-Za-z0-9 ,\"'_-]+$"
             },
-            "monospace": {
+            "heading-1": {
               "type": "string",
               "minLength": 1,
               "pattern": "^[A-Za-z0-9 ,\"'_-]+$"
             }
           },
           "required": [
-            "body",
+            "main",
+            "monospace",
+            "heading",
             "display",
-            "eyebrow"
+            "label"
           ],
           "additionalProperties": false
         },
@@ -553,13 +618,17 @@
                 },
                 "band-run": {
                   "$ref": "#/$defs/fluid"
+                },
+                "plate": {
+                  "$ref": "#/$defs/fluid"
                 }
               },
               "required": [
                 "component-gap",
                 "column-gap",
                 "band",
-                "band-run"
+                "band-run",
+                "plate"
               ],
               "additionalProperties": false
             }
@@ -722,6 +791,13 @@
         },
         "surfaces": {
           "$ref": "#/$defs/surfaces"
+        },
+        "heading-1-color": {
+          "type": "string",
+          "enum": [
+            "text",
+            "accent"
+          ]
         }
       },
       "required": [
@@ -749,6 +825,10 @@
           "type": "string",
           "pattern": "^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$"
         },
+        "background-alt": {
+          "type": "string",
+          "pattern": "^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$"
+        },
         "text": {
           "type": "string",
           "pattern": "^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$"
@@ -788,10 +868,32 @@
         "error": {
           "type": "string",
           "pattern": "^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$"
+        },
+        "button-background": {
+          "type": "string",
+          "pattern": "^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$"
+        },
+        "button-text": {
+          "type": "string",
+          "pattern": "^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$"
+        },
+        "button-background-hover": {
+          "type": "string",
+          "pattern": "^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$"
+        },
+        "background-hover": {
+          "type": "string",
+          "pattern": "^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$"
+        },
+        "info": {
+          "type": "string",
+          "pattern": "^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$"
         }
       },
       "required": [
         "background",
+        "background-alt",
+        "background-hover",
         "text",
         "text-muted",
         "border",
@@ -799,9 +901,13 @@
         "link",
         "accent",
         "focus",
+        "info",
         "success",
         "warning",
-        "error"
+        "error",
+        "button-background",
+        "button-text",
+        "button-background-hover"
       ],
       "additionalProperties": false
     },
@@ -810,51 +916,77 @@
       "properties": {
         "background": {
           "type": "string",
-          "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|success|warning|error)-(?:[1-9]00|950))$"
+          "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|950))$"
+        },
+        "background-alt": {
+          "type": "string",
+          "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|950))$"
         },
         "text": {
           "type": "string",
-          "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|success|warning|error)-(?:[1-9]00|950))$"
+          "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|950))$"
         },
         "text-muted": {
           "type": "string",
-          "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|success|warning|error)-(?:[1-9]00|950))$"
+          "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|950))$"
         },
         "border": {
           "type": "string",
-          "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|success|warning|error)-(?:[1-9]00|950))$"
+          "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|950))$"
         },
         "border-strong": {
           "type": "string",
-          "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|success|warning|error)-(?:[1-9]00|950))$"
+          "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|950))$"
         },
         "link": {
           "type": "string",
-          "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|success|warning|error)-(?:[1-9]00|950))$"
+          "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|950))$"
         },
         "accent": {
           "type": "string",
-          "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|success|warning|error)-(?:[1-9]00|950))$"
+          "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|950))$"
         },
         "focus": {
           "type": "string",
-          "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|success|warning|error)-(?:[1-9]00|950))$"
+          "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|950))$"
         },
         "success": {
           "type": "string",
-          "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|success|warning|error)-(?:[1-9]00|950))$"
+          "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|950))$"
         },
         "warning": {
           "type": "string",
-          "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|success|warning|error)-(?:[1-9]00|950))$"
+          "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|950))$"
         },
         "error": {
           "type": "string",
-          "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|success|warning|error)-(?:[1-9]00|950))$"
+          "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|950))$"
+        },
+        "button-background": {
+          "type": "string",
+          "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|950))$"
+        },
+        "button-text": {
+          "type": "string",
+          "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|950))$"
+        },
+        "button-background-hover": {
+          "type": "string",
+          "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|950))$"
+        },
+        "background-hover": {
+          "type": "string",
+          "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|950))$"
+        },
+        "info": {
+          "type": "string",
+          "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|950))$"
         }
       },
       "required": [
         "background",
+        "background-alt",
+        "background-hover",
         "text",
         "text-muted",
         "border",
@@ -862,9 +994,13 @@
         "link",
         "accent",
         "focus",
+        "info",
         "success",
         "warning",
-        "error"
+        "error",
+        "button-background",
+        "button-text",
+        "button-background-hover"
       ],
       "additionalProperties": false
     },
@@ -876,11 +1012,11 @@
           "properties": {
             "from": {
               "type": "string",
-              "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|success|warning|error)-(?:[1-9]00|950))$"
+              "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|950))$"
             },
             "to": {
               "type": "string",
-              "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|success|warning|error)-(?:[1-9]00|950))$"
+              "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|950))$"
             }
           },
           "required": [
@@ -894,11 +1030,11 @@
           "properties": {
             "from": {
               "type": "string",
-              "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|success|warning|error)-(?:[1-9]00|950))$"
+              "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|950))$"
             },
             "to": {
               "type": "string",
-              "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|success|warning|error)-(?:[1-9]00|950))$"
+              "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|950))$"
             }
           },
           "required": [
@@ -912,11 +1048,11 @@
           "properties": {
             "from": {
               "type": "string",
-              "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|success|warning|error)-(?:[1-9]00|950))$"
+              "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|950))$"
             },
             "to": {
               "type": "string",
-              "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|success|warning|error)-(?:[1-9]00|950))$"
+              "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|950))$"
             }
           },
           "required": [
@@ -930,11 +1066,11 @@
           "properties": {
             "from": {
               "type": "string",
-              "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|success|warning|error)-(?:[1-9]00|950))$"
+              "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|950))$"
             },
             "to": {
               "type": "string",
-              "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|success|warning|error)-(?:[1-9]00|950))$"
+              "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|950))$"
             }
           },
           "required": [
@@ -948,11 +1084,11 @@
           "properties": {
             "from": {
               "type": "string",
-              "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|success|warning|error)-(?:[1-9]00|950))$"
+              "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|950))$"
             },
             "to": {
               "type": "string",
-              "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|success|warning|error)-(?:[1-9]00|950))$"
+              "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|950))$"
             }
           },
           "required": [
@@ -966,11 +1102,11 @@
           "properties": {
             "from": {
               "type": "string",
-              "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|success|warning|error)-(?:[1-9]00|950))$"
+              "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|950))$"
             },
             "to": {
               "type": "string",
-              "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|success|warning|error)-(?:[1-9]00|950))$"
+              "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|950))$"
             }
           },
           "required": [
@@ -984,11 +1120,11 @@
           "properties": {
             "from": {
               "type": "string",
-              "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|success|warning|error)-(?:[1-9]00|950))$"
+              "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|950))$"
             },
             "to": {
               "type": "string",
-              "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|success|warning|error)-(?:[1-9]00|950))$"
+              "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|950))$"
             }
           },
           "required": [
@@ -1002,11 +1138,11 @@
           "properties": {
             "from": {
               "type": "string",
-              "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|success|warning|error)-(?:[1-9]00|950))$"
+              "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|950))$"
             },
             "to": {
               "type": "string",
-              "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|success|warning|error)-(?:[1-9]00|950))$"
+              "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|950))$"
             }
           },
           "required": [
@@ -1020,11 +1156,11 @@
           "properties": {
             "from": {
               "type": "string",
-              "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|success|warning|error)-(?:[1-9]00|950))$"
+              "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|950))$"
             },
             "to": {
               "type": "string",
-              "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|success|warning|error)-(?:[1-9]00|950))$"
+              "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|950))$"
             }
           },
           "required": [
@@ -1038,11 +1174,29 @@
           "properties": {
             "from": {
               "type": "string",
-              "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|success|warning|error)-(?:[1-9]00|950))$"
+              "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|950))$"
             },
             "to": {
               "type": "string",
-              "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|success|warning|error)-(?:[1-9]00|950))$"
+              "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|950))$"
+            }
+          },
+          "required": [
+            "from",
+            "to"
+          ],
+          "additionalProperties": false
+        },
+        "info": {
+          "type": "object",
+          "properties": {
+            "from": {
+              "type": "string",
+              "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|950))$"
+            },
+            "to": {
+              "type": "string",
+              "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|950))$"
             }
           },
           "required": [
@@ -1195,6 +1349,18 @@
         },
         "tint-tertiary": {
           "$ref": "#/$defs/surface-modes"
+        },
+        "status-info": {
+          "$ref": "#/$defs/surface-modes"
+        },
+        "status-success": {
+          "$ref": "#/$defs/surface-modes"
+        },
+        "status-warning": {
+          "$ref": "#/$defs/surface-modes"
+        },
+        "status-error": {
+          "$ref": "#/$defs/surface-modes"
         }
       },
       "required": [
@@ -1205,7 +1371,11 @@
         "inverse",
         "accent",
         "picture-light",
-        "picture-dark"
+        "picture-dark",
+        "status-info",
+        "status-success",
+        "status-warning",
+        "status-error"
       ],
       "additionalProperties": false
     },
@@ -1305,6 +1475,33 @@
             },
             "error": {
               "$ref": "#/$defs/contrast-error"
+            },
+            "button-background": {
+              "$ref": "#/$defs/contrast-button-background"
+            },
+            "button-text": {
+              "$ref": "#/$defs/contrast-button-text"
+            },
+            "button-text-hover": {
+              "$ref": "#/$defs/contrast-button-text-hover"
+            },
+            "text-alt": {
+              "$ref": "#/$defs/contrast-text-alt"
+            },
+            "text-muted-alt": {
+              "$ref": "#/$defs/contrast-text-muted-alt"
+            },
+            "link-alt": {
+              "$ref": "#/$defs/contrast-link-alt"
+            },
+            "info": {
+              "$ref": "#/$defs/contrast-info"
+            },
+            "text-hover": {
+              "$ref": "#/$defs/contrast-text-hover"
+            },
+            "link-hover": {
+              "$ref": "#/$defs/contrast-link-hover"
             }
           },
           "required": [
@@ -1317,7 +1514,16 @@
             "focus",
             "success",
             "warning",
-            "error"
+            "error",
+            "button-background",
+            "button-text",
+            "button-text-hover",
+            "text-alt",
+            "text-muted-alt",
+            "link-alt",
+            "info",
+            "text-hover",
+            "link-hover"
           ],
           "additionalProperties": false
         },
@@ -1958,6 +2164,18 @@
             },
             "tint-tertiary": {
               "$ref": "#/$defs/contrast-modes"
+            },
+            "status-info": {
+              "$ref": "#/$defs/contrast-modes"
+            },
+            "status-success": {
+              "$ref": "#/$defs/contrast-modes"
+            },
+            "status-warning": {
+              "$ref": "#/$defs/contrast-modes"
+            },
+            "status-error": {
+              "$ref": "#/$defs/contrast-modes"
             }
           },
           "required": [
@@ -1968,7 +2186,11 @@
             "inverse",
             "accent",
             "picture-light",
-            "picture-dark"
+            "picture-dark",
+            "status-info",
+            "status-success",
+            "status-warning",
+            "status-error"
           ],
           "additionalProperties": false
         }
@@ -1976,6 +2198,519 @@
       "required": [
         "status",
         "matrix"
+      ],
+      "additionalProperties": false
+    },
+    "contrast-button-background": {
+      "type": "object",
+      "properties": {
+        "foreground": {
+          "type": "string",
+          "pattern": "^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$"
+        },
+        "background": {
+          "type": "string",
+          "pattern": "^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$"
+        },
+        "ratio": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 21
+        },
+        "target": {
+          "const": 3
+        },
+        "passed": {
+          "type": "boolean"
+        },
+        "samples": {
+          "type": "object",
+          "properties": {
+            "#000000": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 21
+            },
+            "#ffffff": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 21
+            }
+          },
+          "additionalProperties": false,
+          "dependentRequired": {
+            "#000000": [
+              "#ffffff"
+            ],
+            "#ffffff": [
+              "#000000"
+            ]
+          }
+        }
+      },
+      "required": [
+        "foreground",
+        "background",
+        "ratio",
+        "target",
+        "passed",
+        "samples"
+      ],
+      "additionalProperties": false
+    },
+    "contrast-button-text": {
+      "type": "object",
+      "properties": {
+        "foreground": {
+          "type": "string",
+          "pattern": "^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$"
+        },
+        "background": {
+          "type": "string",
+          "pattern": "^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$"
+        },
+        "ratio": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 21
+        },
+        "target": {
+          "const": 4.5
+        },
+        "passed": {
+          "type": "boolean"
+        },
+        "samples": {
+          "type": "object",
+          "properties": {
+            "#000000": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 21
+            },
+            "#ffffff": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 21
+            }
+          },
+          "additionalProperties": false,
+          "dependentRequired": {
+            "#000000": [
+              "#ffffff"
+            ],
+            "#ffffff": [
+              "#000000"
+            ]
+          }
+        }
+      },
+      "required": [
+        "foreground",
+        "background",
+        "ratio",
+        "target",
+        "passed",
+        "samples"
+      ],
+      "additionalProperties": false
+    },
+    "contrast-button-text-hover": {
+      "type": "object",
+      "properties": {
+        "foreground": {
+          "type": "string",
+          "pattern": "^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$"
+        },
+        "background": {
+          "type": "string",
+          "pattern": "^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$"
+        },
+        "ratio": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 21
+        },
+        "target": {
+          "const": 4.5
+        },
+        "passed": {
+          "type": "boolean"
+        },
+        "samples": {
+          "type": "object",
+          "properties": {
+            "#000000": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 21
+            },
+            "#ffffff": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 21
+            }
+          },
+          "additionalProperties": false,
+          "dependentRequired": {
+            "#000000": [
+              "#ffffff"
+            ],
+            "#ffffff": [
+              "#000000"
+            ]
+          }
+        }
+      },
+      "required": [
+        "foreground",
+        "background",
+        "ratio",
+        "target",
+        "passed",
+        "samples"
+      ],
+      "additionalProperties": false
+    },
+    "contrast-text-alt": {
+      "type": "object",
+      "properties": {
+        "foreground": {
+          "type": "string",
+          "pattern": "^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$"
+        },
+        "background": {
+          "type": "string",
+          "pattern": "^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$"
+        },
+        "ratio": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 21
+        },
+        "target": {
+          "const": 4.5
+        },
+        "passed": {
+          "type": "boolean"
+        },
+        "samples": {
+          "type": "object",
+          "properties": {
+            "#000000": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 21
+            },
+            "#ffffff": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 21
+            }
+          },
+          "additionalProperties": false,
+          "dependentRequired": {
+            "#000000": [
+              "#ffffff"
+            ],
+            "#ffffff": [
+              "#000000"
+            ]
+          }
+        }
+      },
+      "required": [
+        "foreground",
+        "background",
+        "ratio",
+        "target",
+        "passed",
+        "samples"
+      ],
+      "additionalProperties": false
+    },
+    "contrast-text-muted-alt": {
+      "type": "object",
+      "properties": {
+        "foreground": {
+          "type": "string",
+          "pattern": "^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$"
+        },
+        "background": {
+          "type": "string",
+          "pattern": "^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$"
+        },
+        "ratio": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 21
+        },
+        "target": {
+          "const": 4.5
+        },
+        "passed": {
+          "type": "boolean"
+        },
+        "samples": {
+          "type": "object",
+          "properties": {
+            "#000000": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 21
+            },
+            "#ffffff": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 21
+            }
+          },
+          "additionalProperties": false,
+          "dependentRequired": {
+            "#000000": [
+              "#ffffff"
+            ],
+            "#ffffff": [
+              "#000000"
+            ]
+          }
+        }
+      },
+      "required": [
+        "foreground",
+        "background",
+        "ratio",
+        "target",
+        "passed",
+        "samples"
+      ],
+      "additionalProperties": false
+    },
+    "contrast-link-alt": {
+      "type": "object",
+      "properties": {
+        "foreground": {
+          "type": "string",
+          "pattern": "^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$"
+        },
+        "background": {
+          "type": "string",
+          "pattern": "^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$"
+        },
+        "ratio": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 21
+        },
+        "target": {
+          "const": 4.5
+        },
+        "passed": {
+          "type": "boolean"
+        },
+        "samples": {
+          "type": "object",
+          "properties": {
+            "#000000": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 21
+            },
+            "#ffffff": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 21
+            }
+          },
+          "additionalProperties": false,
+          "dependentRequired": {
+            "#000000": [
+              "#ffffff"
+            ],
+            "#ffffff": [
+              "#000000"
+            ]
+          }
+        }
+      },
+      "required": [
+        "foreground",
+        "background",
+        "ratio",
+        "target",
+        "passed",
+        "samples"
+      ],
+      "additionalProperties": false
+    },
+    "contrast-info": {
+      "type": "object",
+      "properties": {
+        "foreground": {
+          "type": "string",
+          "pattern": "^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$"
+        },
+        "background": {
+          "type": "string",
+          "pattern": "^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$"
+        },
+        "ratio": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 21
+        },
+        "target": {
+          "const": 4.5
+        },
+        "passed": {
+          "type": "boolean"
+        },
+        "samples": {
+          "type": "object",
+          "properties": {
+            "#000000": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 21
+            },
+            "#ffffff": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 21
+            }
+          },
+          "additionalProperties": false,
+          "dependentRequired": {
+            "#000000": [
+              "#ffffff"
+            ],
+            "#ffffff": [
+              "#000000"
+            ]
+          }
+        }
+      },
+      "required": [
+        "foreground",
+        "background",
+        "ratio",
+        "target",
+        "passed",
+        "samples"
+      ],
+      "additionalProperties": false
+    },
+    "contrast-text-hover": {
+      "type": "object",
+      "properties": {
+        "foreground": {
+          "type": "string",
+          "pattern": "^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$"
+        },
+        "background": {
+          "type": "string",
+          "pattern": "^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$"
+        },
+        "ratio": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 21
+        },
+        "target": {
+          "const": 4.5
+        },
+        "passed": {
+          "type": "boolean"
+        },
+        "samples": {
+          "type": "object",
+          "properties": {
+            "#000000": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 21
+            },
+            "#ffffff": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 21
+            }
+          },
+          "additionalProperties": false,
+          "dependentRequired": {
+            "#000000": [
+              "#ffffff"
+            ],
+            "#ffffff": [
+              "#000000"
+            ]
+          }
+        }
+      },
+      "required": [
+        "foreground",
+        "background",
+        "ratio",
+        "target",
+        "passed",
+        "samples"
+      ],
+      "additionalProperties": false
+    },
+    "contrast-link-hover": {
+      "type": "object",
+      "properties": {
+        "foreground": {
+          "type": "string",
+          "pattern": "^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$"
+        },
+        "background": {
+          "type": "string",
+          "pattern": "^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$"
+        },
+        "ratio": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 21
+        },
+        "target": {
+          "const": 4.5
+        },
+        "passed": {
+          "type": "boolean"
+        },
+        "samples": {
+          "type": "object",
+          "properties": {
+            "#000000": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 21
+            },
+            "#ffffff": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 21
+            }
+          },
+          "additionalProperties": false,
+          "dependentRequired": {
+            "#000000": [
+              "#ffffff"
+            ],
+            "#ffffff": [
+              "#000000"
+            ]
+          }
+        }
+      },
+      "required": [
+        "foreground",
+        "background",
+        "ratio",
+        "target",
+        "passed",
+        "samples"
       ],
       "additionalProperties": false
     }

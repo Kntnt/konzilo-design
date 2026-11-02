@@ -1,0 +1,7 @@
+---
+import type { HTMLAttributes } from 'astro/types';
+// A grid with a maximum column count that steps down to fit its own container.
+interface Props extends HTMLAttributes<'div'> { columns?: 2 | 3 | 4; }
+const { columns = 3, class: className, ...attributes } = Astro.props;
+---
+<div {...attributes} class:list={['kn-card-grid', className]} data-kn-columns={columns}><slot /></div>

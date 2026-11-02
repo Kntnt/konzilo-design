@@ -1,0 +1,18 @@
+---
+import type { HTMLAttributes } from 'astro/types';
+import type { Surface } from './frame-types';
+// Background and vertical rhythm belong to the band; its content shares the page rail.
+interface Props extends HTMLAttributes<'section'> {
+  surface?: Surface;
+  picture?: string;
+  contentClass?: string;
+}
+const { surface, picture, contentClass, class: className, style, ...attributes } = Astro.props;
+const pictureStyle = picture ? { '--kn-picture-image': `url(${JSON.stringify(picture)})` } : {};
+const bandStyle = typeof style === 'string'
+  ? `${Object.entries(pictureStyle).map(([key, value]) => `${key}:${value}`).join(';')};${style}`
+  : { ...pictureStyle, ...style };
+---
+<section {...attributes} class:list={['kn-band', className]} data-kn-surface={surface} style={bandStyle}>
+  <div class:list={['kn-band-content', contentClass]}><slot /></div>
+</section>

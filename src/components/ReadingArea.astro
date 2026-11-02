@@ -1,0 +1,18 @@
+---
+import type { HTMLAttributes } from 'astro/types';
+// Slots are emitted in reading order; the script only changes geometry.
+interface Props extends HTMLAttributes<'div'> {
+  side?: 'end' | 'start' | 'none';
+  stack?: 'before' | 'after';
+}
+const { side = 'end', stack = 'before', class: className, ...attributes } = Astro.props;
+---
+<div {...attributes} class:list={['kn-reading-area', className]} data-kn-side={side} data-kn-stack={stack} data-kn-columns="1">
+  {stack === 'before' && Astro.slots.has('aside') && <div class="kn-reading-area-aside"><slot name="aside" /></div>}
+  <div class="kn-reading-area-flow"><slot /></div>
+  {stack === 'after' && Astro.slots.has('aside') && <div class="kn-reading-area-aside"><slot name="aside" /></div>}
+</div>
+<script>
+  import { setupReadingAreas } from './reading-area.js';
+  setupReadingAreas();
+</script>

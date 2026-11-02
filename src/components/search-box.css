@@ -1,0 +1,13 @@
+@layer kn-components {
+  .kn-search-box { position: relative; display: grid; gap: 0.875rem; inline-size: min(36rem, 100%); margin-inline: auto; padding: 1.5rem; border-radius: var(--kn-radius-card); box-shadow: var(--kn-shadow-panel); border: 1px solid var(--kn-border); }
+  .kn-search-box > :is(h1, h2, h3, h4, h5, h6) { margin: 0; }
+  .kn-search-main { display: grid; gap: 0.875rem; }
+  .kn-search-main > :is(h1, h2, h3, h4, h5, h6) { margin: 0; }
+  .kn-search-main > .kn-search-row { flex: 1 1 16rem; }
+  .kn-search-row { display: flex; gap: 0.625rem; }
+  .kn-search-row input { flex: 1; min-inline-size: 0; inline-size: 100%; padding: 0.625rem 0.75rem; border: 1px solid var(--kn-border-strong); border-radius: var(--kn-radius-control); background: var(--kn-background); color: var(--kn-text); font: inherit; }
+  .kn-search-links { display: flex; flex-wrap: wrap; gap: 0.375rem 1.125rem; margin: 0; padding: 0; list-style: none; font-size: var(--kn-type-small-size); }
+  .kn-search-links a, .kn-header .kn-search-links a { color: var(--kn-link); text-decoration: underline; text-underline-offset: 0.22em; }
+  @media (width <= 37.5rem) { .kn-search-box { gap: 0.75rem; padding: 1.25rem; } }
+  @media (width <= 22.5rem) { .kn-search-box .kn-search-row { flex-direction: column; } }
+}

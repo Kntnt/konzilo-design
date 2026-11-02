@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>Konzilo Design Tool</title>
+    <link rel="stylesheet" href="/tool/style.css" />
+  </head>
+  <body>
+    <aside class="controls">
+      <header class="toolbar">
+        <p class="app-name">Konzilo / Design tool</p>
+        <p id="status" role="status" aria-live="polite">Loading design…</p>
+        <div class="actions">
+          <button
+            id="save"
+            type="button"
+            title="Save all inputs and generated values to the design file."
+          >
+            Save</button
+          ><button
+            id="pdf"
+            type="button"
+            title="Save the design, then create the complete approval PDF."
+          >
+            Create PDF
+          </button>
+        </div>
+        <div id="result" role="status" aria-live="polite"></div>
+      </header>
+      <form id="controls" aria-label="Design settings"></form>
+    </aside>
+    <main class="preview">
+      <header class="preview-toolbar">
+        <label for="viewport">Window width</label
+        ><select
+          id="viewport"
+          title="Sets the preview’s real window width, so responsive layouts and fluid sizes respond."
+        >
+          <option value="390">Phone · 390 px</option>
+          <option value="768">Tablet · 768 px</option>
+          <option value="1440" selected>Wide · 1440 px</option></select
+        ><label for="mode">Mode</label
+        ><select
+          id="mode"
+          title="Show the same design on light or dark Surfaces."
+        >
+          <option value="light">Light</option>
+          <option value="dark">Dark</option></select
+        ><span id="preview-size"></span>
+      </header>
+      <div id="preview-stage">
+        <div id="preview-window">
+          <iframe
+            id="preview"
+            title="Live component preview"
+            src="/preview.html"
+          ></iframe>
+        </div>
+      </div>
+    </main>
+    <script type="module" src="/tool/app.js"></script>
+  </body>
+</html>

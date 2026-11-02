@@ -1,0 +1,17 @@
+@layer kn-components {
+  .kn-visitor-filters { display: grid; gap: var(--kn-space-component-gap); margin-block-end: var(--kn-space-column-gap); }
+  .kn-visitor-filter-panel { display: flex; flex-wrap: wrap; align-items: end; gap: 1em; padding: 1.25em; border: 1px solid var(--kn-border); border-radius: var(--kn-radius-card); }
+  .kn-visitor-filter-select { flex: 0 1 12em; }
+  .kn-visitor-filter-search { flex: 1 1 16em; }
+  .kn-visitor-filter-input { position: relative; }
+  .kn-visitor-filter-input > .kn-icon { position: absolute; inset-inline-start: 0.75em; inset-block-start: 50%; translate: 0 -50%; pointer-events: none; color: var(--kn-text-muted); }
+  .kn-visitor-filter-input > input { padding-inline-start: 2.25em; }
+  .kn-visitor-filter-group { min-inline-size: 0; padding: 0; margin: 0; border: 0; }
+  .kn-visitor-filter-group legend { margin-block-end: 0.5em; }
+  .kn-visitor-filter-toggles { display: flex; flex-wrap: wrap; gap: 0.5em; }
+  button.kn-pill { min-block-size: 1.75rem; padding-inline: 0.8em; background: transparent; color: var(--kn-text); border-color: var(--kn-border-strong); cursor: pointer; }
+  button.kn-pill[aria-pressed="true"] { background: var(--kn-button-background); color: var(--kn-button-text); border-color: var(--kn-button-background); }
+  button.kn-pill:hover { text-decoration: underline; text-underline-offset: 0.18em; }
+  .kn-visitor-filters[data-kn-enhanced] .kn-visitor-filter-submit { display: none; }
+  .kn-visitor-filter-count { color: var(--kn-text-muted); margin: 0; }
+}

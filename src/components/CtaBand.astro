@@ -1,0 +1,20 @@
+---
+import type { HTMLAttributes } from 'astro/types';
+import type { Surface } from './frame-types';
+import Band from './Band.astro';
+import HeadingGroup from './HeadingGroup.astro';
+interface Props extends HTMLAttributes<'section'> {
+  heading: string;
+  text?: string;
+  level?: 1 | 2 | 3 | 4 | 5 | 6;
+  surface?: Surface;
+}
+const { heading, text, level = 2, surface = 'tint', class: className, ...attributes } = Astro.props;
+---
+<Band {...attributes} class:list={['kn-cta-band', className]} contentClass="kn-cta-band-content" surface={surface}>
+  <div class="kn-cta-band-text">
+    <HeadingGroup heading={heading} level={level} type="heading-3" />
+    {text && <p>{text}</p>}
+  </div>
+  <div class="kn-cta-band-actions"><slot /></div>
+</Band>

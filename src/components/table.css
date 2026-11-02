@@ -1,0 +1,27 @@
+@layer kn-components {
+  .kn-table-scroll { min-inline-size: 0; max-inline-size: 100%; overflow-x: auto; overscroll-behavior-inline: contain; margin-block: 1.5em; }
+  /* Breakout geometry may exceed the reading column, while scrolling stays local. */
+  .kn-table-scroll[data-kn-width]:not([data-kn-width="narrow"]) { max-inline-size: none; }
+  :is(.kn-table, .kn-table-scroll > table, .kn-body-text table) { inline-size: 100%; border-collapse: collapse; color: var(--kn-text); font-family: var(--kn-typeface-main); font-size: var(--kn-type-small-size); line-height: var(--kn-type-small-line-height); font-weight: var(--kn-type-small-weight); letter-spacing: var(--kn-type-small-letter-spacing); }
+  :is(.kn-table, .kn-table-scroll > table, .kn-body-text table) caption { caption-side: top; text-align: start; color: var(--kn-text-muted); font-size: var(--kn-type-small-size); padding-block-end: 0.75em; }
+  :is(.kn-table, .kn-table-scroll > table, .kn-body-text table) :is(th, td) { padding-block: 0.75em; padding-inline: 0.9em; border-block-end: 1px solid var(--kn-border); text-align: start; vertical-align: top; }
+  :is(.kn-table, .kn-table-scroll > table, .kn-body-text table) :is(th, td) { overflow-wrap: normal; }
+  :is(.kn-table, .kn-table-scroll > table, .kn-body-text table) th { font-weight: var(--kn-type-heading-6-weight); }
+  :is(.kn-table, .kn-table-scroll > table, .kn-body-text table) thead th { border-block-end-color: var(--kn-border-strong); }
+  :is(.kn-table, .kn-table-scroll > table, .kn-body-text table) tfoot { border-block-start: 1px solid var(--kn-border-strong); }
+  :is(.kn-table, .kn-table-scroll > table, .kn-body-text table) [data-kn-align="center"] { text-align: center; }
+  :is(.kn-table, .kn-table-scroll > table, .kn-body-text table) :is([data-kn-align="end"], [data-kn-numeric]) { text-align: end; }
+  :is(.kn-table, .kn-table-scroll > table, .kn-body-text table) [data-kn-numeric] { font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .kn-table-scroll[data-kn-striped] > table > tbody > tr:nth-child(even) { background: var(--kn-background-alt); }
+  :is(.kn-table, .kn-table-scroll > table, .kn-body-text table) > tbody > tr { transition: background-color var(--kn-duration-feedback) var(--kn-easing-standard); }
+  :is(.kn-table, .kn-table-scroll > table, .kn-body-text table) > tbody > tr:hover { background: var(--kn-background-alt); }
+  :is(table[data-kn-striped], .kn-table-scroll[data-kn-striped] > table) > tbody > tr:hover { background: var(--kn-background-hover); }
+  .kn-table-scroll[data-kn-surface] { padding: var(--kn-space-component-gap); border: 0; border-radius: var(--kn-radius-card); }
+  .kn-table-scroll[data-kn-surface] > table > :is(tbody, tfoot):last-child > tr:last-child > :is(th, td) { border-block-end: 0; }
+  /* Bare Markdown tables have no wrapper: their own box supplies the scrollport. */
+  .kn-body-text > table:not(.kn-table) { display: block; max-inline-size: 100%; overflow-x: auto; margin-block: 1.5em; }
+  @media print {
+    .kn-table-scroll, .kn-body-text > table:not(.kn-table) { overflow: visible; }
+    :is(.kn-table, .kn-table-scroll > table, .kn-body-text table) thead { display: table-header-group; }
+  }
+}

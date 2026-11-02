@@ -1,0 +1,71 @@
+---
+import Table from '../../../src/components/Table.astro';
+import Accordion from '../../../src/components/Accordion.astro';
+import Quotation from '../../../src/components/Quotation.astro';
+import Callout from '../../../src/components/Callout.astro';
+import { columns, rows, questions } from '../samples.js';
+const { id } = Astro.props;
+---
+
+{id === 'table' && (
+  <div class="sample-pair">
+    {['page', 'brand'].map((surface) => (
+      <div data-kn-surface={surface} class="sample-pad">
+        <Table
+          caption="A clear delivery plan"
+          columns={columns}
+          rows={rows}
+          striped={surface === 'brand'}
+          footer={[[{ text: 'Total hours', colspan: 2, header: true }, '68']]}
+        />
+      </div>
+    ))}
+  </div>
+)}
+{id === 'accordion' && (
+  <div class="sample-stack">
+    <div class="sample-pair">
+      {['hairlines', 'boxes'].map((variant) => (
+        <Accordion
+          variant={variant}
+          mode="multiple"
+          items={questions.slice(0, 1)}
+        />
+      ))}
+    </div>
+    <Quotation name="Service team" context="Our approach" surface="tint">
+      <p>The most useful plan makes the next step clear.</p>
+    </Quotation>
+  </div>
+)}
+{id === 'callout' && (
+  <div class="sample-callouts">
+    {['filled', 'outlined'].flatMap((style) =>
+      ['info', 'success', 'warning', 'error'].map((variant, index) => (
+        <Callout
+          variant={variant}
+          style={style}
+          title={
+            [
+              'Before you begin',
+              'Request confirmed',
+              'Check the date',
+              'Address missing',
+            ][index]
+          }
+        >
+          <p>
+            {
+              [
+                'Keep your details ready.',
+                'We will be in touch.',
+                'Allow time for review.',
+                'Add a complete email.',
+              ][index]
+            }
+          </p>
+        </Callout>
+      )),
+    )}
+  </div>
+)}

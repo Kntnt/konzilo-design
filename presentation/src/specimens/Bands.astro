@@ -1,0 +1,76 @@
+---
+import Hero from '../../../src/components/Hero.astro';
+import Button from '../../../src/components/Button.astro';
+import LinkGroup from '../../../src/components/LinkGroup.astro';
+import TextImage from '../../../src/components/TextImage.astro';
+import BodyText from '../../../src/components/BodyText.astro';
+import CtaBand from '../../../src/components/CtaBand.astro';
+import KeyFigures from '../../../src/components/KeyFigures.astro';
+import { sample } from '../samples.js';
+import { context } from './context.js';
+const { id, project, resolved } = Astro.props;
+const { landscapes, dark } = context(project, resolved);
+const fullPicture = id === 'hero-full-picture';
+---
+
+{id.startsWith('hero-') && (
+  <Hero
+    variant={fullPicture ? 'plate' : id.slice(5)}
+    surface={fullPicture ? 'picture-dark' : 'brand'}
+    heading={sample.heading}
+    eyebrow={sample.eyebrow}
+    deck={sample.deck}
+    picture={fullPicture ? dark : landscapes[0]}
+    alt="Soft overlapping planes in the design colours"
+    style="min-block-size:562px;display:flex;align-items:center"
+  >
+    <Button href="#contact">{sample.action}</Button>
+  </Hero>
+)}
+{['text-image', 'text-image-start'].includes(id) && (
+  <div class="text-image-stage specimen-rail">
+    <TextImage
+      imageSide={id === 'text-image-start' ? 'start' : 'end'}
+      src={landscapes[id === 'text-image-start' ? 2 : 1]}
+      alt="Quiet arcs and bands from the design palette"
+      caption="A composition from the design’s own palette."
+    >
+      <BodyText>
+        <h2 data-kn-type="heading-2">A practical partnership</h2>
+        <p>{sample.paragraph}</p>
+        <p>
+          <a href="#services">{sample.secondary}</a>
+        </p>
+      </BodyText>
+    </TextImage>
+  </div>
+)}
+{id === 'cta-band' && (
+  <div class="sample-stack">
+    <div class="specimen-rail figures-stage">
+      <KeyFigures
+        figures={[
+          {
+            value: '24',
+            label: 'Projects delivered',
+            note: 'Over the past year',
+          },
+          { value: '96%', label: 'On-time delivery' },
+          { value: '12', label: 'Specialist advisers' },
+        ]}
+      />
+    </div>
+    <CtaBand
+      surface="brand"
+      heading="Agree on the next step"
+      text="Describe what you need and we will help you make a plan."
+    >
+      <LinkGroup>
+        <Button href="#contact">Contact the team</Button>
+        <Button variant="arrow" href="#services">
+          {sample.secondary}
+        </Button>
+      </LinkGroup>
+    </CtaBand>
+  </div>
+)}

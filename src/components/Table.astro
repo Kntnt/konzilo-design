@@ -1,0 +1,33 @@
+---
+import { nextId } from './ids.js';
+import type { HTMLAttributes } from 'astro/types';
+import type { Surface } from './frame-types';
+import type { TableColumn, TableCell } from './content-types';
+import { tableRows } from './table.js';
+interface Props extends HTMLAttributes<'div'> {
+  caption: string;
+  columns?: TableColumn[];
+  rows?: TableCell[][];
+  footer?: TableCell[][];
+  striped?: boolean;
+  surface?: Surface;
+  width?: 'narrow' | 'wide' | 'full' | 'bleed-start' | 'bleed-end';
+}
+const { caption, columns = [], rows = [], footer = [], striped = false, surface, width, class: className, ...attributes } = Astro.props;
+const slotted = Astro.slots.has('default');
+const captionId = nextId('kn-table-caption');
+const groups = slotted ? [] : [{ tag: 'tbody', rows: tableRows(rows, columns) }, { tag: 'tfoot', rows: tableRows(footer, columns) }];
+---
+<div {...attributes} class:list={['kn-table-scroll', className]} tabindex="0" role="region" aria-labelledby={slotted ? undefined : captionId} aria-label={slotted ? caption : undefined} data-kn-striped={striped || undefined} data-kn-surface={surface} data-kn-width={width}>
+  {slotted ? <slot /> : <table class="kn-table">
+    <caption id={captionId}>{caption}</caption>
+    {columns.length > 0 && <thead><tr>{columns.map((column) => <th scope="col" data-kn-align={column.numeric ? 'end' : column.align} data-kn-numeric={column.numeric || undefined}>{column.label}</th>)}</tr></thead>}
+    {groups.filter((group) => group.rows.length > 0).map(({ tag, rows }) => {
+      const Group = tag as 'tbody' | 'tfoot';
+      return <Group>{rows.map((row) => <tr>{row.map((cell) => {
+        const Cell = cell.header ? 'th' : 'td';
+        return <Cell scope={cell.header ? cell.rowspan > 1 ? 'rowgroup' : 'row' : undefined} colspan={cell.colspan > 1 ? cell.colspan : undefined} rowspan={cell.rowspan > 1 ? cell.rowspan : undefined} data-kn-align={cell.align} data-kn-numeric={cell.numeric || undefined}>{cell.text}</Cell>;
+      })}</tr>)}</Group>;
+    })}
+  </table>}
+</div>

@@ -1,0 +1,59 @@
+---
+import ConsentBanner from '../../../src/components/ConsentBanner.astro';
+import { consentCategories, consentTexts } from '../interaction-samples';
+import Page from '../../../src/components/Page.astro';
+import Header from '../../../src/components/Header.astro';
+import Footer from '../../../src/components/Footer.astro';
+import Hero from '../../../src/components/Hero.astro';
+import Band from '../../../src/components/Band.astro';
+import ReadingArea from '../../../src/components/ReadingArea.astro';
+import AsideBlock from '../../../src/components/AsideBlock.astro';
+import BodyText from '../../../src/components/BodyText.astro';
+import Button from '../../../src/components/Button.astro';
+import Table from '../../../src/components/Table.astro';
+import Callout from '../../../src/components/Callout.astro';
+import Breadcrumbs from '../../../src/components/Breadcrumbs.astro';
+import { workshopColumns, workshopRows } from '../content-samples';
+import { identity, menu, languages, search, cta, footerBands } from '../frame-samples';
+import { coreCss } from '../../../src/css/index.js';
+import { derive } from '../../../src/generator/index.js';
+import { galleryInputs } from '../design.js';
+import '../../../src/fonts/fonts.css';
+import '../../../src/components/index.css';
+---
+<!doctype html><html lang="en" data-kn-mode="light"><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" /><title>Juniper Atlas / Frame lab</title><link rel="icon" href="data:," /><style is:inline id="kn-live-core" set:html={coreCss(derive(galleryInputs))} />
+<style is:inline>
+  .g-control-tip { position: fixed; z-index: 20; max-inline-size: min(22rem, 90vw); padding: 0.6em 0.8em; border-radius: var(--kn-radius-control); font-size: 0.8125rem; pointer-events: none; }
+  [hidden] { display: none !important; }
+  .lab-message { padding: var(--kn-space-plate); margin: 0; border-radius: var(--kn-radius-card); }
+  .lab-message a { color: var(--kn-link); }
+  .lab-search-result { position: fixed; inset-block-end: 1rem; inset-inline: 1rem; z-index: 10; padding: 1rem; border-radius: var(--kn-radius-control); }
+  .lab-dialog { max-inline-size: min(32rem, 90vw); padding: var(--kn-space-plate); border: 1px solid var(--kn-border); border-radius: var(--kn-radius-card); }
+</style></head><body>
+  {(['A', 'B', 'C'] as const).map((arrangement) => <template data-lab-header={arrangement}>
+    <Header id="lab-header" identity={identity} menu={menu} linkMenu menuButton={{ word: 'Menu' }} languages={languages} search={search} cta={cta} arrangement={arrangement} numbered>
+      <p slot="menu-above" class="lab-message" data-kn-surface="tint">From the notebook<br /><a href="#notes">A new view of familiar places</a></p>
+      <p slot="menu-above" class="lab-message" data-kn-surface="tint">Open table<br /><a href="#notes">Bring a question on Thursday</a></p>
+      <p slot="menu-above" class="lab-message" data-kn-surface="tint">A shared walk<br /><a href="#notes">Meet beside the old bridge</a></p>
+      <Fragment slot="menu-below"><a href="#contact">Contact the studio</a><span>Open Thursday, 10–16</span></Fragment>
+    </Header>
+  </template>)}
+  <Page>
+    <Hero id="home" variant="plate" surface="brand" eyebrow="Juniper Atlas / Field notes" heading="A wider view begins nearby" deck="Scroll, narrow the window, or open the menu to explore the page frame."><Button href="#notes">Read the notebook</Button></Hero>
+    <Band data-lab-long id="notes">
+      <Breadcrumbs items={[{ label: 'Juniper Atlas', href: '#home' }, { label: 'Notebook', href: '#notes' }, { label: 'Notes from the shared path' }]} />
+      <ReadingArea><AsideBlock slot="aside" heading="Keep a question nearby" sticky surface="tint"><p>What did you notice that someone else walked past?</p><a href="#contact">Visit the open table</a></AsideBlock>
+        <BodyText><h2>Notes from the shared path</h2><Callout title="Bring a notebook"><p>The first walk begins at the garden table. Leave a little room for another perspective.</p></Callout><Table caption="This week at Juniper Atlas" columns={workshopColumns} rows={workshopRows} striped />{Array.from({ length: 15 }, (_, i) => <><h3>{i + 1} / Look a little closer</h3><p>We followed the path past the old bridge and stopped where the trees opened onto a meadow. Each person noticed something different: the curve of the bank, the sound of water, a place to sit. Back at the shared table, these small observations became a set of sketches. We tested the simplest ideas first, leaving space for people to add their own experience. A useful place grows through this patient exchange, one ordinary detail at a time.</p></>)}</BodyText>
+      </ReadingArea>
+    </Band>
+    <Band id="contact" data-lab-long><span id="cookie-policy"></span><BodyText><h2>Bring a question to the table</h2><p>The next useful idea may begin with an ordinary conversation.</p><Button data-kn-dialog="lab-dialog">Open an invitation</Button></BodyText></Band>
+    <Footer slot="footer" bands={footerBands.map((band) => ({ ...band, cells: band.cells.map((cell) => ({ ...cell, links: cell.links?.map((link) => ({ ...link, href: link.label === 'Preferences' ? '#cookie-policy' : link.href, label: link.label === 'Preferences' ? 'Cookie policy' : link.label, consentOpen: link.label === 'Preferences' })) })) }))} />
+  </Page>
+  <ConsentBanner id="lab-consent" categories={consentCategories} texts={consentTexts} policyHref="#cookie-policy" />
+  <dialog id="lab-dialog" class="lab-dialog" data-kn-surface="page"><p>There is always room for one more perspective.</p><form method="dialog"><Button type="submit">Close invitation</Button></form></dialog>
+  <p class="lab-search-result" data-kn-surface="raised" role="status" hidden></p>
+  <script>
+    import { setupFrameLab } from '../lab-frame.js';
+    setupFrameLab();
+  </script>
+</body></html>

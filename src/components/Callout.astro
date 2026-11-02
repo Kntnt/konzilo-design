@@ -1,0 +1,20 @@
+---
+import type { HTMLAttributes } from 'astro/types';
+import type { Level } from './frame-types';
+import BodyText from './BodyText.astro';
+import Icon from './Icon.astro';
+interface Props extends Omit<HTMLAttributes<'div'>, 'style'> {
+  variant?: 'info' | 'success' | 'warning' | 'error';
+  title?: string;
+  level?: Level;
+  style?: 'filled' | 'outlined';
+}
+const { variant = 'info', title, level = 3, style = 'filled', role, class: className, ...attributes } = Astro.props;
+const Heading = `h${level}` as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
+const icons = { info: 'info', success: 'circle-check', warning: 'triangle-alert', error: 'circle-x' } as const;
+const meanings = { info: 'Information', success: 'Success', warning: 'Warning', error: 'Error' };
+---
+<div {...attributes} class:list={['kn-callout', className]} data-kn-variant={variant} data-kn-style={style} data-kn-surface={style === 'filled' ? `status-${variant}` : undefined} role={role}>
+  <div class="kn-callout-heading"><Icon class="kn-callout-icon" name={icons[variant]} label={meanings[variant]} />{title && <Heading class="kn-callout-title" data-kn-type="heading-6">{title}</Heading>}</div>
+  <BodyText class="kn-callout-content"><slot /></BodyText>
+</div>

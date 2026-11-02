@@ -1,0 +1,13 @@
+---
+import type { HTMLAttributes } from 'astro/types';
+import type { Level } from './frame-types';
+import BodyText from './BodyText.astro';
+import Icon from './Icon.astro';
+interface Props extends HTMLAttributes<'details'> { label: string; open?: boolean; level?: Level }
+const { label, open = false, level, class: className, ...attributes } = Astro.props;
+const Label = (level ? `h${level}` : 'span') as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'span';
+---
+<details {...attributes} class:list={['kn-accordion-item', className]} open={open}>
+  <summary class="kn-accordion-summary"><Label class="kn-accordion-label" data-kn-type="heading-6">{label}</Label><Icon class="kn-accordion-chevron" name="chevron-down" /></summary>
+  <BodyText class="kn-accordion-content"><slot /></BodyText>
+</details>

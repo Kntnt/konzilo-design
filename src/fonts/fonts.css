@@ -1,0 +1,6 @@
+/* The recommended typefaces, served by the site itself so that no request reaches a third party.
+   The files are the publishers' own and stay unmodified: Mona Sans reserves its name, so a
+   subset could not keep it. A browser fetches a file only when the page uses that face. */
+@font-face { font-family: "Mona Sans"; src: url("./MonaSans-VF.woff2") format("woff2"); font-weight: 200 900; font-style: normal; font-display: swap; }
+@font-face { font-family: "Mona Sans"; src: url("./MonaSans-Italic-VF.woff2") format("woff2"); font-weight: 200 900; font-style: italic; font-display: swap; }
+@font-face { font-family: "Red Hat Mono"; src: url("./RedHatMono-VF.woff2") format("woff2"); font-weight: 300 700; font-style: normal; font-display: swap; }

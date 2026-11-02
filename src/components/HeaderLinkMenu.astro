@@ -1,0 +1,6 @@
+---
+import type { FrameLink } from './frame-types';
+interface Props { items: FrameLink[]; label?: string }
+const { items, label = 'Main' } = Astro.props;
+---
+<nav class="kn-header-link-menu" aria-label={label}><ul>{items.map((item) => <li><a href={item.href} aria-current={item.current ? 'page' : undefined}>{item.label}</a></li>)}</ul></nav>

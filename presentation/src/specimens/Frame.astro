@@ -1,0 +1,121 @@
+---
+import Header from '../../../src/components/Header.astro';
+import Footer from '../../../src/components/Footer.astro';
+import Page from '../../../src/components/Page.astro';
+import Band from '../../../src/components/Band.astro';
+import HeadingGroup from '../../../src/components/HeadingGroup.astro';
+import BodyText from '../../../src/components/BodyText.astro';
+import ReadingArea from '../../../src/components/ReadingArea.astro';
+import TableOfContents from '../../../src/components/TableOfContents.astro';
+import AsideBlock from '../../../src/components/AsideBlock.astro';
+import { sample, menu, search, footerBands, headings } from '../samples.js';
+import { context } from './context.js';
+const { id, project, resolved } = Astro.props;
+const { identity } = context(project, resolved);
+---
+
+{id === 'headers' && (
+  <div class="header-arrangements">
+    {['A', 'B', 'C'].map((arrangement) => (
+      <div>
+        <p class="specimen-caption" data-kn-type="label">
+          {arrangement}
+        </p>
+        <Header
+          identity={identity}
+          arrangement={arrangement}
+          menu={menu}
+          linkMenu
+          menuButton={{ word: 'Menu' }}
+          search={search}
+          cta={{ label: 'Contact', href: '#contact' }}
+          numbered
+        />
+      </div>
+    ))}
+  </div>
+)}
+{id.startsWith('header-') && (
+  <Header
+    identity={identity}
+    arrangement="A"
+    menu={menu}
+    linkMenu
+    menuButton={{ word: 'Menu' }}
+    search={search}
+    cta={{ label: 'Contact', href: '#contact' }}
+    numbered
+  />
+)}
+{id === 'footer' && <Footer bands={footerBands(project)} />}
+{id === 'footer-simple' && (
+  <div class="sample-stack">
+    <Footer bands={footerBands(project, 'simple')} />
+    <Footer
+      bands={footerBands(
+        { ...project, 'logo-dark': project.logo || project['logo-dark'] },
+        'simple',
+      ).map((band) => ({ ...band, surface: 'page' }))}
+    />
+  </div>
+)}
+{id === 'page' && (
+  <Page>
+    <Header slot="header" identity={identity} menu={menu} linkMenu />
+    <Band surface="tint">
+      <HeadingGroup
+        heading="Plan the next stage"
+        deck="A short introduction explains the purpose of the page."
+        type="heading-3"
+      />
+    </Band>
+    <Footer slot="footer" bands={footerBands(project, 'simple')} />
+  </Page>
+)}
+{id === 'band' && (
+  <div class="sample-stack sample-bands">
+    <Band surface="tint">
+      <HeadingGroup
+        eyebrow="The first band"
+        heading="Related content shares a Surface"
+        type="heading-3"
+        deck="The content stays on the same rail as the header and footer."
+      />
+    </Band>
+    <Band surface="brand">
+      <HeadingGroup
+        eyebrow="The next band"
+        heading="A different Surface marks a new section"
+        type="heading-3"
+      />
+    </Band>
+    <Band surface="inverse">
+      <HeadingGroup
+        eyebrow="The final band"
+        heading="A clear ending completes the sequence"
+        type="heading-3"
+      />
+    </Band>
+  </div>
+)}
+{id === 'reading-area' && (
+  <ReadingArea>
+    <AsideBlock slot="aside" surface="tint">
+      <TableOfContents headings={headings} />
+    </AsideBlock>
+    <BodyText>
+      <h2 id="planning" data-kn-type="heading-3">
+        Plan the work
+      </h2>
+      <p>{sample.paragraph}</p>
+      <h3 id="review" data-kn-type="heading-4">
+        Review the options
+      </h3>
+      <p>{sample.paragraph}</p>
+      <h2 id="delivery" data-kn-type="heading-3">
+        Agree on delivery
+      </h2>
+      <p>A clear plan keeps responsibilities visible.</p>
+    </BodyText>
+  </ReadingArea>
+)}

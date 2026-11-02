@@ -1,0 +1,18 @@
+---
+import type { HTMLAttributes, ComponentProps } from 'astro/types';
+import Field from './Field.astro';
+import LinkGroup from './LinkGroup.astro';
+interface Props extends HTMLAttributes<'form'> {
+  fields?: ComponentProps<typeof Field>[]; columns?: 1 | 2;
+  honeypot?: { name: string; label: string };
+}
+const { fields = [], columns = 1, honeypot, method = 'post', class: className, ...attributes } = Astro.props;
+---
+<form {...attributes} method={method} class:list={['kn-form', className]} data-kn-columns={columns}>
+  <div class="kn-form-fields">{fields.map((field) => <Field {...field} />)}<slot />{honeypot && <Field {...honeypot} honeypot />}</div>
+  {Astro.slots.has('actions') && <LinkGroup class="kn-form-actions"><slot name="actions" /></LinkGroup>}
+</form>
+<script>
+  import { setupForms } from './form.js';
+  setupForms();
+</script>

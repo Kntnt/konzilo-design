@@ -9,4 +9,7 @@ export function fluid(min, max) {
   return `clamp(${rem(Math.min(min, max))}, ${number(intercept)}rem ${sign} ${number(Math.abs(slope) * 100)}vw, ${rem(Math.max(min, max))})`;
 }
 
+// The window width, in px at the default setting, where a fluid size reaches the given size.
+export const windowAt = (size, min, max) => Math.ceil(320 + (size - min) * (1440 - 320) / (max - min));
+
 export const endpoints = (min, max) => ({ min, max, css: fluid(min, max) });

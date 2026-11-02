@@ -1,7 +1,7 @@
 import { endpoints } from './fluid.js';
 
 export const BASE_SPACE = Object.freeze([[6, 8], [10, 12], [14, 16], [20, 24], [28, 32], [32, 40], [36, 48], [40, 64]].map(Object.freeze));
-export const SPACE_ROLES = Object.freeze({ 'component-gap': 3, 'column-gap': 6, band: 8, 'band-run': 5 });
+export const SPACE_ROLES = Object.freeze({ 'component-gap': 3, 'column-gap': 6, band: 8, 'band-run': 5, plate: 6 });
 
 export function spacing(profile) {
   const density = 0.5 + profile / 100;

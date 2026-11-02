@@ -1,0 +1,18 @@
+---
+import type { HTMLAttributes } from 'astro/types';
+// An eyebrow, semantic heading and optional introductory deck.
+interface Props extends HTMLAttributes<'hgroup'> {
+  heading: string;
+  eyebrow?: string;
+  deck?: string;
+  level?: 1 | 2 | 3 | 4 | 5 | 6;
+  type?: 'display' | 'heading-1' | 'heading-2' | 'heading-3' | 'heading-4' | 'heading-5' | 'heading-6';
+}
+const { heading, eyebrow, deck, level = 2, type = 'heading-2', class: className, ...attributes } = Astro.props;
+const Heading = `h${level}` as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
+---
+<hgroup {...attributes} class:list={['kn-heading-group', className]}>
+  {eyebrow && <p class="kn-heading-group-eyebrow" data-kn-type="label">{eyebrow}</p>}
+  <Heading class="kn-heading-group-heading" data-kn-type={type}>{heading}</Heading>
+  {deck && <p class="kn-heading-group-deck" data-kn-type="lead">{deck}</p>}
+</hgroup>

@@ -23,6 +23,10 @@ Precedence over any conflicting skill, README, or other doc unless the user over
 - `docs/spec/footer.md` — read when working on footer layout, attachment or its cooperation with the page.
 - `docs/spec/header.md` — read when working on header behaviour, responsive layout, identity, navigation or panels.
 - `docs/spec/plates.md` — read when working on tokens, roles, Surfaces, colour generation or contrast checks.
+- `docs/spec/components.md` — read when choosing or building a component, or deciding whether one belongs in the library.
 - `docs/spec/tool.md` — read when working on the design tool, inputs, presentation, exports or design file consumption.
 - `docs/spec/names.md` — read when naming a token, role, Surface kind, width or design-file key, or writing CSS that uses them.
 - `docs/generator.md` — read when changing the generator, design-file schema, CSS emitter or CLI.
+- `gallery/` — live Astro component gallery; `npm run gallery` builds a self-contained `gallery/dist/index.html`.
+- `tool/README.md` — read when running or changing the local design tool, controls, saves or PDF command.
+- `presentation/README.md` — read when changing the approval document, copy overrides, specimens or print checks.

@@ -1,0 +1,13 @@
+@layer kn-components {
+  .kn-footer-band { display: contents; }
+  .kn-footer-band[data-kn-compact] { --kn-footer-edge: 1.25rem; }
+  .kn-footer-background { grid-column: full-start / full-end; background: var(--kn-background); box-shadow: 0 1px 0 var(--kn-background); }
+  .kn-footer-rule { position: relative; z-index: 2; grid-column: a-start / b-end; align-self: start; border-block-start: 1px solid var(--kn-border); }
+  .kn-footer-rule[data-kn-only="a"] { grid-column: a-start / a-end; }
+  .kn-footer-rule[data-kn-only="b"] { grid-column: bc-start / b-end; }
+  .kn-footer-vertical-rule { position: relative; z-index: 2; grid-column: a-end / b-start; justify-self: center; border-inline-start: 1px solid var(--kn-border); }
+  .kn-footer-vertical-rule[data-kn-edge-top] { margin-block-start: var(--kn-footer-edge); }
+  .kn-footer-vertical-rule[data-kn-edge-bottom] { margin-block-end: var(--kn-footer-edge); }
+  .kn-footer-vertical-rule[data-kn-stop-top] { margin-block-start: calc(var(--kn-space-band-run) / 2); }
+  .kn-footer-vertical-rule[data-kn-stop-bottom] { margin-block-end: calc(var(--kn-space-band-run) / 2); }
+}

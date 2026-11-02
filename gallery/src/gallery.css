@@ -1,0 +1,96 @@
+.g-controls { position: sticky; inset-block-start: 0; z-index: 10; block-size: 6.25rem; padding: 0.4rem var(--kn-layout-side-margin); border-block-end: 1px solid var(--kn-border); background: var(--kn-background); color: var(--kn-text); box-shadow: var(--kn-shadow-header); }
+.g-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 1rem; block-size: 1.65rem; }
+.g-toggle { display: none; }
+.g-control-title, .g-status { margin: 0; font-size: 0.75rem; line-height: 1.2; white-space: nowrap; }
+.g-status { font-variant-numeric: tabular-nums; overflow: hidden; text-overflow: ellipsis; }
+.g-controls[data-status="failed"] .g-status { color: var(--kn-error); }
+.g-form { display: grid; grid-template-columns: 0.65fr 0.7fr 0.65fr 0.7fr 1.1fr 1.1fr 1.1fr 1fr repeat(5, 0.8fr); gap: 0.75rem; align-items: end; block-size: 3.75rem; }
+.g-field { display: grid; gap: 0.2rem; min-inline-size: 0; font-size: 0.6875rem; line-height: 1.2; }
+.g-field-label { display: flex; justify-content: space-between; gap: 0.2rem; white-space: nowrap; }
+.g-field output { min-inline-size: 3ch; text-align: end; font-variant-numeric: tabular-nums; }
+.g-field input, .g-field select { inline-size: 100%; min-inline-size: 0; block-size: 1.7rem; margin: 0; accent-color: var(--kn-link); cursor: pointer; }
+.g-field input[type="checkbox"] { inline-size: 1.2rem; }
+.g-field select { font: inherit; color: var(--kn-text); background: var(--kn-background); border: 1px solid var(--kn-border-strong); border-radius: var(--kn-radius-control); }
+.g-reading { max-inline-size: 45rem; margin-inline: auto; }
+.g-section-heading { margin-block: 0 var(--kn-space-column-gap); }
+.g-stack { display: grid; gap: var(--kn-space-column-gap); }
+.g-heading-samples { display: grid; gap: var(--kn-space-plate); }
+.g-surface-row { padding: var(--kn-space-plate); border-radius: var(--kn-radius-card); background-size: cover; background-position: center; }
+.g-surface-name { margin-block: 0 var(--kn-space-component-gap); }
+.g-icon-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr)); gap: var(--kn-space-component-gap); list-style: none; padding: 0; margin: 0; }
+.g-icon-sample { display: flex; align-items: center; gap: 0.75em; padding: var(--kn-space-component-gap); border: 1px solid var(--kn-border); border-radius: var(--kn-radius-control); }
+.g-icon-sample .kn-icon { font-size: 1.5rem; }
+.g-grid-label { margin-block: 0 var(--kn-space-component-gap); }
+.g-note { color: var(--kn-text-muted); margin-block: var(--kn-space-component-gap) 0; }
+.g-footer { padding-block: var(--kn-space-band-run); }
+@media (max-width: 79.999rem) {
+  .g-controls { block-size: auto; padding-block: 0.5rem; }
+  .g-toolbar { block-size: 1.75rem; }
+  .g-control-title { display: none; }
+  .g-toggle { display: inline-flex; align-items: center; gap: 0.5em; padding: 0; border: 0; background: transparent; color: var(--kn-text); font: inherit; font-size: 0.8rem; cursor: pointer; white-space: nowrap; }
+  .g-form { display: none; }
+  .g-controls[data-expanded="true"] .g-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr)); block-size: auto; max-block-size: min(28vh, 12rem); overflow: auto; padding-block: 0.75rem 0.25rem; }
+}
+
+html { scroll-padding-block-start: 7rem; }
+
+/* Tooltips lie over the page, so showing one moves nothing. They hide during a drag. */
+.g-field > span:first-child { cursor: help; }
+.g-tip {
+  position: absolute;
+  z-index: 20;
+  padding: 0.6em 0.8em;
+  border-radius: var(--kn-radius-control);
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  white-space: normal;
+  pointer-events: none;
+  visibility: hidden;
+}
+.g-field:is(:hover, :has(:focus-visible)) .g-tip { visibility: visible; }
+@media (hover: none) {
+  .g-field:focus-within .g-tip { visibility: visible; }
+}
+.g-field:has(input:active) .g-tip { visibility: hidden; }
+@media (width >= 80rem) {
+  .g-field { position: relative; }
+  .g-tip { inset-block-start: calc(100% + 0.5rem); inset-inline-start: 0; inline-size: 17rem; }
+  .g-field:nth-last-child(-n + 3) .g-tip { inset-inline-start: auto; inset-inline-end: 0; }
+}
+@media (width < 80rem) {
+  .g-tip { inset-block-start: 100%; inset-inline: var(--kn-layout-side-margin); }
+}
+
+/* The sticky control bar plays the part a sticky header will: blocks stick below it. */
+.kn-reading-area { --kn-reading-sticky-inset: 7rem; }
+
+.g-lab-form { position: relative; display: grid; grid-template-columns: repeat(auto-fit, minmax(6.5rem, 1fr)); align-items: end; gap: 0.75rem; padding-block-end: 1rem; }
+.g-lab-form .g-field { position: relative; }
+.g-lab-form .g-tip { inset-block-start: 100%; inset-inline-start: 0; inset-inline-end: auto; inline-size: min(17rem, 80vw); }
+.g-lab-width { grid-column: span 2; }
+.g-lab-window { block-size: 80vh; block-size: 80dvh; display: flex; justify-content: center; overflow: clip; border: 1px solid var(--kn-border-strong); background: var(--kn-background); }
+.g-lab-window iframe { display: block; inline-size: 100%; min-inline-size: 20rem; max-inline-size: 100%; block-size: 100%; border: 0; }
+.g-frame-preview { inline-size: 100vw; margin-inline-start: calc((100% - 100vw) / 2); }
+
+#consent-banner .kn-band-content { position: relative; }
+#consent-banner .g-consent-tip { inset-block-start: 100%; inset-inline-start: 0; inline-size: min(24rem, 90%); }
+#consent-banner:has(#g-show-consent:is(:hover, :focus-visible)) .g-consent-tip { visibility: visible; }
+#embeds .kn-figure { inline-size: 100%; margin: 0; }
+
+.g-consent-choice fieldset { border: 0; margin: 0; padding: 0; display: flex; flex-wrap: wrap; align-items: center; column-gap: 1.5rem; }
+.g-consent-choice legend { font-weight: var(--kn-type-heading-6-weight); }
+
+.g-content-form { position: relative; display: grid; grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr)); gap: 1rem; align-items: end; padding: 1.25em; border: 1px solid var(--kn-border); border-radius: var(--kn-radius-card); }
+.g-content-form .g-field { position: relative; }
+.g-content-form .g-tip { inset-block-start: 100%; inset-inline-start: 0; inline-size: min(17rem, 80vw); }
+
+.g-control-tip { position: fixed; z-index: 20; max-inline-size: min(22rem, 90vw); padding: 0.6em 0.8em; border-radius: var(--kn-radius-control); font-size: 0.8125rem; line-height: 1.4; pointer-events: none; }
+.g-control-tip[hidden] { display: none; }
+
+.g-field input[type="checkbox"], .g-consent-choice input { color-scheme: light; }
+.g-typefaces { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr)); gap: 3rem var(--kn-space-column-gap); margin-block-start: 2.5rem; }
+.g-typeface-case { min-inline-size: 0; padding-block-start: 0.75rem; border-block-start: 1px solid var(--kn-border-strong); }
+.g-typeface-name { margin: 0; font-size: var(--kn-type-small-size); font-weight: 600; }
+.g-typeface-note { margin: 0.15rem 0 1.5rem; color: var(--kn-text-muted); font-size: 0.8125rem; line-height: 1.45; }
+.g-typeface-note code { font-size: 0.75rem; overflow-wrap: anywhere; }
+.g-typeface-specimen > * { margin: 0 0 0.5rem; }

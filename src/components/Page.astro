@@ -1,0 +1,21 @@
+---
+import type { HTMLAttributes } from 'astro/types';
+// The opaque sheet, with a growing main between the header and footer slots.
+interface Props extends HTMLAttributes<'div'> {
+  fillLight?: string;
+  fillDark?: string;
+  shadow?: boolean;
+  edgeLine?: boolean;
+  mainId?: string;
+}
+const { fillLight, fillDark, shadow = false, edgeLine = false, mainId = 'content', class: className, style, ...attributes } = Astro.props;
+const fills = { '--kn-page-fill-light': fillLight, '--kn-page-fill-dark': fillDark };
+const pageStyle = typeof style === 'string'
+  ? `${Object.entries(fills).filter(([, value]) => value !== undefined).map(([key, value]) => `${key}:${value}`).join(';')};${style}`
+  : { ...fills, ...style };
+---
+<div {...attributes} class:list={['kn-page', className]} data-kn-surface="page" style={pageStyle}>
+  <slot name="header" />
+  <main id={mainId} tabindex="-1" class="kn-page-main" data-kn-shadow={shadow ? 'true' : undefined} data-kn-edge-line={edgeLine ? 'true' : undefined}><slot /></main>
+  <slot name="footer" />
+</div>

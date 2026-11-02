@@ -1,0 +1,25 @@
+---
+import type { HTMLAttributes } from 'astro/types';
+import type { FooterBandData, Surface } from './frame-types';
+import { layoutFooter } from './footer.js';
+import FooterBand from './FooterBand.astro';
+import FooterCell from './FooterCell.astro';
+interface Props extends HTMLAttributes<'footer'> {
+  bands: FooterBandData[]; attachment?: 'flow' | 'reveal'; rules?: 'content' | 'full';
+  pageSurface?: Surface;
+}
+const { bands, attachment = 'flow', rules = 'content', pageSurface = 'page', class: className, ...attributes } = Astro.props;
+const layout = layoutFooter(bands, { pageSurface });
+---
+{layout.cells.length > 0 && <footer {...attributes} class:list={['kn-footer', className]} data-kn-attachment={attachment} data-kn-rules={rules} data-kn-top-line={layout.topLine || undefined}>
+  <div class="kn-footer-grid">
+    {layout.bands.map((band) => <FooterBand surface={band.surface} cells={band.cells} compact={band.compact} layout={band} decorativeOnly />)}
+    {layout.cells.map((cell) => <FooterCell cell={cell} surface={cell.surface} row={cell.row} compact={cell.compact} ownB={cell.ownB} edgeTop={cell.edgeTop} edgeBottom={cell.edgeBottom} stackFirst={cell.stackFirst} stackLast={cell.stackLast}>
+      {cell.slot ? <slot name={cell.slot} /> : <Fragment set:html={cell.content ?? ''} />}
+    </FooterCell>)}
+  </div>
+</footer>}
+<script>
+  import { setupFooters } from './footer.js';
+  setupFooters();
+</script>

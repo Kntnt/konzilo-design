@@ -11,22 +11,24 @@ Records the naming principles, framework and design-file name draft, and decisio
 - Use kebab-case in custom properties, classes, attributes and design-file keys. Keep the same word for the same thing in the design file, CSS and documentation.
 - Name a role for its use, never its current value or colour. Components consume roles; generated ramps and steps are implementation values.
 - No `on-` pairs. A Surface supplies a complete context, including nested Surfaces.
-- Order names by family, variant, then state: `--text-muted`, `--border-strong`, `--button-hover`. A namespace precedes the family.
+- Order names by family, variant, then state: `--text-muted`, `--border-strong`, `--button-background-hover`. A namespace precedes the family.
 - Names carry no units. Follow tool.md point 3: rem for type sizes, space, widths, radii and breakpoints; em for component parts following their text; unitless line-height and em letter-spacing. Only what is drawn rather than read uses px: hairlines, the frame, focus rings and shadows. Durations use CSS time units.
 
 ## How to read the inventory
 
-**Status concerns the spelling.** “Working name from spec” preserves a spelling already used there; any decided meaning is stated separately. “Proposed here” means that the exact spelling or mapping is new, even when its purpose is already decided. Each row gives the reason for retaining or proposing the name. Component classes and component-specific states wait for the components.
+**Status concerns the spelling.** “Working name from spec” preserves a spelling already used there; any decided meaning is stated separately. “Proposed here” means that the exact spelling or mapping is new, even when its purpose is already decided. Each row gives the reason for retaining or proposing the name. The first six components' classes and mutually exclusive states are recorded under "Component names" below.
 
 **Namespace notation:** custom properties below use their readable stems (`--text`, for example). Under decisions 1–2, the actual exported name is `--kn-text`, with no bare alias. Apply this transformation to every custom property in every table. Selector tables show the recommended full namespace explicitly. Design-file keys and attribute values are unprefixed inside their enclosing file or namespaced attribute. Standard CSS properties and native HTML/ARIA attributes keep their standard names.
 
 ### Context roles and Surface application
 
-The eleven roles are decided in plates.md point 3 and “Decided with the owner”, point 4. Their spellings remain working names; retain all eleven because each supplies a distinct checked relationship. Hover, active and further states are added with components, as already decided.
+The eleven original roles are decided in plates.md point 3 and “Decided with the owner”, point 4. Their spellings remain working names; retain all eleven because each supplies a distinct checked relationship. The three button context roles below were decided with the components on 2026-11-01, and the alternate fill with Table on 2026-11-02. Further states follow as components need them.
 
 | Name | What it is | Source | Status | Reason |
 |---|---|---|---|---|
 | `--background` | The Surface's opaque background fill, with a fallback colour for an image | plates.md §3; page.md §1 | Working name from spec | Covers colour, gradient and image without calling every fill a colour. |
+| `--background-alt` | Checked alternate fill for table rows | Components, 2026-11-02 | Decided with the components; assistant's technical choice | Keeps the background family together; existing text, muted text and links pass on it. |
+| `--background-hover` | Checked fill under the pointer | Components, 2026-11-02 | Decided with the components | Existing text and links pass on it at 4.5:1. |
 | `--text` | Primary foreground text | plates.md §3 | Working name from spec | Names the use independently of light or dark. |
 | `--text-muted` | Secondary foreground text, still contrast-checked | plates.md §3 | Working name from spec | Keeps the text family together. |
 | `--border` | Ordinary separating border colour | plates.md §3 | Working name from spec | Describes separation rather than a shade of grey. |
@@ -34,9 +36,13 @@ The eleven roles are decided in plates.md point 3 and “Decided with the owner�
 | `--link` | Link foreground | plates.md §3 | Working name from spec | Gives links a checked relationship on each Surface. |
 | `--accent` | Contextual accent colour | plates.md §3 | Working name from spec | Keeps the accent role distinct from a raw Brand Colour Seed. |
 | `--focus` | Focus-ring colour | plates.md §3 | Working name from spec | Names the interaction purpose. |
+| `--info` | Information-status colour | Components, 2026-11-02 | Decided with the components | Fixed blue seed, checked like the other status roles. |
 | `--success` | Success-status colour | plates.md §3 | Working name from spec | Names meaning rather than green. |
 | `--warning` | Warning-status colour | plates.md §3 | Working name from spec | Names meaning rather than yellow. |
 | `--error` | Error-status colour | plates.md §3 | Working name from spec | Names meaning rather than red. |
+| `--button-background` | Filled button background on this Surface | Components, 2026-11-01 | Assistant's technical choice | Fixed polarity recipe; checked against its ground at 3:1. |
+| `--button-text` | Filled button text | Components, 2026-11-01 | Assistant's technical choice | Checked against normal and hover fills at 4.5:1. |
+| `--button-background-hover` | Filled button hover and active background | Components, 2026-11-01 | Assistant's technical choice | A checked state on the same role family. |
 | `--polarity` | Generated `light` or `dark` marker for the Surface | plates.md §§3–4 | Proposed here | Uses the spec's exact concept, distinct from a requested mode. |
 | `data-kn-surface="<kind>"` | Recommended Surface-kind selector, e.g. `data-kn-surface="raised"` | plates.md §7; proposed here | Proposed here | One attribute expresses one complete context and makes the selected kind visible. |
 | `.kn-surface-<kind>` | Alternative class form, e.g. `.kn-surface-raised` | plates.md §7; proposed here | Proposed here | An ordinary class can redeclare the same roles; offered for the owner's choice. |
@@ -59,6 +65,7 @@ These eight kind names and their meanings, and the two rank tints added on 2026-
 | `picture-dark` | Image treatment with dark polarity and tested overlay or text Surface | plates.md §4 | Working name from spec; decided kind | Completes the approved picture pair. |
 | `tint-secondary` | The secondary brand colour's tint, following the mode; present only with a secondary | plates.md, decided point 7 | Decided 2026-11-01 | Names the family first, then the rank, as the brand-colour keys do. |
 | `tint-tertiary` | The tertiary brand colour's tint, following the mode; present only with a tertiary | plates.md, decided point 7 | Decided 2026-11-01 | Completes the rank tints. |
+| `status-info`, `status-success`, `status-warning`, `status-error` | Mode-following tints of their own status ramps | Components, 2026-11-02 | Decided with the components | Always present, with the full checked role set. |
 | `data-kn-mode="light"` | Explicit local light-mode selection; also usable at the root | plates.md §4; proposed here | Proposed here | Uses mode for the selection and leaves polarity for the result. |
 | `data-kn-mode="dark"` | Explicit local dark-mode selection; also usable at the root | plates.md §4; proposed here | Proposed here | Keeps the two mode values together under one attribute. |
 | `.kn-mode-light` | Class alternative for explicit light mode | plates.md §7; proposed here | Proposed here | Follows the class alternative if the owner chooses that syntax. |
@@ -112,10 +119,10 @@ All twelve text styles from tool.md point 2 appear below. The proposed `heading-
 | `--type-small-line-height` | small style: unitless line-height | tool.md §2, type scale; plates.md §3; proposed here | Proposed here | Keeps readable leading with the style recipe. |
 | `--type-small-weight` | small style: font weight | tool.md §2, type scale; plates.md §3; proposed here | Proposed here | Keeps the selected typeface’s weight with its style. |
 | `--type-small-letter-spacing` | small style: letter-spacing in em | tool.md §2, type scale; plates.md §3; proposed here | Proposed here | Keeps tracking with the style and follows its text size. |
-| `--type-eyebrow-size` | eyebrow style: fluid font size | tool.md §2, type scale; plates.md §3; proposed here | Proposed here | Names the visual size without fixing its value or unit. |
-| `--type-eyebrow-line-height` | eyebrow style: unitless line-height | tool.md §2, type scale; plates.md §3; proposed here | Proposed here | Keeps readable leading with the style recipe. |
-| `--type-eyebrow-weight` | eyebrow style: font weight | tool.md §2, type scale; plates.md §3; proposed here | Proposed here | Keeps the selected typeface’s weight with its style. |
-| `--type-eyebrow-letter-spacing` | eyebrow style: letter-spacing in em | tool.md §2, type scale; plates.md §3; proposed here | Proposed here | Keeps tracking with the style and follows its text size. |
+| `--type-label-size` | label style: fluid font size | tool.md §2, type scale; plates.md §3; proposed here | Proposed here | Names the visual size without fixing its value or unit. |
+| `--type-label-line-height` | label style: unitless line-height | tool.md §2, type scale; plates.md §3; proposed here | Proposed here | Keeps readable leading with the style recipe. |
+| `--type-label-weight` | label style: font weight | tool.md §2, type scale; plates.md §3; proposed here | Proposed here | Keeps the selected typeface’s weight with its style. |
+| `--type-label-letter-spacing` | label style: letter-spacing in em | tool.md §2, type scale; plates.md §3; proposed here | Proposed here | Keeps tracking with the style and follows its text size. |
 | `--type-mono-size` | mono style: fluid font size | tool.md §2, type scale; plates.md §3; proposed here | Proposed here | Names the visual size without fixing its value or unit. |
 | `--type-mono-line-height` | mono style: unitless line-height | tool.md §2, type scale; plates.md §3; proposed here | Proposed here | Keeps readable leading with the style recipe. |
 | `--type-mono-weight` | mono style: font weight | tool.md §2, type scale; plates.md §3; proposed here | Proposed here | Keeps the selected typeface’s weight with its style. |
@@ -123,12 +130,16 @@ All twelve text styles from tool.md point 2 appear below. The proposed `heading-
 
 | Name | What it is | Source | Status | Reason |
 |---|---|---|---|---|
-| `--typeface-body` | Body Typeface family/stack, also the default for lead and small | tool.md §2; proposed here | Proposed here | Reuses Blueprint's Body Typeface. |
-| `--typeface-display` | Display Typeface family/stack for display and headings | tool.md §2; proposed here | Proposed here | Reuses Blueprint's Display Typeface without tying it to a semantic heading level. |
-| `--typeface-eyebrow` | Eyebrow Typeface family/stack | tool.md §2; proposed here | Proposed here | Keeps the decided separate typeface role. |
-| `--typeface-monospace` | Optional Monospace Typeface family/stack for the mono style | tool.md §2; proposed here | Proposed here | Uses Blueprint's full typeface term; `mono` remains the shorter style name in the spec. |
+| `--typeface-main` | Main family/stack, for practically all content | tool.md §2 | *Decided* 2026-11-02 | One typeface throughout is the norm. |
+| `--typeface-heading` | Heading family/stack; follows main unless set | components.md, Typefaces and labels | *Decided* 2026-11-02 | Serif text can take sans-serif headings. |
+| `--typeface-heading-1` | First-heading family/stack; follows heading unless the optional input is set | components.md, Typefaces and labels | *Built* 2026-11-02 | The tool exposes the rare exception without a separate mode. |
+| `--typeface-display` | Display family/stack for large text; follows heading unless set | components.md, Typefaces and labels | *Decided* 2026-11-02 | A display face changes only that style. |
+| `--typeface-monospace` | Monospace family/stack, always present | tool.md §2 | *Decided* 2026-11-02 | Uses Blueprint's full typeface term; `mono` remains the shorter style name. |
+| `--typeface-label` | The stack labels use: main or monospace | tool.md §2 | *Decided* 2026-11-02 | Lets every label follow the design's one choice. |
+| `--text-heading-1` | First-heading colour, declared on each Surface and reading text or accent | components.md, Typefaces and labels | *Built* 2026-11-02 | The optional input chooses a checked contextual role. |
+| `--type-<style>-features` | A style's font features: `normal`, or its typeface's tuning | components.md, Typefaces and labels | *Decided* 2026-11-02 | Lets tuning follow the typeface and the fluid size. |
 
-`lead` is a typography treatment, not a replacement name for Blueprint's content term Standfirst. No fifth Utility Typeface input is introduced. Font assets and internal type-step indexing are generator details; components read these named roles.
+`lead` is a typography treatment, not a replacement name for Blueprint's content term Standfirst. Font assets and internal type-step indexing are generator details; components read these named roles.
 
 ### Space steps and roles
 
@@ -147,6 +158,7 @@ The specs decide fluid space steps and semantic space roles, but give neither a 
 | `--space-component-gap` | Gap inside a component | plates.md §3; proposed here | Proposed here | Names the first decided space use explicitly. |
 | `--space-column-gap` | Gap between columns, including Narrow and Aside | plates.md §3; page.md, Reading Area §4; proposed here | Proposed here | Shares the same column-gap role across layouts. |
 | `--space-band` | Vertical space at a band's outer edges | plates.md §3; page.md §3; footer.md, model; proposed here | Proposed here | Uses Band, which includes main-content and footer bands. |
+| `--space-plate` | Inner space of a box whose colour differs from its ground | Components, 2026-11-01 | Assistant's technical choice | Separate use from column-gap, sharing step 6 today. |
 | `--space-band-run` | Smaller gap within a run of bands sharing a background | plates.md §3; footer.md, model; proposed here | Proposed here | Makes the adjacency relationship part of the band family. |
 
 ### Shape
@@ -244,6 +256,7 @@ Top-level sections `inputs`, `project` and `resolved` are already decided (tool.
 | `resolved` | All derived values read by consumers | tool.md §5 | Working name from spec; decided key | Retains the shared generated-output contract. |
 | `project.name` | Presentation name | tool.md §5; proposed here | Proposed here | Uses the spec's simple identity word without naming any actual project. |
 | `project.logo` | Presentation logo reference | tool.md §5; proposed here | Proposed here | Keeps the same identity term as the tool. |
+| `project.logo-dark` | Optional logo for dark Surfaces | Tool implementation, 2026-11-02 | Built | Both logo fields accept data URIs or paths relative to the design file. |
 
 The reusable repository stores no actual presentation identity or project-specific reference in this draft.
 
@@ -257,11 +270,14 @@ The reusable repository stores no actual presentation identity or project-specif
 | `inputs.brand-colors.tertiary` | Optional third seed | tool.md §2; proposed here | Proposed here | Retains the decided third rank. |
 | `inputs.gray-temperature` | Grey-scale temperature control; grey scale always exists | plates.md §1; Blueprint Q369; proposed here | Proposed here | Reuses the named input; does not restore a neutral/tinted preset switch. |
 | `inputs.typefaces` | Typeface-role container | tool.md §2; proposed here | Proposed here | Keeps family selections separate from text-style recipes. |
-| `inputs.typefaces.body` | Body Typeface | tool.md §2; proposed here | Proposed here | Same role as `--typeface-body`. |
-| `inputs.typefaces.display` | Display Typeface, also for headings | tool.md §2; proposed here | Proposed here | Same role as `--typeface-display`. |
-| `inputs.typefaces.eyebrow` | Eyebrow Typeface | tool.md §2; proposed here | Proposed here | Same role as `--typeface-eyebrow`. |
-| `inputs.typefaces.monospace` | Optional Monospace Typeface | tool.md §2; proposed here | Proposed here | Same role as `--typeface-monospace`. |
+| `inputs.typefaces.main` | Main family | tool.md §2 | *Decided* 2026-11-02 | Same role as `--typeface-main`. |
+| `inputs.typefaces.monospace` | Monospace family | tool.md §2 | *Decided* 2026-11-02 | Same role as `--typeface-monospace`. |
+| `inputs.typefaces.heading` | Optional heading family | tool.md §2 | *Decided* 2026-11-02 | Same role as `--typeface-heading`. |
+| `inputs.typefaces.heading-1` | Optional first-heading family, following heading unless set | Tool implementation, 2026-11-02 | Built | Same role as `--typeface-heading-1`, including typeface tuning. |
+| `inputs.typefaces.display` | Optional display family | tool.md §2 | *Decided* 2026-11-02 | Same role as `--typeface-display`. |
 | `inputs.type` | Body-size and scale container | tool.md §2; proposed here | Proposed here | Shares the global type family. |
+| `inputs.type.label` | Which family labels use: `main` or `monospace` | tool.md §2 | *Decided* 2026-11-02 | One choice of two recipes, not a set of controls. |
+| `inputs.type.heading-1-color` | First-heading colour: `text` (default) or `accent` | Tool implementation, 2026-11-02 | Built | Reads the chosen role on each Surface. |
 | `inputs.type.body-size` | Fluid body-size endpoints | tool.md §§2–3; proposed here | Proposed here | Matches the body style's size rather than introducing base-font aliases. |
 | `inputs.type.body-size.min` | Body size at the narrowest window, in default-setting pixels | tool.md §§2–3; proposed here | Proposed here | Uses the same endpoint word as resolved fluid values. |
 | `inputs.type.body-size.max` | Body size at the widest window, in default-setting pixels | tool.md §§2–3; proposed here | Proposed here | Completes the endpoint pair without units in the key. |
@@ -278,6 +294,7 @@ The reusable repository stores no actual presentation identity or project-specif
 | `inputs.type.steps.display` | Number of steps above heading-1 | tool.md §2; proposed here | Proposed here | Uses the same visual-style word as the CSS role. |
 | `inputs.type.steps.lead` | Number of steps above body | tool.md §2; proposed here | Proposed here | Uses the same visual-style word as the CSS role. |
 | `inputs.type.steps.small` | Number of steps below body | tool.md §2; proposed here | Proposed here | Uses the same visual-style word as the CSS role. |
+| `inputs.type.steps.label` | Number of steps below body | components.md, Typefaces and labels | *Decided* 2026-11-02 | Keeps labels on the type scale. |
 | `inputs.shadow` | Continuous shadow-control container | tool.md §2; proposed here | Proposed here | Names the CSS shadow family, whose controls implement the Elevation Profile. |
 | `inputs.shadow.strength` | Opacity control; zero off | tool.md §2; proposed here | Proposed here | Retains the decided slider word. |
 | `inputs.shadow.elevation` | Distance, blur and spread multiplier | tool.md §2; proposed here | Proposed here | Retains the decided slider word. |
@@ -305,16 +322,17 @@ These proposed containers account for all derived families in tool.md point 5 an
 | `resolved.ramps.tertiary` | Third seed ramp, when supplied | tool.md §§2, 5; proposed here | Proposed here | Reuses the input's tertiary rank. |
 | `resolved.ramps.gray` | Always-present grey ramp | tool.md §§2, 5; proposed here | Proposed here | Reuses grey rather than introducing neutral as an alias. |
 | `100` through `900`, in increments of `100` | String keys for each ramp's nine steps | plates.md §2 | Working name from spec | Retains the stated ramp indexing; numbers are shade indices, not units or roles. |
-| `resolved.surfaces` | Eight Surface-kind entries | tool.md §5; plates.md §4; proposed here | Proposed here | Uses Surface, the canonical English word. |
+| `resolved.surfaces` | Base, status and available rank-tint Surface-kind entries | tool.md §5; plates.md §4; proposed here | Proposed here | Uses Surface, the canonical English word. |
 | `page`, `raised`, `tint`, `brand`, `inverse`, `accent`, `picture-light`, `picture-dark` | Keys under `resolved.surfaces`, one per kind | plates.md §4 | Working names from spec; decided kinds | Exactly the same kind values as the CSS selectors. |
 | `light`, `dark` | Mode keys under each kind | tool.md §5; plates.md §4 | Working names from spec; modes decided | Keeps mode selection separate from actual polarity. |
-| `background`, `text`, `text-muted`, `border`, `border-strong`, `link`, `accent`, `focus`, `success`, `warning`, `error` | Context-role keys under each mode | plates.md §3 | Working names from spec | Exact CSS role stems, with only `--` and the namespace omitted. |
+| `background`, `background-alt`, `background-hover`, `text`, `text-muted`, `border`, `border-strong`, `link`, `accent`, `focus`, `info`, `success`, `warning`, `error`, `button-background`, `button-text`, `button-background-hover` | Context-role keys under each mode | plates.md §3; components, 2026-11-02 | Working names from spec; alternate fill decided with the components | Exact CSS role stems, with only `--` and the namespace omitted. |
 | `polarity` | Generated marker under each mode | plates.md §§3–4; proposed here | Proposed here | Exact word used by the CSS marker. |
-| `resolved.type` | Text-style recipes keyed by display, heading-1 through heading-6, lead, body, small, eyebrow, mono | tool.md §5; plates.md §3; proposed here | Proposed here | Exact style words used by CSS. |
+| `resolved.type` | Text-style recipes keyed by display, heading-1 through heading-6, lead, body, small, label, mono | tool.md §5; plates.md §3; proposed here | Proposed here | Exact style words used by CSS. |
 | `size`, `line-height`, `weight`, `letter-spacing` | Properties in each type recipe | tool.md §§2–3; proposed here | Proposed here | Same words as the corresponding global roles. |
-| `resolved.typefaces` | Resolved body, display, eyebrow and optional monospace stacks | tool.md §2; proposed here | Proposed here | Keeps the typeface role words unchanged. |
+| `resolved.typefaces` | Resolved main, monospace, heading, display and label stacks, with optional heading-1; each ends in a generic family | tool.md §2 | *Built* 2026-11-02 | Keeps the typeface role words unchanged. |
+| `resolved.heading-1-color` | Optional explicit first-heading colour policy, `text` or `accent` | Tool implementation, 2026-11-02 | Built | Omitted when the input is absent, preserving prior output bytes. |
 | `resolved.space.steps` | Fluid steps keyed 1 through 8 | tool.md §5; plates.md §2; proposed here | Proposed here | Same step vocabulary as the internal CSS scale. |
-| `resolved.space.roles` | component-gap, column-gap, band and band-run | plates.md §3; proposed here | Proposed here | Same variant words as the semantic CSS space roles. |
+| `resolved.space.roles` | component-gap, column-gap, band, band-run and plate | plates.md §3; proposed here | Proposed here | Same variant words as the semantic CSS space roles. |
 | `min`, `max` | Endpoint keys in fluid size and space values | tool.md §5 | Working names from spec | Retains the spec's endpoint words; storage units follow the schema, not the key. |
 | `resolved.radius` | control and card radius values | tool.md §5; plates.md §3; proposed here | Proposed here | Exact family and use words from CSS. |
 | `resolved.shadow` | Finished CSS values keyed header, header-panel, panel, page, box and box-lifted | tool.md §§2, 5; proposed here | Proposed here | Exact shadow variants used in CSS; each value includes near and far shadows. |
@@ -354,3 +372,129 @@ Each entry keeps its problem, options and reason as the record. Decisions 1 and 
 20. **Continuous profile keys.** Problem: density and corners have canonical Profile names while the four shadow controls form an Elevation Profile. **Options:** density-profile/corner-profile plus a shadow container; density/corners/shadow; density-profile/corner-profile/elevation-profile. **Recommendation:** `density-profile`, `corner-profile` and the `shadow` container, because the first two preserve Blueprint's exact terms while shadow directly matches its four controls and the emitted shadow family. Document that shadow implements the Elevation Profile, not stacking order.
 21. **Resolved-family and metadata keys.** Problem: consumers need stable names for every derived family and the three required provenance/check items. **Options:** the grouped resolved paths above; flat resolved keys; shorter metadata such as version/hash/validation. **Recommendation:** the plain families above plus generator-version/inputs-fingerprint/contrast-check, because the CSS and JSON share their role words and the metadata names state exactly what consumers must verify. The plain format and three top-level sections are already decided; report internals remain implementation work.
 22. **Raw values in exported CSS.** Problem: components must use roles, yet fluid space steps are useful when constructing those roles. **Options:** export every ramp and step; keep every raw value only in resolved; emit internal namespaced space steps while keeping ramps and internal type indexing in resolved. **Recommendation:** the last option as drafted, because CSS can retain explicit space relations without inviting raw-colour consumption. Internal steps are not a component API; literal context colours and named global roles remain the public contract.
+
+## Component names (2026-11-01)
+
+***Decided* with the first six components; the assistant's technical choices, 2026-11-01.**
+
+- **Classes:** `.kn-<component>` and `.kn-<component>-<part>`, all in kebab-case; for example `.kn-heading-group` and `.kn-card-heading`. A class names a component or part, not one of several competing appearances.
+- **Variants:** `data-kn-variant` holds mutually exclusive choices: `filled`, `outline`, `arrow` on Button; `link`, `person` on Card (the former article variant is now Content Card). Link Group uses `data-kn-direction="row|stack"`; Card Grid uses `data-kn-columns="2|3|4"`.
+- **Type:** `data-kn-type="display|heading-1|heading-2|heading-3|heading-4|heading-5|heading-6|lead|body|small|label|mono"` applies the complete type recipe, independently of the semantic heading level. Display uses the display role, heading-1 its own, the other headings the heading role, mono the monospace family, label the family the design chose for labels, and everything else the main family.
+- **Button roles:** `--kn-button-background`, `--kn-button-text`, `--kn-button-background-hover` are context roles, supplied on every Surface in both modes. Names follow family, part, state; recipes and pairs are in generator.md.
+- **Plate space:** `--kn-space-plate` is the inner space of a coloured box. It maps to step 6 today, alongside the distinct column-gap use. Components read neither numbered steps nor colour ramps.
+
+The class grammar and selectors are shared by Astro and the plain HTML export.
+
+## Content and navigation names (2026-11-02)
+
+***Decided* with Table, Accordion, Quotation, Callout, Breadcrumb Navigation and Table of Contents; the assistant's technical choices, 2026-11-02.**
+
+- **Classes:** `.kn-table` on the table and `.kn-table-scroll` on its named scroll region; `.kn-accordion` with `.kn-accordion-item`, `summary`, `label`, `chevron` and `content` parts; `.kn-quotation` with `text`, `attribution` and `name` parts; `.kn-callout` with `heading`, `title`, `icon` and `content` parts; `.kn-breadcrumbs` with a `separator` part; `.kn-toc` with a `label` part. Each part uses the ordinary component-part grammar, for example `.kn-accordion-summary`.
+- **Choices:** Table uses `data-kn-striped`, cell `data-kn-align="start|center|end"` and `data-kn-numeric`; its wrapper takes `data-kn-width`. Accordion uses `data-kn-accordion-mode="single|multiple"`; native `details` carries the generated `name` and `open`, leaving `data-kn-mode` exclusively for colour mode. Callout uses `data-kn-variant="info|success|warning|error"`. A `surface` prop uses the existing `data-kn-surface` contract.
+- **Alternate fill:** `--kn-background-alt`, stored as `background-alt` under every Surface mode's roles and recipes. The contrast-pair names `text-alt`, `text-muted-alt` and `link-alt` describe the existing foregrounds over that fill, all at 4.5:1; they add no foreground role. Their fixed recipes and the tested brand correction are in generator.md.
+- **Local relation:** `--kn-callout-mark` reads accent on filled status Surfaces, or info/success/warning/error for an outlined Callout. It is a component-local relation, not another generator input or Surface role.
+
+
+## Header and Footer names (2026-11-01)
+
+**The assistant’s technical choices, 2026-11-01.** The class grammar above also covers Header’s named parts, `.kn-megamenu`, `.kn-skip-link`, `.kn-footer`, `.kn-footer-band` and `.kn-footer-cell`. These consume the existing context, type, space, radius, duration and shadow roles. No new generated token or colour role is introduced.
+
+| Custom property | What it is |
+|---|---|
+| `--kn-header-height` | Measured bar height, published on the root and its Page in rem. |
+| `--kn-header-visible-height` | The sticky height currently shown; zero while fully away or in flow. Root scroll padding and the Reading Area follow it. |
+| `--kn-header-identity-scale` | Unitless, width-driven last-resort scale of the identity; independent of scrolling. |
+| `--kn-header-panel-top` | Measured window position of the bar’s bottom edge, in rem. |
+| `--kn-header-menu-columns` | Number of level-1 columns, capped at five before responsive steps to two and one. |
+| `--kn-footer-height` | The measured footer height reserved by the Page under reveal, in rem. |
+| `--kn-footer-edge` | Local run-edge space: band space, or the compact utility edge. |
+| `--kn-footer-inner`, `--kn-footer-side` | Local grid relations for the shared content rail and its margins. |
+| `--kn-footer-separator` | Local width of the footer link list’s bullet strip, in em. |
+| `--kn-reading-sticky-inset` | Existing Reading Area inset, now the visible sticky header height plus component gap. |
+
+| Attribute | What it is |
+|---|---|
+| `data-kn-arrangement="A|B|C"` | Fixed Header groups and document order. |
+| `data-kn-attachment="flow|sticky"` | Requested Header attachment; effective only with its enhancement. |
+| `data-kn-start="below|under"`, `data-kn-autohide="true|false"` | Requested Header start and sliding behaviour. |
+| `data-kn-opaque-surface="page|brand"` | Header’s own opaque Surface; `data-kn-surface` carries its current complete context. |
+| `data-kn-group="start|end"` | The Header group, in document order. |
+| `data-kn-axis="row|column"`, `data-kn-align="start|center|end"` | The identity’s two pair layouts. Footer Cell also uses align, adding `stretch`. |
+| `data-kn-enhanced`, `data-kn-transparent`, `data-kn-away` | Header enhancement and current appearance states. |
+| `data-kn-collapsed` | Space-separated accepted giving-way steps: `slogan name links word language cta search`. |
+| `data-kn-logo="light|dark"`, `data-kn-logo-polarity="light|dark"` | Image version and the Header’s script-resolved standard `color-scheme`; no CSS polarity branching. |
+| `data-kn-trigger`, `data-kn-panel` | Matching `menu`, `language` or `search` controller and panel names; native ARIA carries their IDs and expanded state. |
+| `data-kn-automatic`, `data-kn-icon` | Automatic menu-button visibility and its `chevron-down`, `menu` or `none` icon choice. |
+| `data-kn-moved="search|language|cta"` | Functional items at the megamenu’s top. |
+| `data-kn-close`, `data-kn-dialog` | Close control and the native dialog ID opened by a CTA. |
+| `data-kn-shadow`, `data-kn-line`, `data-kn-panel-open` | Header layer-edge states. On the Page’s main, `data-kn-shadow="true"` remains the chosen Page shadow. |
+| `data-kn-header-start="below|under"` | The Page’s enhanced Header-start geometry. |
+| `data-kn-sticky-header` | Root scroll-padding participation while a sticky Header is enhanced. |
+| `data-kn-attachment="flow|reveal"` | Requested Footer attachment. |
+| `data-kn-effective-attachment="flow|reveal"` | Footer’s currently eligible attachment; always flow in print. |
+| `data-kn-footer-attachment="flow|reveal"` | The Page’s matching reservation and opaque main-layer state. |
+| `data-kn-rules="content|full"` | Footer hairline extent. |
+| `data-kn-band`, `data-kn-run`, `data-kn-run-start`, `data-kn-run-end` | Build-time Footer band number, same-Surface run and its outer edges. |
+| `data-kn-cell`, `data-kn-column="A|B"`, `data-kn-columns="1|2"` | Cell address, column and column span; row spans are explicit named grid rows. |
+| `data-kn-compact`, `data-kn-own-b` | Compact utility spacing and later-run independent B alignment. |
+| `data-kn-edge-top`, `data-kn-edge-bottom` | Run-edge spacing of cells and vertical hairlines. |
+| `data-kn-stack-first`, `data-kn-stack-last` | Outer spacing of the actual document’s stacked cells. |
+| `data-kn-only="a|b|both"`, `data-kn-stop-top`, `data-kn-stop-bottom` | Hairline segments that avoid merged cells and stop at content. |
+| `data-kn-top-line` | Build-time Footer separator before attachment is measured, also used in static examples. |
+| `data-kn-edge-line="true"` | Explicit Page bottom-edge hairline. |
+| `data-kn-auto-shadow`, `data-kn-auto-line` | Measured Page edge treatment under the Footer’s attachment. |
+
+The `kn:headerchange` window event asks Reading Areas to recheck sticky eligibility when the shown height changes. A `kn:refresh` event on Header or Footer remeasures that component after a host replaces its generated core. These are notifications, not extra design inputs. Gallery-only controls and the frame’s `kn-frame-ready` / `kn-frame-config` messages are outside the component API.
+
+
+## Lists, media, forms and consent names (2026-11-02)
+
+***Decided* with the last six families of the first list; the assistant’s technical choices, 2026-11-02.** The initial build added no generated token or Surface role; the review below adds hover and status contexts.
+
+- **Classes:** `.kn-content-loop`, `.kn-content-rows` and `.kn-content-row` with `heading`, `link`, `content`, `meta`, `excerpt`, `thumbnail` and `icon` parts; `.kn-visitor-filters`, `.kn-visitor-filter-group`, `toggles` and `count`; shared `.kn-pill`; `.kn-pagination`; `.kn-video`; `.kn-embed` with `stage`, `preview`, `poster`, `title`, `provider`, `notice`, `frame`, `original`, `dialog` and `gallery-note` parts; `.kn-form` with `fields` and `actions`; `.kn-field` with `label`, `required`, `control`, `options`, `option`, `help` and `error`; `.kn-consent`, `.kn-consent-settings`, `.kn-consent-settings-form` and `.kn-consent-category`. Parts retain the ordinary component-part grammar. Video and Embed also carry `.kn-figure` and reuse Figure’s media/caption parts and width attributes.
+- **Choices:** `data-kn-presentation="cards|rows"` selects Content Loop presentation. Form reuses `data-kn-columns="1|2"`; its two columns collapse intrinsically. Native `aria-pressed` selects a filter pill, and `aria-current="page"` selects a pager link. Neither adds another variant attribute. Media, forms and rows take no Frame or box shadow; the consent panel and native dialogs use `--kn-shadow-panel`.
+
+| Custom property | What it is |
+|---|---|
+| `--kn-video-ratio` | Local video aspect ratio, default 16 / 9; no generator input. |
+| `--kn-field-max` | Optional maximum inline size of one field, default 100%. |
+| `--kn-consent-height` | Measured visible banner height on the root, in rem; zero while hidden. Reserves body space and end scroll padding. |
+
+| Attribute | What it is |
+|---|---|
+| `data-kn-item`, `data-kn-filter`, `data-kn-text` | One rendered loop item, its JSON object of stable filter values, and its searchable text. |
+| `data-kn-for` | Id of the Content Loop controlled by a Visitor Filters form. |
+| `data-kn-filter-name` | Allowlisted parameter name on a filter button or select; its native value supplies the stable key. |
+| `data-kn-page-size` | Client page size; zero keeps an unpaginated loop. Only one loop owns page state. |
+| `data-kn-count-text`, `data-kn-result-count` | Supplied count template with `{count}` / `{total}` and its polite live-region destination. |
+| `data-kn-pagination-host`, `data-kn-page` | Pager destination within the panel and the page number of an ordinary link. |
+| `data-kn-pagination-label`, `data-kn-previous`, `data-kn-next`, `data-kn-page-label` | Supplied navigation and link labels used when rebuilding a client pager. |
+| `data-kn-url`, `data-kn-embed-title`, `data-kn-format` | Registered original URL, accessible title and provider format (`16 / 9`, `4 / 3`, `audio` or `square`). |
+| `data-kn-embed-load` | Local one-view acceptance control; it grants no category. |
+| `data-kn-embed-overlay` | An ordinary link enhanced to a native player dialog on an unmodified primary click. |
+| `data-kn-embed-close`, `data-kn-embed-level`, `data-kn-embed-notice`, `data-kn-embed-load-label`, `data-kn-embed-original-label` | Optional overlay copy and semantic heading level on its trigger. |
+| `data-kn-gallery-note` | Explicit gallery-only player substitute; normal components still create real iframes. |
+| `data-kn-honeypot`, `data-kn-error-text` | Optional non-interactive honeypot field and the native validation-message destination. |
+| `data-kn-categories`, `data-kn-consent-version`, `data-kn-storage-key`, `data-kn-settings` | Banner’s category catalogue, choice version, localStorage key and native settings-dialog id. |
+| `data-kn-category` | Category id on a settings checkbox, with native disabled for required categories. |
+| `data-kn-consent-accept`, `data-kn-consent-reject`, `data-kn-consent-close` | Accept-all, reject-all and settings-close actions. |
+| `data-kn-consent-open` | Link or button anywhere in the document that reopens Consent Settings. Its link remains the no-script path. |
+| `data-kn-consent-visible` | Root marker while the banner reserves space. |
+| `data-kn-deferred` | Suppresses initial banner display for an explicitly opened gallery lab. |
+
+The public query keys are `q`, the declared filter names and `page`; repeated values express OR. `kn:filterschange` synchronises panels after a local choice; it is not a source-query API. `consent.js` exports `hasConsent`, `setConsent` and `openConsentSettings`; the `kn:consentchange` window event carries the version and category choices, including withdrawal. `kn:consentbanneropen` on the banner opens the deferred lab example. These events change presentation and consent state, not design inputs.
+
+
+## Owner’s review names (2026-11-02)
+
+***Decided* with the components, 2026-11-02:** `--kn-background-hover` / resolved `background-hover`; `--kn-info` / `info`; `status-info`, `status-success`, `status-warning`, `status-error`. `text-hover` and `link-hover` are contrast-pair names at 4.5:1, not extra foreground roles. `STATUS_KINDS` is exported beside `KINDS` and all four belong to `kindsFor` in both modes. The assistant’s fixed contrast corrections are recorded in generator.md.
+
+**Decided component vocabulary:** Accordion’s `variant` selects `data-kn-variant="hairlines|boxes"`; `faq` has only a structured-data effect. Callout’s `style` selects `data-kn-style="filled|outlined"`; its semantic `variant` remains `info|success|warning|error`, and it no longer accepts `surface`.
+
+Content Card (`ContentCard.astro`, `.kn-card.kn-content-card`) and Content Row (`ContentRow.astro`, `.kn-content-row`) replace the earlier loop forms; Card retains only `link|person`. Props `imageRatio`, `imageInset`, `images`, `meta1`, `meta2`, `metaSeparator`, `cta`, `group`, `level` and `type` name their purposes. `meta1`/`meta2` entries are `{ text, datetime?, href?, pill? }`; CTA is `{ label, style: 'link'|'button', icon?: '›'|'»'|'→'|'➔' }`. Loop owns row `images`, `presentation`, `columns` and optional `surface` defaults. No numbered space step is public component input.
+
+**The assistant’s part names:** `.kn-content-items`, `.kn-content-item`, `.kn-content-picture`, `.kn-content-body`, `.kn-content-heading`, `.kn-content-link`, `.kn-content-meta`, `.kn-content-meta-item`, `.kn-content-file`, `.kn-content-text`, `.kn-content-cta`, `.kn-content-cta-icon`, `.kn-content-kind-icon`, `.kn-content-group`. Shared `.kn-pill` supplies filled metadata pills and pressed filter pills. Attributes `data-kn-image-ratio="2:1|3:2|1:1"`, `data-kn-image-inset="true|false"`, `data-kn-meta="1|2"`, `data-kn-separator="comma|bar|dot|none"`, `data-kn-pill`, `data-kn-placeholder` and `data-kn-content-group` describe existing parts. Item `data-kn-group` matches its label for visibility. Optional metadata `kind="author|date|category"` becomes `data-kn-meta-kind` for the gallery configurator; arbitrary metadata needs no kind.
+
+Visitor Filters uses `variant="filters|search"`; `.kn-visitor-filter-panel`, `select`, `search`, `input` and `submit` name its panel parts. `data-kn-enhanced` hides only the filter panel’s fallback submit control. Shared `.kn-search-box`, `.kn-search-row` and `.kn-search-links` come from Search Panel; header aliases remain for compatibility with its approved appearance.
+
+Consent adds `.kn-consent-actions`, `.kn-consent-settings-header`, `.kn-consent-settings-actions`, `.kn-consent-category-label`, `.kn-consent-category-content`, `.kn-consent-always`, `.kn-consent-close`, `.kn-consent-reopen`, `.kn-switch` and `.kn-switch-track`. Props `policyHref`, `policyLabel`, `maxAgeDays` (182), `reopenButton` (true) and `reopenLabel` identify the policy, expiry and persistent control. `categories[].services[]` contains `name`, `provider`, `thirdParty`, `purpose`, `storage` and `data`. `purpose` must include any onward sharing. `data-kn-max-age-days` supplies retention to the runtime; `data-kn-consent-reopen` relates the persistent Button to its banner. Stored `timestamp` is the choice’s epoch milliseconds, beside `version` and `choices`. Existing consent actions/events and Embed’s shared API remain unchanged. `--kn-consent-height` reserves body/scroll space only on narrow windows.

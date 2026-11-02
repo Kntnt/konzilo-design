@@ -1,0 +1,51 @@
+---
+import { project, t, num, date } from '../data.js';
+import { words } from '../words.js';
+const { page } = Astro.props;
+const content = words(page);
+const bookend = page.opener || page.id === 'cover' || page.id === 'next';
+---
+
+<section
+  class:list={[
+    'sheet',
+    page.opener && 'chapter',
+    page.id === 'cover' && 'cover',
+    page.id === 'next' && 'next',
+  ]}
+  id={page.id}
+  data-kn-surface={bookend ? 'brand' : 'page'}
+  data-page={page.number}
+  data-title={content.title}
+  data-catalog={JSON.stringify(page.catalog)}
+>
+  <div class="running rail" data-kn-type="label">
+    {page.id === 'cover'
+      ? t('document.title')
+      : t(`${page.chapter || 'introduction'}.name`)}
+    {page.group && <span> · {t(`group.${page.group}`)}</span>}
+  </div>
+  {page.opener || page.id === 'cover' ? (
+    <slot />
+  ) : (
+    <>
+      <header class="page-heading rail">
+        <h2 data-kn-type="heading-1">{content.title}</h2>
+        <p>{content.text}</p>
+      </header>
+      <div class="specimen-area" data-fit-area data-stage={page.stage}>
+        <div class="specimen-content" data-fit-content>
+          <slot />
+        </div>
+      </div>
+      <p class="zoom-note" data-kn-type="small" data-zoom-note></p>
+    </>
+  )}
+  <footer class="page-foot rail" data-kn-type="label">
+    <span>{project.name}</span>
+    <span>
+      {t('version', { version: project.version })} · {date}
+    </span>
+    <span>{num(page.number)}</span>
+  </footer>
+</section>

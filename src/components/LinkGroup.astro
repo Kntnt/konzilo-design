@@ -1,0 +1,7 @@
+---
+import type { HTMLAttributes } from 'astro/types';
+// Related actions in a wrapping row or a vertical stack.
+interface Props extends HTMLAttributes<'div'> { direction?: 'row' | 'stack'; }
+const { direction = 'row', class: className, ...attributes } = Astro.props;
+---
+<div {...attributes} class:list={['kn-link-group', className]} data-kn-direction={direction}><slot /></div>

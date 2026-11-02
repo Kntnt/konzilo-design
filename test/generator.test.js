@@ -149,7 +149,7 @@ test('defaults, explicit colour policies, frame and completed contrast metadata'
   const file = { inputs, project: {}, resolved: r };
   assert.equal(validateDesignFile(file), file);
   assert.ok((await emitCss(file)).includes('--kn-frame-width: 2px;'));
-  assert.equal(Object.keys(r.surfaces).length, 9); // the eight kinds and tint-secondary
+  assert.equal(Object.keys(r.surfaces).length, 13); // eight base kinds, four status kinds and tint-secondary
 });
 
 test('inputs reject unknown controls, invalid ranges and unavailable colour choices', async () => {

@@ -1,0 +1,148 @@
+---
+import BodyText from '../../../src/components/BodyText.astro';
+import HeadingGroup from '../../../src/components/HeadingGroup.astro';
+import Form from '../../../src/components/Form.astro';
+import Field from '../../../src/components/Field.astro';
+import Button from '../../../src/components/Button.astro';
+import ConsentBanner from '../../../src/components/ConsentBanner.astro';
+import Table from '../../../src/components/Table.astro';
+import { fields, categories, consentTexts } from '../samples.js';
+import { t } from '../data.js';
+const { id } = Astro.props;
+const states = ['default', 'hover', 'focus', 'active', 'disabled'];
+---
+
+{['form', 'form-brand'].includes(id) && (
+  <div
+    data-kn-surface={id === 'form-brand' ? 'brand' : 'page'}
+    class="sample-pad"
+  >
+    <Form action="#contact" fields={fields.slice(0, 4)} columns={2}>
+      <Button slot="actions" type="submit">
+        Send request
+      </Button>
+      <Button slot="actions" type="reset" variant="outline">
+        Start again
+      </Button>
+    </Form>
+  </div>
+)}
+{id === 'form-more' && (
+  <Form
+    action="#contact"
+    columns={2}
+    fields={[
+      {
+        name: 'phone',
+        type: 'tel',
+        label: 'Phone number',
+        help: 'Include the country code.',
+      },
+      { name: 'date', type: 'date', label: 'Preferred date' },
+      {
+        name: 'quantity',
+        type: 'number',
+        label: 'Number of places',
+        min: 1,
+        max: 8,
+        value: '2',
+      },
+      {
+        name: 'website',
+        type: 'url',
+        label: 'Website',
+        help: 'Include the full address.',
+      },
+      ...fields.slice(4),
+    ]}
+  >
+    <Button slot="actions">Save preferences</Button>
+  </Form>
+)}
+{id === 'form-states' && (
+  <div class="sample-state-row">
+    {states.map((state) => (
+      <div>
+        <p data-kn-type="label">{t(`state.${state}`)}</p>
+        <Field
+          class={`is-${state}`}
+          name={`field-${state}`}
+          label="Email address"
+          type="email"
+          value=""
+          disabled={state === 'disabled'}
+        />
+        <Field
+          class={`is-${state}`}
+          name={`select-${state}`}
+          label="Service"
+          type="select"
+          options={[
+            { value: 'planning', label: 'Planning' },
+            { value: 'support', label: 'Support' },
+          ]}
+          disabled={state === 'disabled'}
+        />
+        <Field
+          class={`is-${state}`}
+          name={`check-${state}`}
+          label="Updates"
+          type="checkbox"
+          options={[{ value: 'yes', label: 'Subscribe' }]}
+          disabled={state === 'disabled'}
+        />
+      </div>
+    ))}
+  </div>
+)}
+{['consent-banner', 'consent-settings'].includes(id) && (
+  <ConsentBanner
+    id="specimen-consent"
+    categories={categories}
+    texts={consentTexts}
+    reopenButton={false}
+  />
+)}
+{id === 'consent-services' && (
+  <Table
+    caption="Services used by this example"
+    columns={[
+      'Service / cookie',
+      'Provider',
+      'Third party',
+      'Purpose',
+      'Storage time',
+      'Data collected',
+    ].map((label) => ({ label }))}
+    rows={categories.flatMap((category) =>
+      (category.services || []).map((service) => [
+        service.name,
+        service.provider,
+        service.thirdParty ? 'Yes' : 'No',
+        service.purpose,
+        service.storage,
+        service.data,
+      ]),
+    )}
+  />
+)}
+
+{id === 'consent-banner' && (
+  <div class="consent-page-context">
+    <HeadingGroup
+      eyebrow="Privacy choices"
+      heading="Choose what may run"
+      deck="Necessary storage remembers your choice. Optional external media starts off."
+      type="heading-2"
+    />
+    <BodyText>
+      <p>
+        You can accept all services, reject optional services or decide
+        separately in settings. You can change your choice at any time.
+      </p>
+      <p>
+        <a href="#cookie-policy">Read about storage and privacy</a>
+      </p>
+    </BodyText>
+  </div>
+)}

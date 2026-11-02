@@ -1,0 +1,10 @@
+@layer kn-components {
+  .kn-callout { --kn-callout-mark: var(--kn-info); margin-block: 1.5em; padding: 1.25em; border: 1px solid var(--kn-callout-mark); border-inline-start: 0.3rem solid var(--kn-callout-mark); border-radius: var(--kn-radius-control); color: var(--kn-text); overflow-wrap: anywhere; }
+  .kn-callout[data-kn-variant="success"] { --kn-callout-mark: var(--kn-success); }
+  .kn-callout[data-kn-variant="warning"] { --kn-callout-mark: var(--kn-warning); }
+  .kn-callout[data-kn-variant="error"] { --kn-callout-mark: var(--kn-error); }
+  .kn-callout[data-kn-style="filled"] { --kn-callout-mark: var(--kn-accent); border-block: 0; border-inline-end: 0; }
+  .kn-callout-heading { display: flex; align-items: center; gap: 0.6em; margin-block-end: 0.6em; }
+  .kn-callout-heading > .kn-callout-title { margin: 0; }
+  .kn-callout-icon { color: var(--kn-callout-mark); }
+}

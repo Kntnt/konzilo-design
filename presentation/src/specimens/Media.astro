@@ -1,0 +1,45 @@
+---
+import Figure from '../../../src/components/Figure.astro';
+import VideoPlayer from '../../../src/components/VideoPlayer.astro';
+import Embed from '../../../src/components/Embed.astro';
+import { context } from './context.js';
+import { t } from '../data.js';
+const { id, project, resolved } = Astro.props;
+const { landscapes, panorama } = context(project, resolved);
+---
+
+{id === 'figure' && (
+  <div class="sample-pair media-pair">
+    <Figure
+      src={panorama}
+      width="narrow"
+      alt="Overlapping planes in pale colours"
+      caption="A picture and its caption stay together."
+    />
+    <VideoPlayer
+      title="An introduction to the approach"
+      poster={landscapes[1]}
+      caption="Local poster; this offline specimen has no video file."
+      tracks={[
+        { src: 'data:text/vtt,WEBVTT', language: 'en', label: 'English' },
+      ]}
+    />
+  </div>
+)}
+{id === 'embed' && (
+  <div class="sample-pair">
+    {[false, true].map((thumbnail) => (
+      <div data-embed-example={thumbnail ? 'thumbnail' : 'consent'}>
+        <p class="grid-caption" data-kn-type="label">
+          {t(thumbnail ? 'embed.thumbnail' : 'embed.before-consent')}
+        </p>
+        <Embed
+          url="https://vimeo.com/123456789"
+          title="An introduction to the approach"
+          poster={landscapes[3]}
+          galleryNote="External media remains off in this offline document."
+        />
+      </div>
+    ))}
+  </div>
+)}

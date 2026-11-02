@@ -1,0 +1,39 @@
+---
+import type { HTMLAttributes } from 'astro/types';
+import type { Width } from './interaction-types';
+import type { Surface } from './frame-types';
+import Figure from './Figure.astro';
+import Button from './Button.astro';
+import Icon from './Icon.astro';
+import LinkGroup from './LinkGroup.astro';
+import { recogniseEmbed } from './embed-providers.js';
+import { localPreview, embedNotice } from './embed.js';
+interface Props extends HTMLAttributes<'figure'> {
+  url: string; title?: string; caption?: string; width?: Width; poster?: string; surface?: Surface;
+  loadLabel?: string; settingsLabel?: string; playLabel?: string; notice?: string; originalLabel?: string; galleryNote?: string;
+}
+const { url, title, caption, width = 'narrow', poster, surface = 'raised', loadLabel = 'Show this time', settingsLabel = 'Open consent settings', playLabel, notice, originalLabel = 'Open original content', galleryNote, class: className, ...attributes } = Astro.props;
+const embed = recogniseEmbed(url);
+const name = title ?? embed.title;
+if (!name.trim()) throw new TypeError('Embed requires an accessible title');
+if (poster && !localPreview(poster)) throw new TypeError('Embed preview must be a local image');
+---
+<Figure {...attributes} class:list={['kn-embed', className]} caption={caption} width={width} data-kn-url={url} data-kn-embed-title={name} data-kn-gallery-note={galleryNote}>
+  <div class="kn-embed-stage" data-kn-format={embed.format} hidden>
+    <div class="kn-embed-consent" data-kn-surface={surface}>
+      <p class="kn-embed-title" data-kn-type="heading-6">{name}</p>
+      <p class="kn-embed-notice" data-kn-type="small">{notice ?? embedNotice(embed.provider)}</p>
+      <LinkGroup><Button variant="outline" data-kn-embed-load>{loadLabel}</Button><Button variant="outline" data-kn-consent-open>{settingsLabel}</Button></LinkGroup>
+    </div>
+    {embed.start === 'click' && <button type="button" class="kn-embed-thumbnail" data-kn-surface={surface} aria-label={playLabel ?? `Play: ${name}`} hidden>
+      {poster ? <img class="kn-embed-poster" src={poster} alt="" loading="lazy" /> : <span class="kn-embed-plate" data-kn-type="heading-6">{embed.provider}</span>}
+      <span class="kn-embed-play"><Icon name="play" /></span>
+    </button>}
+    <div class="kn-embed-frame" hidden></div>
+  </div>
+  <a class="kn-embed-original" href={url}>{originalLabel}: {name}</a>
+</Figure>
+<script>
+  import { setupEmbeds } from './embed.js';
+  setupEmbeds();
+</script>

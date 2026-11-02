@@ -1,0 +1,158 @@
+---
+import Page from '../../../src/components/Page.astro';
+import Header from '../../../src/components/Header.astro';
+import Footer from '../../../src/components/Footer.astro';
+import Hero from '../../../src/components/Hero.astro';
+import Band from '../../../src/components/Band.astro';
+import HeadingGroup from '../../../src/components/HeadingGroup.astro';
+import BodyText from '../../../src/components/BodyText.astro';
+import Button from '../../../src/components/Button.astro';
+import LinkGroup from '../../../src/components/LinkGroup.astro';
+import Card from '../../../src/components/Card.astro';
+import CardGrid from '../../../src/components/CardGrid.astro';
+import Form from '../../../src/components/Form.astro';
+import Table from '../../../src/components/Table.astro';
+import Callout from '../../../src/components/Callout.astro';
+import {
+  sample,
+  menu,
+  search,
+  footerBands,
+  columns,
+  rows,
+  fields,
+} from '../samples.js';
+import { context } from './context.js';
+const { id, project, resolved } = Astro.props;
+const { identity, landscapes, list } = context(project, resolved);
+---
+
+{id === 'overview' && (
+  <div class="overview-stage specimen-rail">
+    <div class="overview-copy">
+      <HeadingGroup
+        eyebrow={sample.eyebrow}
+        heading="A practical plan, clearly explained"
+        deck="Useful information and a simple next step."
+        type="heading-1"
+      />
+      <LinkGroup>
+        <Button>{sample.action}</Button>
+        <Button variant="outline">{sample.secondary}</Button>
+      </LinkGroup>
+      <div class="overview-colours">
+        {Object.entries(resolved.ramps).map(([name, ramp]) => (
+          <span style={{ background: ramp[300] }} aria-label={name}></span>
+        ))}
+      </div>
+    </div>
+    <Card
+      heading="Start with a short conversation"
+      text="Explain the goal, review the options and agree on the next step."
+      href="#contact"
+      surface="tint"
+      picture={{ src: landscapes[0], alt: 'Quiet arcs and overlapping planes' }}
+    />
+  </div>
+)}
+{id === 'preview' && (
+  <Page>
+    <Header
+      slot="header"
+      identity={identity}
+      arrangement="A"
+      menu={menu}
+      linkMenu
+      menuButton={{ word: 'Menu' }}
+      search={search}
+    />
+    <Hero
+      variant="picture"
+      eyebrow={sample.eyebrow}
+      heading={sample.heading}
+      deck={sample.deck}
+      picture={landscapes[0]}
+      alt="Quiet arcs and overlapping planes"
+    >
+      <Button href="#contact">{sample.action}</Button>
+    </Hero>
+    <Band surface="tint">
+      <div class="sample-stack preview-services">
+        <HeadingGroup
+          eyebrow="Services"
+          heading="Practical support at every stage"
+          type="heading-3"
+          deck="From the first question to a clear delivery plan."
+        />
+        <CardGrid>
+          {list.map((item) => (
+            <Card
+              heading={item.title}
+              text={item.text}
+              href="#services"
+              surface="raised"
+            />
+          ))}
+        </CardGrid>
+      </div>
+    </Band>
+    <Band surface="page">
+      <BodyText>
+        <h2 data-kn-type="heading-3">Information you can use</h2>
+        <p>{sample.paragraph}</p>
+      </BodyText>
+      <LinkGroup style="margin-block-start: var(--kn-space-component-gap)">
+        <Button>{sample.action}</Button>
+        <Button variant="outline">{sample.secondary}</Button>
+        <Button variant="arrow">{sample.link}</Button>
+      </LinkGroup>
+    </Band>
+    <Band surface="brand">
+      <Table caption="A delivery plan" columns={columns} rows={rows} />
+    </Band>
+    <Band surface="page">
+      <div class="sample-stack">
+        <Callout variant="info" title="A useful starting point">
+          <p>Send a short description of what you need.</p>
+        </Callout>
+        <Form action="#contact" columns={2} fields={fields.slice(0, 2)}>
+          <Button slot="actions">Send request</Button>
+        </Form>
+      </div>
+    </Band>
+    <Footer slot="footer" bands={footerBands(project)} />
+  </Page>
+)}
+{id === 'responsive-hero' && (
+  <>
+    <Header
+      identity={identity}
+      menu={menu}
+      linkMenu
+      menuButton={{ word: 'Menu' }}
+      search={search}
+    />
+    <Hero
+      variant="typographic"
+      heading="Clear next steps"
+      deck="Practical help when you need it."
+    >
+      <Button href="#contact">Get started</Button>
+    </Hero>
+  </>
+)}
+{id === 'responsive-grid' && (
+  <div class="sample-responsive-grid">
+    <CardGrid columns={2}>
+      {list.map((item, index) => (
+        <Card
+          heading={item.title}
+          href="#planning"
+          picture={item.picture}
+          surface={index % 2 ? 'tint' : 'raised'}
+        />
+      ))}
+    </CardGrid>
+  </div>
+)}
+{id === 'responsive-footer' && <Footer bands={footerBands(project)} />}

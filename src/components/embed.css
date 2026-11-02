@@ -1,0 +1,25 @@
+@layer kn-components {
+  .kn-embed [hidden] { display: none; }
+  .kn-embed-consent { display: flex; flex-direction: column; align-items: start; justify-content: center; gap: var(--kn-space-component-gap); min-block-size: 14rem; padding: var(--kn-space-plate); }
+  .kn-embed-consent > p { margin: 0; }
+  .kn-embed-notice { color: var(--kn-text-muted); }
+  /* A heavy player waits behind what looks like the content; a click starts it. */
+  .kn-embed-thumbnail { position: relative; display: grid; place-items: center; inline-size: 100%; aspect-ratio: 16 / 9; padding: 0; border: 0; overflow: clip; cursor: pointer; font: inherit; }
+  .kn-embed-poster { position: absolute; inset: 0; inline-size: 100%; block-size: 100%; object-fit: cover; }
+  .kn-embed-plate { position: absolute; inset-block-start: var(--kn-space-component-gap); inset-inline-start: var(--kn-space-component-gap); color: var(--kn-text-muted); }
+  .kn-embed-play { position: relative; display: grid; place-items: center; inline-size: 4.5rem; block-size: 4.5rem; border-radius: 50%; background: var(--kn-button-background); color: var(--kn-button-text); font-size: 1.75rem; transition: background var(--kn-duration-feedback) var(--kn-easing-standard); }
+  .kn-embed-play .kn-icon { fill: currentColor; }
+  .kn-embed-thumbnail:hover .kn-embed-play { background: var(--kn-button-background-hover); }
+  .kn-embed-frame { aspect-ratio: 16 / 9; background: var(--kn-background-alt); color: var(--kn-text); }
+  .kn-embed-stage[data-kn-format="4 / 3"] .kn-embed-frame { aspect-ratio: 4 / 3; }
+  .kn-embed-stage[data-kn-format="square"] .kn-embed-frame { aspect-ratio: 1; }
+  .kn-embed-stage[data-kn-format="audio"] .kn-embed-frame { aspect-ratio: auto; block-size: 12rem; }
+  .kn-embed-frame iframe { display: block; inline-size: 100%; block-size: 100%; border: 0; }
+  .kn-embed-original { display: inline-block; margin-block: 0.75em; }
+  .kn-embed-gallery-note { margin: 0; padding: var(--kn-space-plate); }
+  .kn-embed-dialog { inline-size: min(60rem, calc(100% - 2 * var(--kn-layout-side-margin))); max-block-size: 90dvh; padding: var(--kn-space-plate); border: 1px solid var(--kn-border); border-radius: var(--kn-radius-card); box-shadow: var(--kn-shadow-panel); }
+  .kn-embed-dialog[open] { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; gap: var(--kn-space-component-gap); }
+  .kn-embed-dialog > :first-child { margin: 0; }
+  .kn-embed-dialog > .kn-embed { grid-column: 1 / -1; }
+  .kn-embed-dialog::backdrop { background: var(--kn-background); opacity: 0.6; }
+}

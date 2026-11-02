@@ -1,0 +1,77 @@
+---
+import Card from '../../../src/components/Card.astro';
+import CardGrid from '../../../src/components/CardGrid.astro';
+import ContentCard from '../../../src/components/ContentCard.astro';
+import { context } from './context.js';
+import { t } from '../data.js';
+const { id, project, resolved } = Astro.props;
+const { list, people, landscapes } = context(project, resolved);
+---
+
+{['card', 'card-unplated'].includes(id) && (
+  <CardGrid columns={3}>
+    {list.map((item, index) => (
+      <Card
+        heading={item.title}
+        text={item.text}
+        href="#services"
+        picture={{ src: landscapes[index], alt: 'A quiet abstract landscape' }}
+        surface={id === 'card' ? ['raised', 'tint', 'brand'][index] : undefined}
+      />
+    ))}
+  </CardGrid>
+)}
+{id === 'card-person' && (
+  <CardGrid columns={4}>
+    {[
+      'Team lead',
+      'Project adviser',
+      'Support specialist',
+      'Service adviser',
+    ].map((heading, index) => (
+      <Card
+        heading={heading}
+        variant="person"
+        personRole="Service team"
+        picture={{
+          src: people[index],
+          alt: 'Abstract head and shoulders in tints',
+        }}
+        surface={index < 2 ? 'tint' : undefined}
+      />
+    ))}
+  </CardGrid>
+)}
+{id === 'content-card' && (
+  <CardGrid>
+    {list.map((item, index) => (
+      <ContentCard
+        {...item}
+        surface={['raised', 'tint', undefined][index]}
+        imageInset={index === 1}
+        cta={{ label: 'Read more', style: 'link', icon: '→' }}
+      />
+    ))}
+  </CardGrid>
+)}
+{id === 'card-grid' && (
+  <div class="sample-stack card-grid-comparison">
+    {[2, 4].map((columns) => (
+      <div>
+        <p class="grid-caption" data-kn-type="label">
+          {t('card-grid.columns', { count: columns })}
+        </p>
+        <CardGrid columns={columns}>
+          {[...list, list[0]].slice(0, columns).map((item, index) => (
+            <Card
+              heading={['Planning', 'Support', 'Delivery', 'Review'][index]}
+              text="A clear next step."
+              href="#services"
+              surface="raised"
+            />
+          ))}
+        </CardGrid>
+      </div>
+    ))}
+  </div>
+)}

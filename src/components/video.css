@@ -1,0 +1,3 @@
+@layer kn-components {
+  .kn-video video { --kn-video-ratio: 16 / 9; display: block; inline-size: 100%; block-size: auto; aspect-ratio: var(--kn-video-ratio); object-fit: contain; background: var(--kn-background-alt); }
+}

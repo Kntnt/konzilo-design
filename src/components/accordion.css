@@ -1,0 +1,27 @@
+@layer kn-components {
+  .kn-accordion { margin-block: 1.5em; }
+  .kn-accordion > .kn-accordion-item { border-block-end: 1px solid var(--kn-border); }
+  .kn-accordion > .kn-accordion-item:first-child { border-block-start: 1px solid var(--kn-border); }
+  .kn-accordion-summary { display: flex; align-items: center; justify-content: space-between; gap: 1em; min-block-size: 2.75rem; padding-block: 1em; padding-inline: 0.75em; transition: background-color var(--kn-duration-feedback) var(--kn-easing-standard); list-style: none; cursor: pointer; color: var(--kn-text); }
+  .kn-accordion-summary::marker { content: ""; }
+  .kn-accordion-summary::-webkit-details-marker { display: none; }
+  .kn-accordion-summary > .kn-accordion-label { margin: 0; min-inline-size: 0; overflow-wrap: anywhere; }
+  .kn-accordion-summary:hover { background: var(--kn-background-alt); }
+  .kn-accordion-chevron { transition: rotate var(--kn-duration-feedback) var(--kn-easing-standard); }
+  .kn-accordion-item[open] > .kn-accordion-summary > .kn-accordion-chevron { rotate: 180deg; }
+  .kn-accordion-content { padding-block-end: 1em; padding-inline: 0.75em; }
+  .kn-accordion[data-kn-variant="boxes"] { display: grid; gap: 0.5em; }
+  .kn-accordion[data-kn-variant="boxes"] > .kn-accordion-item { border: 1px solid var(--kn-border-strong); border-radius: var(--kn-radius-control); overflow: clip; }
+  .kn-accordion[data-kn-variant="boxes"] .kn-accordion-summary { background: var(--kn-background-alt); }
+  .kn-accordion[data-kn-variant="boxes"] .kn-accordion-summary:hover { background: var(--kn-background-hover); }
+  .kn-accordion[data-kn-variant="boxes"] .kn-accordion-content { padding-block: 1em; }
+  @supports (interpolate-size: allow-keywords) {
+    .kn-accordion-item { interpolate-size: allow-keywords; }
+    .kn-accordion-item::details-content { block-size: 0; overflow: clip; transition: block-size var(--kn-duration-movement) var(--kn-easing-standard), content-visibility var(--kn-duration-movement) allow-discrete; }
+    .kn-accordion-item[open]::details-content { block-size: auto; }
+  }
+  @media print {
+    .kn-accordion-item::details-content { content-visibility: visible; block-size: auto; }
+    .kn-accordion-item > .kn-accordion-content { display: block; }
+  }
+}

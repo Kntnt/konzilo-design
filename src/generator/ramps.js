@@ -2,10 +2,11 @@ import { hexToOklch, fitChroma, oklchToHex, contrast, rgbToHex, hexToRgb } from 
 
 export const STEPS = Object.freeze([100, 200, 300, 400, 500, 600, 700, 800, 900, 950]);
 export const TARGETS = Object.freeze([1.12, 1.4, 2, 3.2, 4.8, 6, 8, 11, 16, 18.5]);
-// The light steps that carry tint backgrounds and their borders get a chroma ceiling, so a loud
-// seed gives a calm tint (owner, 2026-11-01). Step 300 is left alone: it is a foreground on dark
-// Surfaces (links, focus, muted text), where the seed's full colour belongs.
-export const LIGHT_CEILING = Object.freeze({ 100: 0.03, 200: 0.06 });
+// The steps that carry tint backgrounds get a chroma ceiling, so a loud seed gives a calm tint in
+// both modes (owner, 2026-11-01): 100 and its border 200 in light mode, 900 in dark mode. Step 300
+// is left alone: it is a foreground on dark Surfaces (links, focus, muted text), where the seed's
+// full colour belongs. So is 800, which carries the brand Surface.
+export const TINT_CEILING = Object.freeze({ 100: 0.03, 200: 0.06, 900: 0.06 });
 
 export function solveLightness(H, C, target, page = '#ffffff', factor = 1) {
   let lo = 0, hi = hexToOklch(page).L;
@@ -40,7 +41,7 @@ export function ramp(seedHex, options = {}) {
 }
 
 export function ramps(brandColors, temperature) {
-  const entries = Object.entries(brandColors).map(([name, seed]) => [name, ramp(seed, { ceiling: LIGHT_CEILING })]);
+  const entries = Object.entries(brandColors).map(([name, seed]) => [name, ramp(seed, { ceiling: TINT_CEILING })]);
   // A neutral midpoint, cooling towards blue or warming towards yellow independently of the brand.
   entries.push(['gray', ramp('#808080', {
     chroma: Math.abs(temperature) / 100 * 0.02,

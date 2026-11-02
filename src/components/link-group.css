@@ -1,0 +1,4 @@
+@layer kn-components {
+  .kn-link-group { display: flex; flex-wrap: wrap; align-items: center; gap: var(--kn-space-component-gap); }
+  .kn-link-group[data-kn-direction="stack"] { flex-direction: column; align-items: flex-start; }
+}

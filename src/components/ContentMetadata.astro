@@ -1,0 +1,8 @@
+---
+import type { ContentMeta, MetaSeparator } from './interaction-types';
+interface Props { items?: ContentMeta[]; separator?: MetaSeparator; place: 1 | 2 }
+const { items = [], separator = 'dot', place } = Astro.props;
+---
+{items.length > 0 && <p class="kn-content-meta" data-kn-type="label" data-kn-meta={place} data-kn-separator={separator}>{items.map((item) => <span class:list={['kn-content-meta-item', { 'kn-pill': item.pill }]} data-kn-pill={item.pill || undefined} data-kn-meta-kind={item.kind}>
+  {item.href ? <a href={item.href}>{item.datetime ? <time datetime={item.datetime}>{item.text}</time> : item.text}</a> : item.datetime ? <time datetime={item.datetime}>{item.text}</time> : item.text}
+</span>)}</p>}

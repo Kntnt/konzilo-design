@@ -1,0 +1,50 @@
+---
+import { resolved, copy, t, project } from '../data.js';
+import { pageList } from '../catalog.js';
+import { coreCss } from '../../../src/css/index.js';
+import Sheet from '../layouts/Sheet.astro';
+import Introduction from '../chapters/Introduction.astro';
+import Colour from '../chapters/Colour.astro';
+import Typography from '../chapters/Typography.astro';
+import Space from '../chapters/Space.astro';
+import Components from '../chapters/Components.astro';
+import '../../../src/components/index.css';
+import '../../../src/fonts/fonts.css';
+import '../document.css';
+const pages = pageList(resolved);
+---
+
+<!doctype html>
+<html lang={copy.lang} data-kn-mode="light">
+  <head>
+    <meta charset="utf-8" />
+    <title>{t('document.title')} · {project.name}</title>
+    <style is:inline set:html={coreCss(resolved)} />
+  </head>
+  <body>
+    {pages.map((page) => (
+      <Sheet page={page}>
+        {page.opener || ['cover', 'contents', 'next'].includes(page.id) ? (
+          <Introduction page={page} pages={pages} />
+        ) : page.chapter === 'colour' ? (
+          <Colour id={page.id} />
+        ) : page.chapter === 'typography' ? (
+          <Typography id={page.id} />
+        ) : page.chapter === 'space' ? (
+          <Space id={page.id} />
+        ) : (
+          <Components page={page} />
+        )}
+      </Sheet>
+    ))}
+    <script
+      id="kn-document-copy"
+      type="application/json"
+      is:inline
+      set:html={JSON.stringify({ zoom: copy.zoom, lang: copy.lang }).replaceAll(
+        '<',
+        '\\u003c',
+      )}
+    />
+  </body>
+</html>

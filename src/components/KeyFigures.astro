@@ -1,0 +1,14 @@
+---
+import type { HTMLAttributes } from 'astro/types';
+interface Props extends HTMLAttributes<'dl'> {
+  figures: { value: string; label: string; note?: string }[];
+}
+const { figures, class: className, ...attributes } = Astro.props;
+---
+<dl {...attributes} class:list={['kn-key-figures', className]}>
+  {figures.map(({ value, label, note }) => <div class="kn-key-figures-item">
+    <dt data-kn-type="small">{label}</dt>
+    <dd class="kn-key-figures-value" data-kn-type="heading-3">{value}</dd>
+    {note && <dd class="kn-key-figures-note" data-kn-type="small">{note}</dd>}
+  </div>)}
+</dl>

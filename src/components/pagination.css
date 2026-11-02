@@ -1,0 +1,8 @@
+@layer kn-components {
+  [data-kn-pagination-host] { margin-block-start: var(--kn-space-component-gap); }
+  .kn-pagination ul { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4em; list-style: none; margin: 0; padding: 0; }
+  .kn-pagination a, .kn-pagination span { display: inline-flex; align-items: center; justify-content: center; min-inline-size: 2.75rem; min-block-size: 2.75rem; padding: 0.4em; }
+  .kn-pagination a { color: var(--kn-text); text-decoration: none; border-radius: var(--kn-radius-control); }
+  .kn-pagination a[aria-current="page"] { background: var(--kn-button-background); color: var(--kn-button-text); }
+  .kn-pagination a:hover { text-decoration: underline; text-underline-offset: 0.18em; }
+}

@@ -1,0 +1,14 @@
+---
+import type { HTMLAttributes } from 'astro/types';
+import type { ContentParts } from './interaction-types';
+import type { Surface } from './frame-types';
+import ContentSummary from './ContentSummary.astro';
+interface Props extends Omit<HTMLAttributes<'article'>, 'title'>, ContentParts {
+  images?: boolean; surface?: Surface; imageRatio?: '1:1' | '3:2';
+}
+const { images = true, surface, picture, imageRatio = '3:2', class: className, title, href, level, type, meta1, meta2, metaSeparator, text, excerpt, cta, kind, fileType, fileSize, linkAttributes, ...attributes } = Astro.props;
+---
+<article {...attributes} class:list={['kn-content-row', className]} data-kn-surface={surface} data-kn-image-ratio={imageRatio}>
+  {images && (picture ? <a {...linkAttributes} class="kn-content-picture" href={href} aria-hidden="true" tabindex="-1"><img src={picture.src} alt="" loading={picture.loading ?? 'lazy'} /></a> : <div class="kn-content-picture" data-kn-placeholder aria-hidden="true"></div>)}
+  <ContentSummary {...{title, href, level, type, meta1, meta2, metaSeparator, text, excerpt, cta, kind, fileType, fileSize, linkAttributes}} />
+</article>

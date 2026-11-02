@@ -1,0 +1,521 @@
+---
+import ContentCard from '../../../src/components/ContentCard.astro';
+import ContentLoop from '../../../src/components/ContentLoop.astro';
+import VisitorFilters from '../../../src/components/VisitorFilters.astro';
+import Pagination from '../../../src/components/Pagination.astro';
+import VideoPlayer from '../../../src/components/VideoPlayer.astro';
+import Embed from '../../../src/components/Embed.astro';
+import ConsentBanner from '../../../src/components/ConsentBanner.astro';
+import Form from '../../../src/components/Form.astro';
+import Field from '../../../src/components/Field.astro';
+import { loopItems, documents, videos, topics, yearOptions, providers, galleryNote, allFields, consentCategories, consentTexts } from '../interaction-samples';
+import Header from '../../../src/components/Header.astro';
+import Footer from '../../../src/components/Footer.astro';
+import { identity, menu, languages, search, cta, footerVariants } from '../frame-samples';
+import Page from '../../../src/components/Page.astro';
+import Band from '../../../src/components/Band.astro';
+import Hero from '../../../src/components/Hero.astro';
+import TextImage from '../../../src/components/TextImage.astro';
+import CtaBand from '../../../src/components/CtaBand.astro';
+import KeyFigures from '../../../src/components/KeyFigures.astro';
+import Figure from '../../../src/components/Figure.astro';
+import ReadingArea from '../../../src/components/ReadingArea.astro';
+import AsideBlock from '../../../src/components/AsideBlock.astro';
+import Sidenote from '../../../src/components/Sidenote.astro';
+import BodyText from '../../../src/components/BodyText.astro';
+import HeadingGroup from '../../../src/components/HeadingGroup.astro';
+import Button from '../../../src/components/Button.astro';
+import LinkGroup from '../../../src/components/LinkGroup.astro';
+import Icon from '../../../src/components/Icon.astro';
+import Card from '../../../src/components/Card.astro';
+import CardGrid from '../../../src/components/CardGrid.astro';
+import Table from '../../../src/components/Table.astro';
+import Accordion from '../../../src/components/Accordion.astro';
+import AccordionItem from '../../../src/components/AccordionItem.astro';
+import Quotation from '../../../src/components/Quotation.astro';
+import Callout from '../../../src/components/Callout.astro';
+import Breadcrumbs from '../../../src/components/Breadcrumbs.astro';
+import TableOfContents from '../../../src/components/TableOfContents.astro';
+import { workshopColumns, workshopRows, totalsColumns, totalsRows, totalsFooter, wideColumns, wideRows, questions, contentsHeadings } from '../content-samples';
+import { icons } from '../../../src/components/icons.js';
+import { derive } from '../../../src/generator/index.js';
+import { coreCss } from '../../../src/css/index.js';
+import { galleryInputs, typefaceCases, typefaceChoices } from '../design.js';
+import '../../../src/fonts/fonts.css';
+import '../../../src/components/index.css';
+import '../gallery.css';
+import { landscape, portrait } from '../samples.js';
+const resolved = derive(galleryInputs);
+const kinds = Object.keys(resolved.surfaces);
+const settings = galleryInputs;
+// Each control explains itself, because the page is shown to people who did not build it.
+const tips = {
+  mode: 'Shows the page in light or dark mode. Page, raised and tint Surfaces follow it; brand, inverse and accent stay dark.',
+  primary: 'The main brand colour. Filled buttons, links and the brand, accent and tint Surfaces are generated from it.',
+  'secondary-enabled': 'Adds a second brand colour. Accents and focus rings then take it, and it gets a tint Surface of its own.',
+  secondary: 'The second brand colour. It has an effect only while Secondary on is ticked.',
+  'main-typeface': 'The family for practically all content. The system stacks need no font file. A serif works as well as a sans-serif.',
+  'heading-typeface': 'Headings follow the main typeface unless you choose otherwise, for example a sans-serif above serif text.',
+  'monospace-typeface': 'The family for code, and for labels when Labels is set to Monospace. Without a deliberate choice it is the system stack.',
+  label: 'The small text around headings: eyebrows, metadata and categories. They are always in capitals, in either the main family, the default, or the monospace family. Choosing Monospace also picks Red Hat Mono, if the system stack was selected.',
+  corner: 'How rounded buttons and cards are, from square through almost square to clearly rounded.',
+  density: 'How much air the design has, from very compact to very loose. It scales the space inside cards, between columns and around bands. Applies when you release the slider.',
+  strength: 'How strong the shadows are; 0 turns them off. Here they show on cards with a Surface of their own.',
+  hardness: "How sharp the shadow's edge is, from soft and diffuse to a solid offset at 100. It shows only when Shadow is above 0.",
+  frame: 'A solid outline around buttons and cards with a Surface of their own, from 0 to 3 pixels; 0 means none. Applies when you release the slider.',
+};
+const sliders = [
+  { id: 'corner', label: 'Corners', value: settings['corner-profile'], max: 100, step: 1 },
+  { id: 'density', label: 'Density', value: settings['density-profile'], max: 100, step: 1 },
+  { id: 'strength', label: 'Shadow', value: settings.shadow.strength, max: 100, step: 1 },
+  { id: 'hardness', label: 'Hardness', value: settings.shadow.hardness, max: 100, step: 1 },
+  { id: 'frame', label: 'Frame', value: settings.frame.width, max: 3, step: 0.1 },
+];
+const picture = { src: landscape, alt: 'Abstract hills beneath a round sun', loading: 'eager' as const };
+const headshot = { src: portrait, alt: 'Neutral portrait silhouette', loading: 'eager' as const };
+// A plate shows only where its colour differs from the band it lies on. Plated and unplated
+// cards get rows of their own, because a site does not mix them in one row.
+const plates = { page: ['raised', 'tint', 'brand'], tint: ['raised', 'page', 'brand'], brand: ['raised', 'tint', 'page'] } as const;
+const linkText = 'Find a clear starting point for your next shared project.';
+const articleText = 'A walk through the ordinary reveals a few unexpected possibilities.';
+const article = { picture, meta1: [{ text: '20 October 2026', datetime: '2026-10-20' }, { text: 'Field notes' }], text: articleText, href: '#body-text' } as const;
+const person = { variant: 'person', picture: headshot, personRole: 'Workshop coordinator', email: 'studio@example.invalid', phone: '+1 202 555 0148' } as const;
+const cardSamples = {
+  Link: [
+    { heading: 'A place to begin', eyebrow: 'Studio notes', icon: 'globe', text: linkText, href: '#body-text' },
+    { heading: 'An open invitation', eyebrow: 'Studio notes', icon: 'mail', text: linkText, href: '#body-text' },
+    { heading: 'Notes from the bench', eyebrow: 'Studio notes', icon: 'file-text', text: linkText, href: '#body-text' },
+  ],
+  Article: [
+    { ...article, heading: 'A new view of familiar places' },
+    { ...article, heading: 'What we noticed along the way' },
+    { ...article, heading: 'Three questions worth asking' },
+  ],
+  Person: [
+    { ...person, heading: 'Rowan Vale' },
+    { ...person, heading: 'Ellis Reed' },
+    { ...person, heading: 'Noor Lind' },
+  ],
+} as const;
+const figures = [{ value: '24', label: 'Shared workshops', note: 'Across four seasons' }, { value: '1,280', label: 'Pages in the notebook' }, { value: '96%', label: 'Materials used again' }, { value: '18', label: 'Neighbourhood gardens' }];
+const runningText = 'We followed the path past the old bridge and stopped where the trees opened onto a meadow. Each person noticed something different: the curve of the bank, the sound of water, a place to sit. Back at the shared table, these small observations became a set of sketches. We tested the simplest ideas first, leaving space for people to add their own experience. A useful place grows through this patient exchange, one ordinary detail at a time.';
+const labChoices = [
+  { name: 'arrangement', label: 'Arrangement', options: ['A', 'B', 'C'], tip: 'The three fixed arrangements set the link menu and search icon in their approved groups.' },
+  { name: 'headerAttachment', label: 'Header', options: ['sticky', 'flow'], tip: 'Sticky holds the header at the window’s top. Flow scrolls with the page.' },
+  { name: 'start', label: 'Page start', options: ['below', 'under'], tip: 'Under puts the first band behind a sticky header, which takes that band’s Surface at the top.' },
+  { name: 'surface', label: 'Opaque Surface', options: ['page', 'brand'], tip: 'The header takes this complete Surface after the first 24 pixels of scrolling.' },
+  { name: 'firstBand', label: 'First band', options: ['dark', 'light'], tip: 'The first band supplies every context role while the header is transparent.' },
+  { name: 'footerAttachment', label: 'Footer', options: ['flow', 'reveal'], tip: 'Reveal holds the footer behind the page only while the entire footer fits in the window.' },
+];
+const labChecks = [
+  { name: 'autohide', label: 'Autohide', checked: false, tip: 'Slides the sticky header away on downward scrolling and brings it back on upward scrolling.' },
+  ...['slogan', 'name', 'links', 'language', 'search', 'cta'].map((name) => ({ name, label: ({ links: 'Link menu', cta: 'CTA' })[name] ?? name[0].toUpperCase() + name.slice(1), checked: true, tip: `Shows the ${({ links: 'link menu', language: 'language switcher', search: 'search icon', cta: 'CTA button' })[name] ?? name} in its fixed place. Functional items move into the megamenu when room runs out.` })),
+  { name: 'pageShadow', label: 'Page shadow', checked: false, tip: 'The Page casts its shadow on the footer. At zero shadow strength the visible edge uses a hairline.' },
+  { name: 'short', label: 'Short page', checked: false, tip: 'Hides the long reading bands. The footer stays at the window’s bottom with the page Surface filling the space above.' },
+];
+const filterTitles = ['Gathering around the orchard table', 'Listening to the morning birds', 'A shelter for rainy afternoons', 'Sketches beside the footbridge', 'The old greenhouse door', 'A place to exchange seeds', 'Learning the names of trees', 'A bench facing the sunrise', 'The shape of a useful tool', 'Drawing a path together', 'Stories carried by the river', 'A workshop for winter evenings', 'Repairing the garden gate', 'Making room for a neighbour', 'The last leaf in the notebook'];
+const filteredItems = loopItems.map((item, index) => ({ ...item, title: filterTitles[index] }));
+const filterCardTitles = ['Following a trail of questions', 'An open cupboard of materials', 'The sound of the courtyard', 'A model made from offcuts', 'Paths between shared gardens', 'Letters from the workshop'];
+const searchTitles = ['A useful place to pause', 'Starting with a blank page', 'Keeping the small discoveries', 'What we learned from the rain'];
+const accordionLabels = [
+  [['Preparing for a first visit', 'Where should we meet?'], ['What is on the workbench?', 'Which materials can I bring?']],
+  [['Following the orchard path', 'How long does the walk take?'], ['Keeping a record of the day', 'May I share a drawing?']],
+  [['Opening the garden for winter', 'When do the gates close?'], ['Making a model together', 'Do I need any experience?']],
+  [['Listening after the evening walk', 'What did we notice in the dark?'], ['Planning the next gathering', 'Can a neighbour join us?']],
+];
+const contentChoices = [
+  { name: 'presentation', label: 'Presentation', options: [['cards', 'Cards'], ['rows', 'Rows']], tip: 'Uses the same rendered content as Content Cards or Content Rows in sections 39, 40 and 41.' },
+  { name: 'ratio', label: 'Picture ratio', options: [['3:2', '3:2'], ['2:1', '2:1 (cards)'], ['1:1', '1:1 (rows)']], tip: 'Cards offer 3:2 or 2:1 pictures. Rows offer 3:2 or square pictures.' },
+  { name: 'metadata', label: 'Metadata place', options: [['1', 'Above heading'], ['2', 'Below heading'], ['both', 'Both places']], tip: 'Places metadata above or below the heading. Both puts the category above and author and date below.' },
+  { name: 'separator', label: 'Separator', options: [['dot', 'Dot'], ['comma', 'Comma'], ['bar', 'Bar'], ['none', 'None']], tip: 'A decorative separator between metadata values; never next to a category pill.' },
+  { name: 'cta', label: 'Read more', options: [['link', 'Link'], ['none', 'None'], ['button', 'Outline button']], tip: 'Adds a separate content link or outline Button after the text, with the title in its accessible name.' },
+  { name: 'cta-icon', label: 'CTA icon', options: [['→', '→'], ['', 'None'], ['›', '›'], ['»', '»'], ['➔', '➔']], tip: 'Adds a decorative text arrow at the end of the CTA. It reverses in right-to-left text.' },
+  { name: 'surface', label: 'Card Surface', options: Object.keys(resolved.surfaces).filter((kind) => !kind.startsWith('picture-')).sort((a, b) => a === 'raised' ? -1 : b === 'raised' ? 1 : a.localeCompare(b)).map((kind) => [kind, kind]), tip: 'Selects the complete checked Surface for plated content. Unplated content inherits its band.' },
+  { name: 'columns', label: 'Columns', options: [['3', 'Three'], ['1', 'One'], ['2', 'Two'], ['4', 'Four']], tip: 'The maximum card column count. The grid reduces its count when there is less room.' },
+];
+const contentChecks = [
+  { name: 'images', label: 'Pictures', checked: true, tip: 'Shows pictures on every row, preserving a placeholder where an item has no picture.' },
+  { name: 'inset', label: 'Picture gap', checked: false, tip: 'Keeps a plated card’s picture inside the padding instead of flush to its three outer edges.' },
+  { name: 'author', label: 'Author', checked: true, tip: 'Shows the author metadata and its independent link to the notebook.' },
+  { name: 'date', label: 'Date', checked: true, tip: 'Shows a publication time with a machine-readable date.' },
+  { name: 'category', label: 'Category', checked: true, tip: 'Shows the category metadata and its own link.' },
+  { name: 'pill', label: 'Category pill', checked: false, tip: 'Renders the category as a small uppercase pill using the shared checked Button colours.' },
+  { name: 'text', label: 'Short text', checked: true, tip: 'Shows the optional summary or marked search excerpt after the metadata.' },
+  { name: 'plated', label: 'Plated', checked: true, tip: 'Gives the item its own Surface. A plated card also gets the shared frame and lifted hover shadow.' },
+];
+const contentPresets = [
+  { name: 'Editorial cards', meta: 'all', titles: ['A corner worth keeping', 'Riverbank conversations', 'The first shared drawing'], props: { surface: 'raised', cta: { label: 'Read the story', style: 'link', icon: '→' } } },
+  { name: 'Inset picture cards', meta: 'all', titles: ['A room for making', 'Drawing with neighbours', 'Tools that tell a story'], props: { surface: 'tint', imageInset: true, imageRatio: '2:1', cta: { label: 'Explore', style: 'button', icon: '›' } } },
+  { name: 'Category-led stories', meta: 'pill', titles: ['An orchard in autumn', 'The paper lantern workshop', 'Gathering seeds together'], props: { surface: 'raised' } },
+  { name: 'A simple reading list', meta: 'all', titles: ['Where the footpath bends', 'The value of a pause', 'An unexpected meeting'], props: { presentation: 'rows', images: false, metaSeparator: 'bar' } },
+  { name: 'Picture-led rows', meta: 'all', titles: ['Looking across the water', 'A sketch of the clearing', 'The garden after rain'], props: { presentation: 'rows', imageRatio: '1:1', cta: { label: 'Continue', style: 'link', icon: '»' } } },
+  { name: 'Quiet text cards', meta: 'none', titles: ['Leave a page open', 'A thought to take home', 'Questions for next time'], props: { images: false, columns: 3, cta: { label: 'Open note', style: 'link' } } },
+] as const;
+const bandRows = { page: ['Link', 'Article', 'Person'], tint: ['Link', 'Article'], brand: ['Link', 'Article'] } as const;
+---
+<!doctype html>
+<html lang="en" data-kn-mode="light">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Konzilo components, with live design controls and self-contained examples." />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23168b83' d='M3 3h18v18H3z'/%3E%3C/svg%3E" />
+    <title>Konzilo — Component gallery</title>
+    <style is:inline id="kn-live-core" set:html={coreCss(resolved)} />
+  </head>
+  <body>
+    <Page>
+    <header slot="header" class="g-controls" data-kn-surface="page" data-expanded="false" data-status="passed">
+      <div class="g-toolbar">
+        <p class="g-control-title">Konzilo / Live design</p>
+        <button class="g-toggle" type="button" aria-expanded="false" aria-controls="g-design-controls"><Icon name="menu" />Design controls</button>
+        <p class="g-status" role="status" aria-live="polite">Contrast passed · all Surfaces, both modes</p>
+      </div>
+      <form class="g-form" id="g-design-controls" aria-label="Live design controls">
+        <label class="g-field"><span>Mode</span><select name="mode" aria-describedby="g-tip-mode"><option value="light">Light</option><option value="dark">Dark</option></select><span class="g-tip" id="g-tip-mode" role="tooltip" aria-hidden="true" data-kn-surface="inverse">{tips['mode']}</span></label>
+        <label class="g-field"><span>Primary colour</span><input type="color" name="primary" aria-describedby="g-tip-primary" value={settings['brand-colors'].primary} /><span class="g-tip" id="g-tip-primary" role="tooltip" aria-hidden="true" data-kn-surface="inverse">{tips['primary']}</span></label>
+        <label class="g-field"><span>Secondary on</span><input type="checkbox" name="secondary-enabled" aria-describedby="g-tip-secondary-enabled" checked={Boolean(settings['brand-colors'].secondary)} /><span class="g-tip" id="g-tip-secondary-enabled" role="tooltip" aria-hidden="true" data-kn-surface="inverse">{tips['secondary-enabled']}</span></label>
+        <label class="g-field"><span>Secondary colour</span><input type="color" name="secondary" aria-describedby="g-tip-secondary" value={settings['brand-colors'].secondary ?? '#b66c32'} /><span class="g-tip" id="g-tip-secondary" role="tooltip" aria-hidden="true" data-kn-surface="inverse">{tips['secondary']}</span></label>
+        <label class="g-field"><span>Main typeface</span><select name="main-typeface" aria-describedby="g-tip-main-typeface">{typefaceChoices.main.map(({ label, value }) => <option value={value}>{label}</option>)}</select><span class="g-tip" id="g-tip-main-typeface" role="tooltip" aria-hidden="true" data-kn-surface="inverse">{tips['main-typeface']}</span></label>
+        <label class="g-field"><span>Headings</span><select name="heading-typeface" aria-describedby="g-tip-heading-typeface">{typefaceChoices.heading.map(({ label, value }) => <option value={value}>{label}</option>)}</select><span class="g-tip" id="g-tip-heading-typeface" role="tooltip" aria-hidden="true" data-kn-surface="inverse">{tips['heading-typeface']}</span></label>
+        <label class="g-field"><span>Monospace</span><select name="monospace-typeface" aria-describedby="g-tip-monospace-typeface">{typefaceChoices.monospace.map(({ label, value }) => <option value={value}>{label}</option>)}</select><span class="g-tip" id="g-tip-monospace-typeface" role="tooltip" aria-hidden="true" data-kn-surface="inverse">{tips['monospace-typeface']}</span></label>
+        <label class="g-field"><span>Labels</span><select name="label" aria-describedby="g-tip-label"><option value="main">Main typeface</option><option value="monospace">Monospace</option></select><span class="g-tip" id="g-tip-label" role="tooltip" aria-hidden="true" data-kn-surface="inverse">{tips['label']}</span></label>
+        {sliders.map(({ id, label, value, max, step }) => <label class="g-field" for={`g-${id}`}><span class="g-field-label">{label}<output for={`g-${id}`} id={`g-${id}-value`}>{value}</output></span><input id={`g-${id}`} name={id} type="range" min="0" max={max} step={step} value={value} aria-describedby={`g-tip-${id}`} /><span class="g-tip" id={`g-tip-${id}`} role="tooltip" aria-hidden="true" data-kn-surface="inverse">{tips[id]}</span></label>)}
+      </form>
+    </header>
+      <Band surface="page">
+        <HeadingGroup level={1} type="display" eyebrow="Konzilo Design System / 0.2" heading="A common language for the web" deck="A growing library, one set of roles. Explore an invented studio's content and change the design as you go." />
+      </Band>
+      <Band surface="page" id="typefaces">
+        <HeadingGroup class="g-section-heading" heading="Typefaces" deck="One sans-serif throughout is the norm. Every exception takes one choice or one line of CSS." />
+        <div class="g-typefaces">
+          {typefaceCases.map(({ name, how, style, note }) => <div class="g-typeface-case">
+            <h3 class="g-typeface-name">{name}</h3>
+            <p class="g-typeface-note">{note} <code>{how}</code></p>
+            <div class="g-typeface-specimen" style={style}>
+              <p data-kn-type="label">Field notes / Autumn</p>
+              <p data-kn-type="display">Large text</p>
+              <p data-kn-type="heading-1">First heading</p>
+              <p data-kn-type="heading-3">A lower heading</p>
+              <p data-kn-type="body">Running text, with <code data-kn-type="mono">code</code> in the monospace family.</p>
+            </div>
+          </div>)}
+        </div>
+      </Band>
+      <Band surface="page" id="body-text">
+        <HeadingGroup class="g-section-heading" heading="01 / Body Text" deck="Running text keeps its rhythm wherever it lives." />
+        <BodyText class="g-reading">
+          <h3>Small ideas, thoughtfully made</h3>
+          <p>At Juniper Atlas, we make room for useful ideas. A notebook, a shared table and a clear question are often enough to begin. This is sample content for an invented studio.</p>
+          <p>A good starting point brings <strong>clarity and care</strong> together. We keep the details <em>open to discovery</em>, and share what we learn through <a href="#cards">stories from the workshop</a>.</p>
+          <h4>A practical rhythm</h4>
+          <ul><li>Look closely at the everyday experience.</li><li>Make a small version that people can try.<ul><li>Keep the useful parts.</li><li>Ask what could be clearer.</li></ul></li><li>Leave room for the next idea.</li></ul>
+          <h5>Three steps to a first draft</h5>
+          <ol><li>Choose one question.</li><li>Sketch a possible answer.</li><li>Read it together and revise.</li></ol>
+          <blockquote><p>The most useful detail is the one that helps someone take the next step.</p></blockquote>
+          <hr />
+          <h6>A note on the details</h6>
+          <p>Use <code>currentColor</code> for a mark that follows its text. A small footnote<sup>1</sup> and a formula such as H<sub>2</sub>O should sit comfortably in a sentence.</p>
+          <p><small>1. These words and every illustration on this page are neutral examples.</small></p>
+        </BodyText>
+      </Band>
+      <Band surface="tint">
+        <HeadingGroup class="g-section-heading" heading="02 / Heading Group" />
+        <div class="g-heading-samples">
+          <HeadingGroup level={3} type="display" eyebrow="New perspectives" heading="Make space for what matters" deck="A display style for a generous opening." />
+          <HeadingGroup level={3} type="heading-2" eyebrow="Shared practice" heading="Good work begins with listening" deck="A clear introduction to the next part of the story." />
+          <HeadingGroup level={3} type="heading-5" eyebrow="From the notebook" heading="A smaller thought, just as considered" deck="The visual style changes independently of the heading's semantic level." />
+        </div>
+      </Band>
+      <Band surface="page" id="buttons">
+        <HeadingGroup class="g-section-heading" heading="03 / Buttons and Link Group" deck="The same actions inherit a checked palette on every Surface." />
+        <div class="g-stack">
+          {kinds.map((kind) => <div class="g-surface-row" data-kn-surface={kind} data-g-surface-kind={kind} hidden={!resolved.surfaces[kind]} style={kind.startsWith('picture-') ? { '--kn-picture-image': `url("${landscape}")` } : undefined}>
+            <h3 class="g-surface-name" data-kn-type="heading-5">{kind}</h3>
+            <LinkGroup><Button href="#cards" icon="plus">Explore ideas</Button><Button href="#icons" variant="outline" icon="download">View collection</Button><Button href="#grid" variant="arrow">See the details</Button></LinkGroup>
+          </div>)}
+        </div>
+      </Band>
+      <Band surface="raised" id="icons">
+        <HeadingGroup class="g-section-heading" heading="04 / Icon" deck="Lucide marks follow their text in size and colour." />
+        <ul class="g-icon-grid">{Object.keys(icons).map((name) => <li class="g-icon-sample" data-kn-type="small"><Icon name={name as keyof typeof icons} /><span>{name}</span></li>)}</ul>
+      </Band>
+      {(['page', 'tint', 'brand'] as const).map((ground, bandIndex) => <Band surface={ground} id={bandIndex === 0 ? 'cards' : undefined} contentClass="g-stack">
+        <HeadingGroup heading={`05 / Cards on ${ground}`} deck="A card with its own Surface is a plate. Without one it lies directly on the band, under a hairline or with a picture in its place." />
+        {bandRows[ground].map((name) => <>
+          <div><h3 class="g-grid-label" data-kn-type="heading-5">{name}, with a Surface</h3><CardGrid>
+            {cardSamples[name].map((card, i) => <Fragment>{name === 'Article' ? <ContentCard {...card} title={card.heading} surface={plates[ground][i]} /> : <Card {...card} surface={plates[ground][i]} />}</Fragment>)}
+          </CardGrid></div>
+          <div><h3 class="g-grid-label" data-kn-type="heading-5">{name}, without a Surface</h3><CardGrid>
+            {cardSamples[name].map((card) => <Fragment>{name === 'Article' ? <ContentCard {...card} title={card.heading} /> : <Card {...card} />}</Fragment>)}
+          </CardGrid></div>
+        </>)}
+      </Band>)}
+      <Band surface="page" id="grid" contentClass="g-stack">
+        <HeadingGroup heading="06 / Card Grid" deck="Two, three or four columns at most. Each grid steps down when its cards need more room." />
+        {([2, 3, 4] as const).map((columns) => <div><h3 class="g-grid-label" data-kn-type="heading-5">Up to {columns} columns</h3><CardGrid columns={columns}>
+          {Array.from({ length: columns * 2 }, (_, i) => <Card heading={['Observe', 'Imagine', 'Make', 'Share'][i % 4]} eyebrow={`Step ${i + 1}`} text="One useful idea, ready to grow through a little shared attention." href="#body-text" surface="raised" />)}
+        </CardGrid></div>)}
+      </Band>
+
+      <Hero id="hero" variant="picture" level={2} eyebrow="07 / Hero · Picture" heading="A wider view begins nearby" deck="A shared walk can change the way we see a familiar place." picture={landscape} alt="Invented green hills beneath a golden sun">
+        <LinkGroup><Button href="#reading-area">Read the field notes</Button><Button href="#text-image" variant="arrow">Explore the studio</Button></LinkGroup>
+      </Hero>
+      <Hero variant="plate" level={2} eyebrow="07 / Hero · Plate" heading="Bring your next idea to the table" deck="A clear invitation on a checked brand Surface.">
+        <LinkGroup><Button href="#cta-band">Join a workshop</Button></LinkGroup>
+      </Hero>
+      <Hero variant="typographic" level={2} eyebrow="07 / Hero · Typographic" heading="Small observations. New possibilities." deck="Words lead the opening, with room for a thought to unfold.">
+        <LinkGroup><Button href="#figures" variant="arrow">See what we have learned</Button></LinkGroup>
+      </Hero>
+      <Hero variant="plate" surface="picture-dark" picture={landscape} level={2} eyebrow="07 / Hero · Full-bleed picture" heading="Follow the path beyond the familiar" deck="The generated picture Surface checks its scrim against the lightest and darkest image samples.">
+        <LinkGroup><Button href="#reading-area" variant="outline">Take a closer look</Button></LinkGroup>
+      </Hero>
+      <Band surface="page" id="text-image">
+        <HeadingGroup class="g-section-heading" heading="08 / Text and Image · Image at end" />
+        <TextImage src={landscape} alt="A drawing of hills and a sun" caption="An invented landscape from the shared notebook.">
+          <BodyText><h3>A place for a new perspective</h3><p>{runningText}</p><p><a href="#reading-area">Continue through the field notes</a></p></BodyText>
+        </TextImage>
+      </Band>
+      <Band surface="tint">
+        <HeadingGroup class="g-section-heading" heading="08 / Text and Image · Image at start" />
+        <TextImage imageSide="start">
+          <BodyText><h3>Listen, sketch and try again</h3><p>{runningText}</p></BodyText>
+          <Figure slot="media" src={landscape} alt="Abstract green hills" caption="A media slot can supply a complete Figure." />
+        </TextImage>
+      </Band>
+      <CtaBand id="cta-band" heading="09 / CTA Band · Make room for your next idea" text="Bring a question to our next open table.">
+        <LinkGroup><Button href="#reading-area">Explore the notes</Button><Button href="#figures" variant="arrow">See the figures</Button></LinkGroup>
+      </CtaBand>
+      <CtaBand surface="brand" heading="09 / CTA Band · Start a shared conversation" text="A small first step can open a useful new direction.">
+        <LinkGroup><Button href="#body-text">Find a starting point</Button></LinkGroup>
+      </CtaBand>
+      <Band surface="page" id="figures">
+        <HeadingGroup class="g-section-heading" heading="10 / Key Figures · On the page" />
+        <KeyFigures figures={figures} />
+      </Band>
+      <Band surface="inverse">
+        <HeadingGroup class="g-section-heading" heading="10 / Key Figures · On inverse" />
+        <KeyFigures figures={figures} />
+      </Band>
+      <Band id="figure">
+        <HeadingGroup class="g-section-heading" heading="11 / Figure · Every width" deck="Captions keep the reading measure and start at the content area's edge. The tint belongs to the image panel." />
+        {(['narrow', 'wide', 'full', 'bleed-start', 'bleed-end'] as const).map((width) => <Figure src={landscape} alt="An invented landscape of layered green hills" width={width} surface={width === 'wide' ? 'tint' : undefined} caption={`${width} / A familiar view, imagined for the notebook. The caption keeps its own reading measure.`} />)}
+      </Band>
+      <Band surface="page" id="reading-area">
+        <HeadingGroup class="g-section-heading" heading="12 / Reading Area · Aside at end" deck="Close notes avoid each other. Breakouts reserve their rows, and the earliest one stays narrow beside the Aside Block." />
+        <ReadingArea>
+          <AsideBlock slot="aside" heading="In this notebook" level={3} surface="tint">
+            <BodyText><p>A few useful places to begin, collected for the whole article.</p><ul><li><a href="#field-observations">First observations</a></li><li><a href="#field-sketches">From walks to sketches</a></li><li><a href="#field-reflections">What we carried home</a></li></ul><p>Keep a question in mind as you read.</p></BodyText>
+          </AsideBlock>
+          <BodyText>
+            <h3 id="field-observations">An ordinary place, seen together</h3>
+            <p>At the start of the walk we each wrote one question. The notebook stayed open, ready for an unexpected answer.</p>
+            <Sidenote heading="01 / A question" level={4}><p>What makes a place easy to share? A note can be longer than the sentence that introduced it, and still have a clear place beside the flow.</p></Sidenote>
+            <p>Before the bridge, someone pointed out a small sheltered bench.</p>
+            <Sidenote heading="02 / Look again" level={4}><p>This note is deliberately close to the first. Its position moves down to leave a readable gap.</p></Sidenote>
+            <Figure src={landscape} alt="Layered green hills beside a river" width="wide" caption="An early Breakout keeps Narrow while the Aside Block occupies its row." />
+            <p>{runningText}</p><p>{runningText}</p>
+            <h3 id="field-sketches">From walks to sketches</h3>
+            <p>{runningText}</p>
+            <Sidenote heading="03 / A picture note" level={4}><img src={landscape} alt="A tiny study of hills beneath a sun" loading="lazy" /><p>A small drawing records the shape we noticed along the path.</p></Sidenote>
+            <Figure src={landscape} alt="A landscape study with a golden sun" width="wide" surface="tint" caption="Wide reaches across the content area. This tint ends with the image, above its caption." />
+            <p>{runningText}</p><p>{runningText}</p>
+            <Figure src={landscape} alt="An expansive imagined view of green hills" width="full" caption="Full reaches both window edges. The caption still begins at Narrow's reading line." />
+            <h3 id="field-reflections">What we carried home</h3>
+            <p>{runningText}</p>
+            <Sidenote heading="04 / Leave room" level={4}><p>The last note can extend below the final paragraph. The Reading Area contains it so the next band starts beyond its end.</p><p>We left a blank page for the next group to describe the same place in their own words. A shared notebook is most useful when it has room for another perspective.</p></Sidenote>
+          </BodyText>
+        </ReadingArea>
+      </Band>
+      <Band surface="tint">
+        <HeadingGroup class="g-section-heading" heading="12 / Reading Area · Aside at start" />
+        <ReadingArea side="start" stack="after">
+          <BodyText><h3>The same path, another view</h3><p>{runningText}</p><Sidenote heading="A different edge" level={4}><p>Logical start and end follow the document's writing direction.</p></Sidenote><p>{runningText}</p><Figure width="bleed-start" src={landscape} alt="An invented study of a hillside" caption="The caption returns to the reading line even with the Aside at start." /><p>{runningText}</p></BodyText>
+          <AsideBlock slot="aside" heading="After the story" level={3}><BodyText><p>This block follows the flow in the document and in one column.</p></BodyText></AsideBlock>
+        </ReadingArea>
+      </Band>
+      <Band surface="page">
+        <HeadingGroup class="g-section-heading" heading="12 / Reading Area · Centred Narrow" />
+        <ReadingArea side="none"><BodyText><h3>Room to read</h3><p>{runningText}</p><Figure width="bleed-end" src={landscape} alt="A small imagined landscape" caption="A centred reading line also keeps its alignment through a one-sided Breakout." /><p>{runningText}</p></BodyText></ReadingArea>
+      </Band>
+      <Band surface="raised">
+        <HeadingGroup class="g-section-heading" heading="12 / Reading Area · A sticky Aside Block" deck="The block sticks only while it fits the window and has the Aside to itself." />
+        <ReadingArea>
+          <AsideBlock slot="aside" heading="Keep a question nearby" level={3} sticky surface="page"><BodyText><p>What did you notice that someone else walked past?</p><p><a href="#field-observations">Return to the first observations</a></p></BodyText></AsideBlock>
+          <BodyText><h3>A little more time in the meadow</h3>{Array.from({ length: 9 }, () => <p>{runningText}</p>)}</BodyText>
+        </ReadingArea>
+      </Band>
+      <Band surface="tint" id="band-run"><HeadingGroup heading="13 / A run of two tint bands · First" deck="The first band gives up its padding at the shared edge." /></Band>
+      <Band surface="tint"><HeadingGroup heading="13 / A run of two tint bands · Second" deck="The second band supplies the smaller run gap." /></Band>
+      <Band surface="page" id="frame-lab">
+        <HeadingGroup class="g-section-heading" heading="14 / Header and Footer" deck="A complete page in its own window. Scroll inside it, open a panel, and narrow the frame to see the measured giving-way steps." />
+        <form id="g-lab-controls" class="g-lab-form" aria-label="Header and Footer lab controls">
+          {labChoices.map((control) => <label class="g-field"><span>{control.label}</span><select name={control.name} aria-describedby={`g-lab-tip-${control.name}`}>{control.options.map((option) => <option value={option}>{option}</option>)}</select><span id={`g-lab-tip-${control.name}`} class="g-tip" role="tooltip" aria-hidden="true" data-kn-surface="inverse">{control.tip}</span></label>)}
+          {labChecks.map((control) => <label class="g-field"><span>{control.label}</span><input type="checkbox" name={control.name} checked={control.checked} aria-describedby={`g-lab-tip-${control.name}`} /><span id={`g-lab-tip-${control.name}`} class="g-tip" role="tooltip" aria-hidden="true" data-kn-surface="inverse">{control.tip}</span></label>)}
+          <label class="g-field g-lab-width"><span class="g-field-label">Frame width<output id="g-lab-width-value">Full</output></span><input type="range" name="lab-width" min="320" max="1440" step="1" value="1440" aria-describedby="g-lab-tip-width" /><span id="g-lab-tip-width" class="g-tip" role="tooltip" aria-hidden="true" data-kn-surface="inverse">Moves from 320 pixels to the full available width. Only the frame changes size while you drag.</span></label>
+        </form>
+        <div class="g-lab-window"><iframe id="g-frame-lab" title="Juniper Atlas / Header and Footer live lab" sandbox="allow-scripts allow-forms"></iframe></div>
+        <script id="g-lab-document" type="application/json" is:inline>null</script>
+      </Band>
+      {(['A', 'B', 'C'] as const).map((arrangement, index) => <Band surface="raised" id={`header-${arrangement.toLowerCase()}`}>
+        <HeadingGroup class="g-section-heading" heading={`${15 + index} / Header · Arrangement ${arrangement} · Flow`} />
+        <div class="g-frame-preview"><Header id={`gallery-header-${arrangement}`} identity={{ ...identity, slogan: undefined }} arrangement={arrangement} attachment="flow" menu={menu} linkMenu menuButton={{ word: 'Menu' }} languages={languages} search={search} cta={cta} level={3} numbered /></div>
+      </Band>)}
+      {footerVariants.map((variant, index) => <Band surface="page">
+        <HeadingGroup class="g-section-heading" heading={`${18 + index} / Footer · ${variant.title}`} />
+        <div class="g-frame-preview"><Footer bands={variant.bands} rules={variant.rules} /></div>
+      </Band>)}
+      <Band surface="page" id="tables" contentClass="g-stack">
+        <HeadingGroup heading="33 / Table" deck="Captions, column headings and aligned figures keep shared information easy to compare." />
+        <Table id="table-plain" caption="A week at the studio" columns={workshopColumns} rows={workshopRows} />
+        <Table id="table-totals" caption="Workshop places by season" columns={totalsColumns} rows={totalsRows} footer={totalsFooter} />
+        <Table id="table-striped" caption="The open notebook programme" columns={workshopColumns} rows={workshopRows} striped />
+        <Table id="table-plated" caption="A programme on a raised Surface" columns={workshopColumns} rows={workshopRows} surface="raised" striped />
+        <BodyText><h3>A simple table in running text</h3><p>The same table rules also serve ordinary Markdown output.</p><table><caption>Shared supplies</caption><thead><tr><th scope="col">Material</th><th scope="col">Use</th></tr></thead><tbody><tr><th scope="row">Paper</th><td>First sketches</td></tr><tr><th scope="row">String</th><td>Marking a route</td></tr></tbody></table></BodyText>
+        <Table id="table-handwritten" caption="A hand-written comparison"><table><caption>A hand-written comparison</caption><thead><tr><th scope="col">Approach</th><th scope="col">Starting point</th></tr></thead><tbody><tr><th scope="row">Observe</th><td>A familiar place</td></tr><tr><th scope="row">Imagine</th><td>A new possibility</td></tr></tbody></table></Table>
+        <ReadingArea side="none"><BodyText><h3>A wider weekly plan</h3><p>On a phone, move through the table sideways. The surrounding text keeps its reading measure.</p><Table id="table-wide" caption="The full week, from first observations to shared ideas" columns={wideColumns} rows={wideRows} striped width="wide" /></BodyText></ReadingArea>
+      </Band>
+      {(['tint', 'brand'] as const).map((surface) => <Band surface={surface}>
+        <HeadingGroup class="g-section-heading" heading={`33 / Table · On ${surface}`} />
+        <Table caption={`A week on ${surface}`} columns={workshopColumns} rows={workshopRows} striped />
+      </Band>)}
+      <Band surface="page" id="accordions" contentClass="g-stack">
+        <HeadingGroup heading="34 / Accordion" deck="Native disclosures work with a keyboard and with scripts disabled." />
+        <div><h3 data-kn-type="heading-5">One open at a time</h3><Accordion id="accordion-single">
+          <AccordionItem label="Begin with a walk" level={4} open><p>Choose a familiar path and look for a detail you have overlooked.</p><ul><li>Pause by the bridge.</li><li>Compare what you noticed.</li></ul></AccordionItem>
+          <AccordionItem label="Bring the notes to the table" level={4}><p>Sketch one possible change together.</p><Table caption="Two useful questions" columns={[{ label: 'Question' }, { label: 'Purpose' }]} rows={[["Who uses this place?", 'Listen'], ['What could change?', 'Imagine']]} /></AccordionItem>
+        </Accordion></div>
+        <div><h3 data-kn-type="heading-5">Several open together</h3><Accordion id="accordion-multiple" mode="multiple">
+          <AccordionItem label="The shared notebook" open><p>Keep a record of small observations.</p></AccordionItem>
+          <AccordionItem label="The workshop bench" open><p>Try an idea with simple materials.</p><Figure src={landscape} alt="A landscape sketch from the notebook" caption="A Figure can sit inside an Accordion item." /></AccordionItem>
+        </Accordion></div>
+        <div><h3 data-kn-type="heading-5">Questions before a first visit</h3><Accordion id="accordion-faq" faq items={questions} level={4} /></div>
+      </Band>
+      {(['page', 'tint', 'brand', 'inverse'] as const).map((surface, surfaceIndex) => <Band surface={surface} contentClass="g-stack">
+        <HeadingGroup heading={`34 / Accordion · On ${surface}`} />
+        {(['hairlines', 'boxes'] as const).map((variant, variantIndex) => <div><h3 data-kn-type="heading-5">{variant === 'boxes' ? 'Separate boxes' : 'Quiet dividing lines'}</h3><Accordion variant={variant} items={[{ question: accordionLabels[surfaceIndex][variantIndex][0], answer: '<p>Each observation opens a different path through the shared garden.</p>' }, { question: accordionLabels[surfaceIndex][variantIndex][1], answer: '<p>Bring a pencil, a little time and a question for your neighbours.</p>' }]} /></div>)}
+      </Band>)}
+      <Band surface="page" id="quotations" contentClass="g-stack">
+        <HeadingGroup heading="35 / Quotation" />
+        <Quotation id="quotation-plain" name="Rowan Vale" context="Workshop coordinator, Juniper Atlas" sourceUrl="#toc-observe"><p>A shared place begins with the attention we give to an ordinary detail.</p></Quotation>
+        <Quotation id="quotation-plated" name="Ellis Reed" context="Juniper Atlas notebook" surface="tint"><p>Leave enough room in the first sketch for someone else to add a thought.</p></Quotation>
+      </Band>
+      {(['page', 'brand'] as const).map((ground) => <Band surface={ground} id={`callouts-${ground}`}>
+        <HeadingGroup class="g-section-heading" heading={`36 / Callout · On ${ground}`} />
+        <ReadingArea side="none"><BodyText><p>A few notes help everyone prepare for a shared afternoon.</p>
+          {(['info', 'success', 'warning', 'error'] as const).map((variant) => <>
+            <Callout variant={variant} title={(ground === 'page' ? { info: 'A note before your visit', success: 'Your place is reserved', warning: 'The river path is muddy', error: 'This session is full' } : { info: 'The evening walk starts here', success: 'Your drawing has arrived', warning: 'The orchard gate needs care', error: 'The workshop is closed today' })[variant]} level={3}><p>{{ info: 'The garden table opens at ten. Bring a notebook.', success: 'We look forward to hearing your question.', warning: 'Wear sturdy shoes or meet us at the studio entrance.', error: 'Choose another day from the workshop programme.' }[variant]}</p></Callout>
+            <Callout variant={variant} title={(ground === 'page' ? { info: 'Meet at the garden table', success: 'Materials are ready', warning: 'Allow time for the walk', error: 'The form needs a date' } : { info: 'A map for the next visit', success: 'The garden gate is repaired', warning: 'Rain is expected after lunch', error: 'A meeting place is missing' })[variant]} level={3} style="outlined"><p>{{ info: 'We will begin with a short introduction.', success: 'Paper, pencils and string are on the bench.', warning: 'The path takes about twenty minutes.', error: 'Add a workshop date before sending your request.' }[variant]}</p></Callout>
+          </>)}
+        </BodyText></ReadingArea>
+      </Band>)}
+      <Band surface="page" id="breadcrumbs">
+        <HeadingGroup class="g-section-heading" heading="37 / Breadcrumb Navigation" />
+        <Breadcrumbs id="breadcrumbs-short" items={[{ label: 'Home', href: '#home' }, { label: 'Notebook', href: '#body-text' }, { label: 'Shared paths', href: '#tables' }]} />
+        <Breadcrumbs id="breadcrumbs-long" label="Notebook path" items={[{ label: 'Juniper Atlas', href: '#home' }, { label: 'Notes from the studio', href: '#body-text' }, { label: 'Exploring shared places', href: '#reading-area' }, { label: 'Walking beside the river', href: '#toc-observe' }, { label: 'Observations from the sheltered garden table' }]} />
+      </Band>
+      <Band surface="raised" id="table-of-contents">
+        <HeadingGroup class="g-section-heading" heading="38 / Table of Contents" deck="Headings in the story supply real fragment links, in an Aside Block or in the flow." />
+        <ReadingArea id="contents-reading-area">
+          <AsideBlock slot="aside" sticky surface="page"><TableOfContents id="toc-aside" headings={contentsHeadings} /></AsideBlock>
+          <BodyText>
+            <TableOfContents id="toc-flow" headings={contentsHeadings} depth={3} level={3} label="In this field guide" surface="tint" />
+            <h2 id="toc-observe">Observe the familiar</h2><p>{runningText}</p><p>{runningText}</p>
+            <h3 id="toc-notebook">Keep a shared notebook</h3><p>{runningText}</p><p>{runningText}</p>
+            <h2 id="toc-try">Try a small idea</h2><p>{runningText}</p><p>{runningText}</p>
+            <h3 id="toc-materials">Choose materials with care</h3><p>{runningText}</p><p>{runningText}</p>
+            <h2 id="toc-visit">Visit the open table</h2><p>{runningText}</p><p>{runningText}</p>
+          </BodyText>
+        </ReadingArea>
+      </Band>
+      <Band surface="page" id="content-loop" contentClass="g-stack">
+        <HeadingGroup heading="39 / Content Loop" deck="The same selected content, presented as cards or as rows." />
+        <form id="g-content-controls" class="g-content-form" aria-label="Content presentation controls">
+          {contentChoices.map((control) => <label class="g-field"><span>{control.label}</span><select name={control.name} aria-describedby={`g-content-tip-${control.name}`}>{control.options.map(([value, label]) => <option value={value}>{label}</option>)}</select><span class="g-tip" id={`g-content-tip-${control.name}`} role="tooltip" data-kn-surface="inverse">{control.tip}</span></label>)}
+          {contentChecks.map((control) => <label class="g-field"><span>{control.label}</span><input type="checkbox" name={control.name} checked={control.checked} aria-describedby={`g-content-tip-${control.name}`} /><span class="g-tip" id={`g-content-tip-${control.name}`} role="tooltip" data-kn-surface="inverse">{control.tip}</span></label>)}
+        </form>
+        <ContentLoop id="loop-cards" data-g-configurable items={loopItems.slice(0, 6)} surface="raised" cta={{ label: 'Read more', style: 'link', icon: '→' }} />
+        <div class="g-stack">{contentPresets.map((preset) => <div><h3 data-kn-type="heading-5">{preset.name}</h3><ContentLoop {...preset.props} items={loopItems.slice(0, 3).map((item, i) => ({ ...item, title: preset.titles[i], meta1: preset.meta === 'none' ? [] : preset.meta === 'pill' ? item.meta1?.filter((meta) => meta.kind === 'category').map((meta) => ({ ...meta, pill: true })) : item.meta1 }))} /></div>)}</div>
+        <ContentLoop id="loop-documents" items={documents} presentation="rows" />
+        <ContentLoop id="loop-videos" items={videos} presentation="rows" galleryNote={galleryNote} />
+        <ContentLoop id="loop-video-cards" items={videos.map((item) => ({ ...item, title: 'A film from the open workshop' }))} surface="raised" galleryNote={galleryNote} />
+        <ContentLoop id="loop-empty" items={[]} presentation="rows" empty="The next field note is still taking shape." />
+      </Band>
+      <Band surface="raised" id="visitor-filters" contentClass="g-stack">
+        <HeadingGroup heading="40 / Visitor Filters" deck="Search, select a topic or year, and follow the pages of the result." />
+        <div><VisitorFilters for="filtered-rows" action="#visitor-filters" search={{ label: 'Search field notes' }} toggles={[{ name: 'topic', label: 'Topics', options: topics }]} select={{ name: 'year', label: 'Year', options: yearOptions }} pageSize={4} total={loopItems.length} /><ContentLoop id="filtered-rows" data-g-configurable cta={{ label: 'Continue reading', style: 'link', icon: '→' }} items={filteredItems} presentation="rows" /></div>
+        <div><VisitorFilters for="filtered-cards" action="#visitor-filters" toggles={[{ name: 'card-topic', label: 'Card topics', options: topics }]} /><ContentLoop id="filtered-cards" data-g-configurable cta={{ label: 'Explore this story', style: 'link', icon: '→' }} items={loopItems.slice(0, 6).map((item, index) => ({ ...item, title: filterCardTitles[index], filters: { 'card-topic': item.filters.topic } }))} surface="page" /></div>
+        <div><h3 data-kn-type="heading-5">Pagination for server pages</h3><Pagination page={6} pages={16} href={(page) => `?server-page=${page}#visitor-filters`} /></div>
+      </Band>
+      <Band surface="page" id="search-results" contentClass="g-stack">
+        <HeadingGroup heading="41 / Search results" deck="A search field and a rows loop compose a results page." />
+        <div><VisitorFilters for="search-rows" variant="search" heading="Search the notebook" suggestions={search.links} action="#search-results" search={{ label: 'Search the notebook' }} /><ContentLoop id="search-rows" data-g-configurable cta={{ label: 'Open field note', style: 'link', icon: '→' }} items={loopItems.slice(0, 4).map((item, index) => ({ ...item, title: searchTitles[index], text: undefined, excerpt: 'A small observation becomes a <mark>useful starting point</mark> for a shared place.' }))} presentation="rows" empty="No field notes match that search." /></div>
+      </Band>
+      <Band surface="page" id="video-player">
+        <HeadingGroup class="g-section-heading" heading="42 / Video Player" />
+        <VideoPlayer title="A view across the invented meadow" poster={landscape} tracks={[{ src: 'data:text/vtt,WEBVTT%0A%0A00%3A00.000%20--%3E%2000%3A01.000%0AA%20shared%20view.', language: 'en', label: 'English' }]} caption="Poster only: no video file is bundled with this offline gallery." />
+      </Band>
+      <Band surface="page" id="embeds" contentClass="g-stack">
+        <HeadingGroup heading="43 / Embed" deck="A visitor who has accepted these services sees the content, or a thumbnail that starts a heavy video player. One who has not must make a conscious choice, for this one time or in the consent settings." />
+        <form id="g-embed-consent" class="g-consent-choice" aria-label="Show the embeds as seen by a visitor"><fieldset><legend>Show as seen by a visitor who</legend>
+          <label class="kn-field-option"><input type="radio" name="g-embed-choice" value="no" checked />has not accepted external content</label>
+          <label class="kn-field-option"><input type="radio" name="g-embed-choice" value="yes" />has accepted external content</label>
+        </fieldset></form>
+        <CardGrid columns={3}>{providers.map(([provider, url, title]) => <Embed url={url} title={title} caption={provider} poster={['YouTube', 'Vimeo', 'Loom'].includes(provider) ? landscape : undefined} galleryNote={galleryNote} />)}</CardGrid>
+      </Band>
+      <Band surface="page" id="forms" contentClass="g-stack">
+        <HeadingGroup heading="44 / Form" deck="Contact and subscription forms are compositions of the same fields and actions." />
+        <p id="forms-status" class="g-note" role="status">These examples validate locally. They do not send or store a message.</p>
+        <Form class="g-demo-form" action="#forms-status" method="get" aria-label="Contact Juniper Atlas" honeypot={{ name: 'contact-website', label: 'Leave this field empty' }} fields={[{ name: 'contact-name', label: 'Name', required: true }, { name: 'contact-email', label: 'Email', type: 'email', required: true }, { name: 'contact-message', label: 'Your question', type: 'textarea', required: true, help: 'Tell us what you would like to explore.' }]}><Button slot="actions" type="submit">Send your question</Button></Form>
+        <Form class="g-demo-form" action="#forms-status" method="get" aria-label="Subscribe to the notebook" honeypot={{ name: 'subscribe-website', label: 'Leave this field empty' }}>
+          <Field name="subscribe-email" label="Email for the notebook" type="email" required />
+          <Field name="subscribe-agree" label="Subscription choice" type="checkbox" required options={[{ value: 'yes', label: 'Send me the Juniper Atlas notebook' }]} help="You can leave the list at any time." />
+          <Button slot="actions" type="submit">Subscribe</Button>
+        </Form>
+        <Form class="g-demo-form" action="#forms-status" method="get" aria-label="All field types on page" fields={allFields} columns={2}><Button slot="actions" type="submit">Check the fields</Button><Button slot="actions" type="reset" variant="outline">Start again</Button></Form>
+      </Band>
+      <Band surface="brand" id="forms-brand" contentClass="g-stack">
+        <HeadingGroup heading="44 / Form · On brand" />
+        <Form class="g-demo-form" action="#forms-status" method="get" aria-label="All field types on brand" fields={allFields.map((field) => ({ ...field, name: `brand-${field.name}` }))} columns={2}><Button slot="actions" type="submit">Check the fields</Button></Form>
+      </Band>
+      <Band surface="raised" id="consent-banner">
+        <HeadingGroup class="g-section-heading" heading="45 / Consent Banner" deck="Open the banner inside the frame lab to try equal-weight acceptance and refusal, custom settings and the footer’s Preferences link." />
+        <Button id="g-show-consent" variant="outline" aria-describedby="g-tip-consent">Open banner in frame lab</Button>
+        <span class="g-consent-tip g-tip" id="g-tip-consent" role="tooltip" data-kn-surface="inverse">Opens the non-modal consent banner inside section 14’s frame. The surrounding gallery stays readable.</span>
+        <p class="g-note"><a href="#frame-lab">Go to the frame lab</a> to review the banner and settings.</p>
+      </Band>
+    <footer slot="footer"><Band class="g-footer" surface="inverse"><p data-kn-type="small">Konzilo component gallery · Juniper Atlas is an invented studio.</p><p><a id="cookie-policy" href="#consent-banner" data-kn-consent-open>Cookie policy and choices</a></p></Band></footer>
+    </Page>
+    <ConsentBanner id="gallery-consent" categories={consentCategories} texts={consentTexts} storageKey="kn-gallery-consent" deferred reopenButton={false} policyHref="#cookie-policy" />
+    <script id="g-initial-inputs" type="application/json" is:inline set:html={JSON.stringify(galleryInputs).replace(/</g, '\\u003c')} />
+    <script>
+      import { derive } from '../../../src/generator/index.js';
+      import { coreCss } from '../../../src/css/index.js';
+      import { setupContentControls } from '../content-controls.js';
+      import { setupTooltips } from '../tooltips.js';
+      import { setupControls } from '../controls.js';
+      import { setupGalleryLab } from '../lab.js';
+      import { hasConsent, setConsent } from '../../../src/components/consent.js';
+      const onChange = setupGalleryLab();
+      setupControls({ derive, coreCss, onChange });
+      const embedChoice = document.getElementById('g-embed-consent');
+      if (embedChoice?.elements) {
+        const syncEmbedChoice = () => { embedChoice.elements.namedItem('g-embed-choice').value = hasConsent('external-media') ? 'yes' : 'no'; };
+        embedChoice.addEventListener('change', (event) => setConsent({ 'external-media': event.target.value === 'yes' }));
+        window.addEventListener('kn:consentchange', syncEmbedChoice);
+        syncEmbedChoice();
+      }
+      if (typeof window !== 'undefined') {
+        setupContentControls(); setupTooltips();
+        document.getElementById('g-show-consent')?.addEventListener('click', () => {
+          document.getElementById('g-frame-lab')?.contentWindow?.postMessage({ type: 'kn-frame-consent' }, '*');
+          document.getElementById('frame-lab')?.scrollIntoView({ block: 'start' });
+        });
+        document.querySelectorAll('.g-demo-form').forEach((form) => form.addEventListener('submit', (event) => {
+          event.preventDefault();
+          if (form.checkValidity()) document.getElementById('forms-status').textContent = 'The example form is valid. Thank you for trying it.';
+        }));
+      }
+    </script>
+  </body>
+</html>

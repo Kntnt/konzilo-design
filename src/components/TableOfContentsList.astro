@@ -1,0 +1,6 @@
+---
+import type { ContentsEntry } from './content-types';
+interface Props { entries: ContentsEntry[] }
+const { entries } = Astro.props;
+---
+<ol role="list">{entries.map((entry) => <li><a href={`#${entry.slug}`}>{entry.text}</a>{entry.children.length > 0 && <Astro.self entries={entry.children} />}</li>)}</ol>

@@ -1,0 +1,16 @@
+---
+import type { HTMLAttributes } from 'astro/types';
+import type { Surface } from './frame-types';
+interface Props extends HTMLAttributes<'aside'> {
+  heading?: string;
+  level?: 1 | 2 | 3 | 4 | 5 | 6;
+  sticky?: boolean;
+  surface?: Surface;
+}
+const { heading, level = 2, sticky = false, surface, class: className, ...attributes } = Astro.props;
+const Heading = `h${level}` as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
+---
+<aside {...attributes} class:list={['kn-aside-block', className]} data-kn-sticky={sticky ? 'true' : undefined} data-kn-surface={surface}>
+  {heading && <Heading data-kn-type="heading-6">{heading}</Heading>}
+  <slot />
+</aside>

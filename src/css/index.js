@@ -9,15 +9,27 @@ export async function emitCss(file) {
   await checkFingerprint(file);
   validateDesignFile(file);
   checkContrast(file.resolved);
-  const r = file.resolved;
+  return coreCss(file.resolved);
+}
+
+// Synchronous output for freshly derived, in-memory preview values.
+export function coreCss(r) {
   const lines = [];
   const put = (name, value) => lines.push(`  --kn-${name}: ${value};`);
-  for (const [name, value] of Object.entries(r.typefaces)) put(`typeface-${name}`, value);
+  // Each role points at the one it follows, so a site can move a whole chain with one line.
+  const { main, monospace, heading, display, label } = r.typefaces;
+  put('typeface-main', main);
+  put('typeface-monospace', monospace);
+  put('typeface-heading', heading === main ? 'var(--kn-typeface-main)' : heading);
+  put('typeface-heading-1', r.typefaces['heading-1'] && r.typefaces['heading-1'] !== heading ? r.typefaces['heading-1'] : 'var(--kn-typeface-heading)');
+  put('typeface-display', display === heading ? 'var(--kn-typeface-heading)' : display);
+  put('typeface-label', label === main ? 'var(--kn-typeface-main)' : 'var(--kn-typeface-monospace)');
   for (const [name, recipe] of Object.entries(r.type)) {
     put(`type-${name}-size`, recipe.size.css);
     put(`type-${name}-line-height`, recipe['line-height']);
     put(`type-${name}-weight`, recipe.weight);
     put(`type-${name}-letter-spacing`, `${recipe['letter-spacing']}em`);
+    put(`type-${name}-features`, recipe.features?.['from-window'] === 0 ? recipe.features.value : 'normal');
   }
   for (const [name, value] of Object.entries(r.space.steps)) put(`space-${name}`, value.css);
   for (const [name, value] of Object.entries(r.space.roles)) put(`space-${name}`, value.css);
@@ -30,10 +42,17 @@ export async function emitCss(file) {
   }
   for (const [name, value] of Object.entries(r.duration)) put(`duration-${name}`, `${value}ms`);
   put('easing-standard', r.easing.standard);
+  const staged = Object.entries(r.type).filter(([, { features }]) => features?.['from-window'] > 0)
+    .map(([name, { features }]) => `@media (min-width: ${rem(features['from-window'])}) {\n  :root { --kn-type-${name}-features: ${features.value}; }\n}\n`).join('');
   return `/* Konzilo framework core and checked Surface contexts. */
+@layer kn-core, kn-base, kn-components;
+@layer kn-core {
 :root {
 ${lines.join('\n')}
 }
+${staged}
+/* Declared on each Surface, so a site's own first-heading colour can read that Surface's roles. */
+[data-kn-surface] { --kn-text-heading-1: var(--kn-${r['heading-1-color'] === 'accent' ? 'accent' : 'text'}); }
 
 ${surfaceCss(r.surfaces)}
 
@@ -72,6 +91,7 @@ ${surfaceCss(r.surfaces)}
     --kn-duration-feedback: 0ms;
     --kn-duration-movement: 0ms;
   }
+}
 }
 `;
 }

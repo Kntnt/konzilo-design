@@ -1,0 +1,19 @@
+@layer kn-components {
+  .kn-form, .kn-form-fields { display: grid; gap: var(--kn-space-component-gap); }
+  .kn-form[data-kn-columns="2"] > .kn-form-fields { grid-template-columns: repeat(auto-fit, minmax(min(100%, max(16rem, calc((100% - var(--kn-space-component-gap)) / 2))), 1fr)); }
+  .kn-field { --kn-field-max: 100%; display: grid; align-content: start; gap: 0.4em; min-inline-size: 0; inline-size: 100%; max-inline-size: var(--kn-field-max); border: 0; margin: 0; padding: 0; }
+  .kn-field-label { color: var(--kn-text); }
+  .kn-field-required, .kn-field-help { color: var(--kn-text-muted); }
+  .kn-field-control { display: block; inline-size: 100%; min-inline-size: 0; min-block-size: 2.75rem; padding: 0.6em 0.75em; border: 1px solid var(--kn-border-strong); border-radius: var(--kn-radius-control); background: var(--kn-background); color: var(--kn-text); font: inherit; }
+  textarea.kn-field-control { resize: block; }
+  .kn-field-options { display: grid; gap: 0.25em; }
+  .kn-field-option { display: flex; align-items: center; gap: 0.6em; min-block-size: 2.75rem; cursor: pointer; }
+  /* The browser draws these parts itself. They stay light on every Surface, as the owner decided. */
+  .kn-field-option input, .kn-field-control[type="number"] { color-scheme: light; }
+  .kn-field-option input { accent-color: var(--kn-accent); inline-size: 1.1em; block-size: 1.1em; flex: none; }
+  .kn-field-help, .kn-field-error { margin: 0; }
+  .kn-field-error { display: flex; gap: 0.5em; align-items: baseline; color: var(--kn-error); }
+  .kn-field-error[hidden] { display: none; }
+  .kn-field [aria-invalid="true"] { border-color: var(--kn-error); }
+  .kn-field[data-kn-honeypot] { position: absolute; clip-path: inset(50%); inline-size: 0.0625rem; block-size: 0.0625rem; overflow: hidden; }
+}

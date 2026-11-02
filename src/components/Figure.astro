@@ -1,0 +1,21 @@
+---
+import type { HTMLAttributes } from 'astro/types';
+import type { Surface } from './frame-types';
+// The Surface stays on the media panel; the caption inherits the page context.
+interface Props extends HTMLAttributes<'figure'> {
+  src?: string;
+  alt?: string;
+  caption?: string;
+  width?: 'narrow' | 'wide' | 'full' | 'bleed-start' | 'bleed-end';
+  loading?: 'lazy' | 'eager';
+  surface?: Surface;
+}
+const { src, alt, caption, width = 'narrow', loading = 'lazy', surface, class: className, ...attributes } = Astro.props;
+if (src !== undefined && alt === undefined) throw new TypeError('Figure requires alternative text when src is supplied');
+---
+<figure {...attributes} class:list={['kn-figure', className]} data-kn-width={width}>
+  <div class="kn-figure-media" data-kn-surface={surface}>
+    {src ? <img src={src} alt={alt} loading={loading} /> : <slot />}
+  </div>
+  {caption && <figcaption class="kn-figure-caption" data-kn-type="small">{caption}</figcaption>}
+</figure>

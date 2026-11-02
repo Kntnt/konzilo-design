@@ -1,0 +1,5 @@
+---
+interface Props { href?: string; label?: string }
+const { href = '#content', label = 'Skip to content' } = Astro.props;
+---
+<a class="kn-skip-link" href={href}>{label}</a>

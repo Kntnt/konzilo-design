@@ -1,0 +1,44 @@
+@layer kn-components {
+  :root { --kn-page-light-opacity: 1; --kn-page-dark-opacity: 0; }
+  [data-kn-mode="light"] { --kn-page-light-opacity: 1; --kn-page-dark-opacity: 0; }
+  [data-kn-mode="dark"] { --kn-page-light-opacity: 0; --kn-page-dark-opacity: 1; }
+  .kn-page {
+    --kn-page-fill-light: var(--kn-background);
+    --kn-page-fill-dark: var(--kn-background);
+    position: relative;
+    isolation: isolate;
+    display: flex;
+    flex-direction: column;
+    min-block-size: 100vh;
+    min-block-size: 100dvh;
+    overflow-x: clip;
+    background: var(--kn-background);
+    color: var(--kn-text);
+  }
+  /* Mode markers inherit through any number of nested local mode selections.
+     Both fills are painted on the sheet, above its opaque fallback colour. */
+  .kn-page::before, .kn-page::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+  }
+  .kn-page::before { background: var(--kn-page-fill-light); opacity: var(--kn-page-light-opacity); }
+  .kn-page::after { background: var(--kn-page-fill-dark); opacity: var(--kn-page-dark-opacity); }
+  .kn-page-main { flex: 1; min-inline-size: 0; }
+  .kn-page { --kn-footer-height: 0rem; }
+  .kn-page[data-kn-footer-attachment="reveal"] { padding-block-end: var(--kn-footer-height); }
+  .kn-page[data-kn-footer-attachment="reveal"] > .kn-page-main { position: relative; isolation: isolate; z-index: 1; background: var(--kn-background); }
+  .kn-page[data-kn-footer-attachment="reveal"] > .kn-page-main::before,
+  .kn-page[data-kn-footer-attachment="reveal"] > .kn-page-main::after { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none; }
+  .kn-page[data-kn-footer-attachment="reveal"] > .kn-page-main::before { background: var(--kn-page-fill-light); opacity: var(--kn-page-light-opacity); }
+  .kn-page[data-kn-footer-attachment="reveal"] > .kn-page-main::after { background: var(--kn-page-fill-dark); opacity: var(--kn-page-dark-opacity); }
+  .kn-page-main[data-kn-auto-shadow] { box-shadow: var(--kn-shadow-page); }
+  .kn-page-main:is([data-kn-edge-line], [data-kn-auto-line]) { border-block-end: 1px solid var(--kn-border); }
+  @media print {
+    .kn-page[data-kn-footer-attachment] { padding-block-end: 0; }
+    .kn-page > .kn-page-main[data-kn-shadow], .kn-page > .kn-page-main[data-kn-auto-shadow] { box-shadow: none; }
+  }
+  .kn-page-main[data-kn-shadow] { position: relative; z-index: 1; box-shadow: var(--kn-shadow-page); }
+}

@@ -1,0 +1,27 @@
+---
+import type { HTMLAttributes } from 'astro/types';
+import type { FieldOption } from './interaction-types';
+import { nextId } from './ids.js';
+import { describedBy } from './form.js';
+import Icon from './Icon.astro';
+interface Props extends Omit<HTMLAttributes<'input'>, 'type' | 'value'> {
+  name: string; label: string;
+  type?: 'text' | 'email' | 'tel' | 'url' | 'number' | 'date' | 'password' | 'textarea' | 'select' | 'checkbox' | 'radio';
+  value?: string | string[]; options?: FieldOption[]; help?: string; error?: string;
+  requiredLabel?: string; maxInlineSize?: string; rows?: number; honeypot?: boolean;
+}
+const { name, label, type = 'text', value, options = [], help, error, required = false, requiredLabel = 'required', maxInlineSize, rows = 5, honeypot = false, id = nextId('kn-field'), class: className, ...attributes } = Astro.props;
+const grouped = type === 'checkbox' || type === 'radio';
+const Root = grouped ? 'fieldset' : 'div';
+const description = describedBy(help ? `${id}-help` : undefined, `${id}-error`);
+const invalid = error ? 'true' as const : undefined;
+const selected = (option: string) => Array.isArray(value) ? value.includes(option) : value === option;
+---
+<Root class:list={['kn-field', className]} data-kn-honeypot={honeypot || undefined} aria-hidden={honeypot || undefined} style={maxInlineSize ? { '--kn-field-max': maxInlineSize } : undefined} aria-describedby={grouped ? description : undefined} aria-invalid={grouped ? invalid : undefined}>
+  {grouped ? <><legend class="kn-field-label">{label}{required && <span class="kn-field-required"> ({requiredLabel})</span>}</legend><div class="kn-field-options">{options.map((option, index) => <label class="kn-field-option" for={`${id}-${index}`}><input {...attributes} id={`${id}-${index}`} name={name} type={type} value={option.value} checked={selected(option.value)} required={required} disabled={option.disabled || attributes.disabled} aria-describedby={description} aria-invalid={invalid} />{option.label}</label>)}</div></> : <>
+    <label class="kn-field-label" for={id}>{label}{required && <span class="kn-field-required"> ({requiredLabel})</span>}</label>
+    {type === 'textarea' ? <textarea {...attributes} class="kn-field-control" id={id} name={name} rows={rows} required={required} aria-describedby={description} aria-invalid={invalid}>{value}</textarea> : type === 'select' ? <select {...attributes} class="kn-field-control" id={id} name={name} required={required} aria-describedby={description} aria-invalid={invalid}>{options.map((option) => <option value={option.value} selected={selected(option.value)} disabled={option.disabled}>{option.label}</option>)}</select> : <input {...attributes} class="kn-field-control" id={id} name={name} type={type} value={value} required={required} aria-describedby={description} aria-invalid={invalid} tabindex={honeypot ? -1 : attributes.tabindex} autocomplete={honeypot ? 'off' : attributes.autocomplete} />}
+  </>}
+  {help && <p class="kn-field-help" data-kn-type="small" id={`${id}-help`}>{help}</p>}
+  <p class="kn-field-error" data-kn-type="small" id={`${id}-error`} hidden={!error}><Icon name="circle-x" /><span data-kn-error-text>{error}</span></p>
+</Root>

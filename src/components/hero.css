@@ -1,0 +1,10 @@
+@layer kn-components {
+  .kn-hero-text { display: grid; gap: var(--kn-space-column-gap); min-inline-size: 0; overflow-wrap: anywhere; }
+  .kn-hero-text .kn-heading-group-deck { max-inline-size: var(--kn-layout-narrow); }
+  .kn-hero[data-kn-variant="picture"] > .kn-hero-content { display: flex; flex-wrap: wrap; align-items: center; gap: var(--kn-space-column-gap); }
+  /* Matching bases and growth ratios keep 7:5 whenever both cells share a row. */
+  .kn-hero[data-kn-variant="picture"] .kn-hero-text { flex: 7 1 28rem; }
+  .kn-hero-media { flex: 5 1 20rem; min-inline-size: 0; align-self: stretch; display: grid; overflow: clip; border-radius: var(--kn-radius-card); }
+  .kn-hero-media img { inline-size: 100%; block-size: 100%; min-block-size: 18rem; object-fit: cover; }
+  .kn-hero[data-kn-variant="typographic"] .kn-heading-group-heading { max-inline-size: 14em; }
+}

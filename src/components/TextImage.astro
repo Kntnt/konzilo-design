@@ -1,0 +1,18 @@
+---
+import type { HTMLAttributes } from 'astro/types';
+import type { Surface } from './frame-types';
+import Figure from './Figure.astro';
+interface Props extends HTMLAttributes<'div'> {
+  src?: string;
+  alt?: string;
+  caption?: string;
+  loading?: 'lazy' | 'eager';
+  imageSide?: 'end' | 'start';
+  surface?: Surface;
+}
+const { src, alt, caption, loading = 'lazy', imageSide = 'end', surface, class: className, ...attributes } = Astro.props;
+---
+<div {...attributes} class:list={['kn-text-image', className]} data-kn-image-side={imageSide}>
+  <div class="kn-text-image-text"><slot /></div>
+  <div class="kn-text-image-media"><slot name="media"><Figure src={src} alt={alt} caption={caption} loading={loading} surface={surface} /></slot></div>
+</div>

@@ -1,0 +1,17 @@
+---
+import type { Surface, FooterCellData } from './frame-types';
+import { layoutFooter } from './footer.js';
+import FooterCell from './FooterCell.astro';
+interface Props {
+  surface: Surface; cells: FooterCellData[]; compact?: boolean;
+  layout?: ReturnType<typeof layoutFooter>['bands'][number]; decorativeOnly?: boolean;
+}
+const { surface, cells, compact = false, layout, decorativeOnly = false } = Astro.props;
+const band = layout ?? layoutFooter([{ surface, cells, compact }]).bands[0];
+---
+{cells.length > 0 && <div class="kn-footer-band" data-kn-surface={surface} data-kn-compact={compact || undefined} data-kn-band={band.row} data-kn-run={band.run} data-kn-run-start={band.runStart || undefined} data-kn-run-end={band.runEnd || undefined}>
+  <div class="kn-footer-background" aria-hidden="true" style={{ 'grid-row': `r${band.row}-start / r${band.row}-end` }} />
+  {band.horizontal && <div class="kn-footer-rule" aria-hidden="true" data-kn-only={band.horizontal} style={{ 'grid-row': `r${band.row}-start / r${band.row}-end` }} />}
+  {band.vertical && <div class="kn-footer-vertical-rule" aria-hidden="true" data-kn-edge-top={band.runStart || undefined} data-kn-edge-bottom={band.runEnd || undefined} data-kn-stop-top={band.stopTop || undefined} data-kn-stop-bottom={band.stopBottom || undefined} style={{ 'grid-row': `r${band.row}-start / r${band.row}-end` }} />}
+  {!decorativeOnly && band.cells.map((cell) => <FooterCell cell={cell} surface={cell.surface} row={cell.row} compact={cell.compact} ownB={cell.ownB} edgeTop={cell.edgeTop} edgeBottom={cell.edgeBottom} stackFirst={cell.stackFirst} stackLast={cell.stackLast} />)}
+</div>}

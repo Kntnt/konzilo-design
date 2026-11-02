@@ -1,0 +1,6 @@
+@layer kn-components {
+  .kn-heading-group { display: grid; gap: calc(var(--kn-space-component-gap) / 2); }
+  .kn-heading-group > * { margin: 0; }
+  .kn-heading-group-heading { text-wrap: balance; }
+  .kn-heading-group-eyebrow, .kn-heading-group-deck { color: var(--kn-text-muted); }
+}

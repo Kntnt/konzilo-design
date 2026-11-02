@@ -1,0 +1,12 @@
+---
+import type { Language } from './frame-types';
+import Button from './Button.astro';
+import Icon from './Icon.astro';
+interface Props { languages: Language[]; id?: string; inline?: boolean }
+const { languages, id, inline = false } = Astro.props;
+const current = languages.find((language) => language.current);
+---
+{inline ? <nav class="kn-header-moved-languages" aria-label="Languages" data-kn-moved="language"><Icon name="globe" />{languages.map((language) => <a href={language.href} lang={language.code} hreflang={language.code} aria-current={language.current ? 'true' : undefined}>{language.label}</a>)}</nav> : <div class="kn-header-language">
+  <Button class="kn-header-control kn-header-icon-button" variant="outline" aria-label={`Language${current ? `: ${current.label}` : ''}`} aria-expanded="false" aria-controls={id} popovertarget={id} data-kn-trigger="language" icon="globe" />
+  <ul id={id} class="kn-header-panel kn-header-language-list" data-kn-panel="language" data-kn-surface="page" popover="auto">{languages.map((language) => <li><a href={language.href} lang={language.code} hreflang={language.code} aria-current={language.current ? 'true' : undefined}>{language.label}</a></li>)}</ul>
+</div>}

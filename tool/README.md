@@ -1,0 +1,17 @@
+read when running or changing the local design tool, its controls, persistence or PDF command
+
+# Design tool
+
+Run `npm run tool -- path/to/example.design.json`, optionally with `--port 4174` or `--no-open`. The dependency-free Node HTTP server binds only to `127.0.0.1`. The CLI prints its URL and the absolute design-file path. Stop with Ctrl-C. A missing file starts with Mona Sans and is created by Save; no external design-file path is written to repository configuration.
+
+The 138 px sticky toolbar reserves one line each for status and results. Long paths truncate with their complete text in a tooltip. Compact rows put labels beside controls; narrow and wide body sizes share one row. Typeface selects keep a fixed half-row width, and their custom input appears in the other half only for Other. Each colour swatch has a synchronised exact hex field. The Client section includes Document version, stored as optional string `project.version` with default `1.0`. It appears on the cover and every approval-page foot, independently of generator metadata. Logo selection uses a plain button with a filename or No logo. Header and Footer previews show the logo alone with the name as its accessible label, or the name when no logo is supplied; adding and removing logos updates this live. Tooltips overlay the interface, work on keyboard focus and disappear while dragging. Preview pictures use quiet primary and grey ramps; secondary and tertiary colours remain visible in the Overview chips. The interface uses independent neutral styles; only the real component iframe receives generated core CSS.
+
+`logic.js` owns presets, named/custom ratio choices and conversion between absolute displayed steps and the schema's relative steps. Changing a style recalculates both adjacent relative differences, preserving every other style's absolute size. Neighbours may meet but never cross, and each relative difference stays in 0–12.
+
+`server.js` owns validation, atomic saves, logo embedding and local endpoints. Saves regenerate the complete resolved result. A contrast failure keeps the last good preview and disables PDF creation. PDF creation saves the displayed settings first and returns the complete path plus structured overflow warnings. The browser link opens the generated file through the same local server.
+
+The preview is compiled from real Astro components once at startup into `node_modules/.cache/konzilo-tool`. It is rebuilt on the next start so changes to components are included. Browser imports expose only explicitly allowed generator files, the schema, package metadata and UI modules. Mutations require a same-origin session token and JSON; Host and Origin checks reject cross-origin access.
+
+For scripts: `node bin/konzilo-design.js pdf examples/example.design.json -o presentation/dist/example.pdf`. Without `-o`, output is beside the input as `<stem>-design-system-<YYYY-MM-DD>.pdf`. It resolves the inputs afresh without rewriting the source design file. See [the presentation guide](../presentation/README.md) for the document, copy overrides and print checks.
+
+The browser dependency is exactly `playwright-core@1.64.1`, which uses the already installed Chromium revision 1248. No browser download runs. The PDF command and integration tests close their browser in `finally`; temporary presentation builds are removed after printing. Other installed typefaces depend on the fonts available on the machine producing the PDF.

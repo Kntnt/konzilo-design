@@ -1,0 +1,40 @@
+---
+import type { HTMLAttributes } from 'astro/types';
+import type { Surface } from './frame-types';
+import Icon from './Icon.astro';
+import { icons } from './icons.js';
+// A linked summary or person; a Surface makes it a padded plate.
+interface Props extends HTMLAttributes<'article'> {
+  heading: string;
+  linkAttributes?: HTMLAttributes<'a'>;
+  level?: 1 | 2 | 3 | 4 | 5 | 6;
+  type?: 'display' | 'heading-1' | 'heading-2' | 'heading-3' | 'heading-4' | 'heading-5' | 'heading-6';
+  variant?: 'link' | 'person';
+  surface?: Surface;
+  picture?: { src: string; alt: string; loading?: 'lazy' | 'eager' };
+  icon?: keyof typeof icons;
+  eyebrow?: string;
+  text?: string;
+  href?: string;
+  personRole?: string;
+  email?: string;
+  phone?: string;
+}
+const { heading, linkAttributes = {}, level = 3, type = 'heading-5', variant = 'link', surface, picture, icon, eyebrow, text, href, personRole, email, phone, class: className, ...attributes } = Astro.props;
+const Heading = `h${level}` as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
+const linked = href !== undefined && variant !== 'person';
+---
+<article {...attributes} class:list={['kn-card', className]} data-kn-variant={variant} data-kn-surface={surface}>
+  {picture ? <img class="kn-card-picture" src={picture.src} alt={picture.alt} loading={picture.loading ?? 'lazy'} /> : icon && <Icon class="kn-card-icon" name={icon} />}
+  {eyebrow && <p class="kn-card-eyebrow" data-kn-type="label">{eyebrow}</p>}
+  <Heading class="kn-card-heading" data-kn-type={type}>
+    {linked ? <a {...linkAttributes} class="kn-card-link" href={href}>{heading}</a> : heading}
+  </Heading>
+  {personRole && variant === 'person' && <p class="kn-card-text" data-kn-type="small">{personRole}</p>}
+  {text && <p class="kn-card-text" data-kn-type="small">{text}</p>}
+  {variant === 'person' && (email || phone) && <ul class="kn-card-contacts" data-kn-type="small">
+    {email && <li><a href={`mailto:${email}`}><Icon name="mail" />{email}</a></li>}
+    {phone && <li><a href={`tel:${phone.replace(/[^+\d]/g, '')}`}><Icon name="phone" />{phone}</a></li>}
+  </ul>}
+  {variant === 'link' && linked && <Icon class="kn-card-arrow" name="arrow-right" />}
+</article>

@@ -1,0 +1,8 @@
+@layer kn-components {
+  .kn-text-image { display: flex; flex-wrap: wrap; align-items: center; gap: var(--kn-space-column-gap); }
+  .kn-text-image > * { flex: 1 1 24rem; min-inline-size: 0; }
+  .kn-text-image[data-kn-image-side="start"] { flex-direction: row-reverse; }
+  .kn-text-image-media { border-radius: var(--kn-radius-card); }
+  .kn-text-image-media > .kn-figure { inline-size: 100%; margin: 0; }
+  .kn-text-image-media :where(img, svg) { border-radius: var(--kn-radius-card); }
+}

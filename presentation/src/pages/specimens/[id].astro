@@ -1,0 +1,108 @@
+---
+import { ids, componentPages } from '../../catalog.js';
+import { project, resolved, copy } from '../../data.js';
+import { coreCss } from '../../../../src/css/index.js';
+import Samples from '../../Samples.astro';
+import '../../../../src/components/index.css';
+import '../../../../src/fonts/fonts.css';
+import '../../specimen.css';
+export function getStaticPaths() {
+  return ids
+    .filter((id) => id !== 'responsive')
+    .map((id) => ({ params: { id } }));
+}
+const { id } = Astro.params;
+const full =
+  /^(headers$|header-|footer|hero-|text-image|cta-band|band$|page$|preview$|overview$|responsive-)/.test(
+    id,
+  );
+const stage = componentPages.find(([name]) => name === id)?.[3];
+---
+
+<!doctype html>
+<html lang={copy.lang} data-kn-mode="light">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>{id}</title>
+    <style id="kn-live-core" is:inline set:html={coreCss(resolved)} />
+  </head>
+  <body data-kn-surface="page" data-specimen={id}>
+    <div class="sample-root" data-full={full || undefined} data-stage={stage}>
+      <Samples id={id} project={project} resolved={resolved} />
+    </div>
+    <script is:inline>
+      window.addEventListener('message', (event) => {
+        if (event.source !== parent || event.data?.type !== 'kn-design') return;
+        document.getElementById('kn-live-core').textContent = event.data.css;
+        document.documentElement.dataset.knMode = event.data.mode;
+        const p = event.data.project;
+        if (event.data.picture)
+          document
+            .querySelectorAll('.kn-hero-media img')
+            .forEach((img) => (img.src = event.data.picture));
+        document
+          .querySelectorAll(
+            '.kn-header-name,.kn-footer [data-kn-type="heading-3"]',
+          )
+          .forEach((n) => (n.textContent = p.name || 'Example'));
+        document
+          .querySelectorAll('.kn-footer-cell[data-kn-cell="A1"]')
+          .forEach((n) => {
+            n.replaceChildren();
+            if (p.logo || p['logo-dark']) {
+              const img = document.createElement('img');
+              img.src = p['logo-dark'] || p.logo;
+              img.alt = p.name || 'Example';
+              img.style.maxWidth = '14rem';
+              img.style.maxHeight = '3rem';
+              n.append(img);
+            } else {
+              const label = document.createElement('p');
+              label.dataset.knType = 'heading-3';
+              label.textContent = p.name || 'Example';
+              n.append(label);
+            }
+          });
+        document
+          .querySelectorAll('.kn-header-identity')
+          .forEach((n) => n.setAttribute('aria-label', p.name || 'Example'));
+        document.querySelectorAll('.kn-header-brand').forEach((n) => {
+          let logo = n.querySelector('.kn-header-logo');
+          let name = n.querySelector('.kn-header-name');
+          const source = p.logo || p['logo-dark'];
+          if (!source) {
+            logo?.remove();
+            if (!name) {
+              name = document.createElement('span');
+              name.className = 'kn-header-name';
+              n.append(name);
+            }
+            name.textContent = p.name || 'Example';
+            return;
+          }
+          name?.remove();
+          if (!logo) {
+            logo = document.createElement('span');
+            logo.className = 'kn-header-logo';
+            n.prepend(logo);
+          }
+          logo.replaceChildren();
+          for (const [kind, src] of [
+            ['light', source],
+            ['dark', p['logo-dark'] || source],
+          ]) {
+            const img = document.createElement('img');
+            img.src = src;
+            img.alt = p.name || 'Example';
+            img.dataset.knLogo = kind;
+            logo.append(img);
+          }
+        });
+        document
+          .querySelectorAll('.kn-header,.kn-footer')
+          .forEach((n) => n.dispatchEvent(new Event('kn:refresh')));
+      });
+    </script>
+  </body>
+</html>

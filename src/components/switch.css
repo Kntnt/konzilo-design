@@ -1,0 +1,12 @@
+@layer kn-components {
+  .kn-switch { position: relative; display: inline-grid; align-items: center; min-block-size: 2.75rem; cursor: pointer; flex: none; }
+  .kn-switch input { position: absolute; inset: 0; inline-size: 100%; block-size: 100%; margin: 0; opacity: 0; cursor: inherit; }
+  .kn-switch-track { display: block; inline-size: 2.6em; block-size: 1.5em; padding: 0.15em; border: 1px solid var(--kn-border-strong); border-radius: 2em; background: var(--kn-background); pointer-events: none; }
+  .kn-switch-track::before { content: ""; display: block; inline-size: 1.1em; block-size: 1.1em; border-radius: 50%; background: var(--kn-text); transition: translate var(--kn-duration-feedback) var(--kn-easing-standard); }
+  .kn-switch input:checked + .kn-switch-track { background: var(--kn-button-background); border-color: var(--kn-button-background); }
+  .kn-switch input:checked + .kn-switch-track::before { background: var(--kn-button-text); translate: 1em; }
+  .kn-switch:dir(rtl) input:checked + .kn-switch-track::before { translate: -1em; }
+  .kn-switch input:focus-visible + .kn-switch-track { outline: 2px solid var(--kn-focus); outline-offset: 2px; }
+  .kn-switch:has(input:disabled) { cursor: default; }
+  @media (forced-colors: active) { .kn-switch input { position: static; opacity: 1; } .kn-switch-track { display: none; } }
+}

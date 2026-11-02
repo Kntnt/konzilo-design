@@ -1,0 +1,46 @@
+---
+import type { HTMLAttributes } from 'astro/types';
+import type { ConsentCategory, ConsentTexts } from './interaction-types';
+import type { Surface, Level } from './frame-types';
+import { nextId } from './ids.js';
+import Button from './Button.astro';
+import Table from './Table.astro';
+import Icon from './Icon.astro';
+interface Props extends HTMLAttributes<'aside'> {
+  categories: ConsentCategory[]; texts: ConsentTexts; version?: string; storageKey?: string;
+  surface?: Surface; level?: Level; deferred?: boolean; maxAgeDays?: number;
+  policyHref?: string; policyLabel?: string; reopenButton?: boolean; reopenLabel?: string;
+}
+const { categories, texts, version = '1', storageKey = 'kn-consent', surface = 'page', level = 2, deferred = false, maxAgeDays = 182, policyHref, policyLabel = 'Cookie policy', reopenButton = true, reopenLabel = 'Cookie settings', id = nextId('kn-consent'), class: className, ...attributes } = Astro.props;
+if (new Set(categories.map(({ id }) => id)).size !== categories.length || categories.some(({ id }) => !/^[a-z][a-z0-9-]*$/.test(id))) throw new TypeError('Consent category ids must be unique stable keys');
+if (!Number.isFinite(maxAgeDays) || maxAgeDays <= 0) throw new RangeError('Consent maxAgeDays must be positive');
+const Heading = `h${level}` as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
+const words = { saved: 'Your choice is saved for {days} days. You can change or withdraw it at any time with the cookie settings button or the cookie policy link.', service: 'service', services: 'services', yes: 'Yes', no: 'No', columns: ['Service / cookie', 'Provider', 'Third party', 'Purpose', 'Storage time', 'Data collected'], ...texts };
+const columns = words.columns.map((label) => ({ label }));
+---
+<aside {...attributes} id={id} class:list={['kn-consent', className]} role="dialog" aria-modal="false" aria-labelledby={`${id}-title`} aria-describedby={`${id}-description`} data-kn-surface={surface} data-kn-categories={JSON.stringify(categories)} data-kn-consent-version={version} data-kn-storage-key={storageKey} data-kn-max-age-days={maxAgeDays} data-kn-settings={`${id}-settings`} data-kn-deferred={String(deferred)} hidden>
+  <Heading id={`${id}-title`} data-kn-type="heading-5">{texts.title}</Heading><p id={`${id}-description`} data-kn-type="small">{texts.description}</p>
+  {policyHref && <p data-kn-type="small"><a href={policyHref}>{policyLabel}</a></p>}
+  <div class="kn-consent-actions"><Button data-kn-consent-accept>{texts.acceptAll}</Button><Button data-kn-consent-reject>{texts.rejectAll}</Button><Button variant="outline" data-kn-consent-open>{texts.settings}</Button></div>
+</aside>
+<dialog class="kn-consent-settings" id={`${id}-settings`} data-kn-surface={surface} aria-labelledby={`${id}-settings-title`} aria-describedby={`${id}-settings-description`}>
+  <div class="kn-consent-settings-header"><Heading id={`${id}-settings-title`} data-kn-type="heading-4">{texts.settingsTitle}</Heading><Button class="kn-consent-close" variant="outline" icon="x" aria-label={texts.close} data-kn-consent-close /></div>
+  <p id={`${id}-settings-description`}>{texts.settingsDescription} {words.saved.replace('{days}', String(maxAgeDays))}</p>
+  <form method="dialog" class="kn-consent-settings-form">
+    {categories.map((category, i) => <details class="kn-consent-category">
+      <summary><Icon class="kn-consent-chevron" name="chevron-down" /><span class="kn-consent-category-label">{category.label}<span data-kn-type="small">{category.services?.length ?? 0} {(category.services?.length ?? 0) === 1 ? words.service : words.services}</span></span>
+        {category.required && <span class="kn-consent-always" data-kn-type="small">{texts.required}</span>}
+        <label class="kn-switch"><input type="checkbox" role="switch" id={`${id}-category-${i}`} value={category.id} data-kn-category checked={category.required === true} disabled={category.required === true} aria-label={category.label} aria-describedby={`${id}-category-${i}-description`} /><span class="kn-switch-track" aria-hidden="true"></span></label>
+      </summary>
+      <div class="kn-consent-category-content"><p id={`${id}-category-${i}-description`}>{category.description}</p>
+        {(category.services?.length ?? 0) > 0 && <Table caption={`${category.label} services`} columns={columns} rows={category.services!.map((service) => [service.name, service.provider, service.thirdParty ? words.yes : words.no, service.purpose, service.storage, service.data])} />}
+      </div>
+    </details>)}
+    <div class="kn-consent-settings-actions"><div><Button data-kn-consent-accept>{texts.acceptAll}</Button><Button data-kn-consent-reject>{texts.rejectAll}</Button></div><Button type="submit" variant="outline">{texts.save}</Button></div>
+  </form>
+</dialog>
+{reopenButton && <Button class="kn-consent-reopen" data-kn-surface={surface} data-kn-consent-reopen={id} data-kn-consent-open icon="cookie" aria-label={reopenLabel} hidden />}
+<script>
+  import { setupConsent } from './consent.js';
+  setupConsent();
+</script>

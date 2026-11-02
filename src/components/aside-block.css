@@ -1,0 +1,6 @@
+@layer kn-components {
+  .kn-aside-block { padding-block-start: var(--kn-space-component-gap); border-block-start: 1px solid var(--kn-border); overflow-wrap: anywhere; }
+  .kn-aside-block[data-kn-surface] { padding: var(--kn-space-plate); border: 0; border-radius: var(--kn-radius-card); }
+  .kn-aside-block > :first-child { margin-block-start: 0; }
+  .kn-aside-block > :last-child { margin-block-end: 0; }
+}

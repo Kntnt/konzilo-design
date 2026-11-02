@@ -1,0 +1,41 @@
+---
+import type { HTMLAttributes } from 'astro/types';
+import type { FieldOption } from './interaction-types';
+import { nextId } from './ids.js';
+import Field from './Field.astro';
+import Button from './Button.astro';
+import Icon from './Icon.astro';
+import type { Level, FrameLink } from './frame-types';
+import Pagination from './Pagination.astro';
+interface Props extends HTMLAttributes<'form'> {
+  for: string; variant?: 'filters' | 'search'; search?: { label: string; value?: string };
+  heading?: string; level?: Level; suggestions?: FrameLink[];
+  toggles?: { name: string; label: string; options: FieldOption[]; values?: string[] }[];
+  select?: { name: string; label: string; options: FieldOption[]; value?: string };
+  submitLabel?: string; countText?: string; total?: number; pageSize?: number;
+  paginationLabel?: string; previous?: string; next?: string; pageLabel?: string;
+}
+const { for: target, variant = 'filters', heading = 'Search', level = 2, suggestions = [], search, toggles = [], select, submitLabel = 'Search', countText = '{count} of {total} results', total = 0, pageSize = 0, paginationLabel = 'Pagination', previous = 'Previous', next = 'Next', pageLabel = 'Page', action = '', id = nextId('kn-visitor-filters'), class: className, ...attributes } = Astro.props;
+const Heading = `h${level}` as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
+const filterNames = [...toggles.map(({ name }) => name), ...(select ? [select.name] : [])];
+if (new Set(filterNames).size !== filterNames.length || filterNames.some((name) => !/^[a-z][a-z0-9-]*$/.test(name) || ['q', 'page', 'constructor', 'prototype'].includes(name))) throw new TypeError('Filter names must be distinct stable keys other than q and page');
+if (!Number.isInteger(pageSize) || pageSize < 0) throw new RangeError('Visitor Filters pageSize must be a non-negative integer');
+---
+<form {...attributes} id={id} class:list={['kn-visitor-filters', className]} role="search" method="get" action={action} data-kn-variant={variant} data-kn-for={target} data-kn-page-size={pageSize} data-kn-count-text={countText} data-kn-pagination-label={paginationLabel} data-kn-previous={previous} data-kn-next={next} data-kn-page-label={pageLabel}>
+  {variant === 'search' ? <div class="kn-search-box" data-kn-surface="inverse">
+    <div class="kn-search-main"><Heading data-kn-type="heading-5">{heading}</Heading>
+    <div class="kn-search-row"><input data-kn-surface="page" type="search" name="q" value={search?.value} placeholder={search?.label ?? 'Search the site'} aria-label={search?.label ?? 'Search the site'} /><Button type="submit">{submitLabel}</Button></div></div>
+    {suggestions.length > 0 && <ul class="kn-search-links">{suggestions.map((link) => <li><a href={link.href}>{link.label}</a></li>)}</ul>}
+  </div> : <div class="kn-visitor-filter-panel">
+    {select && <Field {...select} type="select" class="kn-visitor-filter-select" data-kn-filter-name={select.name} />}
+    {toggles.map((group) => <fieldset class="kn-visitor-filter-group"><legend>{group.label}</legend><div class="kn-visitor-filter-toggles">{group.options.map((option) => <button class="kn-pill" type="submit" name={group.name} value={option.value} aria-pressed={String(group.values?.includes(option.value) ?? false)} data-kn-filter-name={group.name}>{option.label}</button>)}</div></fieldset>)}
+    {search && <div class="kn-field kn-visitor-filter-search"><label class="kn-field-label" for={`${id}-search`}>{search.label}</label><div class="kn-visitor-filter-input"><Icon name="search" /><input class="kn-field-control" id={`${id}-search`} name="q" type="search" value={search.value} /></div></div>}
+    <Button class="kn-visitor-filter-submit" type="submit" variant="outline">{submitLabel}</Button>
+  </div>}
+  <p class="kn-visitor-filter-count" role="status" aria-live="polite" data-kn-result-count data-kn-type="small">{countText.replace('{count}', String(total)).replace('{total}', String(total))}</p>
+  <div data-kn-pagination-host>{pageSize > 0 && <Pagination page={1} pages={Math.ceil(total / pageSize)} base={action} label={paginationLabel} previous={previous} next={next} pageLabel={pageLabel} />}</div>
+</form>
+<script>
+  import { setupVisitorFilters } from './visitor-filters.js';
+  setupVisitorFilters();
+</script>

@@ -1,0 +1,20 @@
+---
+import type { HTMLAttributes } from 'astro/types';
+import type { Width } from './interaction-types';
+import Figure from './Figure.astro';
+interface Props extends HTMLAttributes<'figure'> {
+  title: string; poster?: string; sources?: { src: string; type?: string }[];
+  tracks?: { src: string; language: string; label: string; default?: boolean }[];
+  caption?: string; width?: Width; aspectRatio?: string;
+}
+const { title, poster, sources = [], tracks = [], caption, width = 'narrow', aspectRatio = '16 / 9', class: className, ...attributes } = Astro.props;
+if (!title?.trim()) throw new TypeError('Video Player requires an accessible title');
+if (!/^\d+(?:\.\d+)?\s*\/\s*\d+(?:\.\d+)?$/.test(aspectRatio) || aspectRatio.split('/').some((n) => Number(n) <= 0)) throw new TypeError('Invalid video aspect ratio');
+---
+<Figure {...attributes} class:list={['kn-video', className]} caption={caption} width={width}>
+  <video controls preload="metadata" title={title} aria-label={title} poster={poster} style={{ '--kn-video-ratio': aspectRatio }}>
+    {sources.map((source) => <source src={source.src} type={source.type} />)}
+    {tracks.map((track) => <track kind="captions" src={track.src} srclang={track.language} label={track.label} default={track.default} />)}
+    {sources[0] && <a href={sources[0].src}>{title}</a>}
+  </video>
+</Figure>

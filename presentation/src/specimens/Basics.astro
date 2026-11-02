@@ -1,0 +1,105 @@
+---
+import BodyText from '../../../src/components/BodyText.astro';
+import HeadingGroup from '../../../src/components/HeadingGroup.astro';
+import Button from '../../../src/components/Button.astro';
+import LinkGroup from '../../../src/components/LinkGroup.astro';
+import Icon from '../../../src/components/Icon.astro';
+import { sample } from '../samples.js';
+import { t } from '../data.js';
+const { id } = Astro.props;
+const states = ['default', 'hover', 'focus', 'active'];
+---
+
+{id === 'body-text' && (
+  <div class="sample-pair reading-pair">
+    <HeadingGroup
+      eyebrow="Planning"
+      heading="Information you can act on"
+      deck="A short introduction sets out the subject before the detail begins."
+      type="heading-1"
+    />
+    <BodyText>
+      <p>{sample.paragraph}</p>
+      <h3 data-kn-type="heading-4">A straightforward approach</h3>
+      <ul>
+        <li>Understand the goal and review the options.</li>
+        <li>Agree on a plan with clear responsibilities.</li>
+        <li>Keep the next step visible.</li>
+      </ul>
+      <p>
+        Read <a href="#guide">the practical guide</a> or{' '}
+        <strong>contact the team</strong> for support.
+      </p>
+    </BodyText>
+  </div>
+)}
+{id === 'buttons' && (
+  <div class="sample-stack button-matrix">
+    {['page', 'brand'].map((surface) => (
+      <div
+        data-kn-surface={surface}
+        class="sample-state-row"
+        style="--state-columns:4"
+      >
+        {states.map((state) => (
+          <div>
+            <p data-kn-type="label">{t(`state.${state}`)}</p>
+            <LinkGroup direction="stack">
+              {['filled', 'outline', 'arrow'].map((variant) => (
+                <Button
+                  variant={variant}
+                  class={`is-${state}`}
+                >
+                  Continue
+                </Button>
+              ))}
+            </LinkGroup>
+          </div>
+        ))}
+      </div>
+    ))}
+  </div>
+)}
+{id === 'links' && (
+  <div class="sample-stack">
+    {['page', 'tint', 'brand', 'inverse'].map((surface) => (
+      <div
+        data-kn-surface={surface}
+        class="sample-state-row"
+        style="--state-columns:4"
+      >
+        {states.map((state) => (
+          <div>
+            <p data-kn-type="label">{t(`state.${state}`)}</p>
+            <a href="#guide" class={`is-${state}`}>
+              {sample.link}
+            </a>
+          </div>
+        ))}
+      </div>
+    ))}
+  </div>
+)}
+{id === 'icon' && (
+  <div class="sample-icons">
+    {[
+      'arrow-right',
+      'check',
+      'search',
+      'mail',
+      'phone',
+      'download',
+      'file-text',
+      'globe',
+      'info',
+      'circle-check',
+      'triangle-alert',
+      'circle-x',
+    ].map((name) => (
+      <div>
+        <Icon name={name} />
+        <p data-kn-type="small">{name}</p>
+      </div>
+    ))}
+  </div>
+)}

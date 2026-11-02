@@ -1,0 +1,18 @@
+---
+import type { ContentParts } from './interaction-types';
+import ContentMetadata from './ContentMetadata.astro';
+import Button from './Button.astro';
+import Icon from './Icon.astro';
+import { excerptHtml } from './content-loop.js';
+interface Props extends ContentParts {}
+const { title, href, level = 3, type = 'heading-5', meta1 = [], meta2 = [], metaSeparator = 'dot', text, excerpt, cta, kind, fileType, fileSize, linkAttributes = {} } = Astro.props;
+const Heading = `h${level}` as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
+---
+<div class="kn-content-body">
+  <ContentMetadata items={meta1} separator={metaSeparator} place={1} />
+  <Heading class="kn-content-heading" data-kn-type={type}><a {...linkAttributes} class="kn-content-link" href={href}>{title}</a>{kind === 'video' && <Icon class="kn-content-kind-icon" name="play" />}{kind === 'document' && <Icon class="kn-content-kind-icon" name="download" />}</Heading>
+  <ContentMetadata items={meta2} separator={metaSeparator} place={2} />
+  {kind === 'document' && (fileType || fileSize) && <p class="kn-content-file" data-kn-type="small">{fileType && <span>{fileType}</span>}{fileSize && <span>{fileSize}</span>}</p>}
+  {(text || excerpt) && <p class="kn-content-text" data-kn-type="small" set:html={excerptHtml(text ?? excerpt)} />}
+  {cta && <div class="kn-content-cta">{cta.style === 'button' ? <Button {...linkAttributes} href={href} variant="outline" aria-label={`${cta.label}: ${title}`}>{cta.label}{cta.icon && <span class="kn-content-cta-icon" aria-hidden="true">{cta.icon}</span>}</Button> : <a {...linkAttributes} href={href} aria-label={`${cta.label}: ${title}`}><span class="kn-content-cta-label">{cta.label}</span>{cta.icon && <span class="kn-content-cta-icon" aria-hidden="true">{cta.icon}</span>}</a>}</div>}
+</div>

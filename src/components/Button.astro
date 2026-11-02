@@ -1,0 +1,20 @@
+---
+import type { HTMLAttributes } from 'astro/types';
+import Icon from './Icon.astro';
+import { icons } from './icons.js';
+// A navigation link when href is supplied, otherwise a native action button.
+type Attributes = Omit<HTMLAttributes<'button'> & HTMLAttributes<'a'>, 'type'>;
+interface Props extends Attributes {
+  href?: string;
+  variant?: 'filled' | 'outline' | 'arrow';
+  icon?: keyof typeof icons;
+  type?: 'button' | 'submit' | 'reset';
+}
+const { href, variant = 'filled', icon, type = 'button', class: className, ...attributes } = Astro.props;
+const Tag = href === undefined ? 'button' : 'a';
+---
+<Tag {...attributes} href={href} type={href === undefined ? type : undefined} class:list={['kn-button', className]} data-kn-variant={variant}>
+  {icon && <Icon name={icon} />}
+  <slot />
+  {variant === 'arrow' && <Icon name="arrow-right" class="kn-button-arrow" />}
+</Tag>

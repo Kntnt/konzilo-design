@@ -1,0 +1,11 @@
+---
+import type { HTMLAttributes } from 'astro/types';
+import { paginationModel, pageAddress } from './visitor-filters.js';
+interface Props extends HTMLAttributes<'nav'> {
+  page: number; pages: number; label?: string; previous?: string; next?: string; pageLabel?: string;
+  base?: string; filters?: Record<string, string[]>; query?: string; href?: (page: number) => string;
+}
+const { page, pages, label = 'Pagination', previous = 'Previous', next = 'Next', pageLabel = 'Page', base = '', filters = {}, query = '', href, class: className, ...attributes } = Astro.props;
+const stops = paginationModel({ page, pages, previous, next, pageLabel });
+---
+{stops.length > 0 && <nav {...attributes} class:list={['kn-pagination', className]} aria-label={label}><ul role="list">{stops.map((stop) => <li>{stop.page ? <a href={href ? href(stop.page) : pageAddress(base, { q: query, filters }, stop.page)} aria-label={stop.label} aria-current={stop.current ? 'page' : undefined} data-kn-page={stop.page}>{stop.text}</a> : <span aria-hidden="true">{stop.text}</span>}</li>)}</ul></nav>}

@@ -1,0 +1,61 @@
+---
+import { project, t, num } from '../data.js';
+import { chapterNumber } from '../words.js';
+const { page, pages } = Astro.props;
+const logo = project['logo-dark'] || project.logo;
+---
+
+{page.id === 'cover' && (
+  <div class="cover-content rail">
+    {logo ? (
+      <img class="cover-logo" src={logo} alt={project.name} />
+    ) : (
+      <p class="cover-name" data-kn-type="heading-1">
+        {project.name}
+      </p>
+    )}
+    <h1 data-kn-type="display">{t('cover.title')}</h1>
+    <p data-kn-type="lead">{t('cover.text')}</p>
+  </div>
+)}
+{page.opener && (
+  <div class="chapter-content rail">
+    <p class="chapter-number" data-kn-type="display">
+      {chapterNumber(page.chapter)}
+    </p>
+    <h1 data-kn-type="display">{t(`${page.chapter}.name`)}</h1>
+    <p data-kn-type="lead">{t(`${page.chapter}.opener`)}</p>
+  </div>
+)}
+{page.id === 'contents' && (
+  <nav class="contents-list rail">
+    {['colour', 'typography', 'space', 'components'].map((chapter) => (
+      <a href={`#chapter-${chapter}`}>
+        <span data-kn-type="display">{chapterNumber(chapter)}</span>
+        <div>
+          <span data-kn-type="heading-3">{t(`${chapter}.name`)}</span>
+          <p>{t(`${chapter}.opener`)}</p>
+        </div>
+        <span>
+          {num(pages.find((entry) => entry.id === `chapter-${chapter}`).number)}
+        </span>
+      </a>
+    ))}
+  </nav>
+)}
+{page.id === 'next' && (
+  <div class="closing rail">
+    <p data-kn-type="lead">{t('next.intro')}</p>
+    <ol>
+      {[1, 2, 3].map((step) => (
+        <li>
+          <span data-kn-type="display">{num(step)}</span>
+          <div>
+            <p data-kn-type="heading-3">{t(`next.${step}.title`)}</p>
+            <p>{t(`next.${step}.text`)}</p>
+          </div>
+        </li>
+      ))}
+    </ol>
+  </div>
+)}

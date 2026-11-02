@@ -1,0 +1,12 @@
+---
+import type { HTMLAttributes } from 'astro/types';
+import { icons } from './icons.js';
+// A text-sized Lucide icon, decorative unless given an accessible label.
+interface Props extends Omit<HTMLAttributes<'svg'>, 'name'> {
+  name: keyof typeof icons;
+  label?: string;
+}
+const { name, label, class: className, ...attributes } = Astro.props;
+if (!Object.hasOwn(icons, name)) throw new TypeError(`Unknown icon: ${name}`);
+---
+<svg {...attributes} class:list={['kn-icon', className]} viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden={label ? undefined : 'true'} role={label ? 'img' : undefined} aria-label={label} focusable="false" set:html={icons[name]} />

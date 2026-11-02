@@ -1,0 +1,13 @@
+---
+import type { HTMLAttributes } from 'astro/types';
+import type { Surface } from './frame-types';
+interface Props extends HTMLAttributes<'figure'> { name?: string; context?: string; sourceUrl?: string; surface?: Surface }
+const { name, context, sourceUrl, surface, class: className, ...attributes } = Astro.props;
+---
+<figure {...attributes} class:list={['kn-quotation', className]} data-kn-surface={surface}>
+  <blockquote class="kn-quotation-text" cite={sourceUrl} data-kn-type="heading-4"><slot /></blockquote>
+  {(name || context || sourceUrl) && <figcaption class="kn-quotation-attribution" data-kn-type="small">
+    {name && <span class="kn-quotation-name">{name}</span>}{name && context && ', '}{context}
+    {sourceUrl && <>{(name || context) && ' · '}<a href={sourceUrl}>Source</a></>}
+  </figcaption>}
+</figure>

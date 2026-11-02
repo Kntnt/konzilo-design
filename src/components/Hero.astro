@@ -1,0 +1,26 @@
+---
+import type { HTMLAttributes } from 'astro/types';
+import type { Surface } from './frame-types';
+import Band from './Band.astro';
+import HeadingGroup from './HeadingGroup.astro';
+interface Props extends HTMLAttributes<'section'> {
+  heading: string;
+  eyebrow?: string;
+  deck?: string;
+  level?: 1 | 2 | 3 | 4 | 5 | 6;
+  variant?: 'picture' | 'plate' | 'typographic';
+  surface?: Surface;
+  picture?: string;
+  alt?: string;
+  loading?: 'lazy' | 'eager';
+}
+const { heading, eyebrow, deck, level = 1, variant = 'typographic', surface = 'brand', picture, alt, loading = 'eager', class: className, ...attributes } = Astro.props;
+if (variant === 'picture' && picture && alt === undefined) throw new TypeError('Picture Hero requires alternative text');
+---
+<Band {...attributes} class:list={['kn-hero', className]} contentClass="kn-hero-content" surface={variant === 'plate' ? surface : undefined} picture={variant === 'plate' ? picture : undefined} data-kn-variant={variant}>
+  <div class="kn-hero-text">
+    <HeadingGroup heading={heading} eyebrow={eyebrow} deck={deck} level={level} type={variant === 'typographic' ? 'display' : 'heading-1'} />
+    <slot />
+  </div>
+  {variant === 'picture' && picture && <div class="kn-hero-media"><img src={picture} alt={alt} loading={loading} /></div>}
+</Band>

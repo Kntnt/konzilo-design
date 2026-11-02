@@ -95,3 +95,6 @@ Records the header behaviour, layout and items, with their status and reasoning.
 20. **Skip link:** the header begins with "Skip to content", which shows on focus (proposed; the reference design has one).
 
 **Open with the owner:** nothing on the header (2026-10-31). For each question he needs the problem stated and a drawn example.
+
+
+***Built* 2026-11-01:** `Header.astro` and its parts implement points 1–20 and arrangements A, B and C. The component resolves the reference’s missing Escape and keyboard focus handling, no-script search link, reduced motion, print, measured root scroll padding and Reading Area inset. The transparent appearance inherits the first band’s real Surface kind; it has no independent polarity input. The opaque appearance is a real `page` or `brand` Surface. Giving way and autohide decisions are pure functions, checked with the measured-step, jitter and hidden-transition cases. The assistant’s implementation choices and validation limits are recorded in components.md.

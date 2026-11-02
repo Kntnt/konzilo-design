@@ -1,0 +1,8 @@
+@layer kn-components {
+  .kn-breadcrumbs { margin-block: 1em; color: var(--kn-text-muted); }
+  .kn-breadcrumbs > ol { display: flex; flex-wrap: wrap; gap: 0.35em 0; list-style: none; margin: 0; padding: 0; }
+  .kn-breadcrumbs > ol > li { display: inline-flex; align-items: baseline; min-inline-size: 0; margin: 0; overflow-wrap: anywhere; }
+  .kn-breadcrumbs a { color: var(--kn-text); text-decoration: none; }
+  .kn-breadcrumbs a:hover { text-decoration: underline; text-underline-offset: 0.18em; }
+  .kn-breadcrumbs-separator::before { content: "/"; display: inline-block; margin-inline: 0.65em; }
+}
