@@ -602,7 +602,7 @@ test('tool saves presentation prose, keeps controls still and serves the exporte
 
     // Dragging touches only what changed: the logo stays the same element, and so does the picture.
     const stable = (frame) => frame.evaluate(() => {
-      window.__stable = { hero: document.querySelector('.kn-hero-media img').src.length };
+      window.__stable = { hero: document.querySelector('.kn-hero').style.getPropertyValue('--kn-picture-image').length };
       window.__mutations = 0;
       new MutationObserver((list) => {
         for (const change of list) if (change.type === 'childList' && change.target.id !== 'kn-live-core') window.__mutations += 1;
@@ -732,17 +732,17 @@ test('each role chooses a typeface and turns the axes that typeface has', { time
     assert.deepEqual(await axes(), ['wght', 'wdth', 'opsz', 'spacing']);
     await page.locator('[data-role-tab="display"]').click();
     assert.equal(await page.locator('[data-axis="wght"]').inputValue(), '260');
-    assert.equal(await style('.kn-hero h1', 'fontStretch'), '112%');
+    assert.equal(await style('.kn-hero h2', 'fontStretch'), '112%');
     assert.equal(await style('[data-kn-type="label"]', 'fontStretch'), '75%');
 
     // A slider moves the display text, and stays the same element while it does.
     await page.locator('[data-axis="wght"]').evaluate((node) => { window.__slider = node; });
     await drag('wght', '500');
     assert.equal(await page.locator('[data-axis="wght"]').evaluate((node) => node === window.__slider), true);
-    await preview.waitForFunction(() => getComputedStyle(document.querySelector('.kn-hero h1')).fontWeight === '500');
+    await preview.waitForFunction(() => getComputedStyle(document.querySelector('.kn-hero h2')).fontWeight === '500');
     assert.equal((await saved()).type.roles.display.weight, 500);
     await page.locator('[data-axis-reset="wght"]').click();
-    await preview.waitForFunction(() => getComputedStyle(document.querySelector('.kn-hero h1')).fontWeight === '600');
+    await preview.waitForFunction(() => getComputedStyle(document.querySelector('.kn-hero h2')).fontWeight === '600');
     assert.equal((await saved()).type.roles.display.weight, undefined);
 
     // The letter spacing shows in the specimen as well as in the preview.
@@ -752,7 +752,7 @@ test('each role chooses a typeface and turns the axes that typeface has', { time
     await drag('spacing', '0.3');
     assert.deepEqual(await page.locator('[data-axis="spacing"]').boundingBox(), held, 'the page heading never breaks to push the slider');
     await page.waitForFunction((before) => parseFloat(getComputedStyle(document.querySelector('.specimen-name')).letterSpacing) > before + 1, tightest);
-    await preview.waitForFunction(() => parseFloat(getComputedStyle(document.querySelector('.kn-hero h1')).letterSpacing) > 1);
+    await preview.waitForFunction(() => parseFloat(getComputedStyle(document.querySelector('.kn-hero h2')).letterSpacing) > 1);
     await page.locator('[data-axis-reset="spacing"]').click();
 
     // Another typeface brings its own axes, and settings it has no axis for go.
@@ -761,7 +761,7 @@ test('each role chooses a typeface and turns the axes that typeface has', { time
     assert.ok((await axes()).includes('slnt'));
     assert.equal(await page.locator('[data-axis="wdth"]').getAttribute('max'), '151');
     await drag('XTRA', '500');
-    await preview.waitForFunction(() => getComputedStyle(document.querySelector('.kn-hero h1')).fontVariationSettings.includes('XTRA'));
+    await preview.waitForFunction(() => getComputedStyle(document.querySelector('.kn-hero h2')).fontVariationSettings.includes('XTRA'));
     await page.locator('[data-font="display"]').selectOption('Fraunces, Georgia, serif');
     await page.waitForFunction(() => document.querySelector('[data-axis="SOFT"]'));
     const inputs = await saved();
@@ -779,7 +779,7 @@ test('each role chooses a typeface and turns the axes that typeface has', { time
     await page.locator('[data-role-tab="heading-1"]').click();
     assert.equal(await page.locator('[data-font="heading-1"] option', { hasText: 'Playfair' }).count(), 1);
     await page.locator('[data-font="heading-1"]').selectOption('@display');
-    await preview.waitForFunction(() => getComputedStyle(document.querySelector('.kn-hero h2')).fontFamily.startsWith('Fraunces'));
+    await preview.waitForFunction(() => getComputedStyle(document.querySelector('.kn-hero h1')).fontFamily.startsWith('Fraunces'));
     assert.equal((await saved()).type['heading-1-role'], 'display');
 
     // Labels can take any face, a monospace too, and alternate letters come from the face.

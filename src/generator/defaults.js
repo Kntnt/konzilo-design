@@ -28,6 +28,7 @@ const defaults = {
   },
   page: { shadow: false, 'edge-line': false },
   breadcrumbs: { show: true, placement: 'first-band', separator: 'slash', home: 'word', current: true, narrow: 'trail' },
+  hero: { picture: 'behind', surface: 'none', overlay: 'dark', height: 'two-thirds', place: 'bottom', type: 'heading-1' },
   'corner-profile': 25,
   'density-profile': 75,
 };

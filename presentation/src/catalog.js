@@ -1,9 +1,12 @@
+// At a third of the screen a hero's text fills the height, so it has nowhere to move to.
+export const heroHasRoom = (height) => height !== 'third';
+
 export const componentPages = [
   ['header', ['Header'], ['header-a-menu'], []],
   ['footer', ['Footer'], ['footer'], []],
   ['page', ['Page'], ['preview'], []],
   ['breadcrumbs', ['Breadcrumb Navigation'], ['breadcrumbs'], []],
-  ['opening', ['Hero'], ['hero-picture'], ['hero-plate', 'hero-typographic', 'hero-full-picture']],
+  ['opening', ['Hero'], ['hero'], []],
   ['sections', ['Band', 'Text and Image', 'CTA Band', 'Key Figures'], ['band', 'text-image', 'cta-band'], ['text-image-start']],
   ['text', ['Body Text', 'Heading Group', 'Reading Area', 'Table of Contents', 'Quotation', 'Callout', 'Accordion', 'Table'], ['body-text', 'reading-area', 'accordion', 'callout', 'table'], ['callout-more', 'accordion-more', 'table-more']],
   ['buttons', ['Button and Link Group', 'Icon'], ['button-default', 'icon'], ['buttons', 'links']],

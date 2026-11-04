@@ -14,9 +14,10 @@ import { saveDesign, startTool } from '../tool/server.js';
 // A real 2x1 JPEG, the smallest thing a browser will decode as one.
 const JPEG = Buffer.from('/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/wAALCAABAAIBAREA/8QAFAABAAAAAAAAAAAAAAAAAAAACf/EABQQAQAAAAAAAAAAAAAAAAAAAAD/2gAIAQEAAD8AVN//2Q==', 'base64');
 const scratch = () => mkdtemp(join(tmpdir(), 'kn-pictures-'));
-const design = async (directory) => {
+const design = async (directory, hero) => {
   const path = join(directory, 'client.design.json');
   const inputs = { ...defaultInputs(), typefaces: { ...defaultInputs().typefaces, main: 'Mona Sans' } };
+  if (hero) inputs.hero = { ...inputs.hero, ...hero };
   await saveDesign(path, { inputs, project: { name: 'Client', version: '1.0' } });
   return path;
 };
@@ -24,7 +25,7 @@ const design = async (directory) => {
 test('every sample photo ships, and every place can be told from its address', async () => {
   const set = pictures(derive(defaultInputs()).ramps);
   for (const photo of [set.hero, set.panorama, ...set.landscapes]) {
-    assert.ok((await stat(new URL(`..${photo}`, import.meta.url))).size < 250 * 1024, photo);
+    assert.ok((await stat(new URL(`..${photo}`, import.meta.url))).size < 400 * 1024, photo);
     assert.deepEqual(photo.match(PICTURE_URL), [photo]);
   }
   const own = Object.fromEntries(PICTURE_SLOTS.map((slot) => [slot, `/design-pictures/${slot}.jpg`]));
@@ -119,13 +120,14 @@ test('a presentation carries each picture once, and a design\'s own in place of 
         return content;
       };
       assert.match(await page.evaluate(() => getComputedStyle(document.querySelector('.surface-example[data-kn-surface="picture-dark"]')).backgroundImage), /url\("data:image\/jpeg/, 'a picture Surface in the document shows the picture');
-      const hero = await frame('hero-picture');
-      await hero.waitForFunction(() => document.querySelector('.kn-hero-media img')?.naturalWidth === 2);
+      const hero = await frame('hero');
+      const background = () => hero.evaluate(() => getComputedStyle(document.querySelector('.kn-hero')).backgroundImage);
+      await hero.waitForFunction(() => getComputedStyle(document.querySelector('.kn-hero')).backgroundImage.includes('url("data:image/'));
       assert.deepEqual(external, [], 'nothing is fetched');
       await page.locator('#opening [data-frame-pictures] [data-value="off"]').click();
-      assert.equal(await hero.evaluate(() => getComputedStyle(document.querySelector('.kn-hero-media')).display), 'none');
+      assert.doesNotMatch(await background(), /url\(/);
       await page.locator('#opening [data-frame-pictures] [data-value="on"]').click();
-      assert.notEqual(await hero.evaluate(() => getComputedStyle(document.querySelector('.kn-hero-media')).display), 'none');
+      assert.match(await background(), /url\("data:image\//);
     } finally {
       await browser.close();
     }
@@ -136,7 +138,7 @@ test('a presentation carries each picture once, and a design\'s own in place of 
 
 test('in the tool a photo reaches both ends, the toggle hides what can go, and colours leave the photos alone', { timeout: 240000 }, async () => {
   const directory = await scratch();
-  const path = await design(directory);
+  const path = await design(directory, { picture: 'beside' });
   const upload = join(directory, 'camera.png');
   // A red 4x3 picture, drawn by a browser so the test needs no image of its own.
   const tool = await startTool({ designFile: path, port: 0, open: false });

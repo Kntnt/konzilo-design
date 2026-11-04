@@ -511,6 +511,39 @@ function breadcrumbsPage(copy) {
     ${next('breadcrumbs', copy)}`;
 }
 
+/* ---- The page's opening: one hero in the preview, and its choices here, from the background up to the words. ---- */
+const hero = (name, value, drawing, help) => `<button class="pick" type="button" data-pick="inputs.hero.${name}" data-value="${value}" ${tip(help)}>${drawing}</button>`;
+const heroDrawing = (kind, word) => `<span class="pick-screen" data-draw="${kind}" aria-hidden="true"><i></i><i></i></span><span class="pick-word">${escapeHtml(word)}</span>`;
+function heroPage(copy) {
+  return `${head('opening', copy)}
+    ${setting('Picture', `<div class="picks picks-four ui">
+      ${hero('picture', 'none', heroDrawing('none', 'None'), 'Words alone, on the colour below.')}
+      ${hero('picture', 'beside', heroDrawing('beside', 'Beside'), 'The picture stands next to the text, and under it on a phone.')}
+      ${hero('picture', 'behind', heroDrawing('behind', 'Behind'), 'The picture fills the hero, under an overlay that lets the text hold its contrast.')}
+    </div>
+    <div class="fields">
+      ${choice('Colour', 'inputs.hero.surface', [['none', 'None'], ...SURFACE_CHOICES], 'The colour behind the text. With none, what lies beneath shows. A picture behind the text leaves no colour to choose.')}
+      ${choice('Overlay', 'inputs.hero.overlay', [['dark', 'Dark, with light text'], ['light', 'Light, with dark text']], 'What lies between a picture behind the text and the text. It is as strong as the text needs, and no more.')}
+    </div>`)}
+    ${setting('Share of the screen', `<div class="picks picks-four ui">
+      ${hero('height', 'third', heroDrawing('third', '1/3'), 'A third of the screen. The text fills that height, so it stays centred.')}
+      ${hero('height', 'half', heroDrawing('half', '1/2'), 'Half of the screen. A longer text makes it taller.')}
+      ${hero('height', 'two-thirds', heroDrawing('two-thirds', '2/3'), 'Two thirds of the screen. A longer text makes it taller.')}
+      ${hero('height', 'full', heroDrawing('full', 'All'), 'All of the screen. A visitor sees nothing else before scrolling.')}
+    </div>`)}
+    ${setting('Text', `<div class="picks picks-four ui">
+      ${hero('place', 'center', heroDrawing('center', 'Centred'), 'The text in the middle of the hero.')}
+      ${hero('place', 'bottom', heroDrawing('bottom', 'At the bottom'), 'The text at the bottom. Over a picture, the overlay fades in above it, and the picture is clear at the top.')}
+    </div>`)}
+    ${setting('Heading', `<div class="picks picks-four ui">
+      ${hero('type', 'heading-1', heroDrawing('heading-1', 'H1'), 'The first heading\'s size, as on every other page.')}
+      ${hero('type', 'display', heroDrawing('display', 'Display'), 'The largest size, for an opening that speaks loudly.')}
+    </div>`)}
+    <p class="component-note ui">The preview shows one screen, 16:10 on a desktop and upright on a tablet and a phone. The grey bars stand for what follows the hero.</p>
+    ${setting('On this page', `<dl class="component-list"><div><dt class="ui">Hero</dt><dd>${escapeHtml(DESCRIPTIONS.get('Hero') ?? '')}</dd></div></dl>`)}
+    ${why('components', 'About the components', copy)}${next('opening', copy)}`;
+}
+
 /* ---- The components: they take everything from the pages before, and show in the preview. ---- */
 const DESCRIPTIONS = new Map(COMPONENT_GROUPS.flatMap(([, items]) => items));
 DESCRIPTIONS.set('Pagination', 'Moves through a long list, page by page.');
@@ -520,11 +553,11 @@ const componentPage = (id) => (copy) => {
     ${setting('In the preview', `<div class="chips ui">${[...defaults, ...variants].map((specimen) => `<button class="chip" type="button" data-show-specimen="${specimen}" ${tip('Scroll the preview to this.')}>${escapeHtml(copy[`specimen.${specimen}`])}</button>`).join('')}</div>`)}
     <p class="component-note ui">These are the real components, at their real widths. They take their colours, typefaces, space, corners and shadows from the pages before, so there is nothing more to set here.</p>
     ${setting('On this page', `<dl class="component-list">${names.map((name) => `<div><dt class="ui">${escapeHtml(name)}</dt><dd>${escapeHtml(DESCRIPTIONS.get(name) ?? '')}</dd></div>`).join('')}</dl>`)}
-    ${id === 'opening' ? why('components', 'About the components', copy) : ''}${next(id, copy)}`;
+    ${next(id, copy)}`;
 };
 
 export function documentMarkup(copy) {
   const builders = { start, 'colour-scale': colourScale, 'colour-together': colourTogether, 'main-typeface': mainTypeface, 'type-scale': typeScale, space, corners, shadow, header: headerPage, footer: footerPage, page: pagePage, breadcrumbs: breadcrumbsPage };
-  for (const id of CHAPTERS.at(-1)[1]) builders[id] = componentPage(id);
+  for (const id of CHAPTERS.at(-1)[1]) builders[id] = id === 'opening' ? heroPage : componentPage(id);
   return PAGES.map((id) => `<article class="page" data-page="${id}" hidden>${builders[id](copy)}</article>`).join('');
 }

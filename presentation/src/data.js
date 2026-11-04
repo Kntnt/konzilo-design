@@ -61,7 +61,7 @@ if (designPath) {
       throw new Error('Copy override must be an object');
     for (const [key, value] of Object.entries(custom)) {
       // Words for what the document no longer shows do no harm in an older file.
-      if (['specimen.headers', 'specimen.footer-simple'].includes(key)) continue;
+      if (['specimen.headers', 'specimen.footer-simple'].includes(key) || key.startsWith('specimen.hero-')) continue;
       if (!Object.hasOwn(english, key))
         throw new Error(`Unknown copy key: ${key}`);
       if (typeof value !== 'string')

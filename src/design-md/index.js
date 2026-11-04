@@ -202,7 +202,15 @@ function trailWords(b) {
   const first = { word: 'the word Home', name: 'the site\'s name', icon: 'a house icon' }[b.home];
   return `- **Breadcrumb Navigation:** on every page but the start page, ${b.placement === 'own-band' ? 'in a thin Band of its own directly under the header' : 'at the top of the first Band, above its heading'}. It begins with ${first}, its steps are parted by ${TRAIL_MARKS[b.separator]}, and it ${b.current ? 'ends with the current page as plain text' : 'ends with the page above'}. ${b.narrow === 'parent' ? 'On a phone only the link one level up shows.' : 'On a phone the whole trail wraps.'}`;
 }
-function frameWords({ header: h, footer: f, page: p, breadcrumbs: b }) {
+const HERO_SHARES = { third: 'a third', half: 'half', 'two-thirds': 'two thirds', full: 'all' };
+function heroWords(h) {
+  if (!h) return '';
+  const colour = h.surface === 'none' ? 'no background of its own' : `the ${h.surface} Surface`;
+  const ground = h.picture === 'behind' ? `a picture behind the text, under a ${h.overlay} overlay` : h.picture === 'beside' ? `a picture beside the text, on ${colour}` : colour;
+  const place = h.height === 'third' || h.place === 'center' ? 'centred' : 'at the bottom';
+  return `\n- **Hero:** by default ${ground}, taking ${HERO_SHARES[h.height]} of the screen, with its text ${place} and its heading in the ${h.type === 'display' ? 'display' : 'first heading'} style. A page may depart from this.`;
+}
+function frameWords({ header: h, footer: f, page: p, breadcrumbs: b, hero }) {
   const items = Object.keys(SHOWS).filter((key) => h[key]).map((key) => SHOWS[key]);
   const button = { word: 'a menu button with the word and a chevron', icon: 'a menu button with a hamburger icon', off: 'a menu button only when items give way' }[h['menu-button']];
   const attached = h.attachment === 'flow' ? 'It scrolls away with the page.' : `It sticks to the top of the window${h.autohide ? ' and slides away while scrolling down' : ''}.${h.start === 'under' ? ' The page starts under it, and it is transparent at the top.' : ''}`;
@@ -211,7 +219,7 @@ function frameWords({ header: h, footer: f, page: p, breadcrumbs: b }) {
 - **Header:** arrangement ${h.arrangement}, on the ${h.surface} Surface, showing ${[...items, button].join(', ')}. ${attached} The search box is on the ${h['search-surface']} Surface${h['search-blur'] ? ', over a blurred page' : ''}.
 - **Footer:** the \`${f.model}\` model on the ${f.surface} Surface, ${f.attachment === 'reveal' ? 'revealed under the page' : 'in the flow'}. Lines between rows: ${f['horizontal-rules'] ? 'yes' : 'no'}; between columns: ${f['vertical-rule'] ? 'yes' : 'no'}.
 - **Page:** ${p.shadow ? 'it casts a shadow on the footer' : 'no shadow on the footer'}${p['edge-line'] ? ', with a line at its bottom edge' : ''}.
-${trailWords(b)}`;
+${trailWords(b)}${heroWords(hero)}`;
 }
 function componentSection({ project, resolved }) {
   const groups = COMPONENT_GROUPS.map(([group, items]) => `### ${group}\n\n${items.map(([name, job]) => `- **${name}:** ${job}`).join('\n')}`).join('\n\n');

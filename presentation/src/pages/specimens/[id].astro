@@ -3,6 +3,7 @@ import { ids, componentPages, FRAME_PAGES } from '../../catalog.js';
 import { project, resolved, copy, t, ownPictures } from '../../data.js';
 import Samples from '../../Samples.astro';
 import LiveFrame from '../../LiveFrame.astro';
+import LiveHero from '../../LiveHero.astro';
 import { pictures, flatPictures } from '../../samples.js';
 import '../../specimen.css';
 export function getStaticPaths() {
@@ -12,7 +13,7 @@ export function getStaticPaths() {
 }
 const { id } = Astro.params;
 const isFull = (name) =>
-  /^(header-|footer|hero-|text-image|cta-band|band$|page$|preview$|overview$|responsive-|space-section$)/.test(
+  /^(header-|footer|hero$|text-image|cta-band|band$|page$|preview$|overview$|responsive-|space-section$)/.test(
     name,
   );
 const full = isFull(id);
@@ -46,6 +47,7 @@ const full = isFull(id);
       </div>
     )}
     {id === 'preview' && <LiveFrame />}
+    {['catalogue', 'preview'].includes(id) && <LiveHero />}
     {['catalogue', 'preview'].includes(id) && <script id="kn-built-pictures" type="application/json" is:inline set:html={JSON.stringify(flatPictures(pictures(resolved.ramps, ownPictures))).replaceAll('<', '\\u003c')} />}
     <script is:inline>
       document.querySelectorAll('.kn-field[class*="is-"]').forEach((field) => {

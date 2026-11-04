@@ -1,5 +1,6 @@
 ---
 import Hero from '../../../src/components/Hero.astro';
+import Band from '../../../src/components/Band.astro';
 import Button from '../../../src/components/Button.astro';
 import LinkGroup from '../../../src/components/LinkGroup.astro';
 import TextImage from '../../../src/components/TextImage.astro';
@@ -9,24 +10,24 @@ import KeyFigures from '../../../src/components/KeyFigures.astro';
 import { sample } from '../samples.js';
 import { context } from './context.js';
 import { ownPictures } from '../data.js';
+import { heroProps } from '../frame.js';
 const { id, project, resolved } = Astro.props;
-const { landscapes, hero } = context(project, resolved, ownPictures);
-const fullPicture = id === 'hero-full-picture';
+const images = context(project, resolved, ownPictures);
+const { landscapes } = images;
 ---
 
-{id.startsWith('hero-') && (
-  <Hero
-    variant={fullPicture ? 'plate' : id.slice(5)}
-    surface={fullPicture ? 'picture-dark' : 'brand'}
-    heading={sample.heading}
-    eyebrow={sample.eyebrow}
-    deck={sample.deck}
-    picture={fullPicture ? hero : landscapes[0]}
-    alt=""
-    style="min-block-size:562px;display:flex;align-items:center"
-  >
-    <Button href="#contact">{sample.action}</Button>
-  </Hero>
+{id === 'hero' && (
+  <div class="hero-screen">
+    <Hero data-kn-live-hero {...heroProps(resolved.hero, images)} heading={sample.heading} eyebrow={sample.eyebrow} deck={sample.deck}>
+      <Button href="#contact">{sample.action}</Button>
+    </Hero>
+    {/* What follows on the screen, as grey bars: real words would draw the eye from the hero. */}
+    <Band class="hero-rest" aria-hidden="true">
+      {[0, 1, 2, 3].map(() => (
+        <div class="hero-rest-group"><i></i><i></i><i></i><i></i><i></i></div>
+      ))}
+    </Band>
+  </div>
 )}
 {['text-image', 'text-image-start'].includes(id) && (
   <div class="text-image-stage specimen-rail">

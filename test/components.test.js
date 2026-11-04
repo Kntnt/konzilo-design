@@ -19,7 +19,8 @@ test('component CSS uses only logical properties, role reads and permitted drawi
   const axes = { axes: { wdth: 100, opsz: 20 } };
   withRoles.type = { ...withRoles.type, roles: { main: axes, heading: axes, 'heading-1': axes, display: axes, label: axes, monospace: axes } };
   const emitted = new Set([defaultInputs(), withRoles].flatMap((inputs) => [...coreCss(derive(inputs)).matchAll(/(--kn-[\w-]+)\s*:/g)].map(([, name]) => name)));
-  const shared = new Set(css.flatMap((source) => [...source.matchAll(/(--kn-[\w-]+)\s*:/g)].map(([, name]) => name)));
+  // Band sets the picture in its markup, for the Surface and a component to read.
+  const shared = new Set(['--kn-picture-image', ...css.flatMap((source) => [...source.matchAll(/(--kn-[\w-]+)\s*:/g)].map(([, name]) => name))]);
   for (const [i, source] of css.entries()) {
     const name = files[i];
     const ast = parse(source, { parseCustomProperty: true });

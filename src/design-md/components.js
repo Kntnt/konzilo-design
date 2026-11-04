@@ -15,7 +15,7 @@ export const COMPONENT_GROUPS = [
     ['Icon', 'A one-colour icon that follows the text colour.'],
   ]],
   ['Bands', [
-    ['Hero', 'The page\'s opening. Three kinds: with a picture, on a coloured Surface, or typographic only. Only the typographic kind uses the display style; the others use the first heading style.'],
+    ['Hero', 'The page\'s opening. Its background is free: none, a coloured Surface or a picture behind, or a picture can stand beside the text. So is its heading, in the first heading or the display style. It can take a third, half, two thirds or all of the screen, with its text centred or at the bottom. Over a picture with the text at the bottom, the overlay fades in above the text and is at full strength where the text begins.'],
     ['Text and Image', 'Text on one side and an image on the other, either way round.'],
     ['CTA Band', 'A heading, a short text and a button, often last on the page.'],
     ['Key Figures', 'A few large numbers with explanations.'],

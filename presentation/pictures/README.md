@@ -15,4 +15,4 @@ What the sample pages show until a design has its own photos. People are not her
 
 Fetched on 2026-11-04 from Unsplash's image server, where the free photos are; its paid Unsplash+ photos are on `plus.unsplash.com`. The [Unsplash License](https://unsplash.com/license) allows commercial use without attribution, and forbids selling a photo without significant modification and compiling photos into a similar or competing service. It says nothing about people or trademarks, so a photo here has no recognisable face or legible brand. Unsplash's site refuses automated browsers, so the photo pages and photographers' names were not read and are not recorded.
 
-A replacement keeps its file name: `cwebp -q 72 -m 6 -metadata none`, 1920 px wide for the hero and 1600 for the panorama, 1200 for the others.
+A replacement keeps its file name: `cwebp -q 72 -m 6 -metadata none`, 1600 px wide for the panorama and 1200 for the others. The hero shows large and clear above text at the bottom, so it has `-q 82 -sharp_yuv -af` at 1920 px.

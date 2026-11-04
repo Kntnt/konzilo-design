@@ -250,6 +250,9 @@ Each role is a recipe over the ramps (a ramp and step, or white or black).
   role passes over both a black and a white image, each on the nearest step of its
   own ramp; the worse ratio counts. So the picture shows as much as text on it
   allows, and the roles move lighter or darker for it rather than the scrim growing.
+  The CSS gives each picture kind `--kn-scrim-fade`, the same scrim fading in from
+  clear over `--kn-scrim-fade-length`, and `--kn-scrim-header`, for a component whose
+  text stands on part of the picture.
 - **Contrast check:** `contrastCheck` records every pair per kind and mode with its
   ratio, target and samples: text, text-muted, link, info, success, warning and error at
   4.5:1; border-strong, accent and focus at 3:1; border is decorative and only
@@ -330,7 +333,7 @@ recipe whose typeface has tuning and which reaches its size stores `features`, w
 that size. The emitter writes `--kn-type-<style>-features` for every style, `normal`
 until the tuning applies, and a media query for a crossing.
 
-Optional `inputs.header`, `inputs.footer`, `inputs.page` and `inputs.breadcrumbs` pass with their defaults to `resolved.header`, `resolved.footer`, `resolved.page` and `resolved.breadcrumbs`, for a site to give to its components. They emit no CSS. `inputs.layout.wide` and `.narrow` set the resolved `layout` widths. `src/components/footer-models.js` turns the footer's settings and a site's content into the Footer's `bands`.
+Optional `inputs.header`, `inputs.footer`, `inputs.page`, `inputs.breadcrumbs` and `inputs.hero` pass with their defaults to `resolved.header`, `resolved.footer`, `resolved.page`, `resolved.breadcrumbs` and `resolved.hero`, for a site to give to its components. They emit no CSS. `inputs.layout.wide` and `.narrow` set the resolved `layout` widths. `src/components/footer-models.js` turns the footer's settings and a site's content into the Footer's `bands`.
 
 Optional `inputs.type.roles` sets a role's look: `main` (body, lead and small text),
 `heading`, `heading-1`, `display`, `label` and `monospace`, each with optional `weight`,

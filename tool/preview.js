@@ -126,7 +126,8 @@ function postDesign() {
   const { resolved, css, project, ui } = design;
   // The frames hold the section in view themselves, and that must not move the other end.
   quietUntil = Math.max(quietUntil, performance.now() + 200);
-  const message = { type: 'kn-design', pictures: flatPictures(pictures(resolved.ramps, ui.own)), showPictures: ui.pictures !== 'off', css, mode: ui.mode, project, surfaces: Object.keys(resolved.surfaces), frame: { header: resolved.header, footer: resolved.footer, page: resolved.page, breadcrumbs: resolved.breadcrumbs } };
+  const images = pictures(resolved.ramps, ui.own);
+  const message = { type: 'kn-design', pictures: flatPictures(images), hero: { settings: resolved.hero, images: { hero: images.hero, landscapes: images.landscapes } }, showPictures: ui.pictures !== 'off', css, mode: ui.mode, project, surfaces: Object.keys(resolved.surfaces), frame: { header: resolved.header, footer: resolved.footer, page: resolved.page, breadcrumbs: resolved.breadcrumbs } };
   for (const { frame } of Object.values(frames)) frame.contentWindow?.postMessage(message, location.origin);
   const widths = { narrow: 390, wide: ui.width };
   for (const [name, end] of Object.entries(frames)) {

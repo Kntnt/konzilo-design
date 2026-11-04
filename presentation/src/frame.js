@@ -1,6 +1,7 @@
 // What a design's settings for the header, the footer and the page mean for this document's sample content.
 import { footerBands } from '../../src/components/footer-models.js';
 import { menu, search, languages, cta } from './samples.js';
+import { heroHasRoom } from './catalog.js';
 
 export function identityProps(settings, project) {
   const logo = project.logo || project['logo-dark'];
@@ -36,6 +37,19 @@ export function headerProps(settings, project) {
       : undefined,
     cta: settings.cta ? cta : undefined,
     numbered: settings.numbered,
+  };
+}
+
+export function heroProps(settings, images) {
+  const behind = settings.picture === 'behind';
+  const beside = settings.picture === 'beside';
+  return {
+    surface: behind ? `picture-${settings.overlay}` : settings.surface === 'none' ? undefined : settings.surface,
+    picture: behind ? images.hero : beside ? images.landscapes[0] : undefined,
+    alt: beside ? '' : undefined,
+    type: settings.type,
+    height: settings.height,
+    place: heroHasRoom(settings.height) ? settings.place : 'center',
   };
 }
 

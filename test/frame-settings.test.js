@@ -4,7 +4,7 @@ import { derive, defaultInputs, validateInputs } from '../src/generator/index.js
 import { withDefaults } from '../src/generator/defaults.js';
 import { layoutFooter } from '../src/components/footer.js';
 import { footerBands, FOOTER_MODELS, HAS_ROWS, HAS_SECOND_SURFACE } from '../src/components/footer-models.js';
-import { breadcrumbProps, footerContent, footerProps, headerProps, identityProps, pageProps } from '../presentation/src/frame.js';
+import { breadcrumbProps, footerContent, footerProps, headerProps, heroProps, identityProps, pageProps } from '../presentation/src/frame.js';
 import { designMd } from '../src/design-md/index.js';
 
 const inputs = (more = {}) => ({ 'brand-colors': { primary: '#168b83' }, ...more });
@@ -105,4 +105,22 @@ test('a design says how its breadcrumbs show', () => {
   const words = (breadcrumbs) => designMd({ inputs: settings(), project: { name: 'Name' }, resolved: derive(inputs({ breadcrumbs })) }, 'name.design.json');
   assert.match(words({ placement: 'own-band', home: 'icon', narrow: 'parent' }), /thin Band of its own[^\n]*a house icon[^\n]*one level up/);
   assert.match(words({ show: false }), /Breadcrumb Navigation:\*\* none/);
+});
+
+test('a design says how its hero opens a page', () => {
+  const defaults = defaultInputs().hero;
+  assert.deepEqual(defaults, { picture: 'behind', surface: 'none', overlay: 'dark', height: 'two-thirds', place: 'bottom', type: 'heading-1' });
+  assert.equal(derive(inputs({ hero: { height: 'half' } })).hero.height, 'half');
+  assert.equal(derive(inputs({ hero: { height: 'half' } })).hero.place, 'bottom', 'what is left out keeps its default');
+  assert.throws(() => validateInputs(inputs({ hero: { height: 'quarter' } })));
+  const images = { hero: '/behind.webp', landscapes: ['/beside.webp'] };
+  assert.deepEqual(heroProps(defaults, images), { surface: 'picture-dark', picture: '/behind.webp', alt: undefined, type: 'heading-1', height: 'two-thirds', place: 'bottom' });
+  const beside = heroProps({ ...defaults, picture: 'beside', surface: 'brand' }, images);
+  assert.deepEqual([beside.surface, beside.picture, beside.alt], ['brand', '/beside.webp', '']);
+  const plain = heroProps({ ...defaults, picture: 'none' }, images);
+  assert.deepEqual([plain.surface, plain.picture], [undefined, undefined]);
+  assert.equal(heroProps({ ...defaults, height: 'third' }, images).place, 'center', 'at a third the text has nowhere to move');
+  const words = (hero) => designMd({ inputs: settings(), project: { name: 'Name' }, resolved: derive(inputs({ hero })) }, 'name.design.json');
+  assert.match(words({}), /\*\*Hero:\*\* by default a picture behind the text, under a dark overlay, taking two thirds of the screen, with its text at the bottom/);
+  assert.match(words({ picture: 'beside', surface: 'tint', height: 'third', type: 'display' }), /a picture beside the text, on the tint Surface, taking a third of the screen, with its text centred and its heading in the display style/);
 });

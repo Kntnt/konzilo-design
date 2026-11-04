@@ -237,6 +237,32 @@ body {
 .preview-menu-row { display: grid; gap: 0.25rem; }
 .preview-menu-row p { margin: 0; }
 
+/* One screen, as a visitor sees it before scrolling: 16:10 on a desktop, then a tablet and a phone upright.
+   A preview's own height says nothing about a screen, and a report's frame grows to fit what it holds. */
+:root { --sample-screen: 62.5vw; }
+@media (width <= 60rem) {
+  :root { --sample-screen: 133vw; }
+}
+@media (width <= 40rem) {
+  :root { --sample-screen: 216vw; }
+}
+.kn-page { --kn-hero-screen: calc(var(--sample-screen) - var(--kn-header-height)); }
+.kn-page[data-kn-header-start="under"] { --kn-hero-screen: var(--sample-screen); }
+.hero-screen {
+  --kn-hero-screen: var(--sample-screen);
+  block-size: var(--sample-screen);
+  overflow: clip;
+  box-shadow: inset 0 -1px 0 var(--kn-border);
+}
+/* What follows the hero on the screen: grey bars for a heading and its text. */
+.hero-rest > .kn-band-content { display: grid; gap: var(--kn-space-component-gap); }
+.hero-rest-group { display: grid; gap: 0.8rem; }
+.hero-rest-group i { display: block; block-size: 0.7rem; border-radius: 0.2rem; background: var(--kn-border); }
+.hero-rest-group i:first-child { inline-size: 38%; block-size: 1.4rem; margin-block-end: 0.4rem; }
+.hero-rest-group i:nth-child(3) { inline-size: 94%; }
+.hero-rest-group i:nth-child(4) { inline-size: 97%; }
+.hero-rest-group i:last-child { inline-size: 62%; }
+
 /* The pages without pictures: what can go goes, and what is itself a picture keeps an empty place. A video keeps its still. */
 [data-kn-pictures='off'] :is(.kn-hero-media, .kn-card-picture, .kn-content-picture, .kn-text-image-media) {
   display: none;

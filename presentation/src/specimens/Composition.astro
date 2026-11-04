@@ -25,10 +25,11 @@ import {
 } from '../samples.js';
 import { context } from './context.js';
 import { ownPictures } from '../data.js';
-import { headerProps, footerProps, pageProps, breadcrumbProps } from '../frame.js';
+import { headerProps, footerProps, pageProps, breadcrumbProps, heroProps } from '../frame.js';
 import Breadcrumbs from '../../../src/components/Breadcrumbs.astro';
 const { id, project, resolved } = Astro.props;
-const { identity, landscapes, list } = context(project, resolved, ownPictures);
+const images = context(project, resolved, ownPictures);
+const { identity, landscapes, list } = images;
 const crumbs = resolved.breadcrumbs;
 ---
 
@@ -88,22 +89,14 @@ const crumbs = resolved.breadcrumbs;
   <Page {...pageProps(resolved.page)}>
     <Header slot="header" {...headerProps(resolved.header, project)} />
     {crumbs.show && crumbs.placement === 'own-band' && <Band class="kn-breadcrumb-band"><Breadcrumbs {...breadcrumbProps(crumbs, project)} /></Band>}
-    <Hero heading="Clear next steps" deck="Practical help when you need it.">
+    <Hero data-kn-live-hero {...heroProps(resolved.hero, images)} eyebrow={sample.eyebrow} heading={sample.heading} deck={sample.deck}>
       {crumbs.show && crumbs.placement === 'first-band' && <Breadcrumbs slot="before" {...breadcrumbProps(crumbs, project)} />}
+      <Button href="#contact">{sample.action}</Button>
+    </Hero>
+    <Hero level={2} type="display" heading="Clear next steps" deck="Practical help when you need it.">
       <BodyText>
         <p>Plans, drawings and file names like <code>delivery-plan.pdf</code> stay easy to tell apart.</p>
       </BodyText>
-    </Hero>
-    <Hero
-      variant="picture"
-      level={2}
-      eyebrow={sample.eyebrow}
-      heading={sample.heading}
-      deck={sample.deck}
-      picture={landscapes[0]}
-      alt=""
-    >
-      <Button href="#contact">{sample.action}</Button>
     </Hero>
     <Band surface="raised" data-preview-section="surfaces">
       <div class="sample-stack preview-services">
@@ -188,7 +181,7 @@ const crumbs = resolved.breadcrumbs;
       search={search}
     />
     <Hero
-      variant="typographic"
+      type="display"
       heading="Clear next steps"
       deck="Practical help when you need it."
     >

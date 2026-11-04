@@ -78,7 +78,9 @@ test('the real Page and Bands frame all examples, including the seven new compon
   assert.doesNotMatch(main, /<section\b(?![^>]*class="[^"]*kn-band)/);
   const heroes = main.match(/<section\b[^>]*class="kn-band kn-hero"[^>]*>/g);
   assert.equal(heroes.length, 4);
-  for (const variant of ['picture', 'plate', 'typographic']) assert.ok(heroes.some((tag) => tag.includes(`data-kn-variant="${variant}"`)));
+  assert.ok(heroes.some((tag) => tag.includes('data-kn-picture="beside"')));
+  assert.ok(heroes.some((tag) => tag.includes('data-kn-surface="brand"')));
+  assert.ok(heroes.some((tag) => !tag.includes('data-kn-surface')));
   assert.match(main, /class="kn-band kn-hero"[^>]*data-kn-surface="picture-dark"[^>]*--kn-picture-image:/);
   for (const side of ['start', 'end']) assert.match(main, new RegExp(`class="kn-text-image" data-kn-image-side="${side}"`));
   for (const surface of ['brand', 'tint']) assert.match(main, new RegExp(`class="kn-band kn-cta-band"[^>]*data-kn-surface="${surface}"`));

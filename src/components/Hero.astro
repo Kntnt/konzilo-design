@@ -3,25 +3,31 @@ import type { HTMLAttributes } from 'astro/types';
 import type { Surface } from './frame-types';
 import Band from './Band.astro';
 import HeadingGroup from './HeadingGroup.astro';
+// The page's opening. Its background and its heading's size are free choices of their own: no surface
+// lets what lies beneath show, a picture Surface lays the picture behind, and any other picture stands beside the text.
 interface Props extends HTMLAttributes<'section'> {
   heading: string;
   eyebrow?: string;
   deck?: string;
   level?: 1 | 2 | 3 | 4 | 5 | 6;
-  variant?: 'picture' | 'plate' | 'typographic';
+  type?: 'heading-1' | 'display';
   surface?: Surface;
   picture?: string;
   alt?: string;
   loading?: 'lazy' | 'eager';
+  height?: 'third' | 'half' | 'two-thirds' | 'full';
+  place?: 'center' | 'bottom';
 }
-const { heading, eyebrow, deck, level = 1, variant = 'typographic', surface = 'brand', picture, alt, loading = 'eager', class: className, ...attributes } = Astro.props;
-if (variant === 'picture' && picture && alt === undefined) throw new TypeError('Picture Hero requires alternative text');
+const { heading, eyebrow, deck, level = 1, type = 'heading-1', surface, picture, alt, loading = 'eager', height, place = 'center', class: className, ...attributes } = Astro.props;
+const behind = surface?.startsWith('picture-');
+const beside = picture && !behind;
+if (beside && alt === undefined) throw new TypeError('A picture beside a Hero requires alternative text');
 ---
-<Band {...attributes} class:list={['kn-hero', className]} contentClass="kn-hero-content" surface={variant === 'plate' ? surface : undefined} picture={variant === 'plate' ? picture : undefined} data-kn-variant={variant}>
+<Band {...attributes} class:list={['kn-hero', className]} contentClass="kn-hero-content" surface={surface} picture={behind ? picture : undefined} data-kn-picture={beside ? 'beside' : undefined} data-kn-height={height} data-kn-place={place === 'bottom' ? 'bottom' : undefined}>
   <div class="kn-hero-text">
     <slot name="before" />
-    <HeadingGroup heading={heading} eyebrow={eyebrow} deck={deck} level={level} type={variant === 'typographic' ? 'display' : 'heading-1'} />
+    <HeadingGroup heading={heading} eyebrow={eyebrow} deck={deck} level={level} type={type} />
     <slot />
   </div>
-  {variant === 'picture' && picture && <div class="kn-hero-media"><img src={picture} alt={alt} loading={loading} /></div>}
+  {beside && <div class="kn-hero-media"><img src={picture} alt={alt} loading={loading} /></div>}
 </Band>

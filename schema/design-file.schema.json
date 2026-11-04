@@ -155,6 +155,9 @@
         "breadcrumbs": {
           "$ref": "#/$defs/breadcrumb-settings"
         },
+        "hero": {
+          "$ref": "#/$defs/hero-settings"
+        },
         "brand-colors": {
           "type": "object",
           "properties": {
@@ -938,6 +941,9 @@
         },
         "breadcrumbs": {
           "$ref": "#/$defs/breadcrumb-settings"
+        },
+        "hero": {
+          "$ref": "#/$defs/hero-settings"
         },
         "type-scale": {
           "type": "object",
@@ -3204,6 +3210,61 @@
         "passed",
         "samples"
       ],
+      "additionalProperties": false
+    },
+    "hero-settings": {
+      "type": "object",
+      "properties": {
+        "picture": {
+          "type": "string",
+          "enum": [
+            "none",
+            "beside",
+            "behind"
+          ]
+        },
+        "surface": {
+          "type": "string",
+          "enum": [
+            "none",
+            "page",
+            "raised",
+            "tint",
+            "brand",
+            "inverse"
+          ]
+        },
+        "overlay": {
+          "type": "string",
+          "enum": [
+            "dark",
+            "light"
+          ]
+        },
+        "height": {
+          "type": "string",
+          "enum": [
+            "third",
+            "half",
+            "two-thirds",
+            "full"
+          ]
+        },
+        "place": {
+          "type": "string",
+          "enum": [
+            "center",
+            "bottom"
+          ]
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "heading-1",
+            "display"
+          ]
+        }
+      },
       "additionalProperties": false
     }
   }

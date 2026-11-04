@@ -299,6 +299,8 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .picks { display: grid; gap: 6px; }
 .picks-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .picks-two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.picks-four { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.picks-four .pick { flex-direction: column; align-items: stretch; gap: 6px; }
 .pick { display: flex; align-items: center; gap: 10px; min-width: 0; padding: 7px 9px; background: none; border: 1px solid var(--kn-border); border-radius: 6px; color: inherit; font: inherit; text-align: start; cursor: pointer; }
 .pick:hover { border-color: var(--kn-text); }
 .pick[aria-pressed="true"] { border-color: var(--kn-text); box-shadow: inset 0 0 0 1px var(--kn-text); }
@@ -330,3 +332,20 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .pick-trail { font-size: 12px; white-space: nowrap; color: var(--kn-text-muted); }
 .pick-trail b { margin-inline: 0.2em; font-weight: 600; color: var(--kn-text); }
 .pick:disabled { opacity: 0.4; cursor: default; }
+.pick-word { font-weight: 600; }
+/* A little screen for each of the hero's choices: what fills it, and where the words stand in it. */
+.pick-screen { position: relative; display: block; inline-size: 100%; aspect-ratio: 16 / 10; border: 1px solid currentColor; border-radius: 2px; overflow: clip; box-sizing: border-box; }
+.pick-screen i { position: absolute; inset-inline-start: 14%; block-size: 8%; background: currentColor; }
+.pick-screen i:first-child { inset-block-start: 38%; inline-size: 44%; }
+.pick-screen i:last-child { inset-block-start: 54%; inline-size: 30%; }
+.pick-screen[data-draw="beside"]::after { content: ""; position: absolute; inset: 22% 10% 22% 62%; background: currentColor; opacity: 0.35; }
+.pick-screen[data-draw="behind"]::after { content: ""; position: absolute; inset: 0; background: currentColor; opacity: 0.35; }
+.pick-screen:is([data-draw="third"], [data-draw="half"], [data-draw="two-thirds"], [data-draw="full"]) i { display: none; }
+.pick-screen:is([data-draw="third"], [data-draw="half"], [data-draw="two-thirds"], [data-draw="full"])::after { content: ""; position: absolute; inset: 0 0 auto; background: currentColor; opacity: 0.45; block-size: var(--share); }
+.pick-screen[data-draw="third"] { --share: 33.3%; }
+.pick-screen[data-draw="half"] { --share: 50%; }
+.pick-screen[data-draw="two-thirds"] { --share: 66.6%; }
+.pick-screen[data-draw="full"] { --share: 100%; }
+.pick-screen[data-draw="bottom"] i:first-child { inset-block-start: 62%; }
+.pick-screen[data-draw="bottom"] i:last-child { inset-block-start: 78%; }
+.pick-screen[data-draw="display"] i:first-child { inset-block-start: 26%; block-size: 22%; inline-size: 72%; }

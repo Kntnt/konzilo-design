@@ -66,11 +66,11 @@ test('the default design\'s resolved JSON and core CSS change only on purpose', 
   const hash = (value) => createHash('sha256').update(value).digest('hex');
   assert.equal(
     hash(JSON.stringify(r)),
-    '2c46dab94bb5da546f2c162b22284cee1b4cd3706c3e53c5cd664cca6a269f7e',
+    '2e76164ad0b0cc80de9344d54cfb60e022198fc192ab6a34822cbfb77dc51120',
   );
   assert.equal(
     hash(coreCss(r)),
-    '688f52c74e9f1382fed196425c1b3100e3a4573a9afc10fa6e71b684342dabf4',
+    '4801e983ea62f501843c2466d4e28f9c8b3f254baada3e4f987ea3c6b2364cc2',
   );
 });
 

@@ -26,7 +26,14 @@ export function surfaceCss(surfaces) {
     if (light.scrim) {
       const { color, opacity } = light.scrim;
       const scrim = `rgb(from ${color} r g b / ${opacity})`;
-      lines.push(`  background-image: linear-gradient(${scrim}, ${scrim}), var(--kn-picture-image, none);`);
+      const faint = (share) => `rgb(from ${color} r g b / ${Math.round(opacity * share * 1000) / 1000})`;
+      const length = 'var(--kn-scrim-fade-length)';
+      lines.push(
+        `  background-image: linear-gradient(${scrim}, ${scrim}), var(--kn-picture-image, none);`,
+        // For a component whose text stands on part of the picture: the same scrim, fading in from clear.
+        `  --kn-scrim-fade: linear-gradient(to bottom, ${faint(0)} 0, ${faint(0.16)} calc(${length} * 0.25), ${faint(0.5)} calc(${length} * 0.5), ${faint(0.84)} calc(${length} * 0.75), ${scrim} ${length});`,
+        `  --kn-scrim-header: linear-gradient(to bottom, ${scrim} var(--kn-header-height), ${faint(0)} calc(var(--kn-header-height) + 6rem));`,
+      );
     }
     blocks.push(`${selector} {\n${lines.join('\n')}\n}`);
   }

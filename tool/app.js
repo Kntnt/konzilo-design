@@ -27,6 +27,7 @@ import {
 import { CHAPTERS, PAGES, ROLES, STEP_ROWS, axesMarkup, documentMarkup, pageName, tip, takeTips, escapeHtml } from './pages.js';
 import { HAS_SECOND_SURFACE, HAS_ROWS } from '/src/components/footer-models.js';
 import { setupPreview, paint, measure, followPage, showPanelInPreview, showSpecimen } from './preview.js';
+import { heroHasRoom } from '/presentation/src/catalog.js';
 import { setupTooltips } from '/gallery/src/tooltips.js';
 import { pictures, flatPictures, PICTURE_SLOTS } from '/presentation/src/samples.js';
 
@@ -289,6 +290,17 @@ function writeFrameControls() {
   form.querySelector('[data-flag="inputs.header.autohide"]').disabled = !sticky;
   form.querySelector('[data-path="inputs.footer.second-surface"]').disabled = !HAS_SECOND_SURFACE.includes(footer.model);
   form.querySelector('[data-flag="inputs.footer.horizontal-rules"]').disabled = !HAS_ROWS.includes(footer.model);
+  // A picture behind the text leaves no colour to choose, and only a picture behind it has an overlay.
+  const { picture, height } = model.inputs.hero;
+  form.querySelector('[data-path="inputs.hero.surface"]').disabled = picture === 'behind';
+  form.querySelector('[data-path="inputs.hero.overlay"]').disabled = picture !== 'behind';
+  // At a third of the screen the text has nowhere to move to, so it shows as it will stand: centred.
+  if (!heroHasRoom(height)) {
+    const place = (value) => form.querySelector(`[data-pick="inputs.hero.place"][data-value="${value}"]`);
+    place('center').setAttribute('aria-pressed', 'true');
+    place('bottom').setAttribute('aria-pressed', 'false');
+  }
+  form.querySelector('[data-pick="inputs.hero.place"][data-value="bottom"]').disabled = !heroHasRoom(height);
   // Without a trail nothing else about it can apply.
   for (const control of form.querySelectorAll('[data-page="breadcrumbs"] :is(select, .pick, .chip)'))
     if (control.dataset.flag !== 'inputs.breadcrumbs.show') control.disabled = !model.inputs.breadcrumbs.show;
