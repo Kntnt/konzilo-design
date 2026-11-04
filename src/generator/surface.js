@@ -101,22 +101,29 @@ export function surfaces(settings, palette) {
   return Object.fromEntries(kindsFor(palette).map((kind) => [kind, Object.fromEntries(MODES.map((mode) => {
     const { polarity, recipes } = recipesFor(kind, mode, all);
     const surface = { polarity, roles: Object.fromEntries(Object.entries(recipes).map(([role, recipe]) => [role, color(recipe, all)])), recipes, adjustments: {} };
+    const solveRoles = () => {
+      surface.adjustments = {};
+      for (const [role, target] of Object.entries(ROLE_TARGETS)) {
+        // Filled-button recipes are fixed pairs, not foregrounds on the Surface.
+        if (role.startsWith('button-') || role.endsWith('-alt') || role.endsWith('-hover')) continue;
+        const ratio = (hex) => surface.scrim ? Math.min(...['#000000', '#ffffff'].map((image) => pictureContrast(hex, surface.scrim, image))) : contrast(hex, surface.roles.background);
+        const solved = solveRole(recipes[role], all, target, ratio, polarity);
+        surface.roles[role] = solved.color;
+        if (solved.recipe !== recipes[role]) surface.adjustments[role] = { from: recipes[role], to: solved.recipe };
+      }
+    };
     if (kind.startsWith('picture-')) {
       surface.scrim = { color: surface.roles.background, opacity: 1 };
-      // The least hundredth-opacity that preserves all starting recipes.
+      // The least hundredth-opacity at which every role holds on any picture, each on the step of its
+      // ramp nearest its recipe, so the picture shows as much as text on it allows.
       for (let percent = 0; percent <= 100; percent++) {
         surface.scrim.opacity = percent / 100;
+        // Text has one colour here, so the other roles need not be tried until it holds.
+        if (Math.min(...['#000000', '#ffffff'].map((image) => pictureContrast(surface.roles.text, surface.scrim, image))) < ROLE_TARGETS.text) continue;
+        solveRoles();
         if (Object.values(surfacePairs(surface)).every((pair) => pair.passed)) break;
       }
-    }
-    for (const [role, target] of Object.entries(ROLE_TARGETS)) {
-      // Filled-button recipes are fixed pairs, not foregrounds on the Surface.
-      if (role.startsWith('button-') || role.endsWith('-alt') || role.endsWith('-hover')) continue;
-      const ratio = (hex) => surface.scrim ? Math.min(...['#000000', '#ffffff'].map((image) => pictureContrast(hex, surface.scrim, image))) : contrast(hex, surface.roles.background);
-      const solved = solveRole(recipes[role], all, target, ratio, polarity);
-      surface.roles[role] = solved.color;
-      if (solved.recipe !== recipes[role]) surface.adjustments[role] = { from: recipes[role], to: solved.recipe };
-    }
+    } else solveRoles();
     const context = { polarity, text: surface.roles.text, colors: { ...seeds, gray: palette.gray[500] } };
     surface.shadow = shadowsForSurface(settings.shadow, context);
     // Default frame takes the chosen shadow ink before the dark-Surface exception.

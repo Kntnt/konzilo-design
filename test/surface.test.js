@@ -2,8 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import {
-  resolve, defaultInputs, contrast, KINDS, STATUS_KINDS, MODES, ROLES, ROLE_TARGETS, STEPS, kindsFor, TINT_CEILING, ramps, hexToOklch,
-  solveRole, checkContrast, validateDesignFile, shadowsForSurface, pictureContrast,
+  resolve, defaultInputs, contrast, KINDS, STATUS_KINDS, MODES, ROLES, ROLE_TARGETS, STEPS, kindsFor, TINT_CEILING, ramps, hexToOklch, solveRole, checkContrast, validateDesignFile, shadowsForSurface, pictureContrast, derive,
 } from '../src/generator/index.js';
 import { emitCss } from '../src/css/index.js';
 
@@ -96,6 +95,19 @@ test('picture scrims use both image extrema and the worst ratio, in both modes',
     }
     const weaker = { ...surface.scrim, opacity: surface.scrim.opacity - 0.01 };
     assert.ok(Object.entries(ROLE_TARGETS).filter(([role]) => !['button-text', 'button-text-hover'].includes(role) && !(role.endsWith('-alt') || ['text-hover', 'link-hover'].includes(role))).some(([role, target]) => Math.min(...['#000000', '#ffffff'].map((image) => pictureContrast(surface.roles[role], weaker, image))) < target));
+  }
+});
+
+test('an overlay is only as strong as text on any picture needs, and every role holds on its own ramp', () => {
+  for (const primary of ['#6366F1', '#0b2f6b', '#168b83', '#e6c700', '#c0392b', '#111111', '#ff66cc']) {
+    const inputs = defaultInputs();
+    inputs['brand-colors'].primary = primary;
+    const resolved = derive(inputs);
+    assert.equal(resolved['contrast-check'].status, 'passed', primary);
+    for (const mode of MODES) {
+      assert.ok(resolved.surfaces['picture-dark'][mode].scrim.opacity <= 0.6, `${primary}: a dark overlay leaves the picture visible`);
+      assert.ok(resolved.surfaces['picture-light'][mode].scrim.opacity <= 0.65, `${primary}: a light overlay leaves the picture visible`);
+    }
   }
 });
 

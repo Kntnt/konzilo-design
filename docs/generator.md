@@ -247,7 +247,9 @@ Each role is a recipe over the ramps (a ramp and step, or white or black).
   direction) and never jumps to another ramp; the move is recorded as an
   adjustment. If no step passes, the colour stays and the matrix fails.
 - **Pictures:** the scrim takes the least opacity, in hundredths, at which every
-  role passes over both a black and a white image; the worse ratio counts.
+  role passes over both a black and a white image, each on the nearest step of its
+  own ramp; the worse ratio counts. So the picture shows as much as text on it
+  allows, and the roles move lighter or darker for it rather than the scrim growing.
 - **Contrast check:** `contrastCheck` records every pair per kind and mode with its
   ratio, target and samples: text, text-muted, link, info, success, warning and error at
   4.5:1; border-strong, accent and focus at 3:1; border is decorative and only
