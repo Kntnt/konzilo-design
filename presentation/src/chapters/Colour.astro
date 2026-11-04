@@ -1,10 +1,10 @@
 ---
-import { resolved as r, inputs, t, num } from '../data.js';
+import { resolved as r, inputs, t, num, ownPictures } from '../data.js';
 import { pictures } from '../samples.js';
 import { contrast } from '../../../src/generator/color.js';
 import Button from '../../../src/components/Button.astro';
 const { id } = Astro.props;
-const { landscape } = pictures(r.ramps);
+const { landscapes } = pictures(r.ramps, ownPictures);
 const ink = (hex) => contrast(hex, '#ffffff') >= 4.5 ? '#ffffff' : '#111111';
 const primaryKinds = ['page', 'raised', 'tint', 'tint-secondary', 'tint-tertiary', 'brand', 'inverse', 'accent'].filter((kind) => r.surfaces[kind]);
 const moreKinds = Object.keys(r.surfaces).filter((kind) => !primaryKinds.includes(kind));
@@ -32,10 +32,10 @@ const summary = (kind, mode) => {
   <p class="prose">{t('colour.legend')}</p>
 </>}
 {id === 'colour-together' && <>
-  <div data-colour-examples data-kn-mode="light">
+  <div data-colour-examples data-kn-mode="light" style={{ '--kn-sample-picture': `url("${landscapes[0]}")` }}>
     {[primaryKinds, moreKinds].map((kinds, index) => {
       const examples = <div class="surface-grid">{kinds.map((kind) => <figure>
-        <div class="surface-example" data-kn-surface={kind} style={kind.startsWith('picture-') ? { '--kn-picture-image': `url("${landscape}")` } : undefined}>
+        <div class="surface-example" data-kn-surface={kind} style={kind.startsWith('picture-') ? { '--kn-picture-image': 'var(--kn-sample-picture)' } : undefined}>
           <p data-kn-type="label">{t(`surface.${kind}`)}</p>
           <h2 data-kn-type="heading-3">{t('surface.sample')}</h2>
           <p>{t('surface.text')}</p>

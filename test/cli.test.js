@@ -10,7 +10,10 @@ test('CLI resolves, checks and exports; stale inputs fail both consumers', async
   // Exclusive creation protects any pre-existing file. Cleanup paths are literal and explicit.
   await writeFile('/Users/thomas/Projects/konzilo-design/test/cli-fixture.design.json', JSON.stringify({ inputs: defaultInputs(), project: {} }), { flag: 'wx' });
   t.after(() => unlink('/Users/thomas/Projects/konzilo-design/test/cli-fixture.design.json'));
+  const before = await readFile('/Users/thomas/Projects/konzilo-design/test/cli-fixture.design.json', 'utf8');
+  t.after(() => unlink('/Users/thomas/Projects/konzilo-design/test/cli-fixture.design.bak.json'));
   execFileSync(process.execPath, [cli, 'resolve', '/Users/thomas/Projects/konzilo-design/test/cli-fixture.design.json']);
+  assert.equal(await readFile('/Users/thomas/Projects/konzilo-design/test/cli-fixture.design.bak.json', 'utf8'), before);
   const file = JSON.parse(await readFile('/Users/thomas/Projects/konzilo-design/test/cli-fixture.design.json', 'utf8'));
   assert.ok(file.resolved['inputs-fingerprint']);
   assert.match(execFileSync(process.execPath, [cli, 'check', '/Users/thomas/Projects/konzilo-design/test/cli-fixture.design.json'], { encoding: 'utf8' }), /fingerprint matches/);
@@ -35,9 +38,17 @@ test('CLI resolves, checks and exports; stale inputs fail both consumers', async
 });
 
 test('CLI reports incorrect arguments without modifying the design file', () => {
-  for (const args of [[], ['unknown', 'example.json'], ['check', 'example.json', '-o', 'out.css'], ['css', 'example.json', '-o'], ['components-css', '-o'], ['components-css', 'out.css'], ['components-css', '-o', 'out.css', 'extra']]) {
+  for (const args of [[], ['tool'], ['tool', '--no-open'], ['unknown', 'example.json'], ['check', 'example.json', '-o', 'out.css'], ['css', 'example.json', '-o'], ['components-css', '-o'], ['components-css', 'out.css'], ['components-css', '-o', 'out.css', 'extra']]) {
     const run = spawnSync(process.execPath, [cli, ...args], { encoding: 'utf8' });
     assert.equal(run.status, 1);
     assert.match(run.stderr, /Usage:/);
+  }
+});
+
+test('the commands that work on a design file stop and show their usage without one', () => {
+  for (const name of ['design-tool', 'design-presentation', 'design-check', 'design-restore', 'design-md']) {
+    const run = spawnSync(new URL(`../bin/${name}`, import.meta.url).pathname, [], { encoding: 'utf8' });
+    assert.equal(run.status, 2);
+    assert.match(run.stderr, new RegExp(`Usage: ${name} <design-file>`));
   }
 });

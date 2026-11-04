@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+# Puts a design file back as it was before the tool's latest run changed it, from its <name>.bak.json, after asking.
+# Stop the tool first, or it will save its own copy over the restored file.
+# Usage: design-restore <design-file>
+set -euo pipefail
+source "$(dirname "$(realpath "${BASH_SOURCE[0]}")")/lib/design-file.sh"
+
+need_file "$@"
+design="$1"
+backup="${design%.json}.bak.json"
+if [[ ! -f "$backup" ]]; then
+  echo "$backup does not exist, so there is nothing to go back to." >&2
+  exit 1
+fi
+if cmp -s "$design" "$backup"; then
+  echo "$design is the same as its backup."
+  exit 0
+fi
+read -r -p "Replace $design with $backup? The current file is lost. [y/N] " answer
+if [[ "$answer" != [yY] ]]; then
+  echo "Nothing changed."
+  exit 0
+fi
+cp "$backup" "$design"
+echo "Restored $design from $backup."

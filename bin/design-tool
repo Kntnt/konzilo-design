@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# Opens a design file in the design tool, and creates the file as a new, blank design if it does not exist.
+# Every change is saved to the file; the first change of a run first copies it to <name>.bak.json. Ctrl-C stops it.
+# Usage: design-tool <design-file> [--port N] [--no-open]
+set -euo pipefail
+source "$(dirname "$(realpath "${BASH_SOURCE[0]}")")/lib/design-file.sh"
+
+need_file "$@"
+exec node "$konzilo" tool "$@"

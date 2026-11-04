@@ -13,16 +13,16 @@ Records the header behaviour, layout and items, with their status and reasoning.
 - **Identity:** brand plus an optional slogan; the brand is a logo (an image, preferably SVG) and/or a name. Logo and name, and brand and slogan, are each aligned side by side (top, middle, bottom) or stacked (left, centre, right).
 - **Menu:** a link menu, a horizontal row of links that cannot show submenus, or a menu button, a word and/or an icon. The default button is "Menu" with a down arrow; a hamburger icon must be possible.
 - **Giving way.** When the columns cannot keep the gap between them without wrapping, the link menu is replaced entirely by the menu button; if that is not enough, the word before the icon goes.
-- **Megamenu.** The menu button opens and closes a responsive megamenu, exactly the reference design's model: level 1 on top as a heading, level 2 in columns under each, optional descriptions. Static or dynamic content may sit in a row above or below the menu (the reference design: three cards above, for the latest press release, the latest report and the next event; a contact link and a line of text below). These rows go when the screen gets too small.
+- **Megamenu.** The menu button opens and closes a responsive megamenu: level 1 on top as a heading, level 2 in columns under each, optional descriptions. Static or dynamic content may sit in a row above or below the menu, for example cards above and a contact link below. These rows go when the screen gets too small.
 - **Language switcher:** looks like a link of the link menu. With two languages it shows the other; with more, a submenu of languages. Later the same day he replaced this: always a globe, no language named.
-- **Search icon:** a magnifier that opens and closes a search box. He recalled a good solution in the reference implementation: a centred dark box under the header, over a blurred page.
+- **Search icon:** a magnifier that opens and closes a search box. The solution he wants: a centred dark box under the header, over a blurred page.
 - **CTA button:** a button with a call to action, linking to a popup or a page.
 - **Arrangements** (his later word, 2026-10-31, replacing the two "common combinations" of his first description): there are only three, and each may show any one or more of its items:
   - A: left identity; right search, language, link menu, menu button, CTA.
   - B: left identity, link menu; right search, language, menu button, CTA.
   - C: left identity, link menu, search; right language, menu button, CTA.
 
-**Proposed definition** (put to the owner 2026-10-31; the reference implementation shows it). The owner settled the open points the same day, marked *decided*: the link menu, the hamburger, T, the globe, the giving-way steps and where moved items go. The rest he has seen but not confirmed point by point.
+**Proposed definition** (put to the owner 2026-10-31). The owner settled the open points the same day, marked *decided*: the link menu, the hamburger, T, the globe, the giving-way steps and where moved items go. The rest he has seen but not confirmed point by point.
 
 *Behaviour*
 
@@ -87,14 +87,16 @@ Records the header behaviour, layout and items, with their status and reasoning.
     - **The list:** the globe opens a small list of every language, each in its own name (`lang`, `hreflang`), with the current one marked (`aria-current`). Each leads to the same page in that language, or to that language's start page where the page is not translated.
     - **Two languages:** the globe opens the list too, with both (*decided*): a globe names no language, so a click straight to the other one would surprise.
     - **Accessible name:** the control and the current language, e.g. "Language: English" (proposed).
-18. **Search icon:** a magnifier that toggles the search panel, as in the reference implementation.
+18. **Search icon:** a magnifier that toggles the search panel.
     - **Panel:** a centred box under the header, over a blurred page, with the field, a button and a few starting links.
-    - **Responsive** (the owner required it, 2026-10-31): the box is as wide as the content area allows, up to 36rem, and never wider than the window. Field and button share a row, the field taking what the button leaves; where the box is too narrow for both (the reference implementation: a window of 360px or less), the button goes under the field at full width. Narrow screens get less padding.
+    - **Responsive** (the owner required it, 2026-10-31): the box is as wide as the content area allows, up to 36rem, and never wider than the window. Field and button share a row, the field taking what the button leaves; where the box is too narrow for both (a window of 360px or less), the button goes under the field at full width. Narrow screens get less padding.
     - **Behaviour:** focus moves into the field. Esc, the close button or the icon closes the panel and returns focus to the icon. A search goes to the site's search page with `q`, and without a script the icon is a link to that page.
 19. **CTA button:** a button-styled link to a page, or one that opens a dialog. It is a complete surface of its own in both appearances.
-20. **Skip link:** the header begins with "Skip to content", which shows on focus (proposed; the reference design has one).
+20. **Skip link:** the header begins with "Skip to content", which shows on focus (proposed).
 
 **Open with the owner:** nothing on the header (2026-10-31). For each question he needs the problem stated and a drawn example.
 
 
-***Built* 2026-11-01:** `Header.astro` and its parts implement points 1–20 and arrangements A, B and C. The component resolves the reference’s missing Escape and keyboard focus handling, no-script search link, reduced motion, print, measured root scroll padding and Reading Area inset. The transparent appearance inherits the first band’s real Surface kind; it has no independent polarity input. The opaque appearance is a real `page` or `brand` Surface. Giving way and autohide decisions are pure functions, checked with the measured-step, jitter and hidden-transition cases. The assistant’s implementation choices and validation limits are recorded in components.md.
+***Settings in the design* (the owner's wish, 2026-11-03; the assistant chose the details while the owner was away, for review):** the design file's `header` holds the arrangement, attachment, page start, sliding away and opaque surface, which items show (link menu, magnifier, globe, CTA, and a menu button with a word and arrow, a hamburger, or none of its own), the identity's brand and its two alignments, numbered headings and the rows above and below the menu, and four settings for the search box: its Surface (dark by default, the owner's solution of 2026-10-31), the blurred page, its heading and its starting links. The slogan is `project.slogan`, since it is the client's words. A header needs no build to change in the tool: the preview leaves out what is off from a built header with every item.
+
+***Built* 2026-11-01:** `Header.astro` and its parts implement points 1–20 and arrangements A, B and C. The component has Escape and keyboard focus handling, a no-script search link, reduced motion, print, measured root scroll padding and Reading Area inset. The transparent appearance inherits the first band’s real Surface kind; it has no independent polarity input. The opaque appearance is a real `page` or `brand` Surface. Giving way and autohide decisions are pure functions, checked with the measured-step, jitter and hidden-transition cases. The assistant’s implementation choices and validation limits are recorded in components.md.

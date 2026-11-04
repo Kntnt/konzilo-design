@@ -27,23 +27,30 @@ export * from './surface.js';
 export function derive(inputs) {
   validateInputs(inputs);
   const settings = withDefaults(inputs);
+  const { breakpoints, ratio, 'body-size': bodySize } = settings.type;
+  if (breakpoints.min > breakpoints.max) throw new Error('inputs.type.breakpoints: min must not be above max');
   const palette = ramps(settings['brand-colors'], settings['gray-temperature']);
   const contexts = surfaces(settings, palette);
-  const typefaces = typefaceStacks(settings.typefaces, settings.type.label);
+  const typefaces = typefaceStacks(settings.typefaces, settings.type.label, settings.type['heading-1-role']);
   return {
     ramps: palette,
     surfaces: contexts,
-    type: withTuning(typeScale(settings.type), typefaces),
+    type: withTuning(typeScale(settings.type), typefaces, settings.type),
+    'type-scale': { breakpoints, ratio, 'body-size': bodySize },
     typefaces,
     ...(settings.type['heading-1-color'] ? { 'heading-1-color': settings.type['heading-1-color'] } : {}),
     space: spacing(settings['density-profile']),
     radius: radii(settings['corner-profile']),
     shadow: { ...contexts.page.light.shadow },
     frame: { width: settings.frame.width, color: contexts.page.light['frame-color'] },
+    header: settings.header,
+    footer: settings.footer,
+    page: settings.page,
+    breadcrumbs: settings.breadcrumbs,
     layout: {
-      wide: 1200,
+      wide: settings.layout.wide,
       'side-margin': endpoints(16, 48),
-      narrow: 720,
+      narrow: settings.layout.narrow,
       'aside-min': 224,
       'content-area': 'min(calc(100% - 2 * var(--kn-layout-side-margin)), var(--kn-layout-wide))',
     },

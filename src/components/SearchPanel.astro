@@ -8,10 +8,10 @@ const label = search.label ?? 'Search the site';
 ---
 {inline ? <form class="kn-header-moved-search kn-header-search-row kn-search-row" role="search" action={search.action} method="get" data-kn-moved="search">
   <input data-kn-surface="page" type="search" name="q" placeholder={label} aria-label={label} /><Button type="submit">Search</Button>
-</form> : <div id={id} class="kn-header-panel kn-header-search-overlay" data-kn-panel="search" data-kn-surface="page" popover="auto">
-  <div class="kn-header-search-box kn-search-box" data-kn-surface="inverse" role="dialog" aria-labelledby={`${id}-heading`}>
+</form> : <div id={id} class="kn-header-panel kn-header-search-overlay" data-kn-panel="search" data-kn-surface="page" data-kn-blur={search.blur === false ? 'false' : undefined} popover="auto">
+  <div class="kn-header-search-box kn-search-box" data-kn-surface={search.surface ?? 'inverse'} role="dialog" aria-labelledby={`${id}-heading`}>
     <Button class="kn-header-control kn-header-icon-button kn-header-search-close" variant="outline" icon="x" aria-label="Close search" data-kn-close popovertarget={id} popovertargetaction="hide" />
-    <Heading id={`${id}-heading`} data-kn-type="heading-5">Search</Heading>
+    <Heading id={`${id}-heading`} data-kn-type="heading-5" hidden={search.heading === false}>Search</Heading>
     <form class="kn-header-search-row kn-search-row" role="search" action={search.action} method="get"><input data-kn-surface="page" type="search" name="q" placeholder={label} aria-label={label} /><Button type="submit">Search</Button></form>
     {search.links?.length && <ul class="kn-header-search-links kn-search-links">{search.links.map((link) => <li><a href={link.href}>{link.label}</a></li>)}</ul>}
   </div>

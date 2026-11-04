@@ -6,8 +6,10 @@ import ContentLoop from '../../../src/components/ContentLoop.astro';
 import Breadcrumbs from '../../../src/components/Breadcrumbs.astro';
 import Pagination from '../../../src/components/Pagination.astro';
 import { context } from './context.js';
+import { ownPictures } from '../data.js';
+import { breadcrumbProps } from '../frame.js';
 const { id, project, resolved } = Astro.props;
-const { list } = context(project, resolved);
+const { list } = context(project, resolved, ownPictures);
 const results = Array.from({ length: 12 }, (_, index) => ({
   title: [
     'Planning the first stage',
@@ -91,15 +93,13 @@ const results = Array.from({ length: 12 }, (_, index) => ({
   <div class="sample-stack breadcrumb-examples">
     {['page', 'tint', 'brand'].map((surface) => (
       <div class="sample-pad" data-kn-surface={surface}>
-        <Breadcrumbs
-          items={[
-            { label: 'Home', href: '#home' },
-            { label: 'Services', href: '#services' },
-            { label: 'Planning' },
-          ]}
-        />
+        <Breadcrumbs {...breadcrumbProps(resolved.breadcrumbs, project)} />
       </div>
     ))}
+  </div>
+)}
+{id === 'pagination' && (
+  <div class="sample-stack">
     <Pagination page={2} pages={8} href={(number) => `#page-${number}`} />
   </div>
 )}

@@ -10,10 +10,12 @@ const explanationKeys = {
   'type-scale': 'type-scale',
   space: 'space-shape',
   shadow: 'shadow',
-  header: 'components',
+  header: 'frame',
+  opening: 'components',
 };
 const motivation = project.explanations?.[explanationKeys[page.id]];
 const specimenPages = [...componentPages.map(([id]) => id), 'typography-use', 'space'];
+const picturePages = ['page', 'opening', 'sections', 'cards', 'media', 'finding'];
 const paragraphs = (text) => String(text).split(/\n\s*\n/).filter((part) => part.trim());
 ---
 <section class:list={['document-page', page.id === 'start' && 'start-page']} id={page.id} data-page={page.id} data-title={t(`${page.id}.title`)} data-kn-surface={page.id === 'start' ? 'brand' : 'page'}>
@@ -29,7 +31,7 @@ const paragraphs = (text) => String(text).split(/\n\s*\n/).filter((part) => part
     {paragraphs(motivation).map((paragraph) => <p>{paragraph}</p>)}
     {project.contact?.name && <p data-kn-type="small">{project.contact.name}</p>}
   </aside>}
-  {specimenPages.includes(page.id) && <PageToolbar />}
+  {specimenPages.includes(page.id) && <PageToolbar pictures={picturePages.includes(page.id)} />}
   {page.id === 'colour-together' && <PageToolbar width={false} />}
   <div class="page-content"><slot /></div>
   <nav class="page-turn" aria-label={t('nav.label')}>

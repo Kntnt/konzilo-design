@@ -1,11 +1,15 @@
 ---
 import type { HTMLAttributes } from 'astro/types';
-interface Props extends HTMLAttributes<'nav'> { items: { label: string; href?: string }[]; label?: string }
-const { items, label = 'Breadcrumb', class: className, ...attributes } = Astro.props;
+import Icon from './Icon.astro';
+interface Props extends HTMLAttributes<'nav'> {
+  items: { label: string; href?: string }[]; label?: string;
+  separator?: 'slash' | 'chevron' | 'arrow' | 'dot'; home?: 'word' | 'icon'; current?: boolean; narrow?: 'trail' | 'parent';
+}
+const { items, label = 'Breadcrumb', separator = 'slash', home = 'word', current = true, narrow = 'trail', class: className, ...attributes } = Astro.props;
 ---
-{items.length >= 2 && <nav {...attributes} class:list={['kn-breadcrumbs', className]} aria-label={label} data-kn-type="small">
+{items.length >= 2 && <nav {...attributes} class:list={['kn-breadcrumbs', className]} aria-label={label} data-kn-type="small" data-kn-separator={separator} data-kn-home={home} data-kn-current={String(current)} data-kn-narrow={narrow}>
   <ol role="list">{items.map((item, index) => <li>
     {index > 0 && <span class="kn-breadcrumbs-separator" aria-hidden="true" />}
-    {index === items.length - 1 ? <span aria-current="page">{item.label}</span> : item.href ? <a href={item.href}>{item.label}</a> : <span>{item.label}</span>}
+    {index === items.length - 1 ? <span aria-current="page">{item.label}</span> : item.href ? <a href={item.href}>{index === 0 && <Icon name="house" class="kn-breadcrumbs-house" />}<span class="kn-breadcrumbs-label">{item.label}</span></a> : <span>{item.label}</span>}
   </li>)}</ol>
 </nav>}

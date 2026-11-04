@@ -16,6 +16,7 @@ import {
   resolve,
   validateInputs,
   validateDesignFile,
+  checkContrast,
 } from '../src/generator/index.js';
 import { coreCss } from '../src/css/index.js';
 import {
@@ -23,13 +24,30 @@ import {
   relativeSteps,
   stepLimits,
   changeStep,
-  ratioOptions,
-  preset,
   contrastError,
+  snapStrength,
+  ratioName,
+  ratioText,
+  typedRatio,
+  typedWidth,
+  breakpointLimits,
+  lineShare,
+  lineWidth,
+  spreadLabels,
+  optimalControls,
+  clampControls,
+  dragControls,
+  sizeAt,
+  followShare,
+  previewScale,
+  shortChapter,
 } from '../tool/logic.js';
 import { loadDesign, saveDesign } from '../tool/server.js';
+import { newDesign, backUp, backupPath } from '../tool/new-design.js';
+import { writeDesignMd } from '../tool/design-md.js';
+import { designMd, MARKER } from '../src/design-md/index.js';
 import { defaultPresentationPath } from '../tool/presentation.js';
-import { pictures, footerBands } from '../presentation/src/samples.js';
+import { pictures, flatPictures, PICTURE_SLOTS, footerBands } from '../presentation/src/samples.js';
 import { context } from '../presentation/src/specimens/context.js';
 const cache = pathResolve('node_modules/.cache/konzilo-tests');
 async function scratch(fn) {
@@ -43,54 +61,32 @@ async function scratch(fn) {
 }
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 
-test('legacy resolved JSON and core CSS remain byte-identical without new inputs', () => {
+test('the default design\'s resolved JSON and core CSS change only on purpose', () => {
   const r = derive(defaultInputs());
   const hash = (value) => createHash('sha256').update(value).digest('hex');
   assert.equal(
     hash(JSON.stringify(r)),
-    '1c052ade285bb37f1930cdb5bc5b4f60c123705baacc2ec2b02613939c59c532',
+    '66411b6fb9a3b4342b6ea2420db651da1ce66063715829f3ed79c5b8e11ba1d3',
   );
   assert.equal(
     hash(coreCss(r)),
-    '2af33197eb223c8a2e5ce29307cacb23ce00a4b7121238ef868f21387eec6d10',
+    '56f5c2e501477dcc1e61f74bcadfb181b353c7c02933092736da993d0bd7e21a',
   );
 });
 
-test('pictures use quiet primary and gray ramps regardless of other brand colours', () => {
+test('sample photos stay in any design, and only the drawn people follow its colour', () => {
   const inputs = defaultInputs();
-  const r = derive(inputs);
-  const images = pictures(r.ramps);
-  inputs['brand-colors'].secondary = '#7a3e9d';
-  inputs['brand-colors'].tertiary = '#fa6600';
-  assert.deepEqual(pictures(derive(inputs).ramps), images);
-  for (const kind of ['landscapes', 'portraits', 'people']) {
-    assert.equal(new Set(images[kind]).size, 4);
-    for (const uri of images[kind]) {
-      const svg = decodeURIComponent(uri.split(',')[1]);
-      const fills = [...svg.matchAll(/fill="([^"]+)"/g)].map((m) => m[1]);
-      const allowed =
-        kind === 'people'
-          ? [100, 200, 300].map((step) => r.ramps.primary[step])
-          : [100, 200, 300]
-              .flatMap((step) => [r.ramps.primary[step], r.ramps.gray[step]])
-              .concat(r.ramps.primary[500]);
-      assert.ok(fills.every((fill) => allowed.includes(fill)));
-      assert.ok(fills.filter((fill) => fill === r.ramps.primary[500]).length <= 1);
-      if (kind === 'people') {
-        assert.equal([...svg.matchAll(/<circle\b/g)].length, 1);
-        assert.equal([...svg.matchAll(/<path\b/g)].length, 1);
-      }
-    }
+  const images = pictures(derive(inputs).ramps);
+  inputs['brand-colors'].primary = '#c0392b';
+  const other = pictures(derive(inputs).ramps);
+  assert.deepEqual([other.hero, other.panorama, other.landscapes], [images.hero, images.panorama, images.landscapes]);
+  assert.notDeepEqual(other.people, images.people);
+  assert.equal(new Set(images.people).size, 4);
+  assert.equal(flatPictures(images).length, PICTURE_SLOTS.length);
+  for (const svg of images.people.map((uri) => decodeURIComponent(uri.split(',')[1]))) {
+    assert.equal([...svg.matchAll(/<circle\b/g)].length, 1);
+    assert.equal([...svg.matchAll(/<path\b/g)].length, 1);
   }
-  const dark = decodeURIComponent(images.dark.split(',')[1]);
-  const darkFills = [...dark.matchAll(/fill="([^"]+)"/g)].map((m) => m[1]);
-  const allowedDark = [
-    r.ramps.primary[800],
-    r.ramps.primary[900],
-    r.ramps.primary[950],
-    r.ramps.gray[900],
-  ];
-  assert.ok(darkFills.every((fill) => allowedDark.includes(fill)));
 });
 
 test('specimen identity uses a labelled logo alone, or the supplied name', () => {
@@ -167,21 +163,7 @@ test('absolute steppers retain every other style and obey both relative neighbou
   }
 });
 
-test('presets are independent choices, and an unlisted ratio is retained', () => {
-  const inputs = defaultInputs();
-  inputs.type.ratio.max = 1.173;
-  inputs.frame.width = 2;
-  for (const key of ['one', 'mono', 'serif', 'display']) {
-    const p = preset(key, inputs);
-    assert.equal(p.type.ratio.max, 1.173);
-    assert.equal(p.frame.width, 2);
-  }
-  assert.equal(preset('mono', inputs).typefaces.monospace, 'Red Hat Mono');
-  assert.equal(preset('mono', inputs).type.label, 'monospace');
-  assert.equal(preset('serif', inputs).typefaces.heading, 'Mona Sans');
-  assert.equal(preset('display', inputs).typefaces.display, 'Georgia, serif');
-  assert.deepEqual(ratioOptions(1.173).at(-1), [1.173, 'Custom (1.173)']);
-  assert.equal(ratioOptions(1.25).length, 8);
+test('a contrast failure names its pair', () => {
   assert.equal(
     contrastError({
       status: 'failed',
@@ -209,6 +191,171 @@ test('missing files start with Mona Sans and saves include fresh validated outpu
     assert.equal((await readdir(dir)).length, 1);
   }));
 
+test('a new design is plain: one typeface, one colour, no shadows, square corners, a made-up company', async () => {
+  const { inputs, project } = await newDesign();
+  assert.deepEqual(inputs['brand-colors'], { primary: '#6366F1' });
+  assert.equal(inputs.typefaces.main, 'Mona Sans');
+  assert.equal(inputs.typefaces.monospace, 'Mona Sans Mono');
+  assert.equal(inputs.typefaces.heading, undefined);
+  assert.equal(inputs.typefaces.display, undefined);
+  assert.deepEqual(inputs.type.roles.display, { weight: 260, 'letter-spacing': -0.03, axes: { wdth: 112, opsz: 100 } });
+  assert.deepEqual(inputs.type.roles.label, { weight: 800, 'letter-spacing': 0.06, axes: { wdth: 75, opsz: 0 }, features: ['ss02', 'ss07'] });
+  assert.equal(inputs.type['heading-1-role'], undefined);
+  assert.equal(inputs.shadow.strength, 0);
+  assert.equal(inputs.frame.width, 0);
+  assert.equal(inputs['corner-profile'], 0);
+  assert.equal(project.name, 'Placeholdr');
+  for (const key of ['logo', 'logo-dark']) {
+    const svg = Buffer.from(project[key].split(',')[1], 'base64').toString();
+    assert.match(svg, /^<svg /);
+    assert.doesNotMatch(svg, /<text|font-family/);
+  }
+  const resolved = await resolve(inputs);
+  checkContrast(resolved);
+  validateDesignFile({ inputs, project, resolved });
+});
+
+test('the backup sits beside the file and is written only for a real change', () =>
+  scratch(async (dir) => {
+    assert.equal(backupPath('/x/name.design.json'), '/x/name.design.bak.json');
+    assert.equal(backupPath('/x/name'), '/x/name.bak.json');
+    const path = join(dir, 'name.design.json');
+    const model = await newDesign();
+    let writes = 0;
+    const count = { beforeWrite: () => { writes += 1; } };
+    await saveDesign(path, model, count);
+    assert.equal(writes, 1);
+    await saveDesign(path, model, count);
+    assert.equal(writes, 1);
+    await backUp(join(dir, 'nothing.design.json'));
+    assert.deepEqual(await readdir(dir), ['name.design.json']);
+    const original = await readFile(path, 'utf8');
+    await backUp(path);
+    assert.equal(await readFile(backupPath(path), 'utf8'), original);
+    assert.deepEqual((await readdir(dir)).sort(), ['name.design.bak.json', 'name.design.json']);
+  }));
+
+test('a design is written as DESIGN.md: exact tokens, in the format\'s order, and no reference left dangling', async () => {
+  const model = await newDesign();
+  const file = { ...model, project: { ...model.project, brief: 'A calm site for people planning a visit.' }, resolved: await resolve(model.inputs) };
+  const text = designMd(file, 'name.design.json');
+  const [, front, body] = text.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
+  assert.match(front, /^version: "alpha"$/m);
+  assert.match(front, /^name: "Placeholdr"$/m);
+  assert.match(front, /^  primary: "#6366F1"$/m);
+  assert.match(front, new RegExp(`^  page-text: "${file.resolved.surfaces.page.light.roles.text}"$`, 'm'));
+  assert.match(front, new RegExp(`^  dark-page-text: "${file.resolved.surfaces.page.dark.roles.text}"$`, 'm'));
+  assert.match(front, /^  display:\n    fontFamily: "Mona Sans"\n    fontSize: "62px"\n    fontWeight: 260\n/m);
+  assert.match(front, /fontVariation: "\\"wdth\\" 112, \\"opsz\\" 100"/);
+  assert.match(front, /fontFeature: "\\"ss02\\", \\"ss07\\""/);
+  assert.doesNotMatch(text, /undefined|NaN|\[object/);
+  const defined = (group) => new Set([...front.split(`\n${group}:\n`)[1].split(/\n[a-z]+:\n/)[0].matchAll(/^  ([\w-]+):/gm)].map(([, name]) => name));
+  for (const [, group, name] of front.matchAll(/"\{(\w+)\.([\w-]+)\}"/g)) assert.ok(defined(group).has(name), `${group}.${name}`);
+  const sections = [...body.matchAll(/^## (.+)$/gm)].map(([, name]) => name);
+  assert.deepEqual(sections, ['Overview', 'Colors', 'Typography', 'Layout', 'Elevation & Depth', 'Shapes', 'Components', "Do's and Don'ts"]);
+  assert.match(body, /A calm site for people/);
+  assert.match(body, /This design has no shadows/);
+  assert.match(body, /\*\*Consent Banner:\*\*/);
+  assert.ok(body.includes(MARKER));
+});
+
+test('DESIGN.md goes beside the design file, and one it did not write is never replaced', () =>
+  scratch(async (dir) => {
+    const path = join(dir, 'name.design.json');
+    await saveDesign(path, await newDesign());
+    assert.equal(await writeDesignMd(path), join(dir, 'DESIGN.md'));
+    assert.match(await readFile(join(dir, 'DESIGN.md'), 'utf8'), /^---\nversion: "alpha"/);
+    await writeDesignMd(path);
+    await writeFile(join(dir, 'DESIGN.md'), '# My own notes\n');
+    await assert.rejects(writeDesignMd(path), /not written by/);
+    assert.equal(await readFile(join(dir, 'DESIGN.md'), 'utf8'), '# My own notes\n');
+    assert.equal(await writeDesignMd(path, join(dir, 'other.md')), join(dir, 'other.md'));
+  }));
+
 test('presentation names stay beside the input', () => {
   assert.equal(defaultPresentationPath('/neutral/example.design.json', '2026-11-02'), '/neutral/example-presentation-2026-11-02.zip');
+});
+
+test('the divider has one optimal position per preview mode and catches there', () => {
+  assert.equal(optimalControls('both', 1512, 1440), 540);
+  assert.equal(optimalControls('desktop', 1512, 1440), 540);
+  assert.equal(optimalControls('phone', 1512, 1440), 1063);
+  assert.equal(optimalControls('both', 2560, 1440), 673);
+  assert.equal(optimalControls('both', 1512, 768), 540);
+  assert.deepEqual(dragControls(552, 'both', 1512, 1440), { width: 540, atOptimal: true });
+  assert.deepEqual(dragControls(700, 'both', 1512, 1440), { width: 700, atOptimal: false });
+  assert.equal(clampControls(100, 'both', 1512), 490);
+  assert.equal(clampControls(5000, 'both', 1512), 863);
+  assert.equal(clampControls(5000, 'phone', 1512), 1072);
+});
+
+test('each end of the preview reports what it shows and how much a setting reaches it', () => {
+  const scale = { breakpoints: { min: 390, max: 1440 }, ratio: { min: 1.067, max: 1.125 }, 'body-size': { min: 17, max: 19 } };
+  assert.equal(Math.round(sizeAt(scale, 10, 390)), 33);
+  assert.equal(Math.round(sizeAt(scale, 10, 1440)), 62);
+  assert.equal(followShare('narrow', 390, scale), 100);
+  assert.equal(followShare('narrow', 1440, scale), 0);
+  assert.equal(followShare('wide', 390, scale), 0);
+  assert.equal(followShare('wide', 915, scale), 50);
+  assert.equal(followShare('wide', 1440, scale), 100);
+  assert.equal(previewScale(720, 1440, true), 0.5);
+  assert.equal(previewScale(2000, 1440, true), 1);
+  assert.equal(previewScale(720, 1440, false), 1);
+});
+
+test('Strength catches at 50 and keeps any other value', () => {
+  assert.equal(snapStrength(47), 50);
+  assert.equal(snapStrength(53), 50);
+  assert.equal(snapStrength(46), 46);
+  assert.equal(snapStrength(54), 54);
+  assert.equal(snapStrength(0), 0);
+});
+
+test('zero strength and no target casting a shadow come to the same CSS', () => {
+  const inputs = defaultInputs();
+  const zero = coreCss(derive(inputs));
+  inputs.shadow.strength = 50;
+  inputs.shadow.targets = { box: false, header: false, panel: false, page: false };
+  assert.equal(coreCss(derive(inputs)), zero);
+});
+
+test('a base has the name of its scale, or says Custom, and takes what is typed within its limits', () => {
+  assert.equal(ratioName(1.2), 'Minor third');
+  assert.equal(ratioName(1.173), 'Custom');
+  assert.equal(ratioText(1.25), '1.25');
+  assert.equal(ratioText(1.067), '1.067');
+  assert.equal(ratioText(2), '2.00');
+  assert.equal(typedRatio('1,3', 1.25), 1.3);
+  assert.equal(typedRatio(' 1.2345 ', 1.25), 1.235);
+  assert.equal(typedRatio('7', 1.25), 2);
+  assert.equal(typedRatio('0.5', 1.25), 1);
+  assert.equal(typedRatio('wide', 1.25), 1.25);
+  assert.equal(typedRatio('', 1.25), 1.25);
+});
+
+test('the number line runs from 320 to 1920 px, and the left breakpoint may reach the right one and no further', () => {
+  assert.equal(lineShare(320), 0);
+  assert.equal(lineShare(1920), 1);
+  assert.equal(lineWidth(0.5), 1120);
+  assert.equal(lineWidth(-1), 320);
+  assert.equal(lineWidth(2), 1920);
+  assert.equal(lineWidth(lineShare(1443)), 1440, 'a drag catches at a common width');
+  assert.equal(lineWidth(lineShare(1450)), 1450);
+  assert.deepEqual(breakpointLimits({ min: 690, max: 1440 }, 'min'), [320, 1440]);
+  assert.deepEqual(breakpointLimits({ min: 690, max: 1440 }, 'max'), [690, 1920]);
+  assert.equal(typedWidth('768 px', 320, 1920, 390), 768);
+  assert.equal(typedWidth('2000', 320, 1440, 390), 1440);
+  assert.equal(typedWidth('none', 320, 1920, 390), 390);
+});
+
+test('two labels on the line stay centred until they would touch, and keep inside its ends', () => {
+  assert.deepEqual(spreadLabels(100, 400, 100, 500), [50, 350]);
+  assert.deepEqual(spreadLabels(250, 250, 100, 500), [146, 254], 'on one width they part evenly');
+  assert.deepEqual(spreadLabels(0, 0, 100, 500), [0, 108], 'at the left end');
+  assert.deepEqual(spreadLabels(500, 500, 100, 500), [292, 400], 'at the right end');
+});
+
+test('a long chapter name keeps its last word in the menu', () => {
+  assert.equal(shortChapter('Space and shape'), 'Shape');
+  assert.equal(shortChapter('Colour'), 'Colour');
 });

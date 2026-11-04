@@ -1,8 +1,10 @@
 ---
+import { shippedIn } from '../../../src/fonts/catalog.js';
 import { readFile } from 'node:fs/promises';
 import { resolved as r, t, num, date } from '../data.js';
 import { typeOrder, faceName, families, range, px } from '../words.js';
-const licences = await Promise.all(['LICENSE-mona-sans.txt', 'LICENSE-red-hat-mono.txt'].map((name) => readFile(`src/fonts/${name}`, 'utf8')));
+const shipped = shippedIn(r.typefaces);
+const licences = await Promise.all(shipped.map(({ licence }) => readFile(`src/fonts/${licence}`, 'utf8')));
 ---
 <details><summary>{t('details.contrast')}</summary>
   {Object.entries(r['contrast-check'].matrix).map(([kind, modes]) => <section>
@@ -21,6 +23,6 @@ const licences = await Promise.all(['LICENSE-mona-sans.txt', 'LICENSE-red-hat-mo
 <details><summary>{t('details.fonts')}</summary>
   {families.map((family) => <p>{faceName(family)}</p>)}
   <p>{t('details.system-font')}</p>
-  {['Mona Sans', 'Red Hat Mono'].map((name, index) => <section><h2 data-kn-type="heading-4">{t('details.licence', { name })}</h2><pre>{licences[index]}</pre></section>)}
+  {shipped.map(({ family: name }, index) => <section><h2 data-kn-type="heading-4">{t('details.licence', { name })}</h2><pre>{licences[index]}</pre></section>)}
 </details>
 <details><summary>{t('details.record')}</summary><dl><dt>{t('details.fingerprint')}</dt><dd>{r['inputs-fingerprint']}</dd><dt>{t('details.date')}</dt><dd>{date}</dd></dl></details>

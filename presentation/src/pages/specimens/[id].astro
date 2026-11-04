@@ -1,18 +1,21 @@
 ---
-import { ids } from '../../catalog.js';
-import { project, resolved, copy } from '../../data.js';
+import { ids, componentPages, FRAME_PAGES } from '../../catalog.js';
+import { project, resolved, copy, t, ownPictures } from '../../data.js';
 import Samples from '../../Samples.astro';
+import LiveFrame from '../../LiveFrame.astro';
+import { pictures, flatPictures } from '../../samples.js';
 import '../../specimen.css';
 export function getStaticPaths() {
-  return ids
+  return [...ids, 'catalogue']
     .filter((id) => id !== 'responsive')
     .map((id) => ({ params: { id } }));
 }
 const { id } = Astro.params;
-const full =
-  /^(headers$|header-|footer|hero-|text-image|cta-band|band$|page$|preview$|overview$|responsive-|space-section$)/.test(
-    id,
+const isFull = (name) =>
+  /^(header-|footer|hero-|text-image|cta-band|band$|page$|preview$|overview$|responsive-|space-section$)/.test(
+    name,
   );
+const full = isFull(id);
 
 ---
 
@@ -25,9 +28,25 @@ const full =
     <style id="kn-live-core" is:inline />
   </head>
   <body data-kn-surface="page" data-specimen={id}>
-    <div class="sample-root" data-full={full || undefined}>
-      <Samples id={id} project={project} resolved={resolved} />
-    </div>
+    {id === 'catalogue' ? componentPages.filter(([page]) => !FRAME_PAGES.includes(page)).map(([page, , defaults, variants]) => (
+      <div data-component-page={page} class="catalogue-page">
+        <h2 class="catalogue-title">{t(`${page}.title`)}</h2>
+        {[...defaults, ...variants].map((specimen) => (
+          <section data-component={specimen}>
+            <p class="catalogue-name">{t(`specimen.${specimen}`)}</p>
+            <div class="sample-root" data-full={isFull(specimen) || undefined}>
+              <Samples id={specimen} project={project} resolved={resolved} />
+            </div>
+          </section>
+        ))}
+      </div>
+    )) : (
+      <div class="sample-root" data-full={full || undefined}>
+        <Samples id={id} project={project} resolved={resolved} />
+      </div>
+    )}
+    {id === 'preview' && <LiveFrame />}
+    {['catalogue', 'preview'].includes(id) && <script id="kn-built-pictures" type="application/json" is:inline set:html={JSON.stringify(flatPictures(pictures(resolved.ramps, ownPictures))).replaceAll('<', '\\u003c')} />}
     <script is:inline>
       document.querySelectorAll('.kn-field[class*="is-"]').forEach((field) => {
         const state = [...field.classList].find((name) => name.startsWith('is-'));
@@ -35,76 +54,60 @@ const full =
         field.classList.remove(state);
         field.querySelector('.kn-field-control,input')?.classList.add(state);
       });
+      // The tool sends a design for every step of a dragged control. Only what changed is touched:
+      // an image set again is decoded again, and a logo rebuilt blinks and moves the header.
+      let shown = {};
+      let tuning;
+      let built;
+      const sections = '.kn-hero, .kn-band, .kn-footer';
       window.addEventListener('message', (event) => {
         if (event.source !== parent || event.data?.type !== 'kn-design') return;
-        document.getElementById('kn-live-core').textContent = event.data.css;
-        document.documentElement.dataset.knMode = event.data.mode;
-        const p = event.data.project;
-        if (event.data.picture)
+        const { css, mode } = event.data;
+        const surfaces = event.data.surfaces?.join() ?? '';
+        const root = document.documentElement;
+        // Transitions would make every step of a drag lag behind the control.
+        root.toggleAttribute('data-kn-tuning', true);
+        clearTimeout(tuning);
+        tuning = setTimeout(() => root.removeAttribute('data-kn-tuning'), 250);
+        // The section in view stays where it is, whatever happens to the height above it.
+        const top = document.querySelector('.kn-header')?.getBoundingClientRect().bottom ?? 0;
+        const anchor = scrollY > 0 ? [...document.querySelectorAll(sections)].find((n) => n.getBoundingClientRect().bottom > top) : null;
+        const before = anchor?.getBoundingClientRect().top;
+        if (css !== shown.css) document.getElementById('kn-live-core').textContent = css;
+        if (mode !== shown.mode) root.dataset.knMode = mode;
+        const showing = event.data.showPictures === false ? 'off' : 'on';
+        if (showing !== root.dataset.knPictures) root.dataset.knPictures = showing;
+        const builtPictures = document.getElementById('kn-built-pictures');
+        // The sample pictures were named at build time, and follow the live design. Only a picture that
+        // changed is set again, since colours change the drawn people and must not touch the photos.
+        if (builtPictures && event.data.pictures && event.data.pictures.join() !== shown.pictures) {
+          built ??= JSON.parse(builtPictures.textContent);
+          const place = (node, source) => {
+            node.dataset.knPicture ??= built.findIndex((known) => source?.includes(known));
+            return event.data.pictures[node.dataset.knPicture];
+          };
+          for (const img of document.querySelectorAll('img')) {
+            const fresh = place(img, img.getAttribute('src'));
+            if (fresh && fresh !== img.getAttribute('src')) img.src = fresh;
+          }
+          for (const video of document.querySelectorAll('video[poster]')) {
+            const fresh = place(video, video.getAttribute('poster'));
+            if (fresh && fresh !== video.getAttribute('poster')) video.poster = fresh;
+          }
+          for (const band of document.querySelectorAll('[style*="--kn-picture-image"]')) {
+            const image = band.style.getPropertyValue('--kn-picture-image');
+            const fresh = place(band, image);
+            if (fresh && !image.includes(fresh)) band.style.setProperty('--kn-picture-image', `url(${JSON.stringify(fresh)})`);
+          }
+        }
+        if (surfaces !== shown.surfaces)
           document
-            .querySelectorAll('.kn-hero-media img')
-            .forEach((img) => (img.src = event.data.picture));
-        document
-          .querySelectorAll(
-            '.kn-header-name,.kn-footer [data-kn-type="heading-3"]',
-          )
-          .forEach((n) => (n.textContent = p.name || 'Example'));
-        document
-          .querySelectorAll('.kn-footer-cell[data-kn-cell="A1"]')
-          .forEach((n) => {
-            n.replaceChildren();
-            if (p.logo || p['logo-dark']) {
-              const img = document.createElement('img');
-              img.src = p['logo-dark'] || p.logo;
-              img.alt = p.name || 'Example';
-              img.style.maxWidth = '14rem';
-              img.style.maxHeight = '3rem';
-              n.append(img);
-            } else {
-              const label = document.createElement('p');
-              label.dataset.knType = 'heading-3';
-              label.textContent = p.name || 'Example';
-              n.append(label);
-            }
-          });
-        document
-          .querySelectorAll('.kn-header-identity')
-          .forEach((n) => n.setAttribute('aria-label', p.name || 'Example'));
-        document.querySelectorAll('.kn-header-brand').forEach((n) => {
-          let logo = n.querySelector('.kn-header-logo');
-          let name = n.querySelector('.kn-header-name');
-          const source = p.logo || p['logo-dark'];
-          if (!source) {
-            logo?.remove();
-            if (!name) {
-              name = document.createElement('span');
-              name.className = 'kn-header-name';
-              n.append(name);
-            }
-            name.textContent = p.name || 'Example';
-            return;
-          }
-          name?.remove();
-          if (!logo) {
-            logo = document.createElement('span');
-            logo.className = 'kn-header-logo';
-            n.prepend(logo);
-          }
-          logo.replaceChildren();
-          for (const [kind, src] of [
-            ['light', source],
-            ['dark', p['logo-dark'] || source],
-          ]) {
-            const img = document.createElement('img');
-            img.src = src;
-            img.alt = p.name || 'Example';
-            img.dataset.knLogo = kind;
-            logo.append(img);
-          }
-        });
-        document
-          .querySelectorAll('.kn-header,.kn-footer')
-          .forEach((n) => n.dispatchEvent(new Event('kn:refresh')));
+            .querySelectorAll('[data-kn-needs-surface]')
+            .forEach((n) => {
+              n.hidden = !event.data.surfaces?.includes(n.dataset.knNeedsSurface);
+            });
+        if (anchor) scrollBy({ top: anchor.getBoundingClientRect().top - before, behavior: 'instant' });
+        shown = { css, mode, surfaces, pictures: event.data.pictures?.join() };
       });
     </script>
   </body>

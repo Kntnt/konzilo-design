@@ -2,7 +2,7 @@
 
 Records the library's component list, with its status and reasoning.
 
-***Decided*** 2026-11-01 by the owner: build now what a normal website obviously needs, the 20% of components that solve 80% of client cases, and leave the fanciest for later. The list comes from common sense, checked against Blueprint's catalogue, the reference implementations and Lumos's component list as inspiration; no tie to Lumos follows (principles.md).
+***Decided*** 2026-11-01 by the owner: build now what a normal website obviously needs, the 20% of components that solve 80% of client cases, and leave the fanciest for later. The list comes from common sense, checked against Blueprint's catalogue and Lumos's component list as inspiration; no tie to Lumos follows (principles.md).
 
 Names use Blueprint's word where one exists (names.md). Each component is CSS on the `kn-` roles, an Astro component for Konzilo sites and plain HTML and CSS in the export (tool.md, point 4).
 
@@ -43,6 +43,12 @@ The owner added two things to the proposed list and confirmed the Video Player:
 
 - **Table of Contents.**
 - **Embed, with every provider in Blueprint's catalogue (Q364) in the first round**, since a film on YouTube is only one case of embedding. It is one component with one presentation; each provider is a registration of its recognised URLs, player address, format and consent category (the assistant's technical choice, 2026-11-01).
+
+## In the tool and the presentation
+
+***On the owner's word*, 2026-11-03:** both go through the frame first, in a chapter of its own (Header, Footer, Page), and then through every component above, in the presentation's groups: opening, sections, text, buttons, cards, media, finding and forms. A component has no settings of its own in the design: it takes everything from colour, type, space and shape. So its page in the tool says what it is for, and the preview shows the real one at its real widths, on a page of all components that the tool's build makes and the presentation leaves out.
+
+**How breadcrumbs show** (the owner found it missing, 2026-11-03; the assistant chose the details, for review): the design file's `breadcrumbs` holds whether a trail shows, where it stands (at the top of the first band, or in a thin band of its own under the header), the mark between steps (slash, chevron, arrow or dot), the first step (the word Home, the site's name, or a house whose word stays for those who hear the page), whether the trail ends with the current page, and on a phone either the whole trail or only the way up one level. It has a page in the frame chapter, since it stands in the same place on every page. A site places the Breadcrumbs component by these settings; the start page has none, since a trail of one step emits nothing.
 
 ## Not now
 
@@ -144,7 +150,7 @@ The gallery uses Page and Band throughout, keeps its client entries bundled and 
 - The first-heading roles belong to the `heading-1` style. A Hero's heading often has the `display` style, and then the display role decides.
 - A first-heading colour set to a role stays checked for contrast. A literal colour is not checked, and on `:root` it would apply on dark Surfaces too.
 - A label is the small text around a heading: eyebrows, metadata, category pills and the megamenu's numbers. They share `data-kn-type="label"` and change together. Captions, key-figure texts, breadcrumbs and form help stay small text.
-- Labels are in capitals, five steps below body text on the type scale unless changed. No text goes below 12px. The design picks one of two recipes:
+- Labels are in capitals, five steps below body text on the type scale unless changed. No text goes below 12px. The design picks one of these recipes, and `type.roles.label` can set weight, spacing and axes on top (tool.md §2):
 
   | Labels in | Weight | Letter-spacing |
   |---|---|---|
@@ -155,7 +161,7 @@ The gallery uses Page and Band throughout, keeps its client entries bundled and 
 - A table head is not a label. It has the typeface of the rest of the table, generally the main family, as written and in semi-bold.
 - A typeface can carry tuning of its own, in `src/generator/typefaces.js`. Mona Sans takes `ss05` and `ss07` on text from 20px (owner, 2026-10-30): on where a style is always at least 20px, off where it never is, and otherwise from the window where its `clamp()` crosses 20px. Tuning follows the typeface a style has, so it needs the typeface in the design file; a site that changes a typeface in CSS alone also sets that style's `--kn-type-<style>-features`.
 - Rejected: the width axis, and stylistic sets for labels. Mona Sans with a width axis weighs about 150 KB more than without, against 30–39 KB for a whole monospace file, and it exists only in some typefaces. Stylistic sets barely show at label sizes.
-- `src/fonts/` holds the publishers' files unmodified, since Mona Sans reserves its name and a subset could not keep it. A site imports `@kntnt/konzilo-design/fonts.css`, and a browser fetches a file only when the page uses that face.
+- `src/fonts/` holds the publishers' files, recompressed to WOFF2 at most and otherwise unmodified, since several reserve their names and a subset could not keep them. A site imports `@kntnt/konzilo-design/fonts.css`, and a browser fetches a file only when the page uses that face.
 
 ## Owner’s component review
 

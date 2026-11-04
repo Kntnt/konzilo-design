@@ -122,6 +122,7 @@ test('Surface shadows follow polarity and frames take ink before the dark except
     const inputs = defaultInputs();
     inputs['brand-colors'].secondary = '#c76532';
     inputs.shadow.strength = 50;
+    inputs.shadow.hardness = 20;
     inputs.shadow.color = shadowColor;
     inputs.frame.width = 2;
     const file = await design(inputs);

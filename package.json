@@ -17,6 +17,7 @@
   "exports": {
     "./generator": "./src/generator/index.js",
     "./css": "./src/css/index.js",
+    "./design-md": "./src/design-md/index.js",
     "./components/*": "./src/components/*",
     "./components.css": "./src/components/index.css",
     "./fonts.css": "./src/fonts/fonts.css",

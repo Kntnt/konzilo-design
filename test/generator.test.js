@@ -23,7 +23,7 @@ const shadowSettings = () => ({ ...defaultInputs().shadow, ...REFERENCE });
 const surface = { text: referenceInk, colors: { primary: '#168b83' } };
 const design = async (inputs = defaultInputs()) => ({ inputs, project: {}, resolved: await resolve(inputs) });
 
-test('all six reference shadows match character for character', () => {
+test('all six shadows at the reference positions match character for character', () => {
   assert.deepEqual(shadowsForSurface(shadowSettings(), surface), expectedShadows);
 });
 

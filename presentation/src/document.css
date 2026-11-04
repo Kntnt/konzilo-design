@@ -291,12 +291,9 @@ summary + * {
   display: grid;
   gap: var(--kn-space-component-gap);
 }
-.shape-card, .shape-panel {
+.shape-card {
   border-radius: var(--kn-radius-card);
   border: var(--kn-frame-width) solid var(--kn-frame-color);
-}
-.shape-panel {
-  border: 1px solid var(--kn-border-strong);
 }
 .shadow-object {
   padding: var(--kn-space-plate);
@@ -535,6 +532,8 @@ html:not(.js) .page-toolbar {
   line-height: 1.05;
   letter-spacing: var(--kn-type-display-letter-spacing);
   font-feature-settings: var(--kn-type-display-features);
+  font-stretch: var(--kn-type-display-stretch, normal);
+  font-variation-settings: var(--kn-type-display-variation, normal);
 }
 .alphabet {
   margin-block: var(--kn-space-band);
@@ -545,6 +544,8 @@ html:not(.js) .page-toolbar {
   line-height: 1.35;
   overflow-wrap: anywhere;
   font-feature-settings: var(--kn-type-heading-2-features);
+  font-stretch: var(--kn-type-heading-2-stretch, normal);
+  font-variation-settings: var(--kn-type-heading-2-variation, normal);
 }
 .weights {
   display: flex;
@@ -559,6 +560,8 @@ html:not(.js) .page-toolbar {
   font-size: var(--kn-type-heading-1-size);
   line-height: 1.2;
   font-feature-settings: var(--kn-type-heading-1-features);
+  font-stretch: var(--kn-type-heading-1-stretch, normal);
+  font-variation-settings: var(--kn-type-heading-1-variation, normal);
 }
 .tuning {
   border-block-start: 1px solid var(--kn-border);

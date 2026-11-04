@@ -8,60 +8,16 @@ import BodyText from '../../../src/components/BodyText.astro';
 import ReadingArea from '../../../src/components/ReadingArea.astro';
 import TableOfContents from '../../../src/components/TableOfContents.astro';
 import AsideBlock from '../../../src/components/AsideBlock.astro';
-import { sample, menu, search, footerBands, headings } from '../samples.js';
-import { context } from './context.js';
+import { sample, headings } from '../samples.js';
+import { headerProps, footerProps, pageProps } from '../frame.js';
 const { id, project, resolved } = Astro.props;
-const { identity } = context(project, resolved);
 ---
 
-{id === 'headers' && (
-  <div class="header-arrangements">
-    {['B', 'C'].map((arrangement) => (
-      <div>
-        <p class="specimen-caption" data-kn-type="label">
-          {arrangement}
-        </p>
-        <Header
-          identity={identity}
-          arrangement={arrangement}
-          menu={menu}
-          linkMenu
-          menuButton={{ word: 'Menu' }}
-          search={search}
-          cta={{ label: 'Contact', href: '#contact' }}
-          numbered
-        />
-      </div>
-    ))}
-  </div>
-)}
-{id.startsWith('header-') && (
-  <Header
-    identity={identity}
-    arrangement="A"
-    menu={menu}
-    linkMenu
-    menuButton={{ word: 'Menu' }}
-    search={search}
-    cta={{ label: 'Contact', href: '#contact' }}
-    numbered
-  />
-)}
-{id === 'footer' && <Footer bands={footerBands(project)} />}
-{id === 'footer-simple' && (
-  <div class="sample-stack">
-    <Footer bands={footerBands(project, 'simple')} />
-    <Footer
-      bands={footerBands(
-        { ...project, 'logo-dark': project.logo || project['logo-dark'] },
-        'simple',
-      ).map((band) => ({ ...band, surface: 'page' }))}
-    />
-  </div>
-)}
+{id.startsWith('header-') && <Header {...headerProps(resolved.header, project)} />}
+{id === 'footer' && <Footer {...footerProps(resolved.footer, project)} />}
 {id === 'page' && (
-  <Page>
-    <Header slot="header" identity={identity} menu={menu} linkMenu />
+  <Page {...pageProps(resolved.page)}>
+    <Header slot="header" {...headerProps(resolved.header, project)} />
     <Band surface="tint">
       <HeadingGroup
         heading="Plan the next stage"
@@ -69,7 +25,7 @@ const { identity } = context(project, resolved);
         type="heading-3"
       />
     </Band>
-    <Footer slot="footer" bands={footerBands(project, 'simple')} />
+    <Footer slot="footer" {...footerProps(resolved.footer, project)} />
   </Page>
 )}
 {id === 'band' && (

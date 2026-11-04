@@ -13,7 +13,7 @@ import '../document.css';
 const pages = pageList();
 const chapters = [...new Set(pages.map((page) => page.chapter))];
 const runtimeCopy = Object.fromEntries(runtimeKeys.map((key) => [key, t(key)]));
-const config = { slug: slug(project.name), pages, project, date, type: resolved.type, lang: copy.lang, title: t('document.title'), filename: t('document.filename'), copy: runtimeCopy };
+const config = { slug: slug(project.name), pages, project, date, type: resolved.type, typeScale: resolved['type-scale'], lang: copy.lang, title: t('document.title'), filename: t('document.filename'), copy: runtimeCopy };
 const json = (value) => JSON.stringify(value).replaceAll('<', '\\u003c');
 ---
 <!doctype html>

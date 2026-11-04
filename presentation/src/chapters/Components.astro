@@ -1,13 +1,16 @@
 ---
 import { componentPages } from '../catalog.js';
-import { t } from '../data.js';
+import { t, resolved } from '../data.js';
 import Specimen from '../Specimen.astro';
 const { page, specimens } = Astro.props;
 const entry = componentPages.find(([id]) => id === page?.id);
-const defaults = specimens || entry?.[2] || [];
+const crumbs = resolved.breadcrumbs;
+const hidden = page?.id === 'breadcrumbs' && !crumbs.show;
+const defaults = hidden ? [] : specimens || entry?.[2] || [];
 const variants = entry?.[3] || [];
 
 ---
 {page?.id === 'header' && <p class="prose">{t('header.try')}</p>}
+{page?.id === 'breadcrumbs' && <p class="prose">{t(hidden ? 'breadcrumbs.off' : crumbs.placement === 'own-band' ? 'breadcrumbs.own-band' : 'breadcrumbs.first-band')}</p>}
 {defaults.map((id) => <Specimen id={id} />)}
 {variants.length > 0 && <details class="variants"><summary>{t(page.id === 'buttons' ? 'states' : 'variants')}</summary>{variants.map((id) => <Specimen id={id} />)}</details>}

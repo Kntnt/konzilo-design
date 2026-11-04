@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# Checks a design file: that it is valid, up to date with its inputs, and passes every contrast check.
+# Usage: design-check <design-file>
+set -euo pipefail
+source "$(dirname "$(realpath "${BASH_SOURCE[0]}")")/lib/design-file.sh"
+
+need_file "$@"
+exec node "$konzilo" check "$@"

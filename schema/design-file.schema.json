@@ -33,6 +33,12 @@
         "introduction": {
           "type": "string"
         },
+        "slogan": {
+          "type": "string"
+        },
+        "brief": {
+          "type": "string"
+        },
         "contact": {
           "type": "object",
           "properties": {
@@ -63,6 +69,9 @@
             "shadow": {
               "type": "string"
             },
+            "frame": {
+              "type": "string"
+            },
             "components": {
               "type": "string"
             }
@@ -84,9 +93,68 @@
   ],
   "additionalProperties": false,
   "$defs": {
+    "role": {
+      "type": "object",
+      "properties": {
+        "weight": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 1000
+        },
+        "letter-spacing": {
+          "type": "number",
+          "minimum": -0.5,
+          "maximum": 1
+        },
+        "axes": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "number"
+          }
+        },
+        "features": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z0-9]{4}$"
+          }
+        }
+      },
+      "required": [],
+      "additionalProperties": false
+    },
     "inputs": {
       "type": "object",
       "properties": {
+        "layout": {
+          "type": "object",
+          "properties": {
+            "wide": {
+              "type": "number",
+              "minimum": 800,
+              "maximum": 1800
+            },
+            "narrow": {
+              "type": "number",
+              "minimum": 480,
+              "maximum": 960
+            }
+          },
+          "required": [],
+          "additionalProperties": false
+        },
+        "header": {
+          "$ref": "#/$defs/header-settings"
+        },
+        "footer": {
+          "$ref": "#/$defs/footer-settings"
+        },
+        "page": {
+          "$ref": "#/$defs/page-settings"
+        },
+        "breadcrumbs": {
+          "$ref": "#/$defs/breadcrumb-settings"
+        },
         "brand-colors": {
           "type": "object",
           "properties": {
@@ -141,6 +209,10 @@
               "minLength": 1,
               "pattern": "^[A-Za-z0-9 ,\"'_-]+$"
             },
+            "label": {
+              "type": "string",
+              "minLength": 1
+            },
             "heading-1": {
               "type": "string",
               "minLength": 1,
@@ -182,6 +254,23 @@
                   "type": "number",
                   "minimum": 1,
                   "maximum": 2
+                }
+              },
+              "required": [],
+              "additionalProperties": false
+            },
+            "breakpoints": {
+              "type": "object",
+              "properties": {
+                "min": {
+                  "type": "integer",
+                  "minimum": 320,
+                  "maximum": 1920
+                },
+                "max": {
+                  "type": "integer",
+                  "minimum": 320,
+                  "maximum": 1920
                 }
               },
               "required": [],
@@ -257,6 +346,26 @@
                 "text",
                 "accent"
               ]
+            },
+            "heading-1-role": {
+              "type": "string",
+              "enum": [
+                "heading",
+                "display"
+              ]
+            },
+            "roles": {
+              "type": "object",
+              "properties": {
+                "main": { "$ref": "#/$defs/role" },
+                "heading": { "$ref": "#/$defs/role" },
+                "heading-1": { "$ref": "#/$defs/role" },
+                "display": { "$ref": "#/$defs/role" },
+                "label": { "$ref": "#/$defs/role" },
+                "monospace": { "$ref": "#/$defs/role" }
+              },
+              "required": [],
+              "additionalProperties": false
             }
           },
           "required": [],
@@ -344,6 +453,254 @@
       ],
       "additionalProperties": false
     },
+    "header-settings": {
+      "type": "object",
+      "properties": {
+        "arrangement": {
+          "type": "string",
+          "enum": [
+            "A",
+            "B",
+            "C"
+          ]
+        },
+        "attachment": {
+          "type": "string",
+          "enum": [
+            "flow",
+            "sticky"
+          ]
+        },
+        "start": {
+          "type": "string",
+          "enum": [
+            "below",
+            "under"
+          ]
+        },
+        "autohide": {
+          "type": "boolean"
+        },
+        "surface": {
+          "type": "string",
+          "enum": [
+            "page",
+            "brand"
+          ]
+        },
+        "identity": {
+          "type": "string",
+          "enum": [
+            "logo",
+            "name",
+            "both"
+          ]
+        },
+        "brand-axis": {
+          "type": "string",
+          "enum": [
+            "row",
+            "column"
+          ]
+        },
+        "brand-align": {
+          "type": "string",
+          "enum": [
+            "start",
+            "center",
+            "end"
+          ]
+        },
+        "identity-axis": {
+          "type": "string",
+          "enum": [
+            "row",
+            "column"
+          ]
+        },
+        "identity-align": {
+          "type": "string",
+          "enum": [
+            "start",
+            "center",
+            "end"
+          ]
+        },
+        "link-menu": {
+          "type": "boolean"
+        },
+        "menu-button": {
+          "type": "string",
+          "enum": [
+            "word",
+            "icon",
+            "off"
+          ]
+        },
+        "language": {
+          "type": "boolean"
+        },
+        "search": {
+          "type": "boolean"
+        },
+        "cta": {
+          "type": "boolean"
+        },
+        "numbered": {
+          "type": "boolean"
+        },
+        "menu-above": {
+          "type": "boolean"
+        },
+        "menu-below": {
+          "type": "boolean"
+        },
+        "search-surface": {
+          "type": "string",
+          "enum": [
+            "page",
+            "raised",
+            "tint",
+            "brand",
+            "inverse"
+          ]
+        },
+        "search-blur": {
+          "type": "boolean"
+        },
+        "search-heading": {
+          "type": "boolean"
+        },
+        "search-links": {
+          "type": "boolean"
+        }
+      },
+      "required": [],
+      "additionalProperties": false
+    },
+    "footer-settings": {
+      "type": "object",
+      "properties": {
+        "model": {
+          "type": "string",
+          "enum": [
+            "one",
+            "two",
+            "utility",
+            "statement",
+            "tall-identity",
+            "tall-links"
+          ]
+        },
+        "attachment": {
+          "type": "string",
+          "enum": [
+            "flow",
+            "reveal"
+          ]
+        },
+        "surface": {
+          "type": "string",
+          "enum": [
+            "page",
+            "raised",
+            "tint",
+            "brand",
+            "inverse"
+          ]
+        },
+        "second-surface": {
+          "type": "string",
+          "enum": [
+            "page",
+            "raised",
+            "tint",
+            "brand",
+            "inverse"
+          ]
+        },
+        "horizontal-rules": {
+          "type": "boolean"
+        },
+        "vertical-rule": {
+          "type": "boolean"
+        },
+        "rule-extent": {
+          "type": "string",
+          "enum": [
+            "content",
+            "full"
+          ]
+        }
+      },
+      "required": [],
+      "additionalProperties": false
+    },
+    "page-settings": {
+      "type": "object",
+      "properties": {
+        "shadow": {
+          "type": "boolean"
+        },
+        "edge-line": {
+          "type": "boolean"
+        },
+        "fill-light": {
+          "type": "string",
+          "pattern": "^[-#(),.%/ a-zA-Z0-9]+$"
+        },
+        "fill-dark": {
+          "type": "string",
+          "pattern": "^[-#(),.%/ a-zA-Z0-9]+$"
+        }
+      },
+      "required": [],
+      "additionalProperties": false
+    },
+    "breadcrumb-settings": {
+      "type": "object",
+      "properties": {
+        "show": {
+          "type": "boolean"
+        },
+        "placement": {
+          "type": "string",
+          "enum": [
+            "first-band",
+            "own-band"
+          ]
+        },
+        "separator": {
+          "type": "string",
+          "enum": [
+            "slash",
+            "chevron",
+            "arrow",
+            "dot"
+          ]
+        },
+        "home": {
+          "type": "string",
+          "enum": [
+            "word",
+            "name",
+            "icon"
+          ]
+        },
+        "current": {
+          "type": "boolean"
+        },
+        "narrow": {
+          "type": "string",
+          "enum": [
+            "trail",
+            "parent"
+          ]
+        }
+      },
+      "required": [],
+      "additionalProperties": false
+    },
     "fluid": {
       "type": "object",
       "properties": {
@@ -373,6 +730,9 @@
         "size": {
           "$ref": "#/$defs/fluid"
         },
+        "step": {
+          "type": "integer"
+        },
         "line-height": {
           "type": "number",
           "minimum": 0.1
@@ -384,6 +744,16 @@
         },
         "letter-spacing": {
           "type": "number"
+        },
+        "stretch": {
+          "type": "number",
+          "minimum": 1
+        },
+        "variation": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "number"
+          }
         },
         "features": {
           "type": "object",
@@ -554,6 +924,89 @@
             "small",
             "label",
             "mono"
+          ],
+          "additionalProperties": false
+        },
+        "header": {
+          "$ref": "#/$defs/header-settings"
+        },
+        "footer": {
+          "$ref": "#/$defs/footer-settings"
+        },
+        "page": {
+          "$ref": "#/$defs/page-settings"
+        },
+        "breadcrumbs": {
+          "$ref": "#/$defs/breadcrumb-settings"
+        },
+        "type-scale": {
+          "type": "object",
+          "properties": {
+            "breakpoints": {
+              "type": "object",
+              "properties": {
+                "min": {
+                  "type": "integer",
+                  "minimum": 320,
+                  "maximum": 1920
+                },
+                "max": {
+                  "type": "integer",
+                  "minimum": 320,
+                  "maximum": 1920
+                }
+              },
+              "required": [
+                "min",
+                "max"
+              ],
+              "additionalProperties": false
+            },
+            "ratio": {
+              "type": "object",
+              "properties": {
+                "min": {
+                  "type": "number",
+                  "minimum": 1,
+                  "maximum": 2
+                },
+                "max": {
+                  "type": "number",
+                  "minimum": 1,
+                  "maximum": 2
+                }
+              },
+              "required": [
+                "min",
+                "max"
+              ],
+              "additionalProperties": false
+            },
+            "body-size": {
+              "type": "object",
+              "properties": {
+                "min": {
+                  "type": "number",
+                  "minimum": 12,
+                  "maximum": 48
+                },
+                "max": {
+                  "type": "number",
+                  "minimum": 12,
+                  "maximum": 48
+                }
+              },
+              "required": [
+                "min",
+                "max"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "breakpoints",
+            "ratio",
+            "body-size"
           ],
           "additionalProperties": false
         },

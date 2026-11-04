@@ -111,6 +111,8 @@ All twelve text styles from tool.md point 2 appear below. The proposed `heading-
 | `--type-lead-line-height` | lead style: unitless line-height | tool.md §2, type scale; plates.md §3; proposed here | Proposed here | Keeps readable leading with the style recipe. |
 | `--type-lead-weight` | lead style: font weight | tool.md §2, type scale; plates.md §3; proposed here | Proposed here | Keeps the selected typeface’s weight with its style. |
 | `--type-lead-letter-spacing` | lead style: letter-spacing in em | tool.md §2, type scale; plates.md §3; proposed here | Proposed here | Keeps tracking with the style and follows its text size. |
+| `--type-window` | How far the window has come between the breakpoints, from 0 to 1, in `@supports` | tool.md §2 | *Built* 2026-11-03 | Names what it measures. |
+| `--type-base` | The ratio at this window, in `@supports` | tool.md §2 | *Built* 2026-11-03 | The base each size raises to its step. |
 | `--type-body-size` | body style: fluid font size | tool.md §2, type scale; plates.md §3; proposed here | Proposed here | Names the visual size without fixing its value or unit. |
 | `--type-body-line-height` | body style: unitless line-height | tool.md §2, type scale; plates.md §3; proposed here | Proposed here | Keeps readable leading with the style recipe. |
 | `--type-body-weight` | body style: font weight | tool.md §2, type scale; plates.md §3; proposed here | Proposed here | Keeps the selected typeface’s weight with its style. |
@@ -138,12 +140,13 @@ All twelve text styles from tool.md point 2 appear below. The proposed `heading-
 | `--typeface-label` | The stack labels use: main or monospace | tool.md §2 | *Decided* 2026-11-02 | Lets every label follow the design's one choice. |
 | `--text-heading-1` | First-heading colour, declared on each Surface and reading text or accent | components.md, Typefaces and labels | *Built* 2026-11-02 | The optional input chooses a checked contextual role. |
 | `--type-<style>-features` | A style's font features: `normal`, or its typeface's tuning | components.md, Typefaces and labels | *Decided* 2026-11-02 | Lets tuning follow the typeface and the fluid size. |
+| `--type-<style>-stretch`, `--type-<style>-variation` | A style's width and optical size, only where a design sets them for the style's role | tool.md §2 | *Built* 2026-11-03 | Components read them with `normal` as fallback. |
 
 `lead` is a typography treatment, not a replacement name for Blueprint's content term Standfirst. Font assets and internal type-step indexing are generator details; components read these named roles.
 
 ### Space steps and roles
 
-The specs decide fluid space steps and semantic space roles, but give neither a step count nor step names. Eight numbered steps, as in the reference design's tuning, are **proposed here**, ordered by size, with no numerical values implied by the names. Step names are internal CSS values for constructing roles; components read the roles only. The same keys live under `resolved.space.steps` without the CSS family prefix.
+The specs decide fluid space steps and semantic space roles, but give neither a step count nor step names. Eight numbered steps are **proposed here**, ordered by size, with no numerical values implied by the names. Step names are internal CSS values for constructing roles; components read the roles only. The same keys live under `resolved.space.steps` without the CSS family prefix.
 
 | Name | What it is | Source | Status | Reason |
 |---|---|---|---|---|
@@ -154,7 +157,7 @@ The specs decide fluid space steps and semantic space roles, but give neither a 
 | `--space-5` | Fifth generated fluid space step | plates.md §2; proposed here | Proposed here | Keeps one ordered vocabulary for the scale. |
 | `--space-6` | Sixth generated fluid space step | plates.md §2; proposed here | Proposed here | Keeps one ordered vocabulary for the scale. |
 | `--space-7` | Seventh generated fluid space step | plates.md §2; proposed here | Proposed here | Keeps one ordered vocabulary for the scale. |
-| `--space-8` | Largest generated fluid space step | plates.md §2; proposed here | Proposed here | Covers broad band space without naming a fixed distance; eight steps reproduce the reference design. |
+| `--space-8` | Largest generated fluid space step | plates.md §2; proposed here | Proposed here | Covers broad band space without naming a fixed distance. |
 | `--space-component-gap` | Gap inside a component | plates.md §3; proposed here | Proposed here | Names the first decided space use explicitly. |
 | `--space-column-gap` | Gap between columns, including Narrow and Aside | plates.md §3; page.md, Reading Area §4; proposed here | Proposed here | Shares the same column-gap role across layouts. |
 | `--space-band` | Vertical space at a band's outer edges | plates.md §3; page.md §3; footer.md, model; proposed here | Proposed here | Uses Band, which includes main-content and footer bands. |
@@ -183,7 +186,7 @@ Tool.md point 2 now names six tuned elevations, each a finished near-and-far `bo
 | `--shadow-box` | Box elevation | tool.md §2, shadows; proposed here | Proposed here | Retains the tool's generic box term rather than limiting it to cards. |
 | `--shadow-box-lifted` | Lifted box, twice the box elevation | tool.md §2, shadows; proposed here | Proposed here | Keeps the variant within the box family and avoids hard-coding a distance. |
 
-Shadows are off by default; enabling them starts at the reference design's tuned settings. Dark shadows, the explicit-colour override and hardness 100 behaviour remain as decided in tool.md. A shared control does not collapse the six shapes into one literal shadow. No separate `--shadow-footer` or additional seventh layer-shadow role is proposed.
+Shadows are off by default; enabling them starts at the reference positions in tool.md. Dark shadows, the explicit-colour override and hardness 100 behaviour remain as decided in tool.md. A shared control does not collapse the six shapes into one literal shadow. No separate `--shadow-footer` or additional seventh layer-shadow role is proposed.
 
 ### Frame
 
@@ -204,7 +207,7 @@ The frame is always solid, off by default, with corners from the corner slider. 
 | `--layout-aside-min` | Minimum usable Aside width | plates.md §§2–3; page.md, Reading Area §4; proposed here | Proposed here | Names the condition that triggers the one-column layout. |
 | `--layout-content-area` | Available centred content width: `min(100% − 2 × side margin, Wide)` in the page's full-width context | page.md §2; proposed here | Proposed here | Distinguishes the computed width from Wide's maximum. |
 
-The Reading Area threshold is Narrow + column gap + Aside minimum; it gains no independently named breakpoint. The content area aligns the header, footer and bands. Layout values use rem or relations built from rem; names do not encode the reference design's dimensions.
+The Reading Area threshold is Narrow + column gap + Aside minimum; it gains no independently named breakpoint. The content area aligns the header, footer and bands. Layout values use rem or relations built from rem; names do not encode dimensions.
 
 ### Motion
 
@@ -284,6 +287,14 @@ The reusable repository stores no actual presentation identity or project-specif
 | `inputs.type.ratio` | Fluid type-scale ratio endpoints | tool.md §2; proposed here | Proposed here | Names the decided ratio directly. |
 | `inputs.type.ratio.min` | Ratio at the narrowest window | tool.md §2; proposed here | Proposed here | Uses the same endpoint convention as body size. |
 | `inputs.type.ratio.max` | Ratio at the widest window | tool.md §2; proposed here | Proposed here | Completes the pair for one scale, not two scale presets. |
+| `inputs.header` | The header's settings: arrangement, attachment, items, identity, large menu and search box | header.md | *Built* 2026-11-03 | Named for the component they go to. |
+| `inputs.footer` | The footer's settings: model, colours, lines and attachment | footer.md | *Built* 2026-11-03 | Named for the component they go to. |
+| `inputs.page` | The page's shadow on the footer, its edge line and its fill in each mode | page.md | *Built* 2026-11-03 | Named for the component they go to. |
+| `inputs.breadcrumbs` | Whether a trail shows, its place, mark, first step, end, and form on a phone | components.md | *Built* 2026-11-03 | Named for the component they go to. |
+| `inputs.layout.wide`, `inputs.layout.narrow` | Wide and Narrow, in default-setting pixels | page.md | *Built* 2026-11-03 | The resolved `layout` keys they set. |
+| `inputs.type.breakpoints` | Where the ratio and body size endpoints apply | tool.md §2 | *Decided* 2026-11-03 | The owner's word for the two arrows on the number line. |
+| `inputs.type.breakpoints.min` | The left breakpoint, in default-setting pixels | tool.md §2 | *Decided* 2026-11-03 | Uses the same endpoint convention as ratio and body size. |
+| `inputs.type.breakpoints.max` | The right breakpoint, at or above the left | tool.md §2 | *Decided* 2026-11-03 | Completes the pair. |
 | `inputs.type.steps` | Step counts between adjacent visual styles | tool.md §2; proposed here | Proposed here | Keeps progression choices distinct from the ratio. |
 | `inputs.type.steps.heading-6` | Number of steps above body | tool.md §2; proposed here | Proposed here | Uses the same visual-style word as the CSS role. |
 | `inputs.type.steps.heading-5` | Number of steps above heading-6 | tool.md §2; proposed here | Proposed here | Uses the same visual-style word as the CSS role. |
@@ -348,7 +359,7 @@ No separate schema-version key, export configuration or component catalogue is i
 
 ## Naming decisions (2026-11-01)
 
-Each entry keeps its problem, options and reason as the record. Decisions 1 and 2 are the owner's. The rest he left to the assistant, which took each recommendation, with two adjustments: identifiers follow CSS's spelling (`color`, `gray`), and there are eight space steps, `--kn-space-1` to `--kn-space-8`, as in the reference design's tuning, in place of six `--space-step-*`. Already decided Surface kinds, Reading Area terminology, mode behaviour, continuous controls and the design-file source contract stood throughout.
+Each entry keeps its problem, options and reason as the record. Decisions 1 and 2 are the owner's. The rest he left to the assistant, which took each recommendation, with two adjustments: identifiers follow CSS's spelling (`color`, `gray`), and there are eight space steps, `--kn-space-1` to `--kn-space-8`, in place of six `--space-step-*`. Already decided Surface kinds, Reading Area terminology, mode behaviour, continuous controls and the design-file source contract stood throughout.
 
 1. **Prefix coverage.** Problem: bare custom properties such as `--text` and `--accent`, classes and data attributes can collide when exported into WordPress themes and other people's sites, although Konzilo sites are controlled. **Options:** bare names everywhere; prefixes only in third-party exports; one prefix on every design-system-owned custom property, class and data attribute in every output. ***Decided* by the owner:** prefix every such CSS/HTML identifier in every output, because one contract protects exports and keeps consumers interchangeable. Standard CSS properties, native HTML/ARIA names, attribute values and keys inside the design file retain their ordinary names.
 2. **Prefix spelling.** Problem: the namespace must remain recognisable outside Konzilo and unlikely to overlap another framework. **Options:** `konzilo-`; `kd-`; `kds-`; `kn-`. ***Decided* by the owner:** `kn-` (`--kn-text`, `data-kn-surface`, `data-kn-width`), which reads as both KoNzilo and KNtnt. A short prefix keeps the role legible in every line of component CSS, and it does not tie exported code to a product name that may change on the way to Blueprint.
@@ -361,7 +372,7 @@ Each entry keeps its problem, options and reason as the record. Decisions 1 and 
 9. **Heading-style names.** Problem: h1–h6 in the tool describe appearances, while HTML heading levels express independent document structure. **Options:** h1–h6 style keys; heading-1 through heading-6; ordinal size names such as heading-largest through heading-smallest. **Recommendation:** heading-1 through heading-6 in JSON and `--type-heading-1-size` through `--type-heading-6-size` in CSS, because the heading family is explicit and the keys do not look like HTML selectors. Documentation must still state that style 1 can be applied to any semantic level; the progression remains the decided h6-from-body through display chain.
 10. **Type-role grammar.** Problem: the styles need a complete, consistent set of CSS properties without fixing unchosen typeface values. **Options:** `--type-body-size` and corresponding line-height/weight/letter-spacing roles; property-first families such as `--font-size-body`; one CSS shorthand per style. **Recommendation:** the type/style/property grammar listed above, because the entire style stays together, individual properties remain usable, and JSON can carry the identical words. Line-height, weight and tracking come from the typeface recipe, not new sliders.
 11. **Typeface vocabulary.** Problem: the tool calls its optional face monospace but the text style mono. **Options:** monospace for both; mono for both; monospace for the Typeface and mono for the text style. **Recommendation:** retain the distinction, because Monospace Typeface is Blueprint's canonical term and mono is the spec's global style; Display Typeface similarly serves both display and heading styles.
-12. **Space-step names and count.** Problem: fluid steps are decided but no enumeration exists. **Options:** step-1 through step-6; an extensible numbered scale with a count left to implementation; size adjectives such as xs through xl. **Recommendation, adjusted:** eight numbered steps, `--kn-space-1` to `--kn-space-8`, as the reference design's tuning has, because ordered indices survive density changes and provide a finite draft for the four semantic uses. This is a new proposed count, not a recovered decision; numerical values and mappings still require design validation.
+12. **Space-step names and count.** Problem: fluid steps are decided but no enumeration exists. **Options:** step-1 through step-6; an extensible numbered scale with a count left to implementation; size adjectives such as xs through xl. **Recommendation, adjusted:** eight numbered steps, `--kn-space-1` to `--kn-space-8`, because ordered indices survive density changes and provide a finite draft for the four semantic uses. This is a new proposed count, not a recovered decision; numerical values and mappings still require design validation.
 13. **Space-role names.** Problem: the four decided uses have no CSS spellings. **Options:** component-gap/column-gap/band/band-run under space; generic gap/section/run; property-first gap and padding families. **Recommendation:** `--space-component-gap`, `--space-column-gap`, `--space-band`, `--space-band-run`, because they identify each use and Band includes the footer as well as editable Sections.
 14. **Radius-role names.** Problem: one corner slider must feed distinct control and card geometry. **Options:** `--radius-control`/`--radius-card`; `--shape-control-radius`/`--shape-card-radius`; generic small/large radii. **Recommendation:** the radius family with control/card variants, because it names the CSS value and each decided use without introducing presets.
 15. **Shadow names.** Problem: the later tool decision supplies six tuned elevations while the earlier page model describes a common layer shadow. **Options:** the six owner/use names listed above; relational names such as header-over-page and page-over-footer; numbered elevations plus semantic aliases. **Recommendation:** `--shadow-header`, `--shadow-header-panel`, `--shadow-panel`, `--shadow-page`, `--shadow-box`, `--shadow-box-lifted`, because they expose all six tuned shapes, preserve the upper layer's ownership and give the box variant a stable family. Keep shared controls and a shared layer character; do not collapse the tuned shapes or add duplicate numbered public roles.

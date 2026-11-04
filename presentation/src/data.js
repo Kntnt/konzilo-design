@@ -12,6 +12,7 @@ import {
   checkContrast,
 } from '../../src/generator/index.js';
 import { withDefaults } from '../../src/generator/defaults.js';
+import { ownPictureUrls } from '../own-pictures.mjs';
 import english from '../copy.json';
 export const designPath = process.env.KN_DESIGN_FILE;
 const source = designPath
@@ -23,6 +24,8 @@ const source = designPath
       },
       project: { name: 'Example' },
     };
+// A build names a design's own photos without a version; the report embeds them from the folder.
+export const ownPictures = designPath ? await ownPictureUrls(designPath, { versioned: false }) : {};
 export const inputs = withDefaults(source.inputs);
 export const resolved = await resolve(source.inputs);
 checkContrast(resolved);
@@ -57,6 +60,8 @@ if (designPath) {
     if (!custom || Array.isArray(custom) || typeof custom !== 'object')
       throw new Error('Copy override must be an object');
     for (const [key, value] of Object.entries(custom)) {
+      // Words for what the document no longer shows do no harm in an older file.
+      if (['specimen.headers', 'specimen.footer-simple'].includes(key)) continue;
       if (!Object.hasOwn(english, key))
         throw new Error(`Unknown copy key: ${key}`);
       if (typeof value !== 'string')

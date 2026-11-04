@@ -1,7 +1,7 @@
 import { pictures, items } from '../samples.js';
 
-export function context(project, resolved) {
-  const images = pictures(resolved.ramps);
+export function context(project, resolved, ownPictures) {
+  const images = pictures(resolved.ramps, ownPictures);
   const logo = project.logo || project['logo-dark'];
   return {
     ...images,

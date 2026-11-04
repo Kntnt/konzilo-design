@@ -1,3 +1,6 @@
+import { sizeAt } from '../../src/generator/type.js';
+import { PICTURE_URL } from './samples.js';
+
 const config = JSON.parse(document.getElementById('kn-document-data').textContent);
 const assets = JSON.parse(document.getElementById('kn-specimen-data').textContent);
 const sharedCss = document.getElementById('kn-shared').textContent;
@@ -217,11 +220,13 @@ function downloadComments() {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-function frameDocument(id, mode) {
+function frameDocument(id, mode, showing) {
   const specimen = assets.specimens[id];
+  // The live tool's list of pictures has no use here, and it would carry every picture again.
+  const body = specimen.body.replace(/<script id="kn-built-pictures"[\s\S]*?<\/script>/, '').replace(PICTURE_URL, (url) => assets.pictures[url]);
   const styles = specimen.styles.map((index) => assets.styles[index]).join('\n');
   const scripts = specimen.scripts.map((index) => `<script>${assets.scripts[index]}<\/script>`).join('\n');
-  return `<!doctype html><html lang="${config.lang}" data-kn-mode="${mode}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><style>${sharedCss}\n${styles}</style><style id="kn-live-core"></style></head>${specimen.body}${scripts}</html>`;
+  return `<!doctype html><html lang="${config.lang}" data-kn-mode="${mode}" data-kn-pictures="${showing}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><style>${sharedCss}\n${styles}</style><style id="kn-live-core"></style></head>${body}${scripts}</html>`;
 }
 
 function pressedValue(page, control, fallback) {
@@ -257,7 +262,10 @@ function initFrame(specimen) {
   function applyToolbar() {
     const width = pressedValue(page, 'data-frame-width', 'wide');
     frame.style.width = width === 'wide' ? '100%' : `${width}px`;
-    if (frame.contentDocument) frame.contentDocument.documentElement.dataset.knMode = pressedValue(page, 'data-frame-mode', 'light');
+    if (frame.contentDocument) {
+      frame.contentDocument.documentElement.dataset.knMode = pressedValue(page, 'data-frame-mode', 'light');
+      frame.contentDocument.documentElement.dataset.knPictures = pressedValue(page, 'data-frame-pictures', 'on');
+    }
     scheduleSize();
   }
 
@@ -290,7 +298,7 @@ function initFrame(specimen) {
   frameUpdaters.set(specimen, applyToolbar);
   new ResizeObserver(scheduleSize).observe(stage);
   applyToolbar();
-  frame.srcdoc = frameDocument(frame.dataset.specimenFrame, pressedValue(page, 'data-frame-mode', 'light'));
+  frame.srcdoc = frameDocument(frame.dataset.specimenFrame, pressedValue(page, 'data-frame-mode', 'light'), pressedValue(page, 'data-frame-pictures', 'on'));
 }
 
 // A window size wider than the column could not show at its real width, so it is not offered.
@@ -383,8 +391,7 @@ function updateScale() {
   document.getElementById('type-window-value').textContent = translate('value.px', { value: number.format(width) });
   for (const line of document.querySelectorAll('[data-scale-style]')) {
     const style = line.dataset.scaleStyle;
-    const size = config.type[style].size;
-    const current = size.min + (size.max - size.min) * (width - 320) / 1120;
+    const current = sizeAt(config.typeScale, config.type[style].step, width);
     line.style.fontSize = `${current}px`;
     const features = config.type[style].features;
     line.style.fontFeatureSettings = features && width >= features['from-window'] ? features.value : 'normal';

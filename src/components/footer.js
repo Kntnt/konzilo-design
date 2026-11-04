@@ -120,6 +120,7 @@ export function setupFooters(root = document) {
       initialized.delete(footer);
     };
     initialized.set(footer, dispose);
+    footer.addEventListener('kn:dispose', dispose, { once: true });
     return dispose;
   });
   return () => disposers.forEach((dispose) => dispose());

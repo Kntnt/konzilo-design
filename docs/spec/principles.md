@@ -6,7 +6,7 @@ Each point is marked **owner** (his statement), **proposed** (put to him, not co
 
 ## The library
 
-- **Owner:** a component library and a CSS framework of Kntnt's own for Konzilo/Blueprint; the reference design is an instance of it.
+- **Owner:** a component library and a CSS framework of Kntnt's own for Konzilo/Blueprint.
 - **Owner:** each recurring part has a default solution that a site starts from and may depart from ("Det är inte så att det alltid måste vara exakt på det här sättet").
 - **Owner:** the header and the footer are components that, unlike the others, are only of use in exactly that position.
 - **Owner:** the page itself may be a component, since it has properties of its own and the footer must work together with it (page.md and footer.md).

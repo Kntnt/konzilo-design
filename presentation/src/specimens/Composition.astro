@@ -24,8 +24,12 @@ import {
   fields,
 } from '../samples.js';
 import { context } from './context.js';
+import { ownPictures } from '../data.js';
+import { headerProps, footerProps, pageProps, breadcrumbProps } from '../frame.js';
+import Breadcrumbs from '../../../src/components/Breadcrumbs.astro';
 const { id, project, resolved } = Astro.props;
-const { identity, landscapes, list } = context(project, resolved);
+const { identity, landscapes, list } = context(project, resolved, ownPictures);
+const crumbs = resolved.breadcrumbs;
 ---
 
 {id === 'overview' && (
@@ -52,7 +56,7 @@ const { identity, landscapes, list } = context(project, resolved);
       text="Explain the goal, review the options and agree on the next step."
       href="#contact"
       surface="tint"
-      picture={{ src: landscapes[0], alt: 'Quiet arcs and overlapping planes' }}
+      picture={{ src: landscapes[0], alt: '' }}
     />
   </div>
 )}
@@ -81,28 +85,53 @@ const { identity, landscapes, list } = context(project, resolved);
   </Fragment>
 )}
 {id === 'preview' && (
-  <Page>
-    <Header
-      slot="header"
-      attachment="sticky"
-      identity={identity}
-      arrangement="A"
-      menu={menu}
-      linkMenu
-      menuButton={{ word: 'Menu' }}
-      search={search}
-    />
+  <Page {...pageProps(resolved.page)}>
+    <Header slot="header" {...headerProps(resolved.header, project)} />
+    {crumbs.show && crumbs.placement === 'own-band' && <Band class="kn-breadcrumb-band"><Breadcrumbs {...breadcrumbProps(crumbs, project)} /></Band>}
+    <Hero heading="Clear next steps" deck="Practical help when you need it.">
+      {crumbs.show && crumbs.placement === 'first-band' && <Breadcrumbs slot="before" {...breadcrumbProps(crumbs, project)} />}
+      <BodyText>
+        <p>Plans, drawings and file names like <code>delivery-plan.pdf</code> stay easy to tell apart.</p>
+      </BodyText>
+    </Hero>
     <Hero
       variant="picture"
+      level={2}
       eyebrow={sample.eyebrow}
       heading={sample.heading}
       deck={sample.deck}
       picture={landscapes[0]}
-      alt="Quiet arcs and overlapping planes"
+      alt=""
     >
       <Button href="#contact">{sample.action}</Button>
     </Hero>
-    <Band surface="tint">
+    <Band surface="raised" data-preview-section="surfaces">
+      <div class="sample-stack preview-services">
+        <HeadingGroup
+          eyebrow="Ways to start"
+          heading="Three tints on a neutral ground"
+          type="heading-3"
+          deck="The band shows the grey scale. Each card shows one tint, when the design has its colour."
+        />
+        <CardGrid>
+          {[
+            ['tint', list[0]],
+            ['tint-secondary', list[1]],
+            ['tint-tertiary', list[2]],
+          ].map(([surface, item]) => (
+            <Card
+              heading={item.title}
+              text={item.text}
+              href="#services"
+              surface={surface}
+              data-kn-needs-surface={surface}
+              hidden={!resolved.surfaces[surface]}
+            />
+          ))}
+        </CardGrid>
+      </div>
+    </Band>
+    <Band surface="tint" data-preview-section="services">
       <div class="sample-stack preview-services">
         <HeadingGroup
           eyebrow="Services"
@@ -146,7 +175,7 @@ const { identity, landscapes, list } = context(project, resolved);
         </Form>
       </div>
     </Band>
-    <Footer slot="footer" attachment="reveal" bands={footerBands(project)} />
+    <Footer slot="footer" {...footerProps(resolved.footer, project)} />
   </Page>
 )}
 {id === 'responsive-hero' && (

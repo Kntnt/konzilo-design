@@ -39,7 +39,7 @@
   .kn-header-logo [data-kn-logo="dark"] { display: none; }
   .kn-header[data-kn-logo-polarity="dark"] .kn-header-logo:has([data-kn-logo="dark"]) [data-kn-logo="light"] { display: none; }
   .kn-header[data-kn-logo-polarity="dark"] .kn-header-logo [data-kn-logo="dark"] { display: block; }
-  .kn-header-name { font-family: var(--kn-typeface-heading); font-feature-settings: var(--kn-type-heading-5-features); font-weight: var(--kn-type-heading-6-weight); font-size: calc(var(--kn-type-heading-5-size) * var(--kn-header-identity-scale)); line-height: 1.15; letter-spacing: var(--kn-type-heading-5-letter-spacing); }
+  .kn-header-name { font-family: var(--kn-typeface-heading); font-feature-settings: var(--kn-type-heading-5-features); font-stretch: var(--kn-type-heading-5-stretch, normal); font-variation-settings: var(--kn-type-heading-5-variation, normal); font-weight: var(--kn-type-heading-6-weight); font-size: calc(var(--kn-type-heading-5-size) * var(--kn-header-identity-scale)); line-height: 1.15; letter-spacing: var(--kn-type-heading-5-letter-spacing); }
   .kn-header-slogan { font-size: calc(var(--kn-type-small-size) * var(--kn-header-identity-scale)); line-height: 1.3; color: var(--kn-text-muted); transition: color var(--kn-duration-feedback) var(--kn-easing-standard); }
   .kn-header-identity[data-kn-axis="row"] .kn-header-slogan { padding-inline-start: calc(0.875rem * var(--kn-header-identity-scale)); border-inline-start: 1px solid var(--kn-border); }
   .kn-header-link-menu ul { display: flex; gap: var(--kn-space-component-gap); list-style: none; margin: 0; padding: 0; }
@@ -95,6 +95,7 @@
   .kn-header-language-list a { display: block; padding: 0.4375rem 0.625rem; }
   .kn-header-language-list a[aria-current] { font-weight: var(--kn-type-heading-6-weight); }
   .kn-header-search-overlay { position: fixed; inset-block-start: var(--kn-header-panel-top); inset-block-end: 0; inset-inline: 0; inline-size: 100%; max-inline-size: none; max-block-size: none; padding: 1.5rem var(--kn-layout-side-margin); background: transparent; backdrop-filter: blur(0.75rem); overflow-y: auto; }
+  .kn-header-search-overlay[data-kn-blur="false"] { backdrop-filter: none; }
   .kn-header-search-overlay::before { content: ""; position: absolute; inset: 0; background: var(--kn-background); opacity: 0.62; z-index: -1; }
   .kn-header-search-box > :is(h1, h2, h3, h4, h5, h6) { margin: 0; padding-inline-end: 2.75rem; }
   .kn-header .kn-header-search-close { position: absolute; inset-block-start: 0.75rem; inset-inline-end: 0.75rem; inline-size: 2.25rem; block-size: 2.25rem; }

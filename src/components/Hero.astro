@@ -19,6 +19,7 @@ if (variant === 'picture' && picture && alt === undefined) throw new TypeError('
 ---
 <Band {...attributes} class:list={['kn-hero', className]} contentClass="kn-hero-content" surface={variant === 'plate' ? surface : undefined} picture={variant === 'plate' ? picture : undefined} data-kn-variant={variant}>
   <div class="kn-hero-text">
+    <slot name="before" />
     <HeadingGroup heading={heading} eyebrow={eyebrow} deck={deck} level={level} type={variant === 'typographic' ? 'display' : 'heading-1'} />
     <slot />
   </div>

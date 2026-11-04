@@ -15,7 +15,10 @@ const colorFunctions = /^(?:rgba?|hsla?|hwb|lab|lch|oklab|oklch|color|color-mix|
 test('component CSS uses only logical properties, role reads and permitted drawing units', async () => {
   const files = (await readdir(directory)).filter((name) => name.endsWith('.css'));
   const css = await Promise.all(files.map((name) => readFile(new URL(name, directory), 'utf8')));
-  const emitted = new Set([...coreCss(derive(defaultInputs())).matchAll(/(--kn-[\w-]+)\s*:/g)].map(([, name]) => name));
+  const withRoles = { ...defaultInputs(), typefaces: { main: 'Mona Sans', monospace: 'Mona Sans Mono' } };
+  const axes = { axes: { wdth: 100, opsz: 20 } };
+  withRoles.type = { ...withRoles.type, roles: { main: axes, heading: axes, 'heading-1': axes, display: axes, label: axes, monospace: axes } };
+  const emitted = new Set([defaultInputs(), withRoles].flatMap((inputs) => [...coreCss(derive(inputs)).matchAll(/(--kn-[\w-]+)\s*:/g)].map(([, name]) => name)));
   const shared = new Set(css.flatMap((source) => [...source.matchAll(/(--kn-[\w-]+)\s*:/g)].map(([, name]) => name)));
   for (const [i, source] of css.entries()) {
     const name = files[i];
@@ -66,7 +69,7 @@ test('every component has a typed wrapper; seven library runtimes and only the d
     } else assert.doesNotMatch(source, /<script/);
     assert.doesNotMatch(source, /<h[1-6]\b/);
   }
-  assert.equal(Object.keys(icons).length, 22);
+  assert.equal(Object.keys(icons).length, 23);
   for (const markup of Object.values(icons)) assert.doesNotMatch(markup, /<svg|<script|\bhref=/);
   assert.match(await readFile(new URL('LICENSE-lucide.txt', directory), 'utf8'), /ISC License/);
 });

@@ -1,0 +1,29 @@
+---
+// Only the design tool uses these: a header with every item, for each arrangement, to leave items out of.
+import Header from '../../src/components/Header.astro';
+import Breadcrumbs from '../../src/components/Breadcrumbs.astro';
+import { menu, search, languages, cta } from './samples.js';
+import { breadcrumbProps } from './frame.js';
+
+const identity = { label: 'Example', href: '#home', name: 'Example', slogan: 'Slogan', logo: { light: 'data:,', dark: 'data:,' } };
+---
+{['A', 'B', 'C'].map((arrangement) => (
+  <template data-kn-live-header={arrangement}>
+    <Header identity={identity} arrangement={arrangement} attachment="sticky" menu={menu} linkMenu menuButton={{ word: 'Menu' }} languages={languages} search={search} cta={cta} numbered>
+      <div slot="menu-above" class="preview-menu-row">
+        <p data-kn-type="label">From the journal</p>
+        <p><a href="#resources">A practical guide to the first step</a></p>
+      </div>
+      <div slot="menu-below" class="preview-menu-row">
+        <a href="#contact">Contact the team</a>
+      </div>
+    </Header>
+  </template>
+))}
+<template data-kn-live-breadcrumbs>
+  <Breadcrumbs {...breadcrumbProps({ home: 'word', separator: 'slash', current: true, narrow: 'trail' }, { name: 'Example' })} />
+</template>
+<script>
+  import { setupLiveFrame } from './frame-live.js';
+  setupLiveFrame();
+</script>

@@ -222,3 +222,37 @@ body {
 .sample-root:has(.kn-consent) {
   min-height: 560px;
 }
+
+/* A card for a tint the design does not have stays out of the layout. */
+[data-kn-needs-surface][hidden] { display: none; }
+
+/* While the tool tunes a design, every step shows at once rather than easing after the control. */
+[data-kn-tuning] * { transition: none !important; }
+
+/* The tool's catalogue: every component in one page, named where it stands. */
+.catalogue-page { display: grid; gap: 2.5rem; padding-block: 2rem; }
+.catalogue-page + .catalogue-page { border-block-start: 1px solid var(--kn-border); }
+.catalogue-title { margin: 0; padding-inline: var(--kn-layout-side-margin); font-family: var(--kn-typeface-heading); font-size: var(--kn-type-heading-2-size); font-weight: var(--kn-type-heading-2-weight); }
+.catalogue-name { margin: 0 0 0.75rem; padding-inline: var(--kn-layout-side-margin); font-family: var(--kn-typeface-label); font-size: var(--kn-type-label-size); font-weight: var(--kn-type-label-weight); letter-spacing: var(--kn-type-label-letter-spacing); text-transform: uppercase; color: var(--kn-text-muted); }
+.preview-menu-row { display: grid; gap: 0.25rem; }
+.preview-menu-row p { margin: 0; }
+
+/* The pages without pictures: what can go goes, and what is itself a picture keeps an empty place. A video keeps its still. */
+[data-kn-pictures='off'] :is(.kn-hero-media, .kn-card-picture, .kn-content-picture, .kn-text-image-media) {
+  display: none;
+}
+[data-kn-pictures='off'] [style*='--kn-picture-image'] {
+  --kn-picture-image: none !important;
+}
+[data-kn-pictures='off'] .kn-card:not([data-kn-surface]):has(> .kn-card-picture),
+[data-kn-pictures='off'] .kn-content-card:not([data-kn-surface]):has(> .kn-content-picture) {
+  border-block-start: 1px solid var(--kn-border);
+  padding-block-start: var(--kn-space-component-gap);
+}
+[data-kn-pictures='off'] .kn-figure-media {
+  background: var(--kn-background-alt);
+  border-radius: var(--kn-radius-card);
+}
+[data-kn-pictures='off'] .kn-figure-media img {
+  visibility: hidden;
+}

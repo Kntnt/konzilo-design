@@ -3,9 +3,9 @@ import Card from '../../../src/components/Card.astro';
 import CardGrid from '../../../src/components/CardGrid.astro';
 import ContentCard from '../../../src/components/ContentCard.astro';
 import { context } from './context.js';
-import { t } from '../data.js';
+import { t, ownPictures } from '../data.js';
 const { id, project, resolved } = Astro.props;
-const { list, people, landscapes } = context(project, resolved);
+const { list, people, landscapes } = context(project, resolved, ownPictures);
 ---
 
 {['card', 'card-unplated'].includes(id) && (
@@ -15,7 +15,7 @@ const { list, people, landscapes } = context(project, resolved);
         heading={item.title}
         text={item.text}
         href="#services"
-        picture={{ src: landscapes[index], alt: 'A quiet abstract landscape' }}
+        picture={{ src: landscapes[index], alt: '' }}
         surface={id === 'card' ? 'raised' : undefined}
       />
     ))}

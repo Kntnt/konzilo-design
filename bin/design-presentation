@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# Makes the presentation from a design file: a ZIP beside the file, holding one HTML file.
+# Usage: design-presentation <design-file> [-o out.zip]
+set -euo pipefail
+source "$(dirname "$(realpath "${BASH_SOURCE[0]}")")/lib/design-file.sh"
+
+need_file "$@"
+exec node "$konzilo" presentation "$@"

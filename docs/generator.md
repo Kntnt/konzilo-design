@@ -69,7 +69,7 @@ Resolve writes a complete result into the same file, preserving its inputs and
 presentation identity. CSS goes to stdout unless an output path is supplied. Check
 validates the file, the fingerprint and the Surface contrast check. Errors go to stderr with a nonzero exit status.
 
-`tool [file] [--port N] [--no-open]` starts the local editor on 127.0.0.1.
+`tool <file> [--port N] [--no-open]` starts the local editor on 127.0.0.1, on the named file or a new design created there.
 A missing file starts with Mona Sans and is created on first save. `presentation <file>
 [-o out.zip]` generates a ZIP holding one self-contained, browsable HTML presentation.
 The default output is `<stem>-presentation-<YYYY-MM-DD>.zip` beside the input.
@@ -142,11 +142,25 @@ size times that endpoint's ratio raised to the cumulative step count, floored at
 12px and rounded to whole pixels. Eyebrow takes small's size; mono takes body's.
 These are visual styles, independent of semantic HTML heading levels.
 
+The endpoints belong to the breakpoints `inputs.type.breakpoints`, 390 and 1440px by
+default. Between them the body size and the ratio each follow a straight line, so a
+size is `body * ratio ** step` at every width: `sizeAt(scale, step, width)` in
+`src/generator/type.js`. A recipe stores its `step`, and `resolved.type-scale` holds the
+breakpoints, ratio and body size. The emitter writes each size twice. `:root` gets the
+`clamp()` in `size.css`, a straight line on the size between the rounded endpoints, and
+an `@supports` block for `pow()` and `atan2()` replaces it with
+`calc(var(--kn-type-body-size) * pow(var(--kn-type-base), step))`, floored at 0.75rem below
+the body size. `--kn-type-window` is how far the window has come, from 0 to 1, and
+`--kn-type-base` the ratio there. A file resolved before this has neither `step` nor
+`type-scale`, and keeps its clamps. Two breakpoints on one width make a step at that
+width: `size.css` and `--kn-type-window` run over its last pixel, so the wide values hold
+from that width on.
+
 All numeric resolved lengths are pixels at the default browser setting, including
 layout and radii; durations are milliseconds and tracking is in em. Fluid values
 store `{ min, max, css }`, where min/max mean the narrow/wide-window endpoints.
-The stored CSS uses rem at 16 default-setting pixels per rem. `fluid(min, max)`
-interpolates between 20rem and 90rem, rounding CSS coefficients to four decimals;
+The stored CSS uses rem at 16 default-setting pixels per rem. `fluid(min, max, from, to)`
+interpolates between two windows, by default 20rem and 90rem, rounding CSS coefficients to four decimals;
 it also handles equal and descending endpoints. For example, 17–19px yields
 `clamp(1.0625rem, 1.0268rem + 0.1786vw, 1.1875rem)`.
 The root gets no font size. Line-height is unitless. Shadows and frame retain px.
@@ -169,7 +183,7 @@ allowing larger cards more rounding. Radii stay numeric until CSS converts to re
 ### Shadows and frame
 
 `LEVELS` contains six immutable pairs of near/far tuples `[y, blur, spread, alpha]`.
-`shadow(level, controls, hexColor, boost = 1)` applies the reference transformation:
+`shadow(level, controls, hexColor, boost = 1)` applies the transformation:
 elevation scales geometry relative to 50, strength scales alpha relative to 50,
 and angle rotates the offset from vertically downwards. Below hardness 20, blur
 and spread grow to double; above 20 they shrink towards zero, the near shadow
@@ -260,7 +274,7 @@ Each role is a recipe over the ramps (a ramp and step, or white or black).
 
 ### Layout, motion and CSS
 
-Wide defaults to 75rem, Narrow to 45rem and Aside minimum to 14rem, as in the reference implementation. Side margin
+Wide defaults to 75rem, Narrow to 45rem and Aside minimum to 14rem. Side margin
 grows from 1rem to 3rem. The content-area property stores the decided
 `min(100% − 2 × side margin, Wide)` relation. Layout and motion add no inputs.
 Feedback and movement defaults are 180ms and 240ms, with
@@ -299,8 +313,8 @@ load. Body endpoints are 17–19px, ratios 1.067–1.125, chained
 heading/display steps 0, 1, 1, 1, 1, 3, 3, lead 1, small 2 below and
 label 5 below. Grey is
 achromatic. Density 75 gives a looser-leaning multiplier of 1.25; corner 25 gives
-3px radii. Shadows are off through strength zero, with other controls at reference
-positions (hardness 20, angle 0, elevation 50) and all targets enabled. Frame is off.
+3px radii. Shadows are off through strength zero, with hardness 30, angle 0, elevation 50,
+the text colour and all targets enabled. Frame is off.
 
 Initial type recipes use line-height 1.1 for display, 1.3 for headings, 1.4 for
 lead and 1.55 elsewhere; headings/display use weight 600 and −0.01em tracking,
@@ -310,46 +324,52 @@ and labels.
 
 A typeface's own tuning is one entry in `TUNING`, `src/generator/typefaces.js`. A
 recipe whose typeface has tuning and which reaches its size stores `features`, with
-`from-window` 0 when always on, or else the window in px where its `clamp()` crosses
+`from-window` 0 when always on, or else the window in px where its size crosses
 that size. The emitter writes `--kn-type-<style>-features` for every style, `normal`
 until the tuning applies, and a media query for a crossing.
 
+Optional `inputs.header`, `inputs.footer`, `inputs.page` and `inputs.breadcrumbs` pass with their defaults to `resolved.header`, `resolved.footer`, `resolved.page` and `resolved.breadcrumbs`, for a site to give to its components. They emit no CSS. `inputs.layout.wide` and `.narrow` set the resolved `layout` widths. `src/components/footer-models.js` turns the footer's settings and a site's content into the Footer's `bands`.
+
+Optional `inputs.type.roles` sets a role's look: `main` (body, lead and small text),
+`heading`, `heading-1`, `display`, `label` and `monospace`, each with optional `weight`,
+`letter-spacing`, `axes` (variation axes by tag) and `features` (OpenType tags). A style
+then stores them in its recipe: `wdth` as `stretch`, the other axes as `variation`, and
+chosen features with `from-window` 0, an empty list turning a typeface's tuning off. The
+emitter also writes `--kn-type-<style>-stretch` and `--kn-type-<style>-variation`, which
+components read with `normal` as fallback. Without settings the resolved serialization
+and core CSS stay byte-identical.
+
+Optional `inputs.typefaces.label` gives labels a typeface of their own; otherwise
+`inputs.type.label` picks the main or the monospace family.
+
+Optional `inputs.type.heading-1-role` is `heading` (the default) or `display`. In the
+display role the first heading keeps its size and takes display text's line height, its
+stack unless `typefaces.heading-1` names another, and its settings, with any set for
+`heading-1` alone on top.
+
 ## Open questions
 
-- The reference design's tuning uses separate tint and chroma dials per brand
-  colour. Decided inputs cannot express them; this generator keeps factors at 1.
+- Decided inputs cannot express separate tint and chroma dials per brand colour;
+  this generator keeps factors at 1.
 - Grey temperature has no decided numerical mapping or brand-relative hue
   selector. The current cool/warm mapping is provisional and cannot reproduce
   arbitrary hue-and-chroma tuning.
-- The reference design's tuning uses separate section-space scaling, layout
-  measures, radii and type recipes. One density slider, one corner slider and
-  fixed layout/type defaults cannot express every independent combination.
+- One density slider, one corner slider and fixed layout/type defaults cannot
+  express every independent combination of section space, layout measures, radii
+  and type recipes.
   Role-to-step mappings and the slider ranges need visual design validation.
-- The reference design's tuning uses individual shadow strengths per elevation.
-  The decided shared controls preserve the six reference shapes but cannot
-  express arbitrary independent adjustments.
+- The decided shared shadow controls preserve the six tuned shapes but cannot
+  express an individual strength per elevation.
 - Weights, leading and tracking for the main family and the mono style still use
   generic recipes; no extra controls have been added for them.
 - A yellow primary's dark brand Surface still turns olive; no generic fix yet.
 - In dark mode `inverse` and `page` share grey 950, so an inverse band does not
   stand out from a dark page.
-- The reference design's tuning differs from these recipes in two places. Its
-  strong borders on tinted and dark Surfaces equal the ordinary border and miss
-  3:1, which the matrix now requires. On its light tinted Surfaces links and
-  focus take the text colour, but only because its tool fell back to the text
-  colour where a plate named no link colour, not by a tuned choice; these
-  recipes keep the primary and secondary colours. Its light-step tints differ
-  by a few units. Everything else matches to within one unit per channel.
 - Further components must assign their frame, shadow and hairline behaviour.
   Reading Area breakout behaviour was resolved with its layout implementation
   on 2026-11-01 (components.md and page.md).
 
-The comparable reference tuning was checked outside repository files: ten type
-styles, eight space steps, both radii and all six shadow strings matched from
-equivalent inputs, and of 35 compared role colours 14 matched exactly and all but
-the deliberate differences above within a few units. The reference's light tint
-of its second brand colour is now `tint-secondary`, within two units. The automated tests retain only neutral values and generic
-reference constants.
+The automated tests retain only neutral values and generic constants.
 
 
 ## Component review additions (2026-11-02)

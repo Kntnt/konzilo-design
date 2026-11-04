@@ -17,13 +17,14 @@ const recipes = Object.entries(r.type).filter(([style]) => recipeFamily(style) =
 const weights = [...new Set(recipes.map((recipe) => recipe.weight))];
 const tuning = recipes.find((recipe) => recipe.features)?.features;
 const characters = t('type.characters').split(/\s+/);
+const breakpoints = r['type-scale'].breakpoints;
 const scale = (ratio) => t(Object.hasOwn(copy, `scale.${ratio}`) ? `scale.${ratio}` : 'scale.custom', { ratio: num(ratio, 3) });
 ---
 {id === 'main-typeface' && <div class="face" style={{ fontFamily: main }}>
   <p class="face-name">{faceName(main)}</p>
   <div class="alphabet">{characters.map((line) => <p>{line}</p>)}</div>
   <div class="weights">{weights.map((weight) => <div>
-    <p class="weight-word" style={{ fontWeight: weight }}>{t(`weight.${weight}`)}</p>
+    <p class="weight-word" style={{ fontWeight: weight }}>{t(`weight.${Math.min(900, Math.max(100, Math.round(weight / 100) * 100))}`)}</p>
     <p data-kn-type="label">{num(weight)}</p>
   </div>)}</div>
   {tuning && <section class="tuning">
@@ -35,13 +36,13 @@ const scale = (ratio) => t(Object.hasOwn(copy, `scale.${ratio}`) ? `scale.${rati
   </section>}
 </div>}
 {id === 'type-scale' && <>
-  <p class="prose">{t('type.scale-explain', { narrow: scale(inputs.type.ratio.min), wide: scale(inputs.type.ratio.max) })}</p>
+  <p class="prose">{t(breakpoints.min === breakpoints.max ? 'type.scale-explain-step' : 'type.scale-explain', { narrow: scale(inputs.type.ratio.min), wide: scale(inputs.type.ratio.max), from: num(breakpoints.min), to: num(breakpoints.max) })}</p>
   <div class="scale-control">
     <label for="type-window">{t('type.slider')}</label>
-    <output id="type-window-value">{t('value.px', { value: num(1440) })}</output>
-    <input id="type-window" type="range" min="320" max="1440" value="1440" />
+    <output id="type-window-value">{t('value.px', { value: num(breakpoints.max) })}</output>
+    <input id="type-window" type="range" min="320" max="1920" value={breakpoints.max} />
     <span data-kn-type="small">{t('type.slider-min', { value: num(320) })}</span>
-    <span class="scale-end" data-kn-type="small">{t('type.slider-max', { value: num(1440) })}</span>
+    <span class="scale-end" data-kn-type="small">{t('type.slider-max', { value: num(1920) })}</span>
   </div>
   <div class="scale-lines">{typeOrder.map((style) => <div class="scale-line">
     <p data-kn-type="small">{t(`type.${style}`)} · <output data-type-size={style}>{t('value.px', { value: num(r.type[style].size.max) })}</output></p>

@@ -11,7 +11,7 @@ export interface Identity {
   axis?: 'row' | 'column'; align?: 'start' | 'center' | 'end';
 }
 export interface MenuButton { word?: string; icon?: 'chevron-down' | 'menu' | false; label?: string }
-export interface Search { action: string; label?: string; links?: FrameLink[] }
+export interface Search { action: string; label?: string; links?: FrameLink[]; surface?: Surface; blur?: boolean; heading?: boolean }
 export interface Cta { label: string; href?: string; dialog?: string }
 export interface FooterCellData {
   id: string; column: 'A' | 'B'; rows?: number; columns?: 1 | 2;

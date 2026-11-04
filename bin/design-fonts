@@ -1,0 +1,229 @@
+#!/usr/bin/env -S uv run --quiet --script
+# /// script
+# dependencies = ["fonttools", "brotli"]
+# ///
+"""Fetches every typeface from its best source into src/fonts/, then writes catalog.js and fonts.css.
+
+The list below decides the typefaces, their order, category, use and source. Everything else in the
+catalogue, the axes above all, is read from the files. A file is used as published, recompressed to
+WOFF2 if it is a TTF, and subset only where marked: a subset is a modified version, so it must never
+carry a Reserved Font Name.
+Usage: design-fonts [--cache folder]
+"""
+import argparse, io, json, re, sys, urllib.parse, urllib.request, zipfile
+from pathlib import Path
+from fontTools import subset
+from fontTools.ttLib import TTFont
+
+ROOT = Path(__file__).resolve().parent.parent
+OUT = ROOT / 'src/fonts'
+GOOGLE = 'google'
+LATIN = 'U+0000-024F,U+0259,U+02B0-02FF,U+0300-036F,U+1E00-1EFF,U+2000-206F,U+20A0-20BF,U+2100-214F,U+2190-2193,U+2212,U+2215,U+2C60-2C7F,U+A720-A7FF,U+FEFF,U+FFFD'
+
+CATEGORIES = [('sans-serif', 'Sans-serif'), ('slab-serif', 'Slab serif'), ('serif', 'Serif'), ('display', 'Display'), ('monospace', 'Monospace'), ('partner', 'Partners of display faces')]
+# What each use allows. A display typeface is only for the first heading and larger.
+USES = {
+    'text': ['main', 'heading', 'heading-1', 'display', 'label'],
+    'headings': ['heading', 'heading-1', 'display', 'label'],
+    'display': ['heading-1', 'display'],
+    'code': ['monospace', 'label'],
+    'partner': ['main'],
+}
+FALLBACK = {'serif': ', Georgia, serif', 'slab-serif': ', Georgia, serif'}
+
+def release(repo, tag, asset, upright, italic, licence): return dict(kind='release', repo=repo, tag=tag, asset=asset, upright=upright, italic=italic, licence=licence)
+def tree(repo, ref, upright, italic, licence): return dict(kind='tree', repo=repo, ref=ref, upright=upright, italic=italic, licence=licence)
+M_REPO = 'github/mona-sans'
+
+# family, category, use, how it slants (italic: its own file; axis: slant axis; none), source, options
+FACES = [
+    ('Mona Sans', 'sans-serif', 'text', 'italic', release(M_REPO, 'v2.0.27', 'mona-sans-webfonts-v2.0.27.zip', 'MonaSansVF[wdth,opsz,wght].woff2', 'MonaSansVF-Italic[wdth,opsz,wght].woff2', 'OFL.txt'), {}),
+    ('Hubot Sans', 'sans-serif', 'headings', 'italic', GOOGLE, {}),
+    ('Inter', 'sans-serif', 'text', 'italic', release('rsms/inter', 'v4.1', 'Inter-4.1.zip', 'web/InterVariable.woff2', 'web/InterVariable-Italic.woff2', 'LICENSE.txt'), {}),
+    ('Source Sans 3', 'sans-serif', 'text', 'italic', GOOGLE, {}),
+    ('IBM Plex Sans', 'sans-serif', 'text', 'italic', GOOGLE, {}),
+    ('Roboto', 'sans-serif', 'text', 'italic', GOOGLE, {}),
+    ('Roboto Flex', 'sans-serif', 'text', 'axis', GOOGLE, {'slant': {'slnt': -10}}),
+    ('Google Sans Flex', 'sans-serif', 'text', 'axis', GOOGLE, {'slant': {'slnt': -10}, 'subset': True}),
+    ('Noto Sans', 'sans-serif', 'text', 'italic', GOOGLE, {'subset': True}),
+    ('Schibsted Grotesk', 'sans-serif', 'text', 'italic', GOOGLE, {}),
+    ('Archivo', 'sans-serif', 'text', 'italic', GOOGLE, {}),
+    ('Geist', 'sans-serif', 'text', 'italic', release('vercel/geist-font', 'v1.9.0', 'geist-font-v1.9.0.zip', 'Geist[wght].woff2', 'Geist-Italic[wght].woff2', 'OFL.txt'), {}),
+    ('Instrument Sans', 'sans-serif', 'text', 'italic', GOOGLE, {}),
+    ('Atkinson Hyperlegible Next', 'sans-serif', 'text', 'italic', GOOGLE, {}),
+    ('Josefin Sans', 'sans-serif', 'headings', 'italic', GOOGLE, {}),
+    ('Bitter', 'slab-serif', 'text', 'italic', GOOGLE, {}),
+    ('Aleo', 'slab-serif', 'text', 'italic', GOOGLE, {}),
+    ('Rokkitt', 'slab-serif', 'text', 'italic', GOOGLE, {}),
+    ('Josefin Slab', 'slab-serif', 'headings', 'italic', GOOGLE, {}),
+    ('Roboto Slab', 'slab-serif', 'text', 'none', GOOGLE, {}),
+    ('Lora', 'serif', 'text', 'italic', tree('cyrealtype/Lora-Cyrillic', 'v3.021', 'fonts/webfonts/Lora[wght].woff2', 'fonts/webfonts/Lora-Italic[wght].woff2', 'OFL.txt'), {}),
+    ('Source Serif 4', 'serif', 'text', 'italic', release('adobe-fonts/source-serif', '4.005R', 'source-serif-4.005_WOFF2.zip', 'VAR/SourceSerif4Variable-Roman.ttf.woff2', 'VAR/SourceSerif4Variable-Italic.ttf.woff2', None), {'licence': ('adobe-fonts/source-serif', '4.005R', 'LICENSE.md')}),
+    ('Newsreader', 'serif', 'text', 'italic', GOOGLE, {}),
+    ('Literata', 'serif', 'text', 'italic', GOOGLE, {}),
+    ('Alegreya', 'serif', 'text', 'italic', GOOGLE, {}),
+    ('Fraunces', 'serif', 'text', 'italic', tree('undercasetype/Fraunces', '7ccdec31c6028118dce3e47fe864e3744460371d', 'fonts/webfonts/variable/Fraunces[SOFT,WONK,opsz,wght].woff2', 'fonts/webfonts/variable/Fraunces-Italic[SOFT,WONK,opsz,wght].woff2', 'OFL.txt'), {}),
+    ('Roboto Serif', 'serif', 'text', 'italic', GOOGLE, {'subset': True}),
+    ('Merriweather', 'serif', 'text', 'italic', GOOGLE, {}),  # Too large, but its licence reserves the name, so it cannot be subset.
+    ('Piazzolla', 'serif', 'text', 'italic', GOOGLE, {}),
+    ('Noto Serif', 'serif', 'text', 'italic', release('notofonts/latin-greek-cyrillic', 'NotoSerif-v2.015', 'NotoSerif-v2.015.zip', 'NotoSerif[wdth,wght].ttf', 'NotoSerif-Italic[wdth,wght].ttf', 'OFL.txt'), {}),
+    ('Crimson Pro', 'serif', 'text', 'italic', tree('Fonthausen/CrimsonPro', '475ca6a0469ba2bd9c2a3bbf038957099392c04d', 'fonts/variable/CrimsonPro[wght].ttf', 'fonts/variable/CrimsonPro-Italic[wght].ttf', 'OFL.txt'), {}),
+    ('EB Garamond', 'serif', 'text', 'italic', tree('octaviopardo/EBGaramond12', 'e608414f52e532b68e2182f96b4ce9db35335593', 'fonts/variable/EBGaramond[wght].ttf', 'fonts/variable/EBGaramond-Italic[wght].ttf', 'OFL.txt'), {}),
+    ('Cormorant', 'display', 'display', 'italic', GOOGLE, {}),
+    ('Playfair', 'display', 'display', 'italic', GOOGLE, {}),
+    ('Bodoni Moda', 'display', 'display', 'italic', GOOGLE, {}),
+    ('Red Hat Display', 'display', 'display', 'italic', GOOGLE, {}),
+    ('Red Hat Mono', 'monospace', 'code', 'italic', GOOGLE, {}),
+    ('JetBrains Mono', 'monospace', 'code', 'italic', release('JetBrains/JetBrainsMono', 'v2.304', 'JetBrainsMono-2.304.zip', 'fonts/variable/JetBrainsMono[wght].ttf', 'fonts/variable/JetBrainsMono-Italic[wght].ttf', None), {'licence': ('JetBrains/JetBrainsMono', 'v2.304', 'OFL.txt')}),
+    ('IBM Plex Mono', 'monospace', 'code', 'italic', tree('IBM/plex', '@ibm/plex-mono-variable@1.0.0', 'packages/plex-mono-variable/fonts/complete/woff2/IBM Plex Mono Var-Roman.woff2', 'packages/plex-mono-variable/fonts/complete/woff2/IBM Plex Mono Var-Italic.woff2', 'packages/plex-mono-variable/LICENSE.txt'), {}),
+    ('Geist Mono', 'monospace', 'code', 'italic', GOOGLE, {}),
+    ('Roboto Mono', 'monospace', 'code', 'italic', GOOGLE, {}),
+    ('Source Code Pro', 'monospace', 'code', 'italic', GOOGLE, {}),
+    ('Recursive', 'monospace', 'code', 'axis', GOOGLE, {'slant': {'slnt': -15, 'CRSV': 1}}),
+    ('Atkinson Hyperlegible Mono', 'monospace', 'code', 'italic', GOOGLE, {}),
+    ('Mona Sans Mono', 'monospace', 'code', 'none', release(M_REPO, 'v2.0.27', 'mona-sans-webfonts-v2.0.27.zip', 'MonaSansMonoVF[wdth,wght].woff2', None, None), {'licence': (M_REPO, 'v2.0.27', 'OFL.txt')}),
+    ('Red Hat Text', 'partner', 'partner', 'italic', GOOGLE, {}),
+    ('Cormorant Garamond', 'partner', 'partner', 'italic', GOOGLE, {}),
+]
+
+def get(url, cache=None):
+    if cache:
+        path = cache / re.sub(r'[^\w.-]+', '_', url)
+        if path.exists(): return path.read_bytes()
+    request = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+    with urllib.request.urlopen(request, timeout=300) as response: data = response.read()
+    if cache: path.write_bytes(data)
+    return data
+
+def raw(repo, ref, path, cache):
+    return get(f"https://raw.githubusercontent.com/{repo}/{urllib.parse.quote(ref, safe='')}/{urllib.parse.quote(path)}", cache)
+
+def member(archive, suffix):
+    hits = sorted((n for n in archive.namelist() if n == suffix or n.endswith('/' + suffix)), key=len)
+    if not hits: sys.exit(f'{suffix} not in archive; has e.g. {[n for n in archive.namelist() if "variable" in n.lower()][:12]}')
+    return archive.read(hits[0])
+
+def fetch(family, source, options, cache):
+    if source == GOOGLE:
+        text = get('https://fonts.google.com/download/list?family=' + urllib.parse.quote(family), cache).decode('utf8')
+        listing = json.loads(text[text.index('{'):])['manifest']
+        refs = [r for r in listing['fileRefs'] if '/' not in r['filename'] and r['filename'].endswith('.ttf')]
+        upright = [r for r in refs if '-Italic' not in r['filename']]
+        italic = [r for r in refs if '-Italic' in r['filename']]
+        if len(upright) != 1 or len(italic) > 1: sys.exit(f'{family}: expected one variable file: {[r["filename"] for r in refs]}')
+        licence = next(f['contents'] for f in listing['files'] if re.match(r'(OFL|LICENSE)', f['filename']))
+        return get(upright[0]['url'], cache), get(italic[0]['url'], cache) if italic else None, licence.encode('utf8'), f'https://fonts.google.com/specimen/{family.replace(" ", "+")}'
+    if source['kind'] == 'tree':
+        repo, ref = source['repo'], source['ref']
+        upright = raw(repo, ref, source['upright'], cache)
+        italic = raw(repo, ref, source['italic'], cache) if source['italic'] else None
+        return upright, italic, raw(repo, ref, source['licence'], cache), f'https://github.com/{repo}/tree/{urllib.parse.quote(ref, safe="@")}'
+    repo, tag = source['repo'], source['tag']
+    archive = zipfile.ZipFile(io.BytesIO(get(f'https://github.com/{repo}/releases/download/{urllib.parse.quote(tag, safe="")}/{source["asset"]}', cache)))
+    upright = member(archive, source['upright'])
+    italic = member(archive, source['italic']) if source['italic'] else None
+    licence = member(archive, source['licence']) if source['licence'] else raw(*options['licence'], cache)
+    return upright, italic, licence, f'https://github.com/{repo}/releases/tag/{urllib.parse.quote(tag, safe="")}'
+
+def prepared(data, options):
+    font = TTFont(io.BytesIO(data))
+    if options.get('subset'):
+        settings = subset.Options(layout_features=['*'], name_IDs=['*'], notdef_outline=True, glyph_names=False, hinting=False)
+        subsetter = subset.Subsetter(settings)
+        subsetter.populate(unicodes=subset.parse_unicodes(LATIN))
+        subsetter.subset(font)
+    elif data[:4] == b'wOF2':
+        return font, data
+    font.flavor = 'woff2'
+    buffer = io.BytesIO(); font.save(buffer)
+    return TTFont(io.BytesIO(buffer.getvalue())), buffer.getvalue()
+
+def stylistic_sets(font):
+    if 'GSUB' not in font: return []
+    sets = {}
+    for record in font['GSUB'].table.FeatureList.FeatureRecord:
+        if not re.fullmatch(r'ss\d\d', record.FeatureTag): continue
+        params = record.Feature.FeatureParams
+        name = font['name'].getDebugName(params.UINameID) if params is not None and hasattr(params, 'UINameID') else None
+        sets[record.FeatureTag] = name or sets.get(record.FeatureTag) or ''
+    return [[tag, sets[tag]] for tag in sorted(sets)]
+
+def number(value): return int(value) if float(value).is_integer() else value
+def js(value): return json.dumps(value, ensure_ascii=False)
+
+def main():
+    parser = argparse.ArgumentParser(); parser.add_argument('--cache'); args = parser.parse_args()
+    cache = Path(args.cache) if args.cache else None
+    if cache: cache.mkdir(parents=True, exist_ok=True)
+    faces = []
+    for family, category, use, slants, source, options in FACES:
+        upright, italic, licence, url = fetch(family, source, options, cache)
+        name = family.replace(' ', '')
+        font, bytes_up = prepared(upright, options)
+        (OUT / f'{name}-VF.woff2').write_bytes(bytes_up)
+        italic_file = None
+        if italic and slants == 'italic':
+            _, bytes_it = prepared(italic, options)
+            italic_file = f'{name}-Italic-VF.woff2'
+            (OUT / italic_file).write_bytes(bytes_it)
+        slug = family.lower().replace(' ', '-')
+        licence_file = f'LICENSE-{slug}.txt'
+        if licence: (OUT / licence_file).write_bytes(licence)
+        axes = {a.axisTag: [number(a.minValue), number(a.defaultValue), number(a.maxValue)] for a in font['fvar'].axes if a.axisTag != 'ital'}
+        quoted = f'"{family}"' if re.search(r'\d', family) else family
+        face = dict(family=family, category=category, value=quoted + FALLBACK.get(category, ''), roles=USES[use])
+        if family in ('Playfair', 'Bodoni Moda', 'Cormorant'): face['value'] = quoted + FALLBACK['serif']
+        if family in ('Cormorant Garamond',): face['value'] = quoted + FALLBACK['serif']
+        wght = axes.get('wght')
+        face['weight'] = f'{wght[0]} {wght[2]}' if wght else '400'
+        if 'wdth' in axes: face['stretch'] = f"{axes['wdth'][0]}% {axes['wdth'][2]}%"
+        face['upright'] = f'{name}-VF.woff2'
+        face['italic'] = italic_file
+        if options.get('slant'): face['slant'] = options['slant']
+        face['axes'] = axes
+        face['sets'] = stylistic_sets(font)
+        face['licence'] = licence_file
+        face['version'] = re.sub(r'^Version\s+', '', font['name'].getDebugName(5).split(';')[0])
+        face['source'] = url
+        if options.get('subset'): face['subset'] = 'latin'
+        faces.append(face)
+        print(f"{family:28}{face['version']:10}{(OUT / face['upright']).stat().st_size // 1024:6} kB  {' '.join(f'{t} {a[0]}-{a[2]}' for t, a in axes.items())}", flush=True)
+    lines = ',\n  '.join(js(f) for f in faces)
+    (OUT / 'catalog.js').write_text(f"""// The typefaces the library ships, in the owner's order: written by bin/design-fonts, which holds the
+// list and reads everything else from the files. `value` is what a design file stores, `roles` where a
+// typeface may be used, and `axes` each variation axis as [min, default, max]. A typeface has an italic
+// of its own, or `slant` to set on its axes, or stays upright: a browser never slants one by itself.
+export const CATEGORIES = {js([list(c) for c in CATEGORIES])};
+
+export const TYPEFACES = [
+  {lines},
+];
+
+const familyOf = (stack) => stack.split(',')[0].trim().replace(/^["']|["']$/g, '');
+// The shipped typeface a stack names, if any.
+export const faceOf = (stack) => TYPEFACES.find(({{ family }}) => family === familyOf(stack || ''));
+// The shipped typefaces a design's resolved stacks name.
+export const shippedIn = (stacks) => {{
+  const names = new Set(Object.values(stacks).map(familyOf));
+  return TYPEFACES.filter(({{ family }}) => names.has(family));
+}};
+""")
+    def rules(subset_of, base):
+        out = []
+        for f in subset_of:
+            common = f"""font-family: "{f['family']}"; src: url("{base}{f['upright']}") format("woff2"); font-weight: {f['weight']};""" + (f" font-stretch: {f['stretch']};" if 'stretch' in f else '')
+            if f.get('slant') and 'slnt' in f['slant']:
+                angle = -f['axes']['slnt'][0]
+                out.append(f"@font-face {{ {common} font-style: oblique 0deg {angle}deg; font-display: swap; }}")
+                continue
+            out.append(f"@font-face {{ {common} font-style: normal; font-display: swap; }}")
+            if f['italic']:
+                out.append(f"""@font-face {{ font-family: "{f['family']}"; src: url("{base}{f['italic']}") format("woff2"); font-weight: {f['weight']};{f" font-stretch: {f['stretch']};" if 'stretch' in f else ''} font-style: italic; font-display: swap; }}""")
+        return '\n'.join(out) + '\n'
+    (OUT / 'fonts.css').write_text("""/* The typefaces, served by the site itself so that no request reaches a third party. Written by
+   bin/design-fonts. A browser fetches a file only when the page uses that face. */
+""" + rules(faces, './'))
+    gallery = ROOT / 'gallery/src/fonts.css'
+    gallery.write_text(gallery.read_text().split('@font-face')[0] + rules([f for f in faces if f['family'] in ('Mona Sans', 'Geist Mono')], '../../src/fonts/'))
+
+main()

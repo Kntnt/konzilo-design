@@ -8,8 +8,9 @@ import CtaBand from '../../../src/components/CtaBand.astro';
 import KeyFigures from '../../../src/components/KeyFigures.astro';
 import { sample } from '../samples.js';
 import { context } from './context.js';
+import { ownPictures } from '../data.js';
 const { id, project, resolved } = Astro.props;
-const { landscapes, dark } = context(project, resolved);
+const { landscapes, hero } = context(project, resolved, ownPictures);
 const fullPicture = id === 'hero-full-picture';
 ---
 
@@ -20,8 +21,8 @@ const fullPicture = id === 'hero-full-picture';
     heading={sample.heading}
     eyebrow={sample.eyebrow}
     deck={sample.deck}
-    picture={fullPicture ? dark : landscapes[0]}
-    alt="Soft overlapping planes in the design colours"
+    picture={fullPicture ? hero : landscapes[0]}
+    alt=""
     style="min-block-size:562px;display:flex;align-items:center"
   >
     <Button href="#contact">{sample.action}</Button>
@@ -32,7 +33,7 @@ const fullPicture = id === 'hero-full-picture';
     <TextImage
       imageSide={id === 'text-image-start' ? 'start' : 'end'}
       src={landscapes[id === 'text-image-start' ? 2 : 1]}
-      alt="Quiet arcs and bands from the design palette"
+      alt=""
       caption="A composition from the design’s own palette."
     >
       <BodyText>

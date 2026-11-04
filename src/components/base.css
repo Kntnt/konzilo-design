@@ -1,4 +1,6 @@
 @layer kn-base {
+  /* Italics come from a typeface's own italic, never from a browser slanting its upright. */
+  :root { font-synthesis-style: none; }
   *, *::before, *::after { box-sizing: border-box; }
   body {
     margin: 0;
@@ -8,6 +10,8 @@
     font-weight: var(--kn-type-body-weight);
     letter-spacing: var(--kn-type-body-letter-spacing);
     font-feature-settings: var(--kn-type-body-features);
+    font-stretch: var(--kn-type-body-stretch, normal);
+    font-variation-settings: var(--kn-type-body-variation, normal);
   }
   img, svg, video { max-inline-size: 100%; block-size: auto; }
   :where(legend) { padding: 0; }
@@ -20,6 +24,8 @@
     font-weight: var(--kn-type-display-weight);
     letter-spacing: var(--kn-type-display-letter-spacing);
     font-feature-settings: var(--kn-type-display-features);
+    font-stretch: var(--kn-type-display-stretch, normal);
+    font-variation-settings: var(--kn-type-display-variation, normal);
   }
   [data-kn-type="heading-1"] {
     font-family: var(--kn-typeface-heading-1);
@@ -28,6 +34,8 @@
     font-weight: var(--kn-type-heading-1-weight);
     letter-spacing: var(--kn-type-heading-1-letter-spacing);
     font-feature-settings: var(--kn-type-heading-1-features);
+    font-stretch: var(--kn-type-heading-1-stretch, normal);
+    font-variation-settings: var(--kn-type-heading-1-variation, normal);
     color: var(--kn-text-heading-1);
   }
   [data-kn-type="heading-2"] {
@@ -37,6 +45,8 @@
     font-weight: var(--kn-type-heading-2-weight);
     letter-spacing: var(--kn-type-heading-2-letter-spacing);
     font-feature-settings: var(--kn-type-heading-2-features);
+    font-stretch: var(--kn-type-heading-2-stretch, normal);
+    font-variation-settings: var(--kn-type-heading-2-variation, normal);
   }
   [data-kn-type="heading-3"] {
     font-family: var(--kn-typeface-heading);
@@ -45,6 +55,8 @@
     font-weight: var(--kn-type-heading-3-weight);
     letter-spacing: var(--kn-type-heading-3-letter-spacing);
     font-feature-settings: var(--kn-type-heading-3-features);
+    font-stretch: var(--kn-type-heading-3-stretch, normal);
+    font-variation-settings: var(--kn-type-heading-3-variation, normal);
   }
   [data-kn-type="heading-4"] {
     font-family: var(--kn-typeface-heading);
@@ -53,6 +65,8 @@
     font-weight: var(--kn-type-heading-4-weight);
     letter-spacing: var(--kn-type-heading-4-letter-spacing);
     font-feature-settings: var(--kn-type-heading-4-features);
+    font-stretch: var(--kn-type-heading-4-stretch, normal);
+    font-variation-settings: var(--kn-type-heading-4-variation, normal);
   }
   [data-kn-type="heading-5"] {
     font-family: var(--kn-typeface-heading);
@@ -61,6 +75,8 @@
     font-weight: var(--kn-type-heading-5-weight);
     letter-spacing: var(--kn-type-heading-5-letter-spacing);
     font-feature-settings: var(--kn-type-heading-5-features);
+    font-stretch: var(--kn-type-heading-5-stretch, normal);
+    font-variation-settings: var(--kn-type-heading-5-variation, normal);
   }
   [data-kn-type="heading-6"] {
     font-family: var(--kn-typeface-heading);
@@ -69,6 +85,8 @@
     font-weight: var(--kn-type-heading-6-weight);
     letter-spacing: var(--kn-type-heading-6-letter-spacing);
     font-feature-settings: var(--kn-type-heading-6-features);
+    font-stretch: var(--kn-type-heading-6-stretch, normal);
+    font-variation-settings: var(--kn-type-heading-6-variation, normal);
   }
   [data-kn-type="lead"] {
     font-family: var(--kn-typeface-main);
@@ -77,6 +95,8 @@
     font-weight: var(--kn-type-lead-weight);
     letter-spacing: var(--kn-type-lead-letter-spacing);
     font-feature-settings: var(--kn-type-lead-features);
+    font-stretch: var(--kn-type-lead-stretch, normal);
+    font-variation-settings: var(--kn-type-lead-variation, normal);
   }
   [data-kn-type="body"] {
     font-family: var(--kn-typeface-main);
@@ -85,6 +105,8 @@
     font-weight: var(--kn-type-body-weight);
     letter-spacing: var(--kn-type-body-letter-spacing);
     font-feature-settings: var(--kn-type-body-features);
+    font-stretch: var(--kn-type-body-stretch, normal);
+    font-variation-settings: var(--kn-type-body-variation, normal);
   }
   [data-kn-type="small"] {
     font-family: var(--kn-typeface-main);
@@ -93,6 +115,8 @@
     font-weight: var(--kn-type-small-weight);
     letter-spacing: var(--kn-type-small-letter-spacing);
     font-feature-settings: var(--kn-type-small-features);
+    font-stretch: var(--kn-type-small-stretch, normal);
+    font-variation-settings: var(--kn-type-small-variation, normal);
   }
   [data-kn-type="label"] {
     font-family: var(--kn-typeface-label);
@@ -101,6 +125,8 @@
     font-weight: var(--kn-type-label-weight);
     letter-spacing: var(--kn-type-label-letter-spacing);
     font-feature-settings: var(--kn-type-label-features);
+    font-stretch: var(--kn-type-label-stretch, normal);
+    font-variation-settings: var(--kn-type-label-variation, normal);
     font-variant-numeric: tabular-nums;
     text-transform: uppercase;
   }
@@ -111,5 +137,7 @@
     font-weight: var(--kn-type-mono-weight);
     letter-spacing: var(--kn-type-mono-letter-spacing);
     font-feature-settings: var(--kn-type-mono-features);
+    font-stretch: var(--kn-type-mono-stretch, normal);
+    font-variation-settings: var(--kn-type-mono-variation, normal);
   }
 }

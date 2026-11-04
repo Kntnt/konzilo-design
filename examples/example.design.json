@@ -1410,8 +1410,9 @@
         "size": {
           "min": 17,
           "max": 19,
-          "css": "clamp(1.0625rem, 1.0268rem + 0.1786vw, 1.1875rem)"
+          "css": "clamp(1.0625rem, 1.0161rem + 0.1905vw, 1.1875rem)"
         },
+        "step": 0,
         "line-height": 1.55,
         "weight": 400,
         "letter-spacing": 0
@@ -1420,8 +1421,9 @@
         "size": {
           "min": 18,
           "max": 21,
-          "css": "clamp(1.125rem, 1.0714rem + 0.2679vw, 1.3125rem)"
+          "css": "clamp(1.125rem, 1.0554rem + 0.2857vw, 1.3125rem)"
         },
+        "step": 1,
         "line-height": 1.4,
         "weight": 400,
         "letter-spacing": 0
@@ -1432,6 +1434,7 @@
           "max": 15,
           "css": "clamp(0.9375rem, 0.9375rem + 0vw, 0.9375rem)"
         },
+        "step": -2,
         "line-height": 1.55,
         "weight": 400,
         "letter-spacing": 0
@@ -1440,8 +1443,9 @@
         "size": {
           "min": 17,
           "max": 19,
-          "css": "clamp(1.0625rem, 1.0268rem + 0.1786vw, 1.1875rem)"
+          "css": "clamp(1.0625rem, 1.0161rem + 0.1905vw, 1.1875rem)"
         },
+        "step": 0,
         "line-height": 1.3,
         "weight": 600,
         "letter-spacing": -0.01
@@ -1450,8 +1454,9 @@
         "size": {
           "min": 18,
           "max": 21,
-          "css": "clamp(1.125rem, 1.0714rem + 0.2679vw, 1.3125rem)"
+          "css": "clamp(1.125rem, 1.0554rem + 0.2857vw, 1.3125rem)"
         },
+        "step": 1,
         "line-height": 1.3,
         "weight": 600,
         "letter-spacing": -0.01
@@ -1460,8 +1465,9 @@
         "size": {
           "min": 19,
           "max": 24,
-          "css": "clamp(1.1875rem, 1.0982rem + 0.4464vw, 1.5rem)"
+          "css": "clamp(1.1875rem, 1.0714rem + 0.4762vw, 1.5rem)"
         },
+        "step": 2,
         "line-height": 1.3,
         "weight": 600,
         "letter-spacing": -0.01
@@ -1470,8 +1476,9 @@
         "size": {
           "min": 21,
           "max": 27,
-          "css": "clamp(1.3125rem, 1.2054rem + 0.5357vw, 1.6875rem)"
+          "css": "clamp(1.3125rem, 1.1732rem + 0.5714vw, 1.6875rem)"
         },
+        "step": 3,
         "line-height": 1.3,
         "weight": 600,
         "letter-spacing": -0.01
@@ -1480,8 +1487,9 @@
         "size": {
           "min": 22,
           "max": 30,
-          "css": "clamp(1.375rem, 1.2321rem + 0.7143vw, 1.875rem)"
+          "css": "clamp(1.375rem, 1.1893rem + 0.7619vw, 1.875rem)"
         },
+        "step": 4,
         "line-height": 1.3,
         "weight": 600,
         "letter-spacing": -0.01
@@ -1490,8 +1498,9 @@
         "size": {
           "min": 27,
           "max": 43,
-          "css": "clamp(1.6875rem, 1.4018rem + 1.4286vw, 2.6875rem)"
+          "css": "clamp(1.6875rem, 1.3161rem + 1.5238vw, 2.6875rem)"
         },
+        "step": 7,
         "line-height": 1.3,
         "weight": 600,
         "letter-spacing": -0.01
@@ -1500,8 +1509,9 @@
         "size": {
           "min": 33,
           "max": 62,
-          "css": "clamp(2.0625rem, 1.5446rem + 2.5893vw, 3.875rem)"
+          "css": "clamp(2.0625rem, 1.3893rem + 2.7619vw, 3.875rem)"
         },
+        "step": 10,
         "line-height": 1.1,
         "weight": 600,
         "letter-spacing": -0.01
@@ -1512,6 +1522,7 @@
           "max": 12,
           "css": "clamp(0.75rem, 0.75rem + 0vw, 0.75rem)"
         },
+        "step": -5,
         "line-height": 1.4,
         "weight": 600,
         "letter-spacing": 0.06
@@ -1520,11 +1531,26 @@
         "size": {
           "min": 17,
           "max": 19,
-          "css": "clamp(1.0625rem, 1.0268rem + 0.1786vw, 1.1875rem)"
+          "css": "clamp(1.0625rem, 1.0161rem + 0.1905vw, 1.1875rem)"
         },
+        "step": 0,
         "line-height": 1.55,
         "weight": 400,
         "letter-spacing": 0
+      }
+    },
+    "type-scale": {
+      "breakpoints": {
+        "min": 390,
+        "max": 1440
+      },
+      "ratio": {
+        "min": 1.067,
+        "max": 1.125
+      },
+      "body-size": {
+        "min": 17,
+        "max": 19
       }
     },
     "typefaces": {
@@ -1620,6 +1646,51 @@
     "frame": {
       "width": 0,
       "color": "#222222"
+    },
+    "header": {
+      "arrangement": "A",
+      "attachment": "sticky",
+      "start": "below",
+      "autohide": false,
+      "surface": "page",
+      "identity": "logo",
+      "brand-axis": "row",
+      "brand-align": "center",
+      "identity-axis": "row",
+      "identity-align": "center",
+      "link-menu": true,
+      "menu-button": "word",
+      "language": false,
+      "search": true,
+      "cta": true,
+      "numbered": false,
+      "menu-above": false,
+      "menu-below": false,
+      "search-surface": "inverse",
+      "search-blur": true,
+      "search-heading": true,
+      "search-links": true
+    },
+    "footer": {
+      "model": "utility",
+      "attachment": "flow",
+      "surface": "brand",
+      "second-surface": "inverse",
+      "horizontal-rules": false,
+      "vertical-rule": false,
+      "rule-extent": "content"
+    },
+    "page": {
+      "shadow": false,
+      "edge-line": false
+    },
+    "breadcrumbs": {
+      "show": true,
+      "placement": "first-band",
+      "separator": "slash",
+      "home": "word",
+      "current": true,
+      "narrow": "trail"
     },
     "layout": {
       "wide": 1200,

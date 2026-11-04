@@ -3,8 +3,9 @@ import { readFile, writeFile } from 'node:fs/promises';
 import { resolve, checkFingerprint, checkContrast, validateInputs, validateDesignFile } from '../src/generator/index.js';
 import { emitCss } from '../src/css/index.js';
 import { componentsCss } from '../src/css/components.js';
+import { backUp } from '../tool/new-design.js';
 
-const usage = 'Usage: konzilo-design resolve <file> | css <file> [-o out.css] | check <file> | components-css [-o out.css] | tool [file] [--port N] [--no-open] | presentation <file> [-o out.zip]';
+const usage = 'Usage: konzilo-design resolve <file> | css <file> [-o out.css] | check <file> | components-css [-o out.css] | tool <file> [--port N] [--no-open] | presentation <file> [-o out.zip] | design-md <file> [-o DESIGN.md]';
 
 try {
   const [command, path, ...args] = process.argv.slice(2);
@@ -21,9 +22,10 @@ try {
       } else if (value.startsWith('-') || designFile) throw new Error(usage);
       else designFile = value;
     }
+    if (!designFile) throw new Error(usage);
     const { startTool } = await import('../tool/server.js');
     const tool = await startTool({ designFile, port, open });
-    process.stdout.write(`Konzilo design tool: ${tool.url}\nDesign file: ${tool.path}\n`);
+    process.stdout.write(`Konzilo design tool: ${tool.url}\n${tool.created ? 'New design file' : 'Design file'}: ${tool.path}\n`);
     const stop = async () => { await tool.close(); };
     process.once('SIGINT', stop); process.once('SIGTERM', stop);
   } else if (command === 'presentation') {
@@ -31,6 +33,10 @@ try {
     const { createPresentation } = await import('../tool/presentation.js');
     const report = await createPresentation(path, args[1]);
     process.stdout.write(JSON.stringify(report, null, 2) + '\n');
+  } else if (command === 'design-md') {
+    if (!path || !(args.length === 0 || (args.length === 2 && args[0] === '-o'))) throw new Error(usage);
+    const { writeDesignMd } = await import('../tool/design-md.js');
+    process.stdout.write(`${await writeDesignMd(path, args[1])}\n`);
   } else if (command === 'components-css') {
     if (path !== undefined && (path !== '-o' || args.length !== 1)) throw new Error(usage);
     const css = await componentsCss();
@@ -46,6 +52,7 @@ try {
       validateInputs(file.inputs);
       const output = { ...file, resolved: await resolve(file.inputs) };
       validateDesignFile(output);
+      await backUp(path);
       await writeFile(path, JSON.stringify(output, null, 2) + '\n');
     } else if (command === 'css') {
       const css = await emitCss(file);
@@ -59,6 +66,6 @@ try {
     }
   }
 } catch (error) {
-  process.stderr.write(`${error.message}\n`);
+  process.stderr.write(`${error.code === 'ENOENT' ? `No such file: ${error.path}` : error.message}\n`);
   process.exitCode = 1;
 }

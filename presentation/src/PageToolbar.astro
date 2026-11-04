@@ -1,13 +1,21 @@
 ---
 import { t } from './data.js';
-const { width = true } = Astro.props;
+const { width = true, pictures = false } = Astro.props;
 const widths = [['wide', 'window.wide'], ['768', 'window.tablet'], ['390', 'window.phone']];
 const modes = [['light', 'mode.light'], ['dark', 'mode.dark']];
+const showing = [['on', 'pictures.on'], ['off', 'pictures.off']];
 ---
 <div class="page-toolbar">
   {width && (
     <div class="segmented" role="group" aria-label={t('window.label')} data-frame-width>
       {widths.map(([value, key], index) => (
+        <button type="button" data-value={value} aria-pressed={String(index === 0)}>{t(key)}</button>
+      ))}
+    </div>
+  )}
+  {pictures && (
+    <div class="segmented" role="group" aria-label={t('pictures.label')} data-frame-pictures>
+      {showing.map(([value, key], index) => (
         <button type="button" data-value={value} aria-pressed={String(index === 0)}>{t(key)}</button>
       ))}
     </div>

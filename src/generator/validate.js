@@ -17,6 +17,7 @@ function validate(value, rule, path) {
     if (value.length < (rule.minLength ?? 0)) fail('empty value');
     if (rule.pattern && !new RegExp(rule.pattern).test(value)) fail('invalid format');
   }
+  if (type === 'array' && rule.items) value.forEach((item, index) => validate(item, rule.items, `${path}[${index}]`));
   if (type === 'object') {
     for (const key of rule.required ?? []) if (!Object.hasOwn(value, key)) fail(`missing ${key}`);
     for (const [key, v] of Object.entries(value)) {

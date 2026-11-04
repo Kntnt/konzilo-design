@@ -3,9 +3,9 @@ import Figure from '../../../src/components/Figure.astro';
 import VideoPlayer from '../../../src/components/VideoPlayer.astro';
 import Embed from '../../../src/components/Embed.astro';
 import { context } from './context.js';
-import { t } from '../data.js';
+import { t, ownPictures } from '../data.js';
 const { id, project, resolved } = Astro.props;
-const { landscapes, panorama } = context(project, resolved);
+const { landscapes, panorama } = context(project, resolved, ownPictures);
 ---
 
 {id === 'figure' && (
@@ -13,7 +13,7 @@ const { landscapes, panorama } = context(project, resolved);
     <Figure
       src={panorama}
       width="narrow"
-      alt="Overlapping planes in pale colours"
+      alt=""
       caption="A picture and its caption stay together."
     />
     <VideoPlayer

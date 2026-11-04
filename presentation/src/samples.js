@@ -9,61 +9,40 @@ export const sample = {
   secondary: 'Explore services',
   link: 'Read the guide',
 };
-export function pictures(ramps) {
-  const primary = ramps.primary;
-  const gray = ramps.gray;
-  function composition(width, height, index, portrait = false) {
-    const h = (height / width) * 1000;
-    // Plane closures sit well outside the crop; enclosed accents have generous clearance.
-    const shapes = [
-      `<path d="M-300 ${h + 300}V${h * 0.65}Q400 ${-h * 0.15} 1300 ${h * 0.35}V${h + 300}Z" fill="${primary[200]}"/>
-        <path d="M-300 ${h + 300}V${h * 0.95}Q500 ${h * 0.35} 1300 ${h * 0.7}V${h + 300}Z" fill="${gray[200]}"/>`,
-      `<path d="M-300 ${h * 0.6}L1300 ${-h * 0.2}V${h + 300}H-300Z" fill="${gray[200]}"/>
-        <path d="M-300 ${h * 1.1}L1300 ${h * 0.3}V${h + 300}H-300Z" fill="${primary[200]}"/>
-        <circle cx="720" cy="${h * 0.28}" r="24" fill="${primary[500]}"/>`,
-      `<path d="M-300 -300H360Q900 ${h * 0.5} 360 ${h + 300}H-300Z" fill="${primary[200]}"/>
-        <path d="M1300 -300H1100Q400 ${h * 0.5} 1100 ${h + 300}H1300Z" fill="${gray[200]}"/>`,
-      `<path d="M-300 ${h + 300}V${h * 0.4}Q350 ${h * 0.05} 1300 ${h * 0.6}V${h + 300}Z" fill="${gray[200]}"/>
-        <path d="M-300 ${h + 300}V${h * 0.8}Q600 ${h * 0.25} 1300 ${h * 0.9}V${h + 300}Z" fill="${primary[300]}"/>`,
-    ];
-    const silhouette = portrait
-      ? person(h, [500, 470, 530, 490][index], [0.42, 0.4, 0.44, 0.41][index])
-      : shapes[index];
-    return svg(width, height, primary[100], silhouette);
-  }
-  function person(h, x, y) {
+// The places a sample page has a picture. A design's own photo can take any of them.
+export const PICTURE_SLOTS = [
+  'hero',
+  'panorama',
+  'landscape-1',
+  'landscape-2',
+  'landscape-3',
+  'landscape-4',
+  'person-1',
+  'person-2',
+  'person-3',
+  'person-4',
+];
+// What a build leaves in its pages; the report swaps it for the one embedded copy of the picture.
+export const PICTURE_URL = /\/(?:presentation\/pictures|design-pictures)\/[a-z0-9-]+\.[a-z0-9]+/g;
+// Photos where a picture shows best. People stay drawn until a design has its own photos of them,
+// because a stock licence clears no one's face.
+export function pictures(ramps, own = {}) {
+  const photo = (slot) => own[slot] ?? `/presentation/pictures/${slot}.webp`;
+  const fill = ramps.primary[200];
+  function person(index) {
+    const h = (640 / 600) * 1000;
+    const x = [500, 470, 530, 490][index];
+    const y = [0.42, 0.4, 0.44, 0.41][index];
     const shoulders = h * (y + 0.22);
-    return `<circle cx="${x}" cy="${h * y}" r="${h * 0.12}" fill="${primary[200]}"/>
-      <path d="M${x - 300} ${h + 60}C${x - 300} ${shoulders + h * 0.14} ${x - 170} ${shoulders} ${x} ${shoulders}S${x + 300} ${shoulders + h * 0.14} ${x + 300} ${h + 60}Z" fill="${primary[200]}"/>`;
-  }
-  function svg(width, height, background, shapes) {
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 1000 ${(height / width) * 1000}"><rect width="1000" height="${(height / width) * 1000}" fill="${background}"/>${shapes}</svg>`;
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="600" height="640" viewBox="0 0 1000 ${h}"><rect width="1000" height="${h}" fill="${ramps.primary[100]}"/><circle cx="${x}" cy="${h * y}" r="${h * 0.12}" fill="${fill}"/>
+      <path d="M${x - 300} ${h + 60}C${x - 300} ${shoulders + h * 0.14} ${x - 170} ${shoulders} ${x} ${shoulders}S${x + 300} ${shoulders + h * 0.14} ${x + 300} ${h + 60}Z" fill="${fill}"/></svg>`;
     return `data:image/svg+xml,${encodeURIComponent(svg)}`;
   }
-  const landscapes = Array.from({ length: 4 }, (_, index) =>
-    composition(1200, 720, index),
-  );
-  const portraits = Array.from({ length: 4 }, (_, index) =>
-    composition(600, 800, index),
-  );
-  const people = Array.from({ length: 4 }, (_, index) =>
-    composition(600, 640, index, true),
-  );
   return {
-    dark: svg(
-      1440,
-      562,
-      primary[950],
-      `<path d="M-300 -300H300Q850 200 300 700H-300Z" fill="${gray[900]}"/>
-        <path d="M1740 -300H1000Q650 200 1000 700H1740Z" fill="${primary[900]}"/>
-        <path d="M1740 -300H1450Q950 200 1450 700H1740Z" fill="${primary[800]}"/>`,
-    ),
-    panorama: composition(1200, 400, 2),
-    landscape: landscapes[0],
-    portrait: portraits[0],
-    landscapes,
-    portraits,
-    people,
+    hero: photo('hero'),
+    panorama: photo('panorama'),
+    landscapes: [1, 2, 3, 4].map((number) => photo(`landscape-${number}`)),
+    people: [0, 1, 2, 3].map((index) => own[`person-${index + 1}`] ?? person(index)),
   };
 }
 export const menu = [
@@ -144,6 +123,12 @@ export const search = {
     { label: 'Contact', href: '#contact' },
   ],
 };
+export const languages = [
+  { label: 'English', code: 'en', href: '#home', current: true },
+  { label: 'Svenska', code: 'sv', href: '#home' },
+  { label: 'Deutsch', code: 'de', href: '#home' },
+];
+export const cta = { label: 'Contact', href: '#contact' };
 export const columns = [
   { label: 'Service' },
   { label: 'Delivery' },
@@ -353,3 +338,5 @@ export const items = (landscapes) =>
     meta2: [{ text: 'Service team' }],
     filters: { topic: 'guides' },
   }));
+// Every sample picture in one list, in the order of PICTURE_SLOTS, so one design's can replace another's.
+export const flatPictures = (set) => Object.values(set).flat();

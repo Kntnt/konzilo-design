@@ -161,7 +161,7 @@ test('consent timestamps expire at the configured boundary and reject future, un
 
 test('a hover fill shows: it differs visibly from the background and the alternate fill on every Surface', async () => {
   const { derive, contrast } = await import('../src/generator/index.js');
-  for (const primary of ['#168b83', '#1d4ed8', '#0b2f6b', '#c026d3', '#dc2626', '#facc15', '#111111']) {
+  for (const primary of ['#168b83', '#1d4ed8', '#0b2a6b', '#c026d3', '#dc2626', '#facc15', '#111111']) {
     const { surfaces } = derive({ 'brand-colors': { primary, secondary: '#b66c32' } });
     for (const [kind, modes] of Object.entries(surfaces)) for (const [mode, surface] of Object.entries(modes)) {
       const { background, 'background-alt': alternate, 'background-hover': hover } = surface.roles;

@@ -1,12 +1,70 @@
 import test from 'node:test';
+import { TYPEFACES, CATEGORIES, shippedIn } from '../src/fonts/catalog.js';
 import assert from 'node:assert/strict';
 import { readdir, readFile } from 'node:fs/promises';
-import { derive, validateInputs } from '../src/generator/index.js';
+import { derive, validateInputs, sizeAt } from '../src/generator/index.js';
 import { coreCss } from '../src/css/index.js';
 
 const read = (path, encoding = 'utf8') => readFile(new URL(`../${path}`, import.meta.url), encoding);
 const generic = /(?:sans-serif|serif|monospace)$/;
 const inputs = (changes = {}) => ({ 'brand-colors': { primary: '#168b83' }, ...changes });
+
+test('the catalogue follows the owner\'s list: order, sources, and a display face only for the first heading and larger', () => {
+  assert.deepEqual(CATEGORIES.map(([category]) => category), ['sans-serif', 'slab-serif', 'serif', 'display', 'monospace', 'partner']);
+  const inCategory = (category) => TYPEFACES.filter((face) => face.category === category).map((face) => face.family);
+  assert.deepEqual(inCategory('slab-serif'), ['Bitter', 'Aleo', 'Rokkitt', 'Josefin Slab', 'Roboto Slab']);
+  assert.deepEqual(inCategory('display'), ['Cormorant', 'Playfair', 'Bodoni Moda', 'Red Hat Display']);
+  assert.deepEqual(inCategory('partner'), ['Red Hat Text', 'Cormorant Garamond']);
+  const named = (family) => TYPEFACES.find((face) => face.family === family);
+  for (const family of inCategory('display')) assert.deepEqual(named(family).roles, ['heading-1', 'display'], family);
+  for (const family of inCategory('partner')) assert.deepEqual(named(family).roles, ['main'], family);
+  for (const family of ['Hubot Sans', 'Josefin Sans', 'Josefin Slab']) assert.ok(!named(family).roles.includes('main'), family);
+  for (const family of inCategory('monospace')) assert.deepEqual(named(family).roles, ['monospace', 'label'], family);
+  assert.match(named('Mona Sans').source, /github\.com\/github\/mona-sans/);
+  assert.match(named('Aleo').source, /fonts\.google\.com/, 'its origin has lost glyphs');
+  assert.match(named('Red Hat Display').source, /fonts\.google\.com/, 'its origin moved the weights');
+  assert.match(named('EB Garamond').source, /e608414f/, 'the build before the current one');
+  assert.ok(named('Merriweather').subset === undefined, 'its licence reserves the name');
+  for (const { family, source, version, axes } of TYPEFACES) {
+    assert.match(source, /^https:\/\/(fonts\.google\.com|github\.com)\//, family);
+    assert.doesNotMatch(source, /fontsource/i, family);
+    assert.ok(version, family);
+    assert.ok(Object.keys(axes).length, `${family} is variable`);
+  }
+});
+
+test('a role sets its own axes, and nothing else changes', () => {
+  const mona = { main: 'Mona Sans' };
+  const plain = derive(inputs({ typefaces: mona })).type;
+  const set = derive(inputs({ typefaces: mona, type: { roles: {
+    display: { weight: 260, 'letter-spacing': -0.03, axes: { wdth: 112, opsz: 100 } },
+    label: { weight: 800, 'letter-spacing': 0.06, axes: { wdth: 75, opsz: 0 }, features: ['ss02', 'ss07'] },
+  } } }));
+  assert.deepEqual([set.type.display.weight, set.type.display['letter-spacing'], set.type.display.stretch, set.type.display.variation], [260, -0.03, 112, { opsz: 100 }]);
+  assert.deepEqual(set.type.display.features, plain.display.features, 'the tuning stays');
+  assert.deepEqual(set.type.display.size, plain.display.size, 'the type scale stays');
+  assert.deepEqual(set.type.label.features, { value: '"ss02", "ss07"', 'from-window': 0 });
+  for (const style of ['body', 'lead', 'small', 'mono', 'heading-1', 'heading-3']) assert.deepEqual(set.type[style], plain[style], style);
+  const css = coreCss(set);
+  assert.match(css, /--kn-type-display-stretch: 112%;/);
+  assert.match(css, /--kn-type-display-variation: "opsz" 100;/);
+  assert.match(css, /--kn-type-label-features: "ss02", "ss07";/);
+  assert.doesNotMatch(coreCss(derive(inputs({ typefaces: mona }))), /-stretch:|-variation:/);
+
+  const body = derive(inputs({ typefaces: mona, type: { roles: { main: { weight: 350 }, heading: { axes: { GRAD: 50 } } } } })).type;
+  assert.deepEqual([body.body.weight, body.lead.weight, body.small.weight], [350, 350, 350]);
+  assert.deepEqual(body['heading-4'].variation, { GRAD: 50 });
+  assert.deepEqual(body['heading-1'].variation, { GRAD: 50 }, 'a first heading follows the headings');
+  assert.equal(derive(inputs({ typefaces: mona, type: { roles: { display: { features: [] } } } })).type.display.features, undefined, 'an empty choice turns the tuning off');
+  assert.throws(() => validateInputs(inputs({ type: { roles: { footer: {} } } })), /footer/);
+  assert.throws(() => validateInputs(inputs({ type: { roles: { label: { features: ['not a tag'] } } } })), /features/);
+});
+
+test('labels can take a typeface of their own', () => {
+  const { typefaces } = derive(inputs({ typefaces: { main: 'Mona Sans', label: 'Geist Mono' } }));
+  assert.equal(typefaces.label, 'Geist Mono, system-ui, sans-serif');
+  assert.match(coreCss(derive(inputs({ typefaces: { main: 'Mona Sans', label: 'Geist Mono' } }))), /--kn-typeface-label: Geist Mono, system-ui, sans-serif;/);
+});
 
 test('with nothing chosen, both families are system stacks and labels use the main one', () => {
   const { typefaces, type } = derive(inputs());
@@ -74,6 +132,7 @@ test('each heading style reads its role, and the first heading can differ with C
   assert.match(ruleOf('display'), /--kn-typeface-display/);
   assert.match(ruleOf('heading-1'), /--kn-typeface-heading-1/);
   assert.match(ruleOf('heading-1'), /color: var\(--kn-text-heading-1\)/);
+  assert.match(ruleOf('heading-1'), /font-stretch: var\(--kn-type-heading-1-stretch, normal\)/);
   for (const n of [2, 3, 4, 5, 6]) assert.match(ruleOf(`heading-${n}`), /font-family: var\(--kn-typeface-heading\)/);
   const body = await read('src/components/body-text.css');
   assert.match(body, /h1:not\(\[data-kn-type\]\) \{\s*font-family: var\(--kn-typeface-heading-1\);\s*color: var\(--kn-text-heading-1\);/);
@@ -81,17 +140,16 @@ test('each heading style reads its role, and the first heading can differ with C
 });
 
 test('Mona Sans takes its stylistic sets from 20px, by style and fluid window', () => {
-  const { type } = derive(inputs({ typefaces: { main: 'Mona Sans' } }));
+  const { type, 'type-scale': scale } = derive(inputs({ typefaces: { main: 'Mona Sans' } }));
   assert.equal(type.body.features, undefined, 'always below 20px');
   assert.equal(type.small.features, undefined);
   assert.equal(type.label.features, undefined);
   assert.deepEqual(type['heading-1'].features, { value: '"ss05", "ss07"', 'from-window': 0 }, 'always from 20px');
   const crossing = Object.values(type).filter(({ features }) => features?.['from-window'] > 0);
   assert.ok(crossing.length > 0);
-  for (const { size, features } of crossing) {
-    const at = (window) => size.min + (size.max - size.min) * (window - 320) / (1440 - 320);
-    assert.ok(at(features['from-window']) >= 20);
-    assert.ok(at(features['from-window'] - 1) < 20);
+  for (const { step, features } of crossing) {
+    assert.ok(sizeAt(scale, step, features['from-window']) >= 20);
+    assert.ok(sizeAt(scale, step, features['from-window'] - 1) < 20);
   }
   const css = coreCss(derive(inputs({ typefaces: { main: 'Mona Sans' } })));
   assert.match(css, /--kn-type-heading-1-features: "ss05", "ss07";/);
@@ -109,6 +167,33 @@ test('the sets follow the typeface: other families get none, also when spelled w
   const monaHeadings = derive(inputs({ typefaces: { main: 'Georgia, serif', heading: 'Mona Sans' } })).type;
   assert.ok(monaHeadings['heading-1'].features);
   assert.equal(monaHeadings.lead.features, undefined);
+});
+
+test('the first heading takes the role the user chooses, at its own size', () => {
+  const mona = { main: 'Mona Sans' };
+  const display = { weight: 260, axes: { wdth: 112 } };
+  const asHeading = derive(inputs({ typefaces: mona, type: { roles: { display } } }));
+  assert.equal(asHeading.type['heading-1'].weight, 600);
+  assert.equal(asHeading.type['heading-1'].stretch, undefined);
+  assert.equal(asHeading.typefaces['heading-1'], undefined, 'the default leaves the resolved typefaces as they were');
+
+  const asDisplay = derive(inputs({ typefaces: mona, type: { 'heading-1-role': 'display', roles: { display } } }));
+  assert.deepEqual([asDisplay.type['heading-1'].weight, asDisplay.type['heading-1'].stretch, asDisplay.type['heading-1']['line-height']], [260, 112, 1.1]);
+  assert.deepEqual(asDisplay.type['heading-1'].size, asHeading.type['heading-1'].size, 'its own size');
+  assert.deepEqual(asDisplay.type['heading-2'], asHeading.type['heading-2'], 'second headings never follow');
+  assert.match(coreCss(asDisplay), /--kn-type-heading-1-stretch: 112%;/);
+
+  const adjusted = derive(inputs({ typefaces: mona, type: { 'heading-1-role': 'display', roles: { display, 'heading-1': { axes: { opsz: 40 } } } } }));
+  assert.deepEqual([adjusted.type['heading-1'].stretch, adjusted.type['heading-1'].variation], [112, { opsz: 40 }], 'its own setting goes on top');
+
+  const playfair = derive(inputs({ typefaces: { ...mona, display: 'Playfair, Georgia, serif' }, type: { 'heading-1-role': 'display' } }));
+  assert.equal(playfair.typefaces['heading-1'], 'Playfair, Georgia, serif');
+  assert.equal(playfair.typefaces.heading, playfair.typefaces.main, 'other headings stay');
+  assert.match(coreCss(playfair), /--kn-typeface-heading-1: Playfair, Georgia, serif;/);
+
+  const own = derive(inputs({ typefaces: { ...mona, 'heading-1': 'Lora, Georgia, serif' }, type: { 'heading-1-role': 'display' } }));
+  assert.equal(own.typefaces['heading-1'], 'Lora, Georgia, serif', 'a typeface chosen for it still holds');
+  assert.throws(() => validateInputs(inputs({ type: { 'heading-1-role': 'title' } })), /heading-1-role/);
 });
 
 test('labels sit on the type scale, five steps below body text unless changed, and never below 12px', () => {
@@ -150,13 +235,34 @@ test('a table head has the typeface of the rest of the table, not the label styl
   assert.doesNotMatch(table, /--kn-typeface-label|--kn-type-label|text-transform/);
 });
 
-test('the recommended typefaces ship as unmodified web fonts with their licences', async () => {
+test('the shipped typefaces are web fonts with a real italic and their licences', async () => {
   const css = await read('src/fonts/fonts.css');
-  const files = [...css.matchAll(/url\("\.\/([^"]+)"\)/g)].map(([, file]) => file);
-  assert.deepEqual(files, ['MonaSans-VF.woff2', 'MonaSans-Italic-VF.woff2', 'RedHatMono-VF.woff2']);
-  for (const file of files) {
-    assert.equal((await read(`src/fonts/${file}`, null)).subarray(0, 4).toString('latin1'), 'wOF2', file);
+  assert.equal(TYPEFACES.length, 47);
+  assert.deepEqual(TYPEFACES.filter((face) => !face.italic && !face.slant).map((face) => face.family), ['Roboto Slab', 'Mona Sans Mono'], 'upright, never slanted by a browser');
+  assert.deepEqual(TYPEFACES.filter((face) => face.slant).map((face) => face.family), ['Roboto Flex', 'Google Sans Flex', 'Recursive'], 'italic through an axis');
+  for (const { family, upright, italic, weight, licence, category, roles } of TYPEFACES) {
+    for (const file of [upright, italic].filter(Boolean)) {
+      assert.equal((await read(`src/fonts/${file}`, null)).subarray(0, 4).toString('latin1'), 'wOF2', file);
+      assert.ok(css.includes(`font-family: "${family}"; src: url("./${file}") format("woff2"); font-weight: ${weight};`), file);
+    }
+    assert.match(await read(`src/fonts/${licence}`), /Open Font License|Apache License/, licence);
+    assert.ok(roles.length, family);
+    assert.ok(CATEGORIES.some(([name]) => name === category), family);
   }
+  assert.equal([...css.matchAll(/@font-face/g)].length, TYPEFACES.flatMap((face) => [face.upright, face.italic].filter(Boolean)).length);
+  assert.match(css, /"Roboto Flex"[^}]*font-style: oblique 0deg 10deg;/);
+  assert.match(css, /"Recursive"[^}]*font-style: oblique 0deg 15deg;/);
   assert.match(await read('src/fonts/LICENSE-mona-sans.txt'), /Reserved Font Name "Mona"/);
-  assert.match(await read('src/fonts/LICENSE-red-hat-mono.txt'), /Open Font License/);
+  assert.match(await read('src/components/base.css'), /font-synthesis-style: none/);
+});
+
+test('a design file value names its shipped typeface, and only used typefaces are found', () => {
+  for (const { family, value } of TYPEFACES) {
+    assert.deepEqual(shippedIn(derive(inputs({ typefaces: { main: value } })).typefaces).map((face) => face.family), [family]);
+  }
+  assert.deepEqual(shippedIn(derive(inputs({ typefaces: { main: 'Georgia, serif' } })).typefaces), []);
+  assert.deepEqual(
+    shippedIn(derive(inputs({ typefaces: { main: 'Lora, Georgia, serif', monospace: 'Red Hat Mono' } })).typefaces).map((face) => face.family),
+    ['Lora', 'Red Hat Mono'],
+  );
 });

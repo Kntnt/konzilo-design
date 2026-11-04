@@ -5,4 +5,26 @@
   .kn-breadcrumbs a { color: var(--kn-text); text-decoration: none; }
   .kn-breadcrumbs a:hover { text-decoration: underline; text-underline-offset: 0.18em; }
   .kn-breadcrumbs-separator::before { content: "/"; display: inline-block; margin-inline: 0.65em; }
+  .kn-breadcrumbs[data-kn-separator="chevron"] .kn-breadcrumbs-separator::before { content: "\203A"; }
+  .kn-breadcrumbs[data-kn-separator="arrow"] .kn-breadcrumbs-separator::before { content: "\2192"; }
+  .kn-breadcrumbs[data-kn-separator="dot"] .kn-breadcrumbs-separator::before { content: "\00B7"; }
+  .kn-breadcrumbs[data-kn-separator="chevron"]:dir(rtl) .kn-breadcrumbs-separator::before { content: "\2039"; }
+  .kn-breadcrumbs[data-kn-separator="arrow"]:dir(rtl) .kn-breadcrumbs-separator::before { content: "\2190"; }
+  /* The first step as a house: its word stays for those who hear the page. */
+  .kn-breadcrumbs-house { display: none; }
+  .kn-breadcrumbs[data-kn-home="icon"] .kn-breadcrumbs-house { display: inline-block; vertical-align: -0.125em; inline-size: 1.15em; block-size: 1.15em; }
+  .kn-breadcrumbs[data-kn-home="icon"] .kn-breadcrumbs-house + .kn-breadcrumbs-label { position: absolute; inline-size: 0.0625rem; block-size: 0.0625rem; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .kn-breadcrumbs[data-kn-current="false"] > ol > li:last-child { display: none; }
+  /* On a narrow screen a long trail takes room from the heading, so only the way up one level remains. */
+  @media (width <= 40rem) {
+    .kn-breadcrumbs[data-kn-narrow="parent"] > ol > li { display: none; }
+    .kn-breadcrumbs[data-kn-narrow="parent"] > ol > li:nth-last-child(2) { display: inline-flex; }
+    .kn-breadcrumbs[data-kn-narrow="parent"] > ol > li:nth-last-child(2) .kn-breadcrumbs-separator { display: none; }
+    .kn-breadcrumbs[data-kn-narrow="parent"] > ol > li:nth-last-child(2) a::before { content: "\2190"; margin-inline-end: 0.5em; }
+    .kn-breadcrumbs[data-kn-narrow="parent"]:dir(rtl) > ol > li:nth-last-child(2) a::before { content: "\2192"; }
+  }
+  /* A thin band of its own, under the header. */
+  .kn-band.kn-breadcrumb-band { padding-block: 0.75rem; }
+  .kn-breadcrumb-band .kn-breadcrumbs { margin-block: 0; }
+  .kn-hero-text > .kn-breadcrumbs:first-child { margin-block: 0 var(--kn-space-component-gap); }
 }

@@ -1,5 +1,5 @@
 import http from 'node:http';
-import { readFile, writeFile, rename, mkdir, unlink } from 'node:fs/promises';
+import { access, readFile, writeFile, rename, mkdir, unlink } from 'node:fs/promises';
 import {
   resolve as pathResolve,
   dirname,
@@ -10,14 +10,18 @@ import {
 import { spawn } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
 import { buildPresentation, repo } from './build.js';
+import { newDesign, backUp } from './new-design.js';
+import { writeDesignMd } from './design-md.js';
 import { createPresentation } from './presentation.js';
 import {
-  defaultInputs,
   resolve,
   validateDesignFile,
   checkContrast,
 } from '../src/generator/index.js';
 import { withDefaults } from '../src/generator/defaults.js';
+import { componentsCss } from '../src/css/components.js';
+import { PICTURE_SLOTS } from '../presentation/src/samples.js';
+import { OWN_PICTURES_PATH, ownPictureUrls, readOwnPicture, removeOwnPicture, saveOwnPicture } from '../presentation/own-pictures.mjs';
 
 export async function loadDesign(path) {
   try {
@@ -30,12 +34,7 @@ export async function loadDesign(path) {
     };
   } catch (error) {
     if (error.code !== 'ENOENT') throw error;
-    const inputs = defaultInputs();
-    inputs.typefaces.main = 'Mona Sans';
-    return {
-      inputs,
-      project: { name: 'Example', version: '1.0', logo: null, 'logo-dark': null },
-    };
+    return newDesign();
   }
 }
 async function embedLogos(model, path) {
@@ -54,16 +53,20 @@ async function embedLogos(model, path) {
   }
   return model;
 }
-export async function saveDesign(path, model) {
+// A save that would change nothing does not touch the file, so `beforeWrite` runs only for a real write.
+export async function saveDesign(path, model, { beforeWrite } = {}) {
   const resolved = await resolve(model.inputs);
   checkContrast(resolved);
   const file = { inputs: model.inputs, project: model.project, resolved };
   validateDesignFile(file);
+  const text = JSON.stringify(file, null, 2) + '\n';
+  if ((await readFile(path, 'utf8').catch(() => null)) === text) return file;
   await mkdir(dirname(path), { recursive: true });
+  await beforeWrite?.();
   // Rename a complete sibling file so an interrupted save cannot truncate the source.
   const temporary = `${path}.saving-${randomBytes(6).toString('hex')}`;
   try {
-    await writeFile(temporary, JSON.stringify(file, null, 2) + '\n', {
+    await writeFile(temporary, text, {
       flag: 'wx',
     });
     await rename(temporary, path);
@@ -73,6 +76,18 @@ export async function saveDesign(path, model) {
     });
   }
   return file;
+}
+// The words the document uses: the presentation's copy and the design's own override.
+export async function loadCopy(path) {
+  const copy = JSON.parse(await readFile(join(repo, 'presentation/copy.json'), 'utf8'));
+  try {
+    const custom = JSON.parse(await readFile(`${path.replace(/\.[^/.]+$/, '')}.copy.json`, 'utf8'));
+    for (const [key, value] of Object.entries(custom))
+      if (Object.hasOwn(copy, key) && typeof value === 'string') copy[key] = value;
+  } catch (error) {
+    if (error.code !== 'ENOENT') throw error;
+  }
+  return copy;
 }
 function openBrowser(url) {
   const command =
@@ -86,15 +101,16 @@ function openBrowser(url) {
   child.on('error', () => {});
   child.unref();
 }
-export async function startTool({
-  designFile = 'design.design.json',
-  port = 4174,
-  open = true,
-} = {}) {
+export async function startTool({ designFile, port = 4174, open = true }) {
   const path = pathResolve(designFile);
+  const created = !(await access(path).then(() => true, () => false));
   let model = await loadDesign(path);
+  // One backup a run: what the file held when this run first changed it. A file this run made has nothing to keep.
+  let backedUp = created;
   const previewDir = join(repo, 'node_modules/.cache/konzilo-tool');
-  const { preview } = await buildPresentation({ output: previewDir });
+  const { preview, catalogue } = await buildPresentation({ output: previewDir });
+  const copy = await loadCopy(path);
+  const components = await componentsCss();
   const token = randomBytes(24).toString('hex');
   let lastPresentation;
   let busy = false;
@@ -103,6 +119,8 @@ export async function startTool({
     '.js': 'text/javascript; charset=utf-8',
     '.css': 'text/css; charset=utf-8',
     '.json': 'application/json; charset=utf-8',
+    '.woff2': 'font/woff2',
+    '.webp': 'image/webp',
   };
   const server = http.createServer(async (req, res) => {
     const json = (status, value) => {
@@ -126,12 +144,22 @@ export async function startTool({
       res.setHeader('X-Content-Type-Options', 'nosniff');
       res.setHeader('Cache-Control', 'no-store');
       if (req.method === 'GET' && url.pathname === '/api/state') {
-        json(200, { ...(await embedLogos(model, path)), token });
+        json(200, { ...(await embedLogos(model, path)), token, copy, path, pictures: await ownPictureUrls(path) });
+        return;
+      }
+      if (req.method === 'GET' && url.pathname === '/tool/components.css') {
+        res.writeHead(200, { 'Content-Type': mime['.css'] });
+        res.end(components);
         return;
       }
       if (req.method === 'GET' && url.pathname === '/preview.html') {
         res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
         res.end(preview);
+        return;
+      }
+      if (req.method === 'GET' && url.pathname === '/catalogue.html') {
+        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+        res.end(catalogue);
         return;
       }
       if (req.method === 'GET' && url.pathname === '/api/presentation-file') {
@@ -146,9 +174,44 @@ export async function startTool({
         res.end(lastPresentation);
         return;
       }
+      if (req.method === 'GET' && url.pathname.startsWith(OWN_PICTURES_PATH)) {
+        const picture = await readOwnPicture(path, url.pathname.slice(OWN_PICTURES_PATH.length));
+        if (!picture) {
+          json(404, { error: 'Not found.' });
+          return;
+        }
+        // The address has a version, and a picture fetched again is a picture decoded again.
+        res.writeHead(200, { 'Content-Type': picture.type, 'Cache-Control': 'max-age=3600' });
+        res.end(picture.bytes);
+        return;
+      }
+      if (url.pathname === '/api/picture' && ['POST', 'DELETE'].includes(req.method)) {
+        const slot = url.searchParams.get('slot');
+        if (req.headers['x-konzilo-token'] !== token) {
+          json(403, { error: 'Invalid local session.' });
+          return;
+        }
+        if (!PICTURE_SLOTS.includes(slot)) {
+          json(400, { error: 'Unknown picture place.' });
+          return;
+        }
+        if (req.method === 'DELETE') await removeOwnPicture(path, slot);
+        else {
+          const parts = [];
+          let size = 0;
+          for await (const chunk of req) {
+            size += chunk.length;
+            if (size > 15 * 1024 * 1024) throw new Error('A picture may be at most 15 MB.');
+            parts.push(chunk);
+          }
+          await saveOwnPicture(path, slot, Buffer.concat(parts));
+        }
+        json(200, { pictures: await ownPictureUrls(path) });
+        return;
+      }
       if (
         req.method === 'POST' &&
-        ['/api/save', '/api/presentation'].includes(url.pathname)
+        ['/api/save', '/api/presentation', '/api/design-md'].includes(url.pathname)
       ) {
         if (
           req.headers['x-konzilo-token'] !== token ||
@@ -168,10 +231,19 @@ export async function startTool({
             throw new Error('Design file exceeds 15 MB.');
         }
         const incoming = JSON.parse(body);
-        await saveDesign(path, incoming);
+        await saveDesign(path, incoming, {
+          beforeWrite: async () => {
+            if (!backedUp) await backUp(path);
+            backedUp = true;
+          },
+        });
         model = { inputs: incoming.inputs, project: incoming.project };
         if (url.pathname === '/api/save') {
           json(200, { path });
+          return;
+        }
+        if (url.pathname === '/api/design-md') {
+          json(200, { path: await writeDesignMd(path) });
           return;
         }
         busy = true;
@@ -190,7 +262,7 @@ export async function startTool({
       }
       const pathname = url.pathname === '/' ? '/tool/index.html' : url.pathname;
       const allowed =
-        /^\/(?:tool\/(?:index\.html|style\.css|app\.js|logic\.js)|src\/(?:generator|css)\/[a-z-]+\.js|schema\/design-file\.schema\.json|package\.json|gallery\/src\/tooltips\.js|presentation\/src\/samples\.js)$/;
+        /^\/(?:presentation\/pictures\/[a-z0-9-]+\.webp|tool\/(?:index\.html|style\.css|app\.js|logic\.js|pages\.js|preview\.js)|src\/(?:generator|css)\/[a-z-]+\.js|src\/design-md\/components\.js|src\/components\/footer-models\.js|presentation\/src\/catalog\.js|src\/fonts\/(?:fonts\.css|catalog\.js|[A-Za-z0-9-]+\.woff2)|schema\/design-file\.schema\.json|package\.json|gallery\/src\/tooltips\.js|presentation\/src\/samples\.js)$/;
       if (!allowed.test(pathname)) {
         json(404, { error: 'Not found.' });
         return;
@@ -198,6 +270,7 @@ export async function startTool({
       const source = await readFile(join(repo, pathname.slice(1)));
       res.writeHead(200, {
         'Content-Type': mime[extname(pathname)] || 'application/octet-stream',
+        ...(extname(pathname) === '.webp' ? { 'Cache-Control': 'max-age=3600' } : {}),
       });
       res.end(source);
     } catch (error) {
@@ -206,15 +279,27 @@ export async function startTool({
     }
   });
   await new Promise((done, fail) => {
-    server.once('error', fail);
+    server.once('error', (error) =>
+      fail(
+        error.code === 'EADDRINUSE'
+          ? new Error(`Port ${port} is in use, probably by another copy of the tool. Stop that one, or choose another port with --port.`)
+          : error,
+      ),
+    );
     server.listen(port, '127.0.0.1', done);
   });
+  if (created)
+    await saveDesign(path, model).catch((error) => {
+      server.close();
+      throw error;
+    });
   const url = `http://127.0.0.1:${server.address().port}`;
   if (open) openBrowser(url);
   return {
     server,
     url,
     path,
+    created,
     close: () =>
       new Promise((done, fail) =>
         server.close((error) => (error ? fail(error) : done())),

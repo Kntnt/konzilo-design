@@ -1,5 +1,6 @@
 // Lucide inner SVG markup; ISC licence in LICENSE-lucide.txt.
 export const icons = {
+  "house": "<path d=\"M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8\" />\n  <path d=\"M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z\" />",
   "cookie": "<path d=\"M11 17h.01\" />\n  <path d=\"M11.496 2c.324-.016.558.292.529.615a4 4 0 004.235 4.368.713.713 0 01.758.757 4 4 0 004.366 4.237c.323-.03.63.204.614.527a10 10 0 01-2.915 6.566A1 1 0 114.93 4.918 10 10 0 0111.496 2\" />\n  <path d=\"M12 12h.01\" />\n  <path d=\"M16 16h.01\" />\n  <path d=\"M16 3h.01\" />\n  <path d=\"M21 4h.01\" />\n  <path d=\"M21 8h.01\" />\n  <path d=\"M7 14h.01\" />\n  <path d=\"M9 8h.01\" />",
   "arrow-right": "<path d=\"M5 12h14\" />\n  <path d=\"m12 5 7 7-7 7\" />",
   "arrow-up-right": "<path d=\"M7 7h10v10\" />\n  <path d=\"M7 17 17 7\" />",

@@ -1,9 +1,12 @@
 import { readFile, writeFile, readdir } from 'node:fs/promises';
-import { join, resolve, relative } from 'node:path';
+import { extname, join, resolve, relative } from 'node:path';
 import { rolldown } from 'rolldown';
 import * as csstree from 'css-tree';
 import { componentsCss } from '../src/css/components.js';
 import { coreCss } from '../src/css/index.js';
+import { shippedIn } from '../src/fonts/catalog.js';
+import { PICTURE_URL } from './src/samples.js';
+import { OWN_PICTURES_PATH, PICTURE_TYPES, readOwnPicture } from './own-pictures.mjs';
 
 export async function forcedStates() {
   const tree = csstree.parse(await componentsCss());
@@ -20,8 +23,14 @@ export async function forcedStates() {
   return csstree.generate(tree);
 }
 
-async function fontCss() {
-  let css = await readFile(new URL('../src/fonts/fonts.css', import.meta.url), 'utf8');
+// A presentation carries only the typefaces its design uses: all of them would weigh megabytes.
+async function fontCss(resolved) {
+  const families = new Set(shippedIn(resolved.typefaces).map(({ family }) => family));
+  const all = await readFile(new URL('../src/fonts/fonts.css', import.meta.url), 'utf8');
+  let css = all.split('\n').filter((line) => {
+    const name = line.match(/^@font-face \{ font-family: "([^"]+)"/)?.[1];
+    return name && families.has(name);
+  }).join('\n');
   for (const match of [...css.matchAll(/url\("(.+?)"\)/g)]) {
     const bytes = await readFile(new URL(`../src/fonts/${match[1]}`, import.meta.url));
     css = css.replace(match[0], `url("data:font/woff2;base64,${bytes.toString('base64')}")`);
@@ -29,10 +38,18 @@ async function fontCss() {
   return css;
 }
 
+// A stock photo from this folder, or a design's own from the one beside its file.
+async function pictureData(url, designFile) {
+  const own = url.startsWith(OWN_PICTURES_PATH) && await readOwnPicture(designFile, url.slice(OWN_PICTURES_PATH.length));
+  const bytes = own ? own.bytes : await readFile(new URL(`.${url.replace('/presentation', '')}`, import.meta.url));
+  const type = own ? own.type : PICTURE_TYPES[extname(url)];
+  return `data:${type};base64,${bytes.toString('base64')}`;
+}
+
 const safeJson = (value) => JSON.stringify(value).replaceAll('<', '\\u003c');
 const safeScript = (value) => value.replace(/<\/script/gi, '<\\/script');
 
-export async function inlineBuild(directory, resolved) {
+export async function inlineBuild(directory, resolved, designFile) {
   const root = resolve(directory);
   const local = (path) => {
     if (/^(?:[a-z]+:|\/\/)/i.test(path)) throw new Error(`External build asset refused: ${path}`);
@@ -40,7 +57,7 @@ export async function inlineBuild(directory, resolved) {
     if (relative(root, target).startsWith('..')) throw new Error('Build asset escapes output');
     return target;
   };
-  const shared = [coreCss(resolved), await componentsCss(), await fontCss(), await forcedStates()].join('\n');
+  const shared = [coreCss(resolved), await componentsCss(), await fontCss(resolved), await forcedStates()].join('\n');
   const scripts = [];
   const styles = [];
   const bundleCache = new Map();
@@ -90,12 +107,20 @@ export async function inlineBuild(directory, resolved) {
     if (!body) throw new Error(`Specimen has no body: ${entry}`);
     specimens[entry] = { body, scripts: source.scripts, styles: source.styles };
   }
-  const data = { specimens, styles: [...styles], scripts: [...scripts] };
+  // Every component on one page is for the tool; the report shows them one at a time.
+  const catalogue = specimens.catalogue;
+  delete specimens.catalogue;
   const main = await extract(await readFile(join(root, 'index.html'), 'utf8'));
-  let html = main.html.replace('</head>', () => `<style id="kn-shared">${shared}</style>${main.styles.map((index) => `<style>${styles[index]}</style>`).join('')}</head>`);
+  // The report keeps one copy of each picture, and a specimen takes it when it opens.
+  const pictures = {};
+  const used = [...JSON.stringify(specimens).matchAll(PICTURE_URL), ...main.html.matchAll(PICTURE_URL)];
+  for (const url of new Set(used.map(([found]) => found))) pictures[url] = await pictureData(url, designFile);
+  const data = { specimens, styles: [...styles], scripts: [...scripts], pictures };
+  let html = main.html.replace(PICTURE_URL, (url) => pictures[url]).replace('</head>', () => `<style id="kn-shared">${shared}</style>${main.styles.map((index) => `<style>${styles[index]}</style>`).join('')}</head>`);
   html = html.replace('</body>', () => `<script id="kn-specimen-data" type="application/json">${safeJson(data)}</script>${main.scripts.map((index) => `<script>${scripts[index]}</script>`).join('')}</body>`);
-  const preview = specimens.preview;
-  const previewHtml = `<!doctype html><html lang="en"><head><meta charset="utf-8"><style>${shared}\n${preview.styles.map((index) => styles[index]).join('\n')}</style><style id="kn-live-core"></style></head>${preview.body}${preview.scripts.map((index) => `<script>${scripts[index]}</script>`).join('')}</html>`;
+  const standalone = ({ body, styles: own, scripts: run }) => `<!doctype html><html lang="en"><head><meta charset="utf-8"><style>${shared}\n${own.map((index) => styles[index]).join('\n')}</style><style id="kn-live-core"></style></head>${body}${run.map((index) => `<script>${scripts[index]}</script>`).join('')}</html>`;
+  const previewHtml = standalone(specimens.preview);
+  const catalogueHtml = standalone(catalogue);
   await writeFile(join(root, 'index.html'), html);
-  return { html, preview: previewHtml };
+  return { html, preview: previewHtml, catalogue: catalogueHtml };
 }

@@ -2,7 +2,7 @@
 
 Records the footer model and attachment, with their status and reasoning.
 
-**Owner, approved 2026-10-31 ("Ser bra ut"):** the footer model, with the reference implementation and its 24 variants. In short:
+**Owner, approved 2026-10-31 ("Ser bra ut"):** the footer model and its 24 variants. In short:
 
 - Up to four bands, each on one colour; a band with no cells is not rendered.
 - Columns A, a third, and B, two thirds, inside the content area; B's content pushed to the end edge as a block.
@@ -11,7 +11,7 @@ Records the footer model and attachment, with their status and reasoning.
 - Optional hairlines, never between colours or through a merged cell, stopping at the content by default. A hairline over column B alone therefore starts at the B block's start edge, not at the column's (*decided* 2026-11-02, the owner found it running too far past the text).
 - On narrow screens, each run stacks its A cells before its B cells, and a row spanning both columns is a unit of its own.
 
-**Known flaw, resolved 2026-11-01:** the reference implementation stacks with CSS `order`, so reading and keyboard order do not follow the stacking order. `Footer.astro` writes the cells in stacking order and places them on the wide grid with named lines and explicit rows; its one-column layout keeps that document order.
+**Stacking (resolved 2026-11-01):** CSS `order` would part reading and keyboard order from the stacking order, so `Footer.astro` writes the cells in stacking order and places them on the wide grid with named lines and explicit rows; its one-column layout keeps that document order.
 
 ### Attachment
 
@@ -36,6 +36,8 @@ Two further points, taken with the owner one at a time (2026-10-31):
 - **Short pages** (*decided*; he welcomed the catch): on a page shorter than the window, the footer stands at the window's bottom edge under both values. The space between the last content and the footer is the page's surface, below the last band. It follows from the page model (page.md), where nothing behind the page ever shows; and on a short page `flow` and `reveal` look alike, since the whole footer shows at once.
 - **A visible edge under `reveal`** (*decided*): the page's bottom edge always shows, or the footer's content seems to appear out of nothing behind an invisible line. It shows by a colour change between the page's last band and the footer's first, the page's shadow on the footer, or the line at the page's bottom edge; where the bands have the same colour and neither shadow nor line is chosen, the component adds the shadow. The cost, accepted: no reveal without a visible edge.
 
-The reference implementation already behaves as `reveal`, falling back when the footer does not fit; it does not yet do invariant 4, the short-page point or the automatic shadow. **Resolved in the real component, 2026-11-01:** `Footer.astro`, `footer.js` and the Page implement all six invariants and both further points. Reveal eligibility is continually measured, keyboard focus uncovers the footer, short pages grow on the page Surface and an equal-colour reveal edge gets the Page’s shadow automatically, with its hairline when the shadow is off. Footer layout is calculated at build time, so runs, merged cells, hairlines and stacking need no script. The assistant’s technical choices and validation limits are in components.md.
+**Built 2026-11-01:** `Footer.astro`, `footer.js` and the Page implement all six invariants and both further points. Reveal eligibility is continually measured, keyboard focus uncovers the footer, short pages grow on the page Surface and an equal-colour reveal edge gets the Page’s shadow automatically, with its hairline when the shadow is off. Footer layout is calculated at build time, so runs, merged cells, hairlines and stacking need no script. The assistant’s technical choices and validation limits are in components.md.
 
-**Related, already in the model:** the page's shadow on the footer (a toggle in the reference implementation; page.md, point 4), and the line above the footer, drawn only when the first band has the page's colour and the page casts no shadow.
+**Settings in the design** (the owner's wish, 2026-11-03; the assistant chose the details while the owner was away, for review): the design file's `footer` holds a model, the main colour and the thin band's colour, lines between rows and between columns, where lines end, and the attachment. The models are six of the approved variants with a job to do, in `footer-models.js`: one band; two rows; two rows with a thin band; a statement across both columns above the rest; a tall left column; a tall right column. The other approved variants were tests of the layout's rules, which still hold. In the tool's preview, `footer-html.js` writes the same markup as `Footer.astro`, and a test holds the two together.
+
+**Related, already in the model:** the page's shadow on the footer (page.md, point 4), and the line above the footer, drawn only when the first band has the page's colour and the page casts no shadow.

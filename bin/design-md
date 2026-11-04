@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# Writes a design file as DESIGN.md, the open format for describing a design system to an AI agent.
+# Usage: design-md <design-file> [-o out.md]
+set -euo pipefail
+source "$(dirname "$(realpath "${BASH_SOURCE[0]}")")/lib/design-file.sh"
+
+need_file "$@"
+exec node "$konzilo" design-md "$@"

@@ -1,0 +1,5 @@
+/* The gallery shows the library with its two defaults, and does not carry every shipped typeface. */
+@font-face { font-family: "Mona Sans"; src: url("../../src/fonts/MonaSans-VF.woff2") format("woff2"); font-weight: 200 900; font-stretch: 75% 125%; font-style: normal; font-display: swap; }
+@font-face { font-family: "Mona Sans"; src: url("../../src/fonts/MonaSans-Italic-VF.woff2") format("woff2"); font-weight: 200 900; font-stretch: 75% 125%; font-style: italic; font-display: swap; }
+@font-face { font-family: "Geist Mono"; src: url("../../src/fonts/GeistMono-VF.woff2") format("woff2"); font-weight: 100 900; font-style: normal; font-display: swap; }
+@font-face { font-family: "Geist Mono"; src: url("../../src/fonts/GeistMono-Italic-VF.woff2") format("woff2"); font-weight: 100 900; font-style: italic; font-display: swap; }

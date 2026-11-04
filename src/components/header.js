@@ -247,6 +247,7 @@ export function setupHeaders(root = document) {
       initialized.delete(header);
     };
     initialized.set(header, dispose);
+    header.addEventListener('kn:dispose', dispose, { once: true });
     return dispose;
   });
   return () => disposers.forEach((dispose) => dispose());
