@@ -338,7 +338,7 @@ Load the generated core and `@kntnt/konzilo-design/components.css` once per
 site. Astro components import no CSS themselves; individual `.astro` files
 are exported under `@kntnt/konzilo-design/components/*`. Astro ^7 is an
 optional peer for consumers using those wrappers. A Konzilo site takes all this
-through `fromDesign` (docs/spec/konzilo.md).
+through `fromDesign` (docs/spec/konzilo.md), and its `konzilo.css` adds a layer of its own after these, `kn-konzilo`.
 
 `:root` also gets two literals, `--kn-theme-primary`, the primary brand seed exactly,
 and `--kn-theme-base`, the page's background in light mode, from `resolved.theme`. The

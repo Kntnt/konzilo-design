@@ -62,7 +62,11 @@ It does not return `presentations`, since a site registers its own, or `bodyClas
 
 ## `konzilo.css`
 
-`@kntnt/konzilo-design/konzilo.css`. Every rule stands in the `kn-components` layer and uses the roles of the Surface it stands on, so it works in both modes and a site's unlayered CSS overrides it. It also styles what the core's reader writes into a body with no class of its own: figures, galleries, code blocks with their `--astro-code-*` colours, task lists and footnotes. `:root` gets `--konzilo-lightbox-overlay`, `--konzilo-lightbox-text` and `--konzilo-lightbox-control`.
+`@kntnt/konzilo-design/konzilo.css`. It uses the roles of the Surface a thing stands on, so it works in both modes, and a site's unlayered CSS overrides it. It also styles what the core's reader writes into a body with no class of its own: figures, galleries, code blocks with their `--astro-code-*` colours, task lists and footnotes. `:root` gets `--konzilo-lightbox-overlay`, `--konzilo-lightbox-text` and `--konzilo-lightbox-control`.
+
+Its rules on the core's classes stand in a layer of their own, `kn-konzilo`, after `kn-components`. A form, a pager or a list of results stands in body text, whose rules are as strong as these, and a site's stylesheets do not reach a page in a set order: on a real build `components.css` comes after `konzilo.css`, which gave a pager the body's underlined links. Its rules on what the reader writes with no class stand in `kn-components`, below any rule with a class.
+
+`test/fixtures/konzilo-page.html` is what the core really writes, fragments of a built site from its template with made-up content, and the tests also hold it against this library's own Form, Field, ConsentBanner, Embed and Pagination, property by property. Search's and a preview's states are in it too. The core writes no `:disabled` field: in a preview only its button is disabled.
 
 **The lightbox** stands inside a body's wrapper, so the rules of `.kn-body-text` and the reset reach into it. The core's `modal.css` has no layer, so it beats every rule of this library on what it names: the margins and padding of its list, items, figure and words, the colour and size of its words, and the size of its image and buttons. `konzilo.css` takes back what it does not name: a link's colour and focus ring in a caption, inline code's fill and an image's corners. A gallery's crop on the page does not reach the dialog, which stands beside the gallery and not in it.
 
@@ -104,19 +108,28 @@ The core gives a menu as plain data, entries of `{ title, url, items }`, and its
 
 ## How a site takes its design
 
-From this repository, for each version:
+This starts from the core's site template, as `bin/new-site` makes it, in a folder here called `my-site`.
+
+From this repository, for each version, and then for each design. The tool creates the design file at the first change saved:
 
 ```bash
-npm pack --pack-destination ~/Projects/my-site/vendor        # kntnt-konzilo-design-<version>.tgz
+mkdir -p ~/Projects/my-site/vendor
+npm pack --pack-destination ~/Projects/my-site/vendor
+bin/design-tool ~/Projects/my-site/design/site.design.json
 node bin/konzilo-design.js fonts ~/Projects/my-site/design/site.design.json
 ```
 
-In the site, with the tarball and the fonts and logos folders committed:
+In the site, with the tarball, the design file and the fonts and logos folders committed:
 
 ```bash
 npm install ./vendor/kntnt-konzilo-design-<version>.tgz
 npx konzilo-design logos design/site.design.json
+rm -r src/styles
 ```
+
+**The template's stylesheets go,** with their imports in `src/layouts/Site.astro`, `src/components/List.astro`, `Cards.astro` and `Form.astro`. They have no layer, so they would beat `konzilo.css`, and they read custom properties nothing declares any more: a form's fields lose their borders and its button its fill. What the template's own classes looked like goes with them (What a site needs, below).
+
+In its configuration, `fromDesign` takes the place of `bodyStyles` and `tokens`, and the rest stays:
 
 ```js
 // astro.config.mjs
@@ -124,40 +137,58 @@ import { defineConfig } from 'astro/config';
 import konzilo from '@kntnt/konzilo/astro';
 import { fromDesign } from '@kntnt/konzilo-design/konzilo';
 
+// Every page is built for the site's public host, which the build's environment names.
+process.env.KONZILO_ORIGIN ??= 'http://localhost:4321';
+
 export default defineConfig({
   integrations: [konzilo({
     ...await fromDesign('./design/site.design.json'),
-    presentations: { list: './src/components/List.astro' },
+    presentations: { list: './src/components/List.astro', cards: './src/components/Cards.astro' },
+    directives: { form: './src/components/Form.astro' },
+    searchPage: './src/components/SearchPage.astro',
+    termPage: './src/components/TermPage.astro',
   })],
   markdown: { shikiConfig: { theme: 'css-variables' } },   // Code blocks take their colours from konzilo.css.
+  devToolbar: { enabled: false },
 });
 ```
+
+Its layout:
 
 ```astro
 ---
 // src/layouts/Site.astro
 import design from '../../design/site.design.json';
+import { publicSite } from '@kntnt/konzilo/astro';
+import Head from '@kntnt/konzilo/astro/Head.astro';
 import ConsentBanner from '@kntnt/konzilo/astro/ConsentBanner.astro';
 import ConsentControls from '@kntnt/konzilo/astro/ConsentControls.astro';
+import { siteMenu } from '@kntnt/konzilo/astro/site-settings';
 import Page from '@kntnt/konzilo-design/components/Page.astro';
 import Header from '@kntnt/konzilo-design/components/Header.astro';
 import Footer from '@kntnt/konzilo-design/components/Footer.astro';
-import { siteMenu } from '@kntnt/konzilo/astro/site-settings';
 import { footerFromDesign, headerProps, logoAddresses, menuProps, pageProps } from '@kntnt/konzilo-design/design-props';
 import '@kntnt/konzilo-design/components.css';
 
-const { header, footer, page } = design.resolved;
+const { entry, title, page } = Astro.props;
+const { header, footer, page: pageSettings } = design.resolved;
 const base = import.meta.env.BASE_URL;
 const logos = logoAddresses(design.project, { base });
 const menu = menuProps(await siteMenu('main', Astro.url), { current: Astro.url.pathname, base });
-const content = { upper: { /* what stands in each cell the design has on */ }, lower: { /* but the two below */ } };
+const search = { action: `${base}search/`, label: 'Search' };
+// What stands in each cell the design has on, but the two the consent controls fill. A cell given nothing stays empty.
+const content = { upper: { a1: { text: design.project.name } } };
 ---
-<html lang="en">
-  <head><!-- the core's Head --></head>
+<html lang={publicSite(Astro.url).languageTag}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <Head entry={entry} title={title} page={page} />
+  </head>
   <body>
     <ConsentBanner />
-    <Page {...pageProps(page)}>
-      <Header {...headerProps(header, design.project, { menu, logos, home: base })} slot="header" />
+    <Page {...pageProps(pageSettings)}>
+      <Header {...headerProps(header, design.project, { menu, logos, search, home: base })} slot="header" />
       <slot />
       <Footer {...footerFromDesign(footer, content)} slot="footer">
         <ConsentControls slot="lower-a2" buttons={false} />
@@ -168,7 +199,41 @@ const content = { upper: { /* what stands in each cell the design has on */ }, l
 </html>
 ```
 
-A template wraps a post's body in the library's body text, `<BodyText><Body post={entry}><Content /></Body></BodyText>`, and Page holds the page's one `<main>`. `components.css` holds what `body-styles.css` holds again, to no harm. `design-props` also gives `identityProps`, `heroProps`, `nextHeadingProps` and `breadcrumbProps`, each taking the site's own content, and `footerBrand`.
+Page holds the page's one `<main>`, so a template's `<main>` goes. In its place, and in place of `class="body-text"`, what a template shows stands in a Band, in the library's body text at a width, which body text has none of by itself. The wrapper stands directly around what the body writes, since a bare table takes its scrolling from that:
+
+```astro
+---
+// src/pages/[...page].astro, in part
+import Band from '@kntnt/konzilo-design/components/Band.astro';
+import BodyText from '@kntnt/konzilo-design/components/BodyText.astro';
+---
+<Site entry={page} page={number}>
+  <Band>
+    <BodyText data-kn-width="narrow">
+      <h1>{page.data.title}</h1>
+      <Body post={page} page={number}><Content /></Body>
+      <CookieDeclaration />
+    </BodyText>
+  </Band>
+</Site>
+```
+
+The core's `Breadcrumbs.astro` writes no class, so a design cannot reach it. The library's takes the same levels:
+
+```astro
+---
+import Breadcrumbs from '@kntnt/konzilo-design/components/Breadcrumbs.astro';
+import { breadcrumbs } from '@kntnt/konzilo/astro/breadcrumbs';
+import { breadcrumbProps } from '@kntnt/konzilo-design/design-props';
+import design from '../../design/site.design.json';
+
+const [home, ...rest] = await breadcrumbs(page, Astro.url);
+const trail = rest.map(({ name, href }, at) => (at === rest.length - 1 ? { label: name } : { label: name, href }));
+---
+<Breadcrumbs {...breadcrumbProps(design.resolved.breadcrumbs, design.project, { trail, home: home.href, homeWord: home.name })} />
+```
+
+`components.css` holds what `body-styles.css` holds again, to no harm. `design-props` also gives `identityProps`, `heroProps` and `nextHeadingProps`, each taking the site's own content, and `footerBrand`, which takes the `logos` above as its `logo`.
 
 ## What a site needs
 
@@ -176,7 +241,7 @@ From this package: the design file, `fromDesign`, `konzilo.css`, the fonts and l
 
 Of its own, since nothing here does it yet:
 
-- Its languages, search and trail in the shapes Header and Breadcrumbs take, from the core's `languageSwitcher()` (`{ url, name, current, language }`), its search and its breadcrumb levels (`{ name, href }`). Only the menu has an adapter so far.
-- The components for its `presentations`, `searchPage` and `termPage`, which it registers by a path or a package's name. This package has ContentLoop and ContentCard, and no presentation built on them for the core's `{ posts, options, empty, pager }`.
+- Its languages, in the shape Header takes, from the core's `languageSwitcher()` (`{ url, name, current, language }`). Only the menu has an adapter so far, and the trail the few lines above.
+- The look of its own `presentations`, `searchPage` and `termPage`. The template's List, Cards and TermPage write classes of the template's, whose styles went with `src/styles`, so they stand unstyled until the site gives them some or replaces them. This package has ContentLoop and ContentCard, and no presentation built on them for the core's `{ posts, options, empty, pager }`.
 - `bodyClass`, which the core does not take yet, so a template writes the wrapper around a body itself.
 - A restart of Astro's dev server after a change to the design, which it does not watch.

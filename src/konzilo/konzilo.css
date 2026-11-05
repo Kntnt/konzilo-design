@@ -1,9 +1,52 @@
 /* What the Konzilo core writes, in this library's look. On a Konzilo site the core owns the markup and the behaviour of
    consent, embeds, forms, search, the pager and the lightbox, and this file only styles them, with the roles of the
    Surface they stand on and the same look as Field, Form, ConsentBanner, Embed and Pagination.
-   The core's docs/site-design.md lists every class and state, and test/konzilo-css.test.js holds that list. */
-@layer kn-core, kn-base, kn-components;
+   The core's docs/site-design.md lists every class and state, and test/fixtures/konzilo-page.html holds what it writes.
+
+   Most of this stands in a layer of its own, after the components. A form, a pager or a list of results stands in body
+   text, whose rules are as strong as these and may come later, since a site's stylesheets do not reach the page in a set
+   order. What the core's reader writes with no class stands with the components, below any rule with a class. */
+@layer kn-core, kn-base, kn-components, kn-konzilo;
 @layer kn-components {
+  /* An image and a gallery in a body. The core writes a bare figure. These stay below any rule with a class, so a figure of
+     the library's own keeps its look and the lightbox's dialog can have the last word. */
+  :where(.kn-body-text) figure { margin-inline: 0; margin-block: var(--kn-space-column-gap); }
+  :where(.kn-body-text) figure img { display: block; max-inline-size: 100%; block-size: auto; border-radius: var(--kn-radius-card); }
+  :where(.kn-body-text) figcaption { padding-block-start: var(--kn-space-component-gap); color: var(--kn-text-muted); font-size: var(--kn-type-small-size); line-height: var(--kn-type-small-line-height); letter-spacing: var(--kn-type-small-letter-spacing); overflow-wrap: anywhere; }
+
+  /* What the core's reader writes into a body with no class of its own. */
+  .kn-body-text pre {
+    --astro-code-foreground: var(--kn-text);
+    --astro-code-background: var(--kn-background-alt);
+    --astro-code-token-constant: var(--kn-link);
+    --astro-code-token-string: var(--kn-text-muted);
+    --astro-code-token-comment: var(--kn-text-muted);
+    --astro-code-token-keyword: var(--kn-link);
+    --astro-code-token-parameter: var(--kn-text);
+    --astro-code-token-function: var(--kn-link);
+    --astro-code-token-string-expression: var(--kn-text-muted);
+    --astro-code-token-punctuation: var(--kn-text-muted);
+    --astro-code-token-link: var(--kn-link);
+    margin-block: 0 1em;
+    padding: var(--kn-space-plate);
+    overflow-x: auto;
+    background: var(--kn-background-alt);
+    color: var(--kn-text);
+    border-radius: var(--kn-radius-control);
+    font-family: var(--kn-typeface-monospace);
+    font-size: var(--kn-type-small-size);
+    line-height: var(--kn-type-mono-line-height);
+    overflow-wrap: normal;
+  }
+  .kn-body-text pre code { font-size: inherit; }
+  .kn-body-text blockquote cite { display: block; margin-block-start: 0.5em; font-size: var(--kn-type-small-size); font-style: normal; }
+  .kn-body-text .contains-task-list { padding-inline-start: 0; list-style: none; }
+  .kn-body-text .task-list-item input { inline-size: 1.1em; block-size: 1.1em; margin-block: 0; margin-inline: 0 0.6em; accent-color: var(--kn-accent); color-scheme: light; vertical-align: -0.15em; }
+  .kn-body-text [data-footnotes] { margin-block-start: 2em; padding-block-start: 1em; border-block-start: 1px solid var(--kn-border); color: var(--kn-text-muted); font-size: var(--kn-type-small-size); line-height: var(--kn-type-small-line-height); letter-spacing: var(--kn-type-small-letter-spacing); }
+  /* The footnotes' heading is for a screen reader alone. */
+  .sr-only { position: absolute; inline-size: 0.0625rem; block-size: 0.0625rem; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+}
+@layer kn-konzilo {
   /* The lightbox's dark overlay is the same in both modes, so these are colours, not roles of the page. A photograph
      wants nothing of the design around it. */
   :root {
@@ -98,7 +141,7 @@
   .konzilo-consent-services[open] > summary::before { rotate: 225deg; }
   .konzilo-consent-services > ul { margin: 0; padding: 0; list-style: none; }
   .konzilo-consent-service { padding-block: 0.75em; border-block-start: 1px solid var(--kn-border); }
-  .konzilo-consent-facts { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 0.25em 0.75em; margin: 0; font-size: var(--kn-type-small-size); line-height: var(--kn-type-small-line-height); overflow-wrap: anywhere; }
+  .konzilo-consent-facts { display: grid; grid-template-columns: fit-content(14em) minmax(0, 1fr); gap: 0.25em 0.75em; margin: 0; font-size: var(--kn-type-small-size); line-height: var(--kn-type-small-line-height); overflow-wrap: anywhere; }
   .konzilo-consent-facts dt { font-weight: var(--kn-type-heading-6-weight); }
   .konzilo-consent-facts dd { margin: 0; }
   .konzilo-consent-facts ul { margin: 0; padding-inline-start: 1.25em; }
@@ -108,8 +151,8 @@
   .konzilo-consent-dialog > .konzilo-consent-buttons > .konzilo-consent-secondary { margin-inline-start: auto; }
 
   /* The switch: as the library's, on the input itself, with room for a finger around what is drawn. */
-  .konzilo-consent-switch { appearance: none; display: inline-grid; align-items: center; flex: none; inline-size: 2.6em; block-size: 2.75rem; margin: 0; background: none; border: 0; outline: 0; cursor: pointer; }
-  .konzilo-consent-switch::before { content: ""; grid-area: 1 / 1; block-size: 1.5em; border: 1px solid var(--kn-border-strong); border-radius: 2em; background: var(--kn-background); }
+  .konzilo-consent-switch { appearance: none; display: inline-grid; align-items: center; flex: none; inline-size: 2.6em; block-size: 2.75rem; margin: 0; background: none; border: 0; outline: 0; font: inherit; cursor: pointer; }
+  .konzilo-consent-switch::before { content: ""; grid-area: 1 / 1; inline-size: 2.6em; block-size: 1.5em; border: 1px solid var(--kn-border-strong); border-radius: 2em; background: var(--kn-background); }
   .konzilo-consent-switch::after { content: ""; grid-area: 1 / 1; inline-size: 1.1em; block-size: 1.1em; margin-inline-start: 0.2em; border-radius: 50%; background: var(--kn-text); transition: translate var(--kn-duration-feedback) var(--kn-easing-standard); }
   .konzilo-consent-switch:checked::before { background: var(--kn-button-background); border-color: var(--kn-button-background); }
   .konzilo-consent-switch:checked::after { background: var(--kn-button-text); translate: 1em; }
@@ -143,17 +186,21 @@
   }
   @media (width <= 30rem) {
     .konzilo-consent-facts { grid-template-columns: minmax(0, 1fr); }
-    .konzilo-declaration dl { grid-template-columns: minmax(0, 1fr); }
   }
   @media print {
     .konzilo-consent-banner, .konzilo-consent-dialog, .konzilo-consent-controls .konzilo-consent-buttons, .konzilo-declaration .konzilo-consent-buttons { display: none !important; }
   }
 
   /* The cookie declaration stands in a page's body text, whose styles its headings and tables take. */
-  .konzilo-declaration dl { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 0.25em 1em; margin-block: 0 1em; overflow-wrap: anywhere; }
+  .konzilo-declaration dl { display: grid; grid-template-columns: fit-content(14em) minmax(0, 1fr); gap: 0.25em 1em; margin-block: 0 1em; overflow-wrap: anywhere; }
   .konzilo-declaration dt { font-weight: var(--kn-type-heading-6-weight); }
   .konzilo-declaration dd { margin: 0; }
   .konzilo-declaration dd ul { margin-block: 0; }
+  .konzilo-declaration dd li { margin-block: 0; }
+  @media (width <= 30rem) {
+    .konzilo-declaration dl { grid-template-columns: minmax(0, 1fr); }
+    .konzilo-declaration dd + dt { margin-block-start: 0.5em; }
+  }
   .konzilo-declaration-service { margin-block: var(--kn-space-column-gap); padding-block-start: var(--kn-space-component-gap); border-block-start: 1px solid var(--kn-border); }
   .konzilo-declaration :is(.konzilo-declaration-revised, .konzilo-declaration-no-script, .konzilo-declaration-none) { color: var(--kn-text-muted); }
   .konzilo-declaration :is(.konzilo-declaration-consent, .konzilo-declaration-services, .konzilo-declaration-category, .konzilo-declaration-departures) { margin-block-end: var(--kn-space-column-gap); }
@@ -166,7 +213,7 @@
   .konzilo-form .konzilo-form-field { display: grid; align-content: start; gap: 0.4em; min-inline-size: 0; inline-size: 100%; margin: 0; padding: 0; border: 0; }
   .konzilo-form .konzilo-form-field > label, .konzilo-form legend { color: var(--kn-text); }
   .konzilo-form .konzilo-form-required { color: var(--kn-text-muted); }
-  .konzilo-form :is(input:not([type="checkbox"], [type="radio"], [type="hidden"]), textarea, select) { display: block; inline-size: 100%; min-inline-size: 0; min-block-size: 2.75rem; padding: 0.6em 0.75em; border: 1px solid var(--kn-border-strong); border-radius: var(--kn-radius-control); background-color: var(--kn-background); color: var(--kn-text); font: inherit; }
+  .konzilo-form :where(input:not([type="checkbox"], [type="radio"], [type="hidden"]), textarea, select) { display: block; inline-size: 100%; min-inline-size: 0; min-block-size: 2.75rem; padding: 0.6em 0.75em; border: 1px solid var(--kn-border-strong); border-radius: var(--kn-radius-control); background-color: var(--kn-background); color: var(--kn-text); font: inherit; }
   .konzilo-form textarea { resize: block; }
   /* A browser's own arrow stands too close to the edge, and cannot be moved, so a select draws its own: two strokes in its
      text colour, for no picture file can take that colour, and a policy may refuse a picture written in here. */
@@ -188,7 +235,6 @@
   .konzilo-form :is(.konzilo-form-choice, .konzilo-form-checkbox, .konzilo-form-acceptance) label { cursor: pointer; }
   /* The browser draws these parts itself, and they stay light on every Surface, as on Field. */
   .konzilo-form :is(input[type="checkbox"], input[type="radio"]) { flex: none; inline-size: 1.1em; block-size: 1.1em; margin: 0; accent-color: var(--kn-accent); color-scheme: light; cursor: pointer; }
-  .konzilo-form :is(input, textarea, select):disabled { background-color: var(--kn-background-alt); border-color: var(--kn-border); color: var(--kn-text-muted); cursor: default; }
   .konzilo-form :is(.konzilo-form-help, .konzilo-form-problem) { margin: 0; font-size: var(--kn-type-small-size); line-height: var(--kn-type-small-line-height); letter-spacing: var(--kn-type-small-letter-spacing); }
   .konzilo-form .konzilo-form-help { color: var(--kn-text-muted); }
   .konzilo-form .konzilo-form-problem { color: var(--kn-error); }
@@ -216,11 +262,7 @@
   .konzilo-pager a[aria-current="page"] { background: var(--kn-button-background); color: var(--kn-button-text); }
   .konzilo-pager a:hover { text-decoration: underline; text-underline-offset: 0.18em; }
 
-  /* An image and a gallery in a body. The core writes a bare figure. These stay below any rule with a class, so a figure of
-     the library's own keeps its look and the lightbox's dialog can have the last word. */
-  :where(.kn-body-text) figure { margin-inline: 0; margin-block: var(--kn-space-column-gap); }
-  :where(.kn-body-text) figure img { display: block; max-inline-size: 100%; block-size: auto; border-radius: var(--kn-radius-card); }
-  :where(.kn-body-text) figcaption { padding-block-start: var(--kn-space-component-gap); color: var(--kn-text-muted); font-size: var(--kn-type-small-size); line-height: var(--kn-type-small-line-height); letter-spacing: var(--kn-type-small-letter-spacing); overflow-wrap: anywhere; }
+  /* A gallery in a body: its figures, under the rules for a figure in the layer below. */
   .konzilo-gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 12rem), 1fr)); gap: var(--kn-space-component-gap); }
   .konzilo-gallery > figure { margin: 0; }
   .konzilo-gallery > figure img { inline-size: 100%; aspect-ratio: 4 / 3; object-fit: cover; }
@@ -255,46 +297,16 @@
   .konzilo-search-box, .konzilo-search form { display: flex; flex-wrap: wrap; align-items: center; gap: 0.625rem; }
   :is(.konzilo-search-box, .konzilo-search form) label { position: absolute; inline-size: 0.0625rem; block-size: 0.0625rem; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
   :is(.konzilo-search-box, .konzilo-search form) input { flex: 1 1 11rem; min-inline-size: 0; min-block-size: 2.75rem; padding: 0.625rem 0.75rem; border: 1px solid var(--kn-border-strong); border-radius: var(--kn-radius-control); background: var(--kn-background); color: var(--kn-text); font: inherit; }
-  :is(.konzilo-search-status, .konzilo-search-message, .konzilo-search-preview) { color: var(--kn-text-muted); }
+  :is(.konzilo-search-status, .konzilo-search-message, .konzilo-search-preview) { margin-block: var(--kn-space-component-gap) 0; color: var(--kn-text-muted); }
   .konzilo-search-results { margin: 0; padding: 0; list-style: none; }
   .konzilo-search-result { padding-block: var(--kn-space-component-gap); border-block-end: 1px solid var(--kn-border); }
-  .konzilo-search-result > a { font-weight: var(--kn-type-heading-6-weight); color: var(--kn-text); }
+  .konzilo-search-result { margin: 0; }
+  .konzilo-search-result > a { font-weight: var(--kn-type-heading-6-weight); color: var(--kn-text); text-decoration: none; }
+  .konzilo-search-result > a:hover { text-decoration: underline; text-underline-offset: 0.18em; }
   .konzilo-search-about { margin-block: 0.25em 0; color: var(--kn-text-muted); font-size: var(--kn-type-small-size); line-height: var(--kn-type-small-line-height); letter-spacing: var(--kn-type-small-letter-spacing); }
   .konzilo-search-type { font-weight: var(--kn-type-heading-6-weight); }
   .konzilo-search-snippet { margin-block: 0.5em 0; }
   .konzilo-search-snippet mark { background: var(--kn-background-hover); color: inherit; }
   .konzilo-search-pages { display: flex; flex-wrap: wrap; gap: 0.4em 1.5em; margin-block-start: var(--kn-space-component-gap); }
   .konzilo-search-pages a { display: inline-flex; align-items: center; min-block-size: 2.75rem; }
-
-  /* What the core's reader writes into a body with no class of its own. */
-  .kn-body-text pre {
-    --astro-code-foreground: var(--kn-text);
-    --astro-code-background: var(--kn-background-alt);
-    --astro-code-token-constant: var(--kn-link);
-    --astro-code-token-string: var(--kn-text-muted);
-    --astro-code-token-comment: var(--kn-text-muted);
-    --astro-code-token-keyword: var(--kn-link);
-    --astro-code-token-parameter: var(--kn-text);
-    --astro-code-token-function: var(--kn-link);
-    --astro-code-token-string-expression: var(--kn-text-muted);
-    --astro-code-token-punctuation: var(--kn-text-muted);
-    --astro-code-token-link: var(--kn-link);
-    margin-block: 0 1em;
-    padding: var(--kn-space-plate);
-    overflow-x: auto;
-    background: var(--kn-background-alt);
-    color: var(--kn-text);
-    border-radius: var(--kn-radius-control);
-    font-family: var(--kn-typeface-monospace);
-    font-size: var(--kn-type-small-size);
-    line-height: var(--kn-type-mono-line-height);
-    overflow-wrap: normal;
-  }
-  .kn-body-text pre code { font-size: inherit; }
-  .kn-body-text blockquote cite { display: block; margin-block-start: 0.5em; font-size: var(--kn-type-small-size); font-style: normal; }
-  .kn-body-text .contains-task-list { padding-inline-start: 0; list-style: none; }
-  .kn-body-text .task-list-item input { inline-size: 1.1em; block-size: 1.1em; margin-block: 0; margin-inline: 0 0.6em; accent-color: var(--kn-accent); color-scheme: light; vertical-align: -0.15em; }
-  .kn-body-text [data-footnotes] { margin-block-start: 2em; padding-block-start: 1em; border-block-start: 1px solid var(--kn-border); color: var(--kn-text-muted); font-size: var(--kn-type-small-size); line-height: var(--kn-type-small-line-height); letter-spacing: var(--kn-type-small-letter-spacing); }
-  /* The footnotes' heading is for a screen reader alone. */
-  .sr-only { position: absolute; inline-size: 0.0625rem; block-size: 0.0625rem; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 }
