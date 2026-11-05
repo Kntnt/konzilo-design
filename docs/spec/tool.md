@@ -61,11 +61,12 @@ Records the design system, tool inputs, outputs and design file, with their stat
    - **For code:** the components, HTML and CSS, all of them with all their CSS, in a form a Konzilo site takes in simply and gets exactly what was decided.
    - **For AI agents** (*decided* by the owner, 2026-11-03): `DESIGN.md`, Google Labs' open format, still an alpha, with the tokens, the Surfaces, the components and the rules, so an agent can design pages from the same decisions. The format's own command turns it into DTCG tokens or a Tailwind theme, so those need no export of their own here.
 5. **The design file** (owner's idea; the assistant decided its form, 2026-11-01): the tool's settings produce one JSON file, the source, which is what is handed on; everything else is made from it.
+   - `format`: a required whole number saying how to read the file, raised only when its shape breaks (*decided* by the owner, 2026-11-05; konzilo.md, The three versions).
    - `inputs`: what the tool's controls set, the only part a person changes, through the tool.
    - `project`: the presentation name, optional string `version` (default `1.0`), `logo` and optional `logo-dark`, as data URIs or paths relative to the design file. The document version is independent of the generator version.
    - `resolved`: every value the generator derived (ramps, each plate kind's roles in light and dark mode, type and space steps as min and max, radii, shadows as finished CSS values), with the generator's version, a fingerprint of `inputs` and the contrast check's result.
    - Consumers read `resolved` and need no generator, so a consumer in another language (a future WordPress plugin setting a theme's values) never reimplements the colour maths, and every consumer gets the same values. A file whose `inputs` no longer match the fingerprint is refused. Consumers: the Konzilo package, the presentation, the export, later others. Its own plain format; DESIGN.md (point 4) is how it reaches other tools.
-6. **Where:** the repository `Kntnt/konzilo-design` (private, created 2026-11-01), locally `~/Projects/konzilo-design`; Konzilo sites take it as a pinned package plus their design file, others take the export.
+6. **Where:** the repository `Kntnt/konzilo-design` (private, created 2026-11-01), locally `~/Projects/konzilo-design`; Konzilo sites take it as a tarball in their repository, with the fonts a design uses copied beside its file and the design file itself, read by `fromDesign` in their `astro.config.mjs`, and others take the export (*decided* by the owner, 2026-11-05; konzilo.md has the contract and a how-to).
 
 ## HTML presentation implementation (2026-11-02)
 

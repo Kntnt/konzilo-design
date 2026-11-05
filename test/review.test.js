@@ -16,7 +16,7 @@ test('hover and information roles, status kinds and all their pairs pass varied 
   for (const primary of ['#0f766e', '#facc15', '#1d4ed8', '#dc2626', '#111111', '#fff066', '#ffffff', '#ff00ff', '#00ff00', '#808080']) for (const temperature of [-100, 0, 100]) {
     const inputs = { 'brand-colors': { primary, ...(temperature ? { secondary: '#c76532', tertiary: '#8646b0' } : {}) }, 'gray-temperature': temperature };
     const resolved = await resolve(inputs);
-    validateDesignFile({ inputs, project: {}, resolved }); checkContrast(resolved);
+    validateDesignFile({ format: 1, inputs, project: {}, resolved }); checkContrast(resolved);
     assert.deepEqual(Object.keys(resolved.surfaces), kindsFor(inputs['brand-colors']));
     for (const [kind, modes] of Object.entries(resolved.surfaces)) for (const [mode, surface] of Object.entries(modes)) {
       for (const role of ['text-hover', 'link-hover', 'info']) {
@@ -42,7 +42,7 @@ test('exports refuse missing hover/info roles and stale hover reports', async ()
     (r) => { r.surfaces.brand.dark.roles['background-hover'] = r.surfaces.brand.dark.roles.link; },
     (r) => { r['contrast-check'].matrix.page.light.pairs['link-hover'].ratio += 0.1; },
     (r) => { delete r['contrast-check'].matrix['status-info'].dark.pairs['text-hover']; },
-  ]) { const inputs = defaultInputs(); const resolved = await resolve(inputs); tamper(resolved); await assert.rejects(emitCss({ inputs, resolved, project: {} })); }
+  ]) { const inputs = defaultInputs(); const resolved = await resolve(inputs); tamper(resolved); await assert.rejects(emitCss({ format: 1, inputs, resolved, project: {} })); }
 });
 
 test('every plain and striped table has whole-row feedback and keeps both edge paddings', async () => {

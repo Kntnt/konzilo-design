@@ -1,11 +1,12 @@
 import { checkFingerprint } from '../generator/fingerprint.js';
-import { validateDesignFile } from '../generator/validate.js';
+import { checkFormat, validateDesignFile } from '../generator/validate.js';
 import { number, rem, stepStart } from '../generator/fluid.js';
 import { checkContrast } from '../generator/surface.js';
 import { surfaceCss } from './surface.js';
 
 // This consumer reads the stored resolved values; it never resolves the inputs.
 export async function emitCss(file) {
+  checkFormat(file);
   await checkFingerprint(file);
   validateDesignFile(file);
   checkContrast(file.resolved);
@@ -65,6 +66,9 @@ export function coreCss(r) {
   }
   for (const [name, value] of Object.entries(r.duration)) put(`duration-${name}`, `${value}ms`);
   put('easing-standard', r.easing.standard);
+  // Literals, for a consumer that cannot read light-dark(): the primary seed exactly, and the page in light mode.
+  put('theme-primary', r.theme.primary);
+  put('theme-base', r.theme.base);
   const staged = Object.entries(r.type).filter(([, { features }]) => features?.['from-window'] > 0)
     .map(([name, { features }]) => `@media (min-width: ${rem(features['from-window'])}) {\n  :root { --kn-type-${name}-features: ${features.value}; }\n}\n`).join('');
   return `/* Konzilo framework core and checked Surface contexts. */

@@ -1,0 +1,6 @@
+/* What a post's body needs of the library: one of the stylesheets fromDesign names to a Konzilo site's bodyStyles. A site
+   that uses the library's other components also imports components.css, which holds these again, to no harm. */
+@layer kn-core, kn-base, kn-components;
+@import "../components/base.css";
+@import "../components/body-text.css";
+@import "../components/table.css";

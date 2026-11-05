@@ -9,13 +9,14 @@ import {
   resolve,
   defaultInputs,
   validateDesignFile,
+  withFormat,
   checkContrast,
 } from '../../src/generator/index.js';
 import { withDefaults } from '../../src/generator/defaults.js';
 import { ownPictureUrls } from '../own-pictures.mjs';
 import english from '../copy.json';
 export const designPath = process.env.KN_DESIGN_FILE;
-const source = designPath
+const source = withFormat(designPath
   ? JSON.parse(await readFile(designPath, 'utf8'))
   : {
       inputs: {
@@ -23,7 +24,7 @@ const source = designPath
         typefaces: { ...defaultInputs().typefaces, main: 'Mona Sans' },
       },
       project: { name: 'Example' },
-    };
+    });
 // A build names a design's own photos without a version; the report embeds them from the folder.
 export const ownPictures = designPath ? await ownPictureUrls(designPath, { versioned: false }) : {};
 export const inputs = withDefaults(source.inputs);

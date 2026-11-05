@@ -177,7 +177,7 @@ test('background-alt has fixed recipes and all three checked text pairs across s
   for (const primary of ['#0f766e', '#facc15', '#1d4ed8', '#dc2626', '#111111']) for (const ranked of [false, true]) {
     const inputs = { 'brand-colors': { primary, ...(ranked ? { secondary: '#c76532', tertiary: '#8646b0' } : {}) } };
     const r = await resolve(inputs);
-    validateDesignFile({ inputs, project: {}, resolved: r });
+    validateDesignFile({ format: 1, inputs, project: {}, resolved: r });
     assert.equal(checkContrast(r), true);
     assert.match(coreCss(r), /--kn-background-alt:/);
     for (const [kind, modes] of Object.entries(r.surfaces)) for (const [mode, surface] of Object.entries(modes)) {
@@ -209,7 +209,7 @@ test('exports reject missing alternate roles, failed alternate pairs and stale a
     (r) => { delete r['contrast-check'].matrix.brand.dark.pairs['text-muted-alt']; },
   ]) {
     const inputs = { 'brand-colors': { primary: '#0f766e' } };
-    const file = { inputs, project: {}, resolved: await resolve(inputs) };
+    const file = { format: 1, inputs, project: {}, resolved: await resolve(inputs) };
     tamper(file.resolved);
     await assert.rejects(emitCss(file), /contrast check failed|missing background-alt|missing text-muted-alt/);
   }

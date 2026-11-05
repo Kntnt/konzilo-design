@@ -170,7 +170,7 @@ The gallery uses Page and Band throughout, keeps its client entries bundled and 
 - A table head is not a label. It has the typeface of the rest of the table, generally the main family, as written and in semi-bold.
 - A typeface can carry tuning of its own, in `src/generator/typefaces.js`. Mona Sans takes `ss05` and `ss07` on text from 20px (owner, 2026-10-30): on where a style is always at least 20px, off where it never is, and otherwise from the window where its `clamp()` crosses 20px. Tuning follows the typeface a style has, so it needs the typeface in the design file; a site that changes a typeface in CSS alone also sets that style's `--kn-type-<style>-features`.
 - Rejected: the width axis, and stylistic sets for labels. Mona Sans with a width axis weighs about 150 KB more than without, against 30–39 KB for a whole monospace file, and it exists only in some typefaces. Stylistic sets barely show at label sizes.
-- `src/fonts/` holds the publishers' files, recompressed to WOFF2 at most and otherwise unmodified, since several reserve their names and a subset could not keep them. A site imports `@kntnt/konzilo-design/fonts.css`, and a browser fetches a file only when the page uses that face.
+- `src/fonts/` holds the publishers' files, recompressed to WOFF2 at most and otherwise unmodified, since several reserve their names and a subset could not keep them. A site copies the typefaces its design uses with `konzilo-design fonts` and loads the `fonts.css` written beside them (konzilo.md), and a browser fetches a file only when the page uses that face. The package a site installs holds no fonts.
 
 ## Owner’s component review
 

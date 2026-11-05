@@ -14,14 +14,29 @@
   "bin": {
     "konzilo-design": "./bin/konzilo-design.js"
   },
+  "files": [
+    "bin/konzilo-design.js",
+    "bin/lib/backup.js",
+    "docs/spec/konzilo.md",
+    "docs/spec/names.md",
+    "schema",
+    "src/components",
+    "src/css",
+    "src/design-md",
+    "src/fonts/catalog.js",
+    "src/generator",
+    "src/konzilo"
+  ],
   "exports": {
     "./generator": "./src/generator/index.js",
     "./css": "./src/css/index.js",
     "./design-md": "./src/design-md/index.js",
+    "./design-props": "./src/components/design-props.js",
     "./components/*": "./src/components/*",
     "./components.css": "./src/components/index.css",
-    "./fonts.css": "./src/fonts/fonts.css",
-    "./fonts/*": "./src/fonts/*"
+    "./konzilo": "./src/konzilo/index.js",
+    "./konzilo.css": "./src/konzilo/konzilo.css",
+    "./body-styles.css": "./src/konzilo/body-styles.css"
   },
   "devDependencies": {
     "astro": "7.4.2",

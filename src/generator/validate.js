@@ -31,12 +31,32 @@ function validate(value, rule, path) {
   }
 }
 
+// The shape of a design file, as this version reads it. It is raised only when that shape breaks, and the schema holds
+// the number. `project.version` is a client's review version and `resolved.generator-version` the generator that made
+// the values: neither says how to read the file.
+export const DESIGN_FORMAT = schema.properties.format.const;
+
+// Refuses a file of any other format, in words that say what to do. A file with no number is one from before there were
+// numbers, and writing it once gives it one; a higher number is a file this version cannot know the shape of.
+export function checkFormat(file) {
+  const format = file?.format;
+  if (format === DESIGN_FORMAT) return file;
+  if (format === undefined) throw new Error(`This design file has no format number, and this version of the design system reads format ${DESIGN_FORMAT}. Run "konzilo-design resolve <file>", or make a change to it in the design tool, which writes the number.`);
+  if (Number.isInteger(format) && format > DESIGN_FORMAT) throw new Error(`This design file is format ${format}, and this version of the design system reads format ${DESIGN_FORMAT}. Upgrade @kntnt/konzilo-design to a version that reads format ${format}.`);
+  throw new Error(`This design file says its format is ${JSON.stringify(format)}, and this version of the design system reads format ${DESIGN_FORMAT}. Set "format" to ${DESIGN_FORMAT}, or make the file again in the design tool.`);
+}
+
+// For whatever writes a file or reads only its inputs: a file with no number gets this version's, as a missing input
+// gets its default, and any other is refused. The format stands first in the file.
+export const withFormat = (file) => ({ format: DESIGN_FORMAT, ...(file.format === undefined ? file : checkFormat(file)) });
+
 export function validateInputs(inputs) {
   validate(inputs, schema.$defs.inputs, 'inputs');
   return inputs;
 }
 
 export function validateDesignFile(file) {
+  checkFormat(file);
   validate(file, schema, 'design-file');
   return file;
 }

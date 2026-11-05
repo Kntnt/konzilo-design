@@ -210,6 +210,15 @@ The frame is always solid, off by default, with corners from the corner slider. 
 
 The Reading Area threshold is Narrow + column gap + Aside minimum; it gains no independently named breakpoint. The content area aligns the header, footer and bands. Layout values use rem or relations built from rem; names do not encode dimensions.
 
+### Theme colours
+
+The roles of the page are `light-dark()`, so for a consumer that reads a colour at build time the core also writes these two as literals on plain `:root`, outside any conditional rule. A Konzilo site names them to the core as its theme colours (konzilo.md).
+
+| Name | What it is | Source | Status | Reason |
+|---|---|---|---|---|
+| `--kn-theme-primary` | The primary brand seed, exact, in both modes | Owner and the core's session, 2026-11-05 | *Built* | A seed is not always a step of its ramp, so no role holds it. |
+| `--kn-theme-base` | The page's background in light mode | Owner and the core's session, 2026-11-05 | *Built* | The one page colour a browser's frame and a home-screen icon can take. |
+
 ### Motion
 
 Durations and easing exist in plates.md point 2, but their count, names and values are unspecified. These three global roles are a minimal proposed vocabulary for the header's colour transition and slide, and later component feedback. They do not add a motion input slider.
@@ -249,12 +258,13 @@ These part and option names reserve vocabulary, not component class names. Stick
 
 ## Design file
 
-Top-level sections `inputs`, `project` and `resolved` are already decided (tool.md point 5). Dotted paths below describe nesting, not literal keys containing dots. Every new key is kebab-case. The file is a container for the design system, so keys need no CSS namespace. A flattened CSS name joins the same family and variant words; it need not reproduce JSON punctuation or repeat container keys.
+Top-level sections `format`, `inputs`, `project` and `resolved` are already decided (tool.md point 5). Dotted paths below describe nesting, not literal keys containing dots. Every new key is kebab-case. The file is a container for the design system, so keys need no CSS namespace. A flattened CSS name joins the same family and variant words; it need not reproduce JSON punctuation or repeat container keys.
 
 ### Sections and presentation identity
 
 | Name | What it is | Source | Status | Reason |
 |---|---|---|---|---|
+| `format` | Required whole number saying how to read the file, raised only when its shape breaks | Owner, 2026-11-05; konzilo.md | *Built* | Names what it versions: the file's format, apart from `project.version` and `resolved.generator-version`. |
 | `inputs` | Tool-controlled choices; the only part a person changes, through the tool | tool.md §5 | Working name from spec; decided key | Retains the source contract. |
 | `project` | Presentation identity | tool.md §5 | Working name from spec; decided key | Keeps presentation details apart from design choices. |
 | `resolved` | All derived values read by consumers | tool.md §5 | Working name from spec; decided key | Retains the shared generated-output contract. |
@@ -367,6 +377,7 @@ These proposed containers account for all derived families in tool.md point 5 an
 | `resolved.radius` | control and card radius values | tool.md §5; plates.md §3; proposed here | Proposed here | Exact family and use words from CSS. |
 | `resolved.shadow` | Finished CSS values keyed header, header-panel, panel, page, box and box-lifted | tool.md §§2, 5; proposed here | Proposed here | Exact shadow variants used in CSS; each value includes near and far shadows. |
 | `resolved.frame` | width and colour | tool.md §2; proposed here | Proposed here | Same independent frame family and properties as CSS. |
+| `resolved.theme` | primary, the primary brand seed exact, and base, the light page colour | Owner and the core's session, 2026-11-05 | *Built* | The literals behind `--kn-theme-primary` and `--kn-theme-base`. |
 | `resolved.layout` | wide, side-margin, narrow, aside-min and content-area | plates.md §§2–3; page.md §2; proposed here | Proposed here | Same layout role words, including the computed relation. |
 | `resolved.duration` | feedback and movement times | plates.md §2; proposed here | Proposed here | Same duration family and uses as CSS. |
 | `resolved.easing` | standard curve | plates.md §2; proposed here | Proposed here | Same easing family and variant as CSS. |
@@ -374,7 +385,7 @@ These proposed containers account for all derived families in tool.md point 5 an
 | `resolved.inputs-fingerprint` | Fingerprint of inputs; consumers refuse a mismatch | tool.md §5; proposed here | Proposed here | Names exactly what was fingerprinted. |
 | `resolved.contrast-check` | Contrast-check result | tool.md §5; plates.md §6; proposed here | Proposed here | Names the validation, without presuming a report schema. |
 
-No separate schema-version key, export configuration or component catalogue is invented here. This is a name inventory, not a JSON schema: colour-choice encoding, font-asset records, numeric ranges, report details and serialization of fluid relations still need implementation definitions. The words above do not authorize further input controls.
+No export configuration or component catalogue is invented here, and the format version is `format` (Sections and presentation identity). This is a name inventory, not a JSON schema: colour-choice encoding, font-asset records, numeric ranges, report details and serialization of fluid relations still need implementation definitions. The words above do not authorize further input controls.
 
 ## Naming decisions (2026-11-01)
 
@@ -540,3 +551,7 @@ Content Card (`ContentCard.astro`, `.kn-card.kn-content-card`) and Content Row (
 Visitor Filters uses `variant="filters|search"`; `.kn-visitor-filter-panel`, `select`, `search`, `input` and `submit` name its panel parts. `data-kn-enhanced` hides only the filter panel’s fallback submit control. Shared `.kn-search-box`, `.kn-search-row` and `.kn-search-links` come from Search Panel; header aliases remain for compatibility with its approved appearance.
 
 Consent adds `.kn-consent-actions`, `.kn-consent-settings-header`, `.kn-consent-settings-actions`, `.kn-consent-category-label`, `.kn-consent-category-content`, `.kn-consent-always`, `.kn-consent-close`, `.kn-consent-reopen`, `.kn-switch` and `.kn-switch-track`. Props `policyHref`, `policyLabel`, `maxAgeDays` (182), `reopenButton` (true) and `reopenLabel` identify the policy, expiry and persistent control. `categories[].services[]` contains `name`, `provider`, `thirdParty`, `purpose`, `storage` and `data`. `purpose` must include any onward sharing. `data-kn-max-age-days` supplies retention to the runtime; `data-kn-consent-reopen` relates the persistent Button to its banner. Stored `timestamp` is the choice’s epoch milliseconds, beside `version` and `choices`. Existing consent actions/events and Embed’s shared API remain unchanged. `--kn-consent-height` reserves body/scroll space only on narrow windows.
+
+## Names on a Konzilo site (2026-11-05)
+
+`konzilo.css` styles the core's own `konzilo-*` classes, which the core's `docs/site-design.md` lists, and sets its `--konzilo-lightbox-overlay`, `--konzilo-lightbox-text` and `--konzilo-lightbox-control` on the root. It adds two properties of its own inside its rules, `--kn-form-mark`, the colour of a form outcome's edge, and `--kn-select-stroke`, the line of a select's arrow, and a Footer's `--kn-footer-separator` holds for the consent controls in its cells too. `design-props` adds `logoAddresses`, whose `{ light, dark }` is the shape of Header's and `footerBrand`'s logo, and `menuProps`, named as the other props are. The package exports `./konzilo`, `./konzilo.css`, `./body-styles.css` and `./design-props`, and no longer `./fonts.css` or `./fonts/*`, since the tarball holds no fonts (konzilo.md).

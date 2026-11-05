@@ -1,14 +1,14 @@
 import { withDefaults } from '../src/generator/defaults.js';
 import { readFile, writeFile } from 'node:fs/promises';
 import { basename, dirname, join, resolve as pathResolve } from 'node:path';
-import { resolve, validateDesignFile } from '../src/generator/index.js';
+import { resolve, validateDesignFile, withFormat } from '../src/generator/index.js';
 import { designMd, MARKER } from '../src/design-md/index.js';
 
 // Writes the design as DESIGN.md beside the design file, or where `output` says. It resolves afresh,
 // as the presentation does, and refuses to replace a file it did not write.
 export async function writeDesignMd(designFile, output) {
   const source = pathResolve(designFile);
-  const file = JSON.parse(await readFile(source, 'utf8'));
+  const file = withFormat(JSON.parse(await readFile(source, 'utf8')));
   const resolved = await resolve(file.inputs);
   validateDesignFile({ ...file, resolved });
   const target = pathResolve(output || join(dirname(source), 'DESIGN.md'));

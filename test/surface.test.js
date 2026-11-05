@@ -6,7 +6,7 @@ import {
 } from '../src/generator/index.js';
 import { emitCss } from '../src/css/index.js';
 
-const design = async (inputs = defaultInputs()) => ({ inputs, project: {}, resolved: await resolve(inputs) });
+const design = async (inputs = defaultInputs()) => ({ format: 1, inputs, project: {}, resolved: await resolve(inputs) });
 
 test('every kind and mode passes all required pairs for the example, yellow and near-black brands', async () => {
   const example = JSON.parse(await readFile(new URL('../examples/example.design.json', import.meta.url)));

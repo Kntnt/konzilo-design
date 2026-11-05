@@ -12,4 +12,4 @@ file, and everything else is made from that file:
 - **an export** for everyone else: all the CSS and the HTML of every component, for a site
   built on WordPress or anything else.
 
-Status: being specified. Nothing is built yet.
+A Konzilo site takes the package as `docs/spec/konzilo.md` says.

@@ -16,11 +16,11 @@ plain HTTP preview. Fingerprinting needs a secure context (HTTPS or localhost).
 Keep `package.json` and the schema at their relative locations when serving the source modules.
 
 ```js
-import { defaultInputs, derive, resolve, checkFingerprint } from './src/generator/index.js';
+import { DESIGN_FORMAT, defaultInputs, derive, resolve, checkFingerprint } from './src/generator/index.js';
 import { coreCss, emitCss } from './src/css/index.js';
 
 const inputs = defaultInputs();
-const file = { inputs, project: {}, resolved: await resolve(inputs) };
+const file = { format: DESIGN_FORMAT, inputs, project: {}, resolved: await resolve(inputs) };
 await checkFingerprint(file);
 const css = await emitCss(file);
 const preview = derive(inputs);
@@ -46,10 +46,17 @@ const liveCss = coreCss(preview);
   fingerprint. This is a freshness check, not a signature authenticating `resolved`.
   Consumers must perform it before using stored values; they need no colour or
   scale generation. A generator version change alone does not invalidate a file.
+- `DESIGN_FORMAT` is the design file's format, the required top-level integer that is
+  raised only when the file's shape breaks; the schema holds the number. `checkFormat(file)`
+  returns its argument or refuses a missing or newer format, in words naming both numbers
+  and what to do. `withFormat(file)` is for what writes a file or reads only its inputs: it
+  gives a file with no number this version's, first in the file, and refuses a newer one.
+  docs/spec/konzilo.md, The three versions, says how it differs from `project.version` and
+  `resolved.generator-version`.
 - `validateInputs(inputs)` and `validateDesignFile(file)` return their argument
   or throw. Their small validator implements only the vocabulary used by this
   repository's JSON Schema 2020-12; it is not a general schema validator.
-- `emitCss(file)` checks freshness, schema and the contrast check (re-computing
+- `emitCss(file)` checks the format, freshness, schema and the contrast check (re-computing
   the matrix from the stored colours, so an edited `resolved` is refused), then
   asynchronously returns CSS using the stored resolved values: the global roles
   on `:root`, the Surface kinds, the mode selectors and the widths.
@@ -62,12 +69,12 @@ const liveCss = coreCss(preview);
   Low-level mathematical functions expect valid arguments; input validation occurs
   at `resolve` and consumer boundaries.
 
-The CLI supports `resolve <file>`, `css <file> [-o out.css]`, `check <file>`
-and `components-css [-o out.css]`. The last flattens `src/components/index.css`
+The CLI supports `resolve <file>`, `css <file> [-o out.css]`, `check <file>`,
+`fonts <file> [-o folder]`, `logos <file> [-o folder]` and `components-css [-o out.css]`. The last flattens `src/components/index.css`
 into one stylesheet without imports, for plain HTML.
 Resolve writes a complete result into the same file, preserving its inputs and
-presentation identity. CSS goes to stdout unless an output path is supplied. Check
-validates the file, the fingerprint and the Surface contrast check. Errors go to stderr with a nonzero exit status.
+presentation identity, and its format, or this version's where it has none. CSS goes to stdout unless an output path is supplied. Check
+validates the format, the file, the fingerprint and the Surface contrast check. Fonts copies the typefaces the design uses, and logos writes its logos as files, for a Konzilo site's repository (docs/spec/konzilo.md). Errors go to stderr with a nonzero exit status.
 
 `tool <file> [--port N] [--no-open]` starts the local editor on 127.0.0.1, on the named file or a new design created there.
 A missing file starts with Mona Sans and is created on first save. `presentation <file>
@@ -88,7 +95,7 @@ No component rule changes.
 Optional `project.logo-dark` is a string or null like `logo`. Both accept data
 URIs or SVG/PNG paths relative to the design file; the tool embeds picked files
 and the presentation embeds referenced files at build time. Identity never enters
-the inputs fingerprint.
+the inputs fingerprint. A Konzilo site serves them as files, by `konzilo-design logos`.
 
 Optional `project.version` is a string with presentation/tool default `1.0`. It supplies the approval document version independently of `resolved.generator-version`; it never changes generated values or the inputs fingerprint.
 
@@ -330,7 +337,13 @@ rules beat the core Surface background regardless of selector specificity.
 Load the generated core and `@kntnt/konzilo-design/components.css` once per
 site. Astro components import no CSS themselves; individual `.astro` files
 are exported under `@kntnt/konzilo-design/components/*`. Astro ^7 is an
-optional peer for consumers using those wrappers.
+optional peer for consumers using those wrappers. A Konzilo site takes all this
+through `fromDesign` (docs/spec/konzilo.md).
+
+`:root` also gets two literals, `--kn-theme-primary`, the primary brand seed exactly,
+and `--kn-theme-base`, the page's background in light mode, from `resolved.theme`. The
+roles beside them are `light-dark()`, which a consumer that reads a colour at build time
+cannot read, and a seed is not always a step of its ramp.
 
 All owned custom properties and attributes use `kn-`. Width selectors implement
 narrow, wide, full, bleed-start and bleed-end with logical margins, so directions
@@ -370,7 +383,7 @@ recipe whose typeface has tuning and which reaches its size stores `features`, w
 that size. The emitter writes `--kn-type-<style>-features` for every style, `normal`
 until the tuning applies, and a media query for a crossing.
 
-Optional `inputs.header`, `inputs.footer`, `inputs.page`, `inputs.breadcrumbs` and `inputs.hero` pass with their defaults to `resolved.header`, `resolved.footer`, `resolved.page`, `resolved.breadcrumbs` and `resolved.hero`, for a site to give to its components. They emit no CSS. `inputs.hero` has `height` (`third`, `half`, `two-thirds`, `full`), `picture` (`none`, `behind`, `start`, `end`, `start-bleed`, `end-bleed`), `place` (`top`, `center`, `bottom`), `align` (`start`, `center`, `end`), `surface`, `overlay` and `type`; components.md says what they mean. `inputs.layout.wide` and `.narrow` set the resolved `layout` widths. `inputs.header` has `identity` (`logo`, `name`, `both`), `brand-axis` (`row`, `column`) and `slogan-place` (`beside`, `below`) among its settings; header.md, point 13, says what they mean. `footerFromDesign` in `src/components/footer.js` turns the footer's settings and a site's content into the Footer's props, and `footerBrand` in `src/components/brand.js` writes the brand for a cell, following `header.identity` and `header.brand-axis`.
+Optional `inputs.header`, `inputs.footer`, `inputs.page`, `inputs.breadcrumbs` and `inputs.hero` pass with their defaults to `resolved.header`, `resolved.footer`, `resolved.page`, `resolved.breadcrumbs` and `resolved.hero`, for a site to give to its components. They emit no CSS. `inputs.hero` has `height` (`third`, `half`, `two-thirds`, `full`), `picture` (`none`, `behind`, `start`, `end`, `start-bleed`, `end-bleed`), `place` (`top`, `center`, `bottom`), `align` (`start`, `center`, `end`), `surface`, `overlay` and `type`; components.md says what they mean. `inputs.layout.wide` and `.narrow` set the resolved `layout` widths. `inputs.header` has `identity` (`logo`, `name`, `both`), `brand-axis` (`row`, `column`) and `slogan-place` (`beside`, `below`) among its settings; header.md, point 13, says what they mean. `footerFromDesign` in `src/components/footer.js` turns the footer's settings and a site's content into the Footer's props, and `footerBrand` in `src/components/brand.js` writes the brand for a cell, following `header.identity` and `header.brand-axis`. `src/components/design-props.js`, exported as `@kntnt/konzilo-design/design-props`, holds both, with `identityProps`, `headerProps`, `heroProps`, `nextHeadingProps`, `breadcrumbProps` and `pageProps` for the other settings: each takes a site's own content as arguments, and the presentation's `frame.js` gives them the sample's. `logoAddresses` and `menuProps` there are for a Konzilo site (docs/spec/konzilo.md).
 
 Optional `inputs.type.roles` sets a role's look: `main` (body, lead and small text),
 `heading`, `heading-1`, `display`, `label` and `monospace`, each with optional `weight`,

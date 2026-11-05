@@ -18,12 +18,12 @@ const cli = fileURLToPath(new URL('../bin/konzilo-design.js', import.meta.url));
 const designs = () => SEEDS.flatMap((primary) => [{ primary }, { primary, ...FURTHER }].map((brand) => [`${JSON.stringify(brand)}`, { 'brand-colors': brand }]));
 const isPicture = (kind) => kind.startsWith('picture-');
 const isBand = (kind) => kind !== 'page' && !isPicture(kind);
-const file = async (inputs = defaultInputs()) => ({ inputs, project: {}, resolved: await resolve(inputs) });
+const file = async (inputs = defaultInputs()) => ({ format: 1, inputs, project: {}, resolved: await resolve(inputs) });
 
 test('over the seed list, in both modes, every band stands apart from the page and every contrast pair passes', async () => {
   for (const [name, inputs] of designs()) {
     const resolved = await resolve(inputs);
-    validateDesignFile({ inputs, project: {}, resolved });
+    validateDesignFile({ format: 1, inputs, project: {}, resolved });
     assert.equal(checkContrast(resolved), true, name);
     assert.equal(resolved['contrast-check'].status, 'passed', name);
     for (const [kind, modes] of Object.entries(resolved.surfaces)) for (const mode of MODES) {

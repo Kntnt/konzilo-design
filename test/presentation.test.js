@@ -104,9 +104,9 @@ test('project prose is escaped and never changes resolved output', async () => {
   const inputs = JSON.parse(await readFile('examples/example.design.json', 'utf8')).inputs;
   const resolved = await resolve(inputs);
   const project = { introduction: '<script>alert(1)</script>', contact: { name: 'A reader', email: 'review@example.invalid' }, explanations: { colour: 'First paragraph.\n\nSecond paragraph.' } };
-  validateDesignFile({ inputs, project, resolved });
+  validateDesignFile({ format: 1, inputs, project, resolved });
   assert.deepEqual(resolved, await resolve(inputs));
-  assert.throws(() => validateDesignFile({ inputs, project: { explanations: { unknown: 'x' } }, resolved }));
+  assert.throws(() => validateDesignFile({ format: 1, inputs, project: { explanations: { unknown: 'x' } }, resolved }));
 });
 
 test('offline ZIP reader works from file URLs for normal, primary-only and stress inputs', { timeout: 240000 }, async () => {

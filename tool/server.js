@@ -14,8 +14,10 @@ import { newDesign, backUp } from './new-design.js';
 import { writeDesignMd } from './design-md.js';
 import { createPresentation } from './presentation.js';
 import {
+  DESIGN_FORMAT,
   resolve,
   validateDesignFile,
+  withFormat,
   checkContrast,
 } from '../src/generator/index.js';
 import { withDefaults } from '../src/generator/defaults.js';
@@ -26,7 +28,8 @@ import { OWN_PICTURES_PATH, ownPictureUrls, readOwnPicture, removeOwnPicture, sa
 
 export async function loadDesign(path) {
   try {
-    const file = JSON.parse(await readFile(path, 'utf8'));
+    // A file from before formats had numbers opens as it is, and its next save writes the number.
+    const file = withFormat(JSON.parse(await readFile(path, 'utf8')));
     const resolved = await resolve(file.inputs);
     validateDesignFile({ ...file, resolved });
     return {
@@ -58,7 +61,7 @@ async function embedLogos(model, path) {
 export async function saveDesign(path, model, { beforeWrite } = {}) {
   const resolved = await resolve(model.inputs);
   checkContrast(resolved);
-  const file = { inputs: model.inputs, project: model.project, resolved };
+  const file = { format: DESIGN_FORMAT, inputs: model.inputs, project: model.project, resolved };
   validateDesignFile(file);
   const text = JSON.stringify(file, null, 2) + '\n';
   if ((await readFile(path, 'utf8').catch(() => null)) === text) return file;

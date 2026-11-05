@@ -5,6 +5,7 @@ import * as csstree from 'css-tree';
 import { componentsCss } from '../src/css/components.js';
 import { coreCss } from '../src/css/index.js';
 import { shippedIn } from '../src/fonts/catalog.js';
+import { fontFaceRules } from '../src/konzilo/fonts.js';
 import { PICTURE_URL } from './src/samples.js';
 import { OWN_PICTURES_PATH, PICTURE_TYPES, readOwnPicture } from './own-pictures.mjs';
 
@@ -25,12 +26,8 @@ export async function forcedStates() {
 
 // A presentation carries only the typefaces its design uses: all of them would weigh megabytes.
 async function fontCss(resolved) {
-  const families = new Set(shippedIn(resolved.typefaces).map(({ family }) => family));
   const all = await readFile(new URL('../src/fonts/fonts.css', import.meta.url), 'utf8');
-  let css = all.split('\n').filter((line) => {
-    const name = line.match(/^@font-face \{ font-family: "([^"]+)"/)?.[1];
-    return name && families.has(name);
-  }).join('\n');
+  let css = fontFaceRules(all, shippedIn(resolved.typefaces));
   for (const match of [...css.matchAll(/url\("(.+?)"\)/g)]) {
     const bytes = await readFile(new URL(`../src/fonts/${match[1]}`, import.meta.url));
     css = css.replace(match[0], `url("data:font/woff2;base64,${bytes.toString('base64')}")`);

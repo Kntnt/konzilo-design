@@ -72,11 +72,11 @@ test('the default design\'s resolved JSON and core CSS change only on purpose', 
   const hash = (value) => createHash('sha256').update(value).digest('hex');
   assert.equal(
     hash(JSON.stringify(r)),
-    '6672a0eb15277ad8c29eba3997fffef59cc9d7d4fcc006180be5fa2f03bb5540',
+    '19e03d25a9e85f13564cc309f0a1645b72b742b747ba9e7e25a224449e29c978',
   );
   assert.equal(
     hash(coreCss(r)),
-    'dc4436acaa9bdf59bc7b634d98fa1cfb651e22fe6502f51a78a8dbc85da4c765',
+    '642dbbdcde0909ff7aae56404d45daa5bf67958d1c0431b66a76ddd4dd9414e9',
   );
 });
 
@@ -115,6 +115,7 @@ test('specimen identity uses a labelled logo alone, or the supplied name', () =>
 
 test('document version is optional string metadata and leaves generated values unchanged', async () => {
   const file = {
+    format: 1,
     inputs: defaultInputs(),
     project: {},
     resolved: await resolve(defaultInputs()),
@@ -147,7 +148,7 @@ test('first-heading choices follow, override and tune only their own role', asyn
     coreCss(r),
     /\[data-kn-surface\] \{ --kn-text-heading-1: var\(--kn-accent\); \}/,
   );
-  validateDesignFile({ inputs, project: { 'logo-dark': null }, resolved: r });
+  validateDesignFile({ format: 1, inputs, project: { 'logo-dark': null }, resolved: r });
   inputs.type['heading-1-color'] = 'literal';
   assert.throws(() => validateInputs(inputs), /heading-1-color/);
 });
@@ -218,7 +219,7 @@ test('a new design is plain: one typeface, one colour, no shadows, square corner
   }
   const resolved = await resolve(inputs);
   checkContrast(resolved);
-  validateDesignFile({ inputs, project, resolved });
+  validateDesignFile({ format: 1, inputs, project, resolved });
 });
 
 test('the backup sits beside the file and is written only for a real change', () =>

@@ -5,6 +5,11 @@
   "description": "Numeric lengths are pixels at the default browser setting. Fluid min/max are narrow/wide-window endpoints. CSS is stored in rem; shadow and frame lengths remain px. Missing input leaves use generator defaults. All generated Surfaces have checked roles in both modes. Exports require a passing contrast matrix.",
   "type": "object",
   "properties": {
+    "format": {
+      "type": "integer",
+      "const": 1,
+      "description": "The shape of this file, raised only when that shape breaks. Neither project.version, a client's review version, nor resolved.generator-version, the generator that made the values."
+    },
     "inputs": {
       "$ref": "#/$defs/inputs"
     },
@@ -87,6 +92,7 @@
     }
   },
   "required": [
+    "format",
     "inputs",
     "project",
     "resolved"
@@ -1209,6 +1215,25 @@
           ],
           "additionalProperties": false
         },
+        "theme": {
+          "type": "object",
+          "description": "Literal colours for a consumer that cannot read light-dark(): the primary brand seed, exact, and the light page colour.",
+          "properties": {
+            "primary": {
+              "type": "string",
+              "pattern": "^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$"
+            },
+            "base": {
+              "type": "string",
+              "pattern": "^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$"
+            }
+          },
+          "required": [
+            "primary",
+            "base"
+          ],
+          "additionalProperties": false
+        },
         "layout": {
           "type": "object",
           "properties": {
@@ -1304,6 +1329,7 @@
         "layout",
         "duration",
         "easing",
+        "theme",
         "generator-version",
         "inputs-fingerprint",
         "contrast-check",

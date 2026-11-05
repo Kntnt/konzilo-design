@@ -10,7 +10,7 @@ test('synchronous derivation matches resolution except for its fingerprint, with
   const { 'inputs-fingerprint': fingerprint, ...values } = resolved;
   assert.ok(fingerprint);
   assert.deepEqual(derive(inputs), values);
-  assert.equal(coreCss(resolved), await emitCss({ inputs, project: {}, resolved }));
+  assert.equal(coreCss(resolved), await emitCss({ format: 1, inputs, project: {}, resolved }));
   assert.match(coreCss(resolved), /@layer kn-core, kn-base, kn-components;\s*@layer kn-core \{/);
   const script = `import { derive, defaultInputs } from './src/generator/index.js';
     import { coreCss } from './src/css/index.js';
@@ -26,7 +26,7 @@ test('fixed button recipes and all three contrast pairs pass every kind and mode
   for (const primary of ['#0f766e', '#facc15', '#1d4ed8', '#dc2626', '#111111']) for (const ranked of [false, true]) {
     const inputs = { 'brand-colors': { primary, ...(ranked ? { secondary: '#c76532', tertiary: '#8646b0' } : {}) } };
     const resolved = await resolve(inputs);
-    validateDesignFile({ inputs, project: {}, resolved });
+    validateDesignFile({ format: 1, inputs, project: {}, resolved });
     assert.equal(checkContrast(resolved), true);
     for (const [kind, modes] of Object.entries(resolved.surfaces)) for (const mode of MODES) {
       const surface = modes[mode];
@@ -61,7 +61,7 @@ test('export refuses edited button fills and text, failed pairs and stale button
     (r) => { delete r['contrast-check'].matrix.brand.dark.pairs['button-background']; },
   ]) {
     const inputs = defaultInputs();
-    const file = { inputs, project: {}, resolved: await resolve(inputs) };
+    const file = { format: 1, inputs, project: {}, resolved: await resolve(inputs) };
     tamper(file.resolved);
     await assert.rejects(emitCss(file), /contrast check failed|missing button-background/);
   }

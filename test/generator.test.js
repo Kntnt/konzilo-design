@@ -21,7 +21,7 @@ const expectedShadows = {
 };
 const shadowSettings = () => ({ ...defaultInputs().shadow, ...REFERENCE });
 const surface = { text: referenceInk, colors: { primary: '#168b83' } };
-const design = async (inputs = defaultInputs()) => ({ inputs, project: {}, resolved: await resolve(inputs) });
+const design = async (inputs = defaultInputs()) => ({ format: 1, inputs, project: {}, resolved: await resolve(inputs) });
 
 test('all six shadows at the reference positions match character for character', () => {
   assert.deepEqual(shadowsForSurface(shadowSettings(), surface), expectedShadows);
@@ -146,7 +146,7 @@ test('defaults, explicit colour policies, frame and completed contrast metadata'
   assert.equal(r.frame.width, 2);
   assert.equal(r['contrast-check'].status, 'passed');
   assert.ok(r.shadow.box.includes('rgb(170 102 51'));
-  const file = { inputs, project: {}, resolved: r };
+  const file = { format: 1, inputs, project: {}, resolved: r };
   assert.equal(validateDesignFile(file), file);
   assert.ok((await emitCss(file)).includes('--kn-frame-width: 2px;'));
   assert.equal(Object.keys(r.surfaces).length, 13); // eight base kinds, four status kinds and tint-secondary

@@ -43,6 +43,7 @@ export function derive(inputs) {
     radius: radii(settings['corner-profile']),
     shadow: { ...contexts.page.light.shadow },
     frame: { width: settings.frame.width, color: contexts.page.light['frame-color'] },
+    theme: { primary: settings['brand-colors'].primary, base: contexts.page.light.roles.background },
     header: settings.header,
     footer: settings.footer,
     page: settings.page,
