@@ -6,15 +6,15 @@ const { identity: i, class: className, ...attributes } = Astro.props;
 if (!i.name && !i.logo) throw new TypeError('Header identity requires a logo or name');
 if (i.logo && !i.logo.svg && !i.logo.src && !i.logo.light) throw new TypeError('Header logo requires a source or inline SVG');
 ---
-<a {...attributes} class:list={['kn-header-identity', className]} href={i.href} aria-label={i.label} data-kn-axis={i.axis ?? 'row'} data-kn-align={i.align ?? 'center'}>
-  <span class="kn-header-brand" data-kn-axis={i.brandAxis ?? 'row'} data-kn-align={i.brandAlign ?? 'center'}>
-    {i.logo && <span class="kn-header-logo">
+<a {...attributes} class:list={['kn-header-identity', className]} href={i.href} aria-label={i.label} data-kn-slogan-place={i.sloganPlace ?? 'beside'}>
+  <span class="kn-brand" data-kn-axis={i.brandAxis ?? 'row'}>
+    {i.logo && <span class="kn-brand-logo">
       {i.logo.svg ? <span aria-hidden="true" set:html={i.logo.svg} /> : <>
         <img src={i.logo.light ?? i.logo.src} alt={i.name ? '' : i.label} data-kn-logo="light" />
         {i.logo.dark && <img src={i.logo.dark} alt={i.name ? '' : i.label} data-kn-logo="dark" />}
       </>}
     </span>}
-    {i.name && <span class="kn-header-name">{i.name}</span>}
+    {i.name && <span class="kn-brand-name"><span>{i.name}</span></span>}
   </span>
-  {i.slogan && <span class="kn-header-slogan" aria-hidden="true">{i.slogan}</span>}
+  {i.slogan && <span class="kn-header-slogan" aria-hidden="true"><span>{i.slogan}</span></span>}
 </a>

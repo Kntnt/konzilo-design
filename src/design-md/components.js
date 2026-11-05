@@ -4,7 +4,7 @@ export const COMPONENT_GROUPS = [
   ['The frame', [
     ['Page', 'The whole page, with the header above and the footer below. Its main content is a vertical sequence of Bands, nothing else.'],
     ['Header', 'The site header: identity, navigation, a menu button with a responsive megamenu, and a search icon that opens a search panel. Arrangements A, B and C; sticky or static; its items give way as the window narrows.'],
-    ['Footer', 'One to several bands of cells: links, text, contact and legal lines. It can sit in the flow or be revealed under the page as it scrolls.'],
+    ['Footer', 'Two bands, an upper one and a thin lower one, each with up to four cells: a logo, links, text, icons, legal lines. It sits at the end of the page or lies at the edge of the screen, revealed as the page scrolls.'],
     ['Band', 'One section of a page. It runs edge to edge, owns its vertical space, may have a Surface of its own, and keeps its content inside the content area.'],
     ['Reading Area', 'Long text in the Narrow measure, optionally with an Aside for a table of contents, sidenotes and the like.'],
   ]],
@@ -15,7 +15,7 @@ export const COMPONENT_GROUPS = [
     ['Icon', 'A one-colour icon that follows the text colour.'],
   ]],
   ['Bands', [
-    ['Hero', 'The page\'s opening. Its background is free: none, a coloured Surface or a picture behind, or a picture can stand beside the text. So is its heading, in the first heading or the display style. It can take a third, half, two thirds or all of the screen, with its text centred or at the bottom. Over a picture with the text at the bottom, the overlay fades in above the text and is at full strength where the text begins.'],
+    ['Hero', 'The page\'s opening, taking a third, half, two thirds or all of the screen. A picture can lie behind the text, under an overlay that follows the text, or stand on one side with the text opposite, inside the content width or bleeding to the window\'s edge and the hero\'s top and bottom. The text stands at the top, in the middle or at the bottom, and with no picture at the side it moves across the content width, its lines start-aligned. Its background is free, none or a coloured Surface, and so is its heading, in the first heading or the display style, which is only a look. The page\'s H1 is its heading, or stands under it in the next section, and then its text is a plain paragraph with the same look.'],
     ['Text and Image', 'Text on one side and an image on the other, either way round.'],
     ['CTA Band', 'A heading, a short text and a button, often last on the page.'],
     ['Key Figures', 'A few large numbers with explanations.'],
@@ -39,7 +39,7 @@ export const COMPONENT_GROUPS = [
   ['Finding content', [
     ['Content Loop', 'Articles, child pages or documents as cards or rows. A document row has file type and size.'],
     ['Visitor Filters', 'A search field, filter buttons, a select and pagination above a list, and the search results page.'],
-    ['Breadcrumb Navigation', 'The page\'s place in the site.'],
+    ['Breadcrumb Navigation', 'The page\'s place in the site, directly above the page\'s H1, wherever that is.'],
     ['Table of Contents', 'Links to the page\'s headings, in the Aside or in the text.'],
   ]],
   ['Forms and consent', [

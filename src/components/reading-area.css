@@ -34,8 +34,9 @@
   .kn-reading-area:not([data-kn-columns="2"]) .kn-reading-area-flow [data-kn-width="wide"] { inline-size: min(100%, var(--kn-layout-narrow)); margin-inline-start: 0; }
   .kn-reading-area:not([data-kn-columns="2"]) .kn-figure[data-kn-width="wide"] { --kn-figure-caption-offset: 0rem; }
   .kn-reading-area-flow [data-kn-beside-block] { inline-size: min(100%, var(--kn-layout-narrow)); margin-inline-start: 0; }
-  /* Resolve rem, calc and fluid role values through layout, never parseFloat on a token. */
-  .kn-reading-area-measure { position: absolute; visibility: hidden; pointer-events: none; inline-size: var(--kn-layout-narrow); block-size: var(--kn-layout-aside-min); padding-inline-start: var(--kn-space-column-gap); padding-block-start: var(--kn-space-component-gap); }
+  /* Resolve rem, calc and fluid role values through layout, never parseFloat on a token. Wider than a phone's window, it hangs
+     from the area's end and top, since what lies beyond the start of a page cannot be scrolled to. */
+  .kn-reading-area-measure { position: absolute; inset-block-start: 0; inset-inline-end: 0; visibility: hidden; pointer-events: none; inline-size: var(--kn-layout-narrow); block-size: var(--kn-layout-aside-min); padding-inline-start: var(--kn-space-column-gap); padding-block-start: var(--kn-space-component-gap); }
   @media print {
     .kn-reading-area[data-kn-columns] { display: block; min-block-size: 0; --kn-reading-flow-offset: 0rem; }
     .kn-reading-area[data-kn-columns] > .kn-reading-area-flow { inline-size: 100%; margin-inline: 0; }

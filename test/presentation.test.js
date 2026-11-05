@@ -284,7 +284,7 @@ test('offline ZIP reader works from file URLs for normal, primary-only and stres
     await memoryOnly.close();
   } finally {
     await browser.close();
-    await rm('/Users/thomas/Projects/konzilo-design/node_modules/.cache/presentation-tests', { recursive: true, force: true });
+    await rm(pathResolve('node_modules/.cache/presentation-tests'), { recursive: true, force: true });
   }
 });
 
@@ -367,7 +367,7 @@ test('copy overrides reject unknown keys and fall back to English', { timeout: 3
     await writeFile(override, JSON.stringify({ unknown: 'Not allowed' }));
     await assert.rejects(createPresentation(design, output), /Unknown copy key/);
   } finally {
-    await rm('/Users/thomas/Projects/konzilo-design/node_modules/.cache/presentation-copy-tests', { recursive: true, force: true });
+    await rm(pathResolve('node_modules/.cache/presentation-copy-tests'), { recursive: true, force: true });
   }
 });
 
@@ -468,26 +468,64 @@ test('tool saves presentation prose, keeps controls still and serves the exporte
     await preview.waitForFunction(() => !document.querySelector('[data-kn-panel="menu"]').hidden && document.querySelector('.kn-megamenu-number'));
     await page.locator('[data-show-panel="menu"]').click();
 
-    // The footer's model and lines change it where it stands, and what cannot apply is off.
+    // The footer's cells turn on and off where they stand, in the same footer, and no control is off.
     await openPage('Frame', 'Footer');
     await preview.waitForFunction(() => document.querySelector('.kn-header-panel:not([hidden])') === null);
-    const pick = (model) => page.locator(`[data-pick="inputs.footer.model"][data-value="${model}"]`);
-    assert.equal(await pick('utility').getAttribute('aria-pressed'), 'true');
-    await pick('one').click();
-    await preview.waitForFunction(() => document.querySelectorAll('.kn-footer-band').length === 1);
-    assert.equal(await page.locator('[data-path="inputs.footer.second-surface"]').isDisabled(), true);
-    assert.equal(await flag('footer.horizontal-rules').isDisabled(), true);
-    await pick('two').click();
+    const footerPage = page.locator('[data-page="footer"]');
+    assert.equal(await footerPage.locator('button:disabled, select:disabled, input:disabled').count(), 0);
+    const cell = (band, name) => flag(`footer.${band}.cells.${name}`);
+    const miniature = await footerPage.locator('.footer-mini').boundingBox();
+    assert.equal(await footerPage.locator('.footer-mini-cell').count(), 8);
+    assert.equal(await cell('upper', 'a1').getAttribute('aria-pressed'), 'true');
+    assert.ok(await cell('upper', 'a1').getAttribute('aria-label'));
+    assert.ok(await cell('upper', 'a1').getAttribute('data-g-tooltip'));
+    const widths = await footerPage.locator('[data-mini-band="upper"] .footer-mini-cell').evaluateAll((cells) => cells.map((node) => node.getBoundingClientRect().width));
+    assert.ok(Math.abs(widths[1] / widths[0] - 2) < 0.1, 'the miniature has the real 1/3 and 2/3');
+    const bandHeights = await footerPage.locator('.footer-mini-band').evaluateAll((bands) => bands.map((node) => node.getBoundingClientRect().height));
+    assert.ok(bandHeights[0] > bandHeights[1], 'the upper band is taller');
+    await preview.waitForFunction(() => document.querySelectorAll('.kn-footer-cell').length === 8);
+    await preview.evaluate(() => { window.__footer = document.querySelector('.kn-footer'); window.__logo = document.querySelector('.kn-footer img'); });
+    await cell('upper', 'b1').click();
+    assert.equal(await cell('upper', 'b1').getAttribute('aria-pressed'), 'false');
+    // On is filled with the band's colour and says so; off stands empty and says so, and no cell names itself.
+    const look = (node) => node.evaluate((button) => ({ word: getComputedStyle(button, '::before').content, background: getComputedStyle(button).backgroundColor, surface: button.dataset.knSurface, text: button.textContent }));
+    const [on, off] = [await look(cell('upper', 'a1')), await look(cell('upper', 'b1'))];
+    assert.deepEqual([on.word, on.surface, on.text], ['"On"', 'brand', '']);
+    assert.deepEqual([off.word, off.surface, off.text], ['"Off"', undefined, '']);
+    assert.equal(off.background, 'rgba(0, 0, 0, 0)');
+    assert.notEqual(on.background, off.background);
+    await preview.waitForFunction(() => !document.querySelector('[data-kn-band="upper"] [data-kn-cell="b1"]'));
+    assert.equal(await preview.evaluate(() => document.querySelector('.kn-footer') === window.__footer && document.querySelector('.kn-footer img') === window.__logo), true, 'the footer and its logo stay the same elements');
+    assert.equal((await footerPage.locator('.footer-mini').boundingBox()).y, miniature.y, 'nothing moves');
+    // By column, the cell below the empty one takes its column; by row, the cell beside it takes its row.
+    assert.equal(await preview.evaluate(() => document.querySelector('[data-kn-band="upper"] [data-kn-cell="b2"]').dataset.knRow), 'all');
+    await page.locator('[data-path="inputs.footer.fill"]').selectOption('row');
+    await preview.waitForFunction(() => document.querySelector('[data-kn-band="upper"] [data-kn-cell="a1"]').dataset.knColumns === '2');
+    await page.locator('[data-path="inputs.footer.fill"]').selectOption('column');
+    await cell('upper', 'b1').click();
+    await preview.waitForFunction(() => document.querySelector('[data-kn-band="upper"] [data-kn-cell="b1"]'));
     await flag('footer.horizontal-rules').click();
-    await preview.waitForFunction(() => document.querySelectorAll('.kn-footer-rule').length === 1);
+    await preview.waitForFunction(() => document.querySelectorAll('.kn-footer-rule').length === 2);
     await flag('footer.vertical-rule').click();
-    await preview.waitForFunction(() => document.querySelector('.kn-footer-vertical-rule'));
-    await page.locator('[data-path="inputs.footer.surface"]').selectOption('page');
+    await preview.waitForFunction(() => document.querySelectorAll('.kn-footer-vertical-rule').length === 2);
+    await flag('footer.horizontal-rules').click();
+    await flag('footer.vertical-rule').click();
+    await page.locator('[data-path="inputs.footer.upper.surface"]').selectOption('page');
     await preview.waitForFunction(() => document.querySelector('.kn-footer-band').dataset.knSurface === 'page');
+    assert.equal(await cell('upper', 'a1').getAttribute('data-kn-surface'), 'page');
     await page.locator('[data-path="inputs.footer.attachment"]').selectOption('reveal');
     await preview.waitForFunction(() => document.querySelector('.kn-footer').dataset.knAttachment === 'reveal');
     await page.locator('[data-path="inputs.footer.attachment"]').selectOption('flow');
-    await pick('utility').click();
+    // A band without a cell is gone, and without any cell so is the footer, until one comes back.
+    for (const name of ['a1', 'b1', 'a2', 'b2']) await cell('lower', name).click();
+    await preview.waitForFunction(() => document.querySelectorAll('.kn-footer-band').length === 1);
+    for (const name of ['a1', 'b1', 'a2', 'b2']) await cell('upper', name).click();
+    await preview.waitForFunction(() => !document.querySelector('.kn-footer'));
+    await cell('lower', 'b1').click();
+    await preview.waitForFunction(() => document.querySelector('.kn-page-main + .kn-footer [data-kn-cell="b1"]'));
+    await cell('lower', 'b1').click();
+    for (const name of ['a1', 'b1', 'a2', 'b2']) { await cell('upper', name).click(); await cell('lower', name).click(); }
+    await preview.waitForFunction(() => document.querySelectorAll('.kn-footer-cell').length === 8);
 
     // The page's widths and the line and shadow where it meets the footer.
     await openPage('Frame', 'Page');
@@ -504,9 +542,9 @@ test('tool saves presentation prose, keeps controls still and serves the exporte
     // How the trail shows: where it stands, its mark and first step, and whether it shows at all.
     await openPage('Frame', 'Breadcrumbs');
     const trail = () => document.querySelector('.kn-breadcrumbs');
-    await preview.waitForFunction(() => document.querySelector('.kn-hero-text > .kn-breadcrumbs:first-child'));
-    await page.locator('[data-path="inputs.breadcrumbs.placement"]').selectOption('own-band');
-    await preview.waitForFunction(() => document.querySelector('.kn-page-main > .kn-breadcrumb-band .kn-breadcrumbs') && !document.querySelector('.kn-hero-text > .kn-breadcrumbs'));
+    // It stands directly above the page's H1, here the hero's, above the eyebrow, and there is no choice of place.
+    await preview.waitForFunction(() => document.querySelector('[data-kn-live-hero] .kn-hero-text > .kn-breadcrumbs:first-child + .kn-heading-group > .kn-heading-group-eyebrow + h1'));
+    assert.equal(await page.locator('[data-path="inputs.breadcrumbs.placement"]').count(), 0);
     await page.locator('[data-pick="inputs.breadcrumbs.separator"][data-value="chevron"]').click();
     await preview.waitForFunction(() => getComputedStyle(document.querySelector('.kn-breadcrumbs-separator'), '::before').content.includes('\u203A'));
     await page.locator('[data-path="inputs.breadcrumbs.home"]').selectOption('icon');
@@ -521,7 +559,7 @@ test('tool saves presentation prose, keeps controls still and serves the exporte
     assert.ok(await preview.evaluate(() => [...document.querySelectorAll('.kn-breadcrumbs li')].filter((item) => getComputedStyle(item).display !== 'none').length > 1), 'a wide window keeps the whole trail');
     await flag('breadcrumbs.show').click();
     await preview.waitForFunction(() => !document.querySelector('.kn-breadcrumbs'));
-    assert.equal(await page.locator('[data-path="inputs.breadcrumbs.placement"]').isDisabled(), true);
+    assert.equal(await page.locator('[data-path="inputs.breadcrumbs.home"]').isDisabled(), true);
     await flag('breadcrumbs.show').click();
     await preview.waitForFunction(trail);
 
@@ -532,9 +570,8 @@ test('tool saves presentation prose, keeps controls still and serves the exporte
     for (const name of ['Opening', 'Sections', 'Text', 'Buttons', 'Cards', 'Media', 'Finding', 'Forms'])
       assert.equal(await page.locator('.page-link', { hasText: name }).count(), 1, name);
     await preview.waitForFunction((core) => document.getElementById('kn-live-core').textContent === core, await page.locator('#kn-live-core').textContent());
-    const before2 = await preview.evaluate(() => scrollY);
-    await page.locator('[data-show-specimen="card-grid"]').click();
-    await preview.waitForFunction((from) => scrollY > from, before2);
+    await page.locator('[data-look-key="grid-columns"][data-look-value="4"]').click();
+    await preview.waitForFunction(() => document.querySelector('[data-look="grid-columns:4"]').getClientRects().length && !document.querySelector('[data-look="grid-columns:2"]').getClientRects().length);
     await page.locator('[data-page="cards"] .next').click();
     await page.waitForFunction(() => document.querySelector('.page-link[aria-current="true"]').textContent === 'Media');
     await openPage('Frame', 'Header');
@@ -547,18 +584,18 @@ test('tool saves presentation prose, keeps controls still and serves the exporte
     assert.equal(savedFrame.inputs.header.arrangement, 'C');
     assert.equal(savedFrame.inputs.header['search-surface'], 'tint');
     assert.equal(savedFrame.resolved.header.arrangement, 'C');
-    assert.equal(savedFrame.inputs.footer.surface, 'page');
+    assert.equal(savedFrame.inputs.footer.upper.surface, 'page');
     assert.equal(savedFrame.project.slogan, 'Calm and clear');
 
     // The markup the preview makes for a footer is the one Footer.astro makes.
     const built = await fetch(tool.url + '/preview.html').then((response) => response.text());
     const settings = withDefaults({ 'brand-colors': { primary: '#000000' } }).footer;
-    const { bands, ...options } = footerProps(settings, { name: 'Example' });
+    const footer = footerProps(settings, { name: 'Example' });
     const same = await page.evaluate(([astro, live]) => {
       const shape = (node) => [node.tagName, [...node.attributes].filter((attribute) => attribute.name !== 'slot').map((attribute) => `${attribute.name}=${attribute.value.replace(/\s/g, '')}`).sort(), [...node.children].map(shape), node.children.length ? '' : node.textContent.trim()];
       const parse = (html) => new DOMParser().parseFromString(html, 'text/html').querySelector('.kn-footer');
       return JSON.stringify(shape(parse(astro))) === JSON.stringify(shape(parse(live))) || [JSON.stringify(shape(parse(astro))).slice(0, 900), JSON.stringify(shape(parse(live))).slice(0, 900)];
-    }, [built.match(/<footer[\s\S]*?<\/footer>/)[0], footerHtml(layoutFooter(bands), options)]);
+    }, [built.match(/<footer[\s\S]*?<\/footer>/)[0], footerHtml(layoutFooter(footer), footer)]);
     assert.equal(same, true, JSON.stringify(same));
 
     // A change is saved without being asked.
@@ -699,9 +736,8 @@ test('tool saves presentation prose, keeps controls still and serves the exporte
   } finally {
     await browser.close();
     await tool.close();
-    await rm('/Users/thomas/Projects/konzilo-design/node_modules/.cache/presentation-tool-tests', { recursive: true, force: true });
-    await rm('/Users/thomas/Projects/konzilo-design/node_modules/.cache/konzilo-tool', { recursive: true, force: true });
-  }
+    await rm(pathResolve('node_modules/.cache/presentation-tool-tests'), { recursive: true, force: true });
+      }
 });
 
 test('each role chooses a typeface and turns the axes that typeface has', { timeout: 120000 }, async () => {
@@ -732,17 +768,17 @@ test('each role chooses a typeface and turns the axes that typeface has', { time
     assert.deepEqual(await axes(), ['wght', 'wdth', 'opsz', 'spacing']);
     await page.locator('[data-role-tab="display"]').click();
     assert.equal(await page.locator('[data-axis="wght"]').inputValue(), '260');
-    assert.equal(await style('.kn-hero h2', 'fontStretch'), '112%');
+    assert.equal(await style('h2[data-kn-type="display"]', 'fontStretch'), '112%');
     assert.equal(await style('[data-kn-type="label"]', 'fontStretch'), '75%');
 
     // A slider moves the display text, and stays the same element while it does.
     await page.locator('[data-axis="wght"]').evaluate((node) => { window.__slider = node; });
     await drag('wght', '500');
     assert.equal(await page.locator('[data-axis="wght"]').evaluate((node) => node === window.__slider), true);
-    await preview.waitForFunction(() => getComputedStyle(document.querySelector('.kn-hero h2')).fontWeight === '500');
+    await preview.waitForFunction(() => getComputedStyle(document.querySelector('h2[data-kn-type="display"]')).fontWeight === '500');
     assert.equal((await saved()).type.roles.display.weight, 500);
     await page.locator('[data-axis-reset="wght"]').click();
-    await preview.waitForFunction(() => getComputedStyle(document.querySelector('.kn-hero h2')).fontWeight === '600');
+    await preview.waitForFunction(() => getComputedStyle(document.querySelector('h2[data-kn-type="display"]')).fontWeight === '600');
     assert.equal((await saved()).type.roles.display.weight, undefined);
 
     // The letter spacing shows in the specimen as well as in the preview.
@@ -752,7 +788,7 @@ test('each role chooses a typeface and turns the axes that typeface has', { time
     await drag('spacing', '0.3');
     assert.deepEqual(await page.locator('[data-axis="spacing"]').boundingBox(), held, 'the page heading never breaks to push the slider');
     await page.waitForFunction((before) => parseFloat(getComputedStyle(document.querySelector('.specimen-name')).letterSpacing) > before + 1, tightest);
-    await preview.waitForFunction(() => parseFloat(getComputedStyle(document.querySelector('.kn-hero h2')).letterSpacing) > 1);
+    await preview.waitForFunction(() => parseFloat(getComputedStyle(document.querySelector('h2[data-kn-type="display"]')).letterSpacing) > 1);
     await page.locator('[data-axis-reset="spacing"]').click();
 
     // Another typeface brings its own axes, and settings it has no axis for go.
@@ -761,7 +797,7 @@ test('each role chooses a typeface and turns the axes that typeface has', { time
     assert.ok((await axes()).includes('slnt'));
     assert.equal(await page.locator('[data-axis="wdth"]').getAttribute('max'), '151');
     await drag('XTRA', '500');
-    await preview.waitForFunction(() => getComputedStyle(document.querySelector('.kn-hero h2')).fontVariationSettings.includes('XTRA'));
+    await preview.waitForFunction(() => getComputedStyle(document.querySelector('h2[data-kn-type="display"]')).fontVariationSettings.includes('XTRA'));
     await page.locator('[data-font="display"]').selectOption('Fraunces, Georgia, serif');
     await page.waitForFunction(() => document.querySelector('[data-axis="SOFT"]'));
     const inputs = await saved();
@@ -877,7 +913,7 @@ test('each role chooses a typeface and turns the axes that typeface has', { time
     await breakpoints();
 
     // The hollow arrow says which width the rows show; it changes nothing in the design.
-    const shown = (key) => page.locator(`[data-step-sample="${key}"]`).evaluate((node) => parseFloat(node.style.fontSize));
+    const shown = (key) => page.locator(`[data-step-sample="${key}"]`).evaluate((node) => parseFloat(getComputedStyle(node).fontSize));
     const wide = await shown('display');
     await widthField('view').fill('390');
     await widthField('view').press('Enter');
@@ -886,14 +922,16 @@ test('each role chooses a typeface and turns the axes that typeface has', { time
     await widthField('view').fill('1440');
     await widthField('view').press('Enter');
 
-    // However large the scale, a row shows its whole text, and a step leaves the button under the pointer.
+    // However large the scale, a sample keeps its true size and its row its height, and a step leaves the button under the pointer.
+    const rowOf = (key) => page.locator('.step', { has: page.locator(`[data-step-sample="${key}"]`) });
+    const rowsBefore = await Promise.all(['display', 'heading-1', 'heading-2'].map(async (key) => (await rowOf(key).boundingBox()).height));
     await page.locator('[data-ratio="min"]').selectOption('1.25');
     await list.selectOption('1.5');
-    await page.waitForFunction(() => parseFloat(document.querySelector('[data-step-sample="display"]').style.fontSize) > 150);
-    for (const key of ['display', 'heading-1', 'heading-2']) {
+    await page.waitForFunction(() => parseFloat(getComputedStyle(document.querySelector('[data-step-sample="display"]')).fontSize) > 150);
+    for (const [index, key] of ['display', 'heading-1', 'heading-2'].entries()) {
       const [font, height] = await page.locator(`[data-step-sample="${key}"]`).evaluate((node) => [parseFloat(getComputedStyle(node).fontSize), node.getBoundingClientRect().height]);
-      assert.ok(height >= font * 1.2, `${key}: ${height} for ${font}`);
-      assert.ok((await page.locator('.step', { has: page.locator(`[data-step-sample="${key}"]`) }).boundingBox()).height > height, key);
+      assert.ok(font > height, `${key}: larger than its row, at ${font} in ${height}`);
+      assert.equal((await rowOf(key).boundingBox()).height, rowsBefore[index], key);
     }
     const plus = page.locator('[data-step="heading-1"][data-delta="1"]');
     await plus.scrollIntoViewIfNeeded();
@@ -909,9 +947,8 @@ test('each role chooses a typeface and turns the axes that typeface has', { time
   } finally {
     await browser.close();
     await tool.close();
-    await rm('/Users/thomas/Projects/konzilo-design/node_modules/.cache/presentation-role-tests', { recursive: true, force: true });
-    await rm('/Users/thomas/Projects/konzilo-design/node_modules/.cache/konzilo-tool', { recursive: true, force: true });
-  }
+    await rm(pathResolve('node_modules/.cache/presentation-role-tests'), { recursive: true, force: true });
+      }
 });
 
 test('the menu never runs its two parts together, and a restarted tool keeps the work in a window', { timeout: 180000 }, async () => {
@@ -929,7 +966,7 @@ test('the menu never runs its two parts together, and a restarted tool keeps the
     await page.locator('.chapter', { hasText: 'Shape' }).click();
     await page.locator('.page-link', { hasText: 'Corners' }).click();
 
-    // Words in the status take room, and the left part goes to two lines rather than under the right part.
+    // Words in the status take room only where there is room: here the dot says it, and the row stays as it is.
     const apart = () => page.evaluate(() => {
       const [row] = document.querySelectorAll('.menu-row');
       const left = document.getElementById('chapters').getBoundingClientRect();
@@ -943,9 +980,9 @@ test('the menu never runs its two parts together, and a restarted tool keeps the
       document.getElementById('status').dataset.state = 'error';
       document.getElementById('status-text').textContent = 'A long message about the save';
     });
-    const twoLines = await apart();
-    assert.deepEqual([twoLines.inside, twoLines.separate], [true, true]);
-    assert.ok(twoLines.height > oneLine.height, 'the row grows for its second line');
+    const withWords = await apart();
+    assert.deepEqual([withWords.inside, withWords.separate], [true, true]);
+    assert.equal(withWords.height, oneLine.height, 'the row keeps its height');
     await page.evaluate(() => {
       document.getElementById('status').dataset.state = 'saved';
       document.getElementById('status-text').textContent = 'Saved';
@@ -1013,7 +1050,6 @@ test('the tool makes a missing file, writes nothing on opening, and backs up onc
     }
   } finally {
     await browser.close();
-    await rm('/Users/thomas/Projects/konzilo-design/node_modules/.cache/presentation-backup-tests', { recursive: true, force: true });
-    await rm('/Users/thomas/Projects/konzilo-design/node_modules/.cache/konzilo-tool', { recursive: true, force: true });
-  }
+    await rm(pathResolve('node_modules/.cache/presentation-backup-tests'), { recursive: true, force: true });
+      }
 });

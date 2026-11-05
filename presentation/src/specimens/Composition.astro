@@ -18,19 +18,19 @@ import {
   sample,
   menu,
   search,
-  footerBands,
   columns,
   rows,
   fields,
 } from '../samples.js';
 import { context } from './context.js';
 import { ownPictures } from '../data.js';
-import { headerProps, footerProps, pageProps, breadcrumbProps, heroProps } from '../frame.js';
+import { headerProps, footerProps, pageProps, breadcrumbProps, heroProps, nextHeadingProps } from '../frame.js';
 import Breadcrumbs from '../../../src/components/Breadcrumbs.astro';
 const { id, project, resolved } = Astro.props;
 const images = context(project, resolved, ownPictures);
 const { identity, landscapes, list } = images;
-const crumbs = resolved.breadcrumbs;
+const trail = resolved.breadcrumbs.show ? breadcrumbProps(resolved.breadcrumbs, project) : undefined;
+const below = resolved.hero.h1 === 'below';
 ---
 
 {id === 'overview' && (
@@ -88,16 +88,17 @@ const crumbs = resolved.breadcrumbs;
 {id === 'preview' && (
   <Page {...pageProps(resolved.page)}>
     <Header slot="header" {...headerProps(resolved.header, project)} />
-    {crumbs.show && crumbs.placement === 'own-band' && <Band class="kn-breadcrumb-band"><Breadcrumbs {...breadcrumbProps(crumbs, project)} /></Band>}
     <Hero data-kn-live-hero {...heroProps(resolved.hero, images)} eyebrow={sample.eyebrow} heading={sample.heading} deck={sample.deck}>
-      {crumbs.show && crumbs.placement === 'first-band' && <Breadcrumbs slot="before" {...breadcrumbProps(crumbs, project)} />}
+      {trail && !below && <Breadcrumbs slot="before" {...trail} />}
       <Button href="#contact">{sample.action}</Button>
     </Hero>
-    <Hero level={2} type="display" heading="Clear next steps" deck="Practical help when you need it.">
-      <BodyText>
+    <Band>
+      {trail && below && <Breadcrumbs {...trail} />}
+      <HeadingGroup {...nextHeadingProps(resolved.hero)} heading="Clear next steps" deck="Practical help when you need it." />
+      <BodyText style="margin-block-start: var(--kn-space-column-gap)">
         <p>Plans, drawings and file names like <code>delivery-plan.pdf</code> stay easy to tell apart.</p>
       </BodyText>
-    </Hero>
+    </Band>
     <Band surface="raised" data-preview-section="surfaces">
       <div class="sample-stack preview-services">
         <HeadingGroup
@@ -146,7 +147,8 @@ const crumbs = resolved.breadcrumbs;
     </Band>
     <Band surface="page">
       <BodyText>
-        <h2 data-kn-type="heading-3">Information you can use</h2>
+        {/* Display text has a place of its own here, so its role's controls show whatever the hero's heading looks like. */}
+        <h2 data-kn-type="display">Information you can use</h2>
         <p>{sample.paragraph}</p>
       </BodyText>
       <LinkGroup style="margin-block-start: var(--kn-space-component-gap)">
@@ -168,7 +170,7 @@ const crumbs = resolved.breadcrumbs;
         </Form>
       </div>
     </Band>
-    <Footer slot="footer" {...footerProps(resolved.footer, project)} />
+    <Footer slot="footer" {...footerProps(resolved.footer, project, resolved.header)} />
   </Page>
 )}
 {id === 'responsive-hero' && (
@@ -203,4 +205,3 @@ const crumbs = resolved.breadcrumbs;
     </CardGrid>
   </div>
 )}
-{id === 'responsive-footer' && <Footer bands={footerBands(project)} />}

@@ -10,22 +10,31 @@ import KeyFigures from '../../../src/components/KeyFigures.astro';
 import { sample } from '../samples.js';
 import { context } from './context.js';
 import { ownPictures } from '../data.js';
-import { heroProps } from '../frame.js';
+import { heroProps, nextHeadingProps, breadcrumbProps } from '../frame.js';
+import Breadcrumbs from '../../../src/components/Breadcrumbs.astro';
+import HeadingGroup from '../../../src/components/HeadingGroup.astro';
 const { id, project, resolved } = Astro.props;
 const images = context(project, resolved, ownPictures);
 const { landscapes } = images;
+const trail = resolved.breadcrumbs.show ? breadcrumbProps(resolved.breadcrumbs, project) : undefined;
+const below = resolved.hero.h1 === 'below';
 ---
 
 {id === 'hero' && (
   <div class="hero-screen">
     <Hero data-kn-live-hero {...heroProps(resolved.hero, images)} heading={sample.heading} eyebrow={sample.eyebrow} deck={sample.deck}>
+      {trail && !below && <Breadcrumbs slot="before" {...trail} />}
       <Button href="#contact">{sample.action}</Button>
     </Hero>
-    {/* What follows on the screen, as grey bars: real words would draw the eye from the hero. */}
-    <Band class="hero-rest" aria-hidden="true">
-      {[0, 1, 2, 3].map(() => (
-        <div class="hero-rest-group"><i></i><i></i><i></i><i></i><i></i></div>
-      ))}
+    {/* What follows on the screen: its real heading, which may be the page's H1, and grey bars, as more words would draw the eye from the hero. */}
+    <Band class="hero-rest">
+      {trail && below && <Breadcrumbs {...trail} />}
+      <HeadingGroup {...nextHeadingProps(resolved.hero)} heading="Clear next steps" />
+      <div class="hero-rest-bars" aria-hidden="true">
+        {[0, 1, 2, 3].map(() => (
+          <div class="hero-rest-group"><i></i><i></i><i></i><i></i><i></i></div>
+        ))}
+      </div>
     </Band>
   </div>
 )}

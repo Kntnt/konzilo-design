@@ -1,5 +1,5 @@
 import http from 'node:http';
-import { access, readFile, writeFile, rename, mkdir, unlink } from 'node:fs/promises';
+import { access, readFile, readdir, writeFile, rename, mkdir, mkdtemp, rm, unlink } from 'node:fs/promises';
 import {
   resolve as pathResolve,
   dirname,
@@ -19,6 +19,7 @@ import {
   checkContrast,
 } from '../src/generator/index.js';
 import { withDefaults } from '../src/generator/defaults.js';
+import { withKeptLogos } from './logic.js';
 import { componentsCss } from '../src/css/components.js';
 import { PICTURE_SLOTS } from '../presentation/src/samples.js';
 import { OWN_PICTURES_PATH, ownPictureUrls, readOwnPicture, removeOwnPicture, saveOwnPicture } from '../presentation/own-pictures.mjs';
@@ -101,19 +102,47 @@ function openBrowser(url) {
   child.on('error', () => {});
   child.unref();
 }
+// A folder per run, so a second tool or a test run cannot pull the preview from under this one.
+// Runs stopped from outside leave theirs behind, and the next start sweeps them.
+async function previewFolder() {
+  const cache = join(repo, 'node_modules/.cache');
+  await mkdir(cache, { recursive: true });
+  const running = (pid) => {
+    try {
+      process.kill(pid, 0);
+      return true;
+    } catch (error) {
+      return error.code === 'EPERM';
+    }
+  };
+  for (const name of await readdir(cache)) {
+    const pid = /^konzilo-tool-(\d+)-/.exec(name)?.[1];
+    if (pid && !running(Number(pid))) await rm(join(cache, name), { recursive: true, force: true });
+  }
+  return mkdtemp(join(cache, `konzilo-tool-${process.pid}-`));
+}
+
 export async function startTool({ designFile, port = 4174, open = true }) {
   const path = pathResolve(designFile);
   const created = !(await access(path).then(() => true, () => false));
   let model = await loadDesign(path);
   // One backup a run: what the file held when this run first changed it. A file this run made has nothing to keep.
   let backedUp = created;
-  const previewDir = join(repo, 'node_modules/.cache/konzilo-tool');
+  const previewDir = await previewFolder();
   const { preview, catalogue } = await buildPresentation({ output: previewDir });
   const copy = await loadCopy(path);
   const components = await componentsCss();
   const token = randomBytes(24).toString('hex');
   let lastPresentation;
   let busy = false;
+  // Writes take their turn in the order they came, and the state waits for them: a window reloaded
+  // just after a change has to find that change, and the save it sent going away must not lose to an earlier one.
+  let writes = Promise.resolve();
+  const inTurn = (write) => {
+    const turn = writes.then(write);
+    writes = turn.catch(() => {});
+    return turn;
+  };
   const mime = {
     '.html': 'text/html; charset=utf-8',
     '.js': 'text/javascript; charset=utf-8',
@@ -144,6 +173,7 @@ export async function startTool({ designFile, port = 4174, open = true }) {
       res.setHeader('X-Content-Type-Options', 'nosniff');
       res.setHeader('Cache-Control', 'no-store');
       if (req.method === 'GET' && url.pathname === '/api/state') {
+        await writes;
         json(200, { ...(await embedLogos(model, path)), token, copy, path, pictures: await ownPictureUrls(path) });
         return;
       }
@@ -224,20 +254,22 @@ export async function startTool({ designFile, port = 4174, open = true }) {
           json(409, { error: 'A presentation is already being created.' });
           return;
         }
-        let body = '';
-        for await (const chunk of req) {
-          body += chunk;
-          if (body.length > 15 * 1024 * 1024)
-            throw new Error('Design file exceeds 15 MB.');
-        }
-        const incoming = JSON.parse(body);
-        await saveDesign(path, incoming, {
-          beforeWrite: async () => {
-            if (!backedUp) await backUp(path);
-            backedUp = true;
-          },
+        await inTurn(async () => {
+          let body = '';
+          for await (const chunk of req) {
+            body += chunk;
+            if (body.length > 15 * 1024 * 1024)
+              throw new Error('Design file exceeds 15 MB.');
+          }
+          const incoming = withKeptLogos(JSON.parse(body), model.project);
+          await saveDesign(path, incoming, {
+            beforeWrite: async () => {
+              if (!backedUp) await backUp(path);
+              backedUp = true;
+            },
+          });
+          model = { inputs: incoming.inputs, project: incoming.project };
         });
-        model = { inputs: incoming.inputs, project: incoming.project };
         if (url.pathname === '/api/save') {
           json(200, { path });
           return;
@@ -262,7 +294,7 @@ export async function startTool({ designFile, port = 4174, open = true }) {
       }
       const pathname = url.pathname === '/' ? '/tool/index.html' : url.pathname;
       const allowed =
-        /^\/(?:presentation\/pictures\/[a-z0-9-]+\.webp|tool\/(?:index\.html|style\.css|app\.js|logic\.js|pages\.js|preview\.js)|src\/(?:generator|css)\/[a-z-]+\.js|src\/design-md\/components\.js|src\/components\/footer-models\.js|presentation\/src\/catalog\.js|src\/fonts\/(?:fonts\.css|catalog\.js|[A-Za-z0-9-]+\.woff2)|schema\/design-file\.schema\.json|package\.json|gallery\/src\/tooltips\.js|presentation\/src\/samples\.js)$/;
+        /^\/(?:presentation\/pictures\/[a-z0-9-]+\.webp|tool\/(?:index\.html|style\.css|app\.js|logic\.js|history\.js|pages\.js|preview\.js)|src\/(?:generator|css)\/[a-z-]+\.js|src\/design-md\/components\.js|presentation\/src\/(?:catalog|looks)\.js|src\/fonts\/(?:fonts\.css|catalog\.js|[A-Za-z0-9-]+\.woff2)|schema\/design-file\.schema\.json|package\.json|gallery\/src\/tooltips\.js|presentation\/src\/samples\.js)$/;
       if (!allowed.test(pathname)) {
         json(404, { error: 'Not found.' });
         return;
@@ -300,9 +332,11 @@ export async function startTool({ designFile, port = 4174, open = true }) {
     url,
     path,
     created,
-    close: () =>
-      new Promise((done, fail) =>
+    close: async () => {
+      await new Promise((done, fail) =>
         server.close((error) => (error ? fail(error) : done())),
-      ),
+      );
+      await rm(previewDir, { recursive: true, force: true });
+    },
   };
 }

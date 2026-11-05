@@ -5,6 +5,7 @@ import { TYPEFACES, CATEGORIES } from '/src/fonts/catalog.js';
 import { scales, LINE, COMMON_WIDTHS, lineShare } from './logic.js';
 import { COMPONENT_GROUPS } from '/src/design-md/components.js';
 import { componentPages } from '/presentation/src/catalog.js';
+import { TOOL_PAGES } from '/presentation/src/looks.js';
 
 export const CHAPTERS = [
   ['start', ['start']],
@@ -18,17 +19,19 @@ export const CHAPTERS = [
 const SHORT_NAMES = { opening: 'Opening', buttons: 'Buttons', media: 'Media', finding: 'Finding', forms: 'Forms', page: 'Page' };
 export const pageName = (id, copy) => SHORT_NAMES[id] || copy[`${id}.title`];
 export const PAGES = CHAPTERS.flatMap(([, pages]) => pages);
+// Each row of the type scale has a height of its own, in rem, and keeps it: tall enough for the size the style
+// reaches at a scale the tool does not warn about, and a larger sample is clipped rather than push the rows below.
 export const STEP_ROWS = [
-  ['display', 'Display'],
-  ['heading-1', 'H1'],
-  ['heading-2', 'H2'],
-  ['heading-3', 'H3'],
-  ['heading-4', 'H4'],
-  ['heading-5', 'H5'],
-  ['heading-6', 'H6'],
-  ['lead', 'Lead'],
-  ['small', 'Small'],
-  ['label', 'Label'],
+  ['display', 'Display', 7],
+  ['heading-1', 'H1', 5.5],
+  ['heading-2', 'H2', 4.25],
+  ['heading-3', 'H3', 3.75],
+  ['heading-4', 'H4', 3.25],
+  ['heading-5', 'H5', 2.875],
+  ['heading-6', 'H6', 2.625],
+  ['lead', 'Lead', 2.625],
+  ['small', 'Small', 2.25],
+  ['label', 'Label', 2.25],
 ];
 export const escapeHtml = (value) =>
   String(value ?? '').replace(
@@ -78,15 +81,16 @@ function why(key, label, copy) {
   return `<div class="why"><span class="why-head ui"><b>${escapeHtml(label)}</b><span>The client reads this here, as it stands</span></span>
     <textarea data-path="project.explanations.${key}" aria-label="${escapeHtml(label)}" placeholder="${escapeHtml(copy['motivation.label'])}" ${tip('Optional. It appears in the presentation. Blank lines make paragraphs.')}></textarea></div>`;
 }
-function head(id, copy, { lead = true, fixed = false } = {}) {
+function head(id, copy, { lead = true, fixed = false, text = copy[`${id}.lead`] } = {}) {
   return `<header class="page-head ${fixed ? 'fixed' : ''}"><h1>${escapeHtml(copy[`${id}.title`])}</h1>${
-    lead && copy[`${id}.lead`] ? `<p class="page-lead">${escapeHtml(copy[`${id}.lead`])}</p>` : ''
+    lead && text ? `<p class="page-lead">${escapeHtml(text)}</p>` : ''
   }</header>`;
 }
 function next(id, copy) {
   const following = PAGES[PAGES.indexOf(id) + 1];
   if (!following) return '';
-  return `<button class="next" type="button" data-go="${following}">${escapeHtml(copy[`${following}.title`])} →</button>`;
+  const title = copy[`${following}.title`];
+  return `<button class="next ui" type="button" data-go="${following}" ${tip(`Go on to the next page: ${title}.`)}>${escapeHtml(title)} →</button>`;
 }
 
 const PICTURE_TILES = [
@@ -104,16 +108,12 @@ const PICTURE_TILES = [
 function start(copy) {
   const tile = (key, label, background) => `<div class="logo-tile" ${background}>
     <input type="file" hidden data-logo="${key}" accept="image/svg+xml,image/png" aria-label="${escapeHtml(label)}">
-    <button class="logo-pick ui" type="button" data-choose-logo="${key}" ${tip(`${label}: click to choose an SVG or PNG. It is embedded in the design file.`)}>
+    <button class="logo-pick ui" type="button" data-choose-logo="${key}" ${tip(`${label}: click to choose an SVG or PNG. A symbol, as the name has its own setting on the Header page. It is embedded in the design file.`)}>
       <img data-logo-image="${key}" alt="" hidden><span data-logo-word="${key}"></span>
     </button>
     <button class="logo-remove ui" type="button" data-remove-logo="${key}" hidden ${tip('Remove this logo. The client name takes its place.')}>Remove</button>
   </div>`;
   return `${head('start', copy)}
-    <div class="why"><span class="why-head ui"><b>Introduction</b><span>The client reads this first</span></span>
-      <textarea data-path="project.introduction" aria-label="Introduction" placeholder="${escapeHtml(copy['start.how'])}" ${tip('Optional introduction on the first page of the presentation. Blank lines make paragraphs.')}></textarea></div>
-    <div class="why"><span class="why-head ui"><b>Design brief</b><span>For the designers and AI agents, not the client</span></span>
-      <textarea data-path="project.brief" aria-label="Design brief" placeholder="Who the site is for and how it should feel." ${tip('Optional. It opens the file exported for AI agents, and it is what most decides what they make. It is not shown in the presentation.')}></textarea></div>
     <div class="fields">
       ${textField('Client', 'project.name', 'The client name, in the preview and on every page of the presentation.')}
       ${textField('Version', 'project.version', 'The version on the first page and at the foot of every page of the presentation.')}
@@ -124,19 +124,24 @@ function start(copy) {
       ${tile('logo', 'Logo', 'data-kn-mode="light" data-kn-surface="page" style="box-shadow: inset 0 0 0 1px var(--kn-border); border-radius: var(--kn-radius-control)"')}
       ${tile('logo-dark', 'Logo for dark backgrounds', 'data-kn-surface="brand" style="border-radius: var(--kn-radius-control)"')}
     </div>
-    <div class="why-head ui"><b>Pictures</b><span>Sample photos until the client’s own are added</span></div>
+    <section class="setting"><h2 class="why-head ui"><b>Pictures</b><span>Sample photos until the client’s own are added</span></h2>
     <div class="picture-tiles">${PICTURE_TILES.map(([slot, name, help]) => `<div class="picture-tile">
       <input type="file" hidden data-picture="${slot}" accept="image/jpeg,image/png,image/webp,image/avif" aria-label="${escapeHtml(name)}">
-      <button class="picture-pick ui" type="button" data-choose-picture="${slot}" ${tip(`${help} Click to choose the client’s own photo. It is kept in a folder beside the design file.`)}>
+      <button class="picture-pick ui" type="button" data-choose-picture="${slot}" ${tip(`${help} Click to choose the client’s own photo. It is kept in a folder beside the design file, where Undo does not reach.`)}>
         <img data-picture-image="${slot}" alt=""><span class="picture-name">${escapeHtml(name)}</span>
       </button>
-      <button class="logo-remove ui" type="button" data-remove-picture="${slot}" hidden ${tip('Remove this photo. The sample takes its place.')}>Remove</button>
-    </div>`).join('')}</div>`;
+      <button class="logo-remove ui" type="button" data-remove-picture="${slot}" hidden ${tip('Remove this photo. The sample takes its place, and Undo does not bring it back.')}>Remove</button>
+    </div>`).join('')}</div></section>
+    <div class="why"><span class="why-head ui"><b>Introduction</b><span>The client reads this first</span></span>
+      <textarea data-path="project.introduction" aria-label="Introduction" placeholder="${escapeHtml(copy['start.how'])}" ${tip('Optional introduction on the first page of the presentation. Blank lines make paragraphs.')}></textarea></div>
+    <div class="why"><span class="why-head ui"><b>Design brief</b><span>For the designers and AI agents, not the client</span></span>
+      <textarea data-path="project.brief" aria-label="Design brief" placeholder="Who the site is for and how it should feel." ${tip('Optional. It opens the file exported for AI agents, and it is what most decides what they make. It is not shown in the presentation.')}></textarea></div>
+    ${next('start', copy)}`;
 }
 
 function colourBlock(key, name, job, removable) {
   return `<section class="colour" data-colour-block="${key}">
-    <div class="colour-name"><h2>${escapeHtml(name)}</h2><p class="colour-job ui">${escapeHtml(job)}</p></div>
+    <div class="colour-name"><h2 class="setting-title ui">${escapeHtml(name)}</h2><p class="colour-job ui">${escapeHtml(job)}</p></div>
     <div class="colour-body">
       <div class="colour-controls ui">
         ${slider('Hue', `lch.${key}.H`, 0, 360, 'Turns the colour around the wheel. The whole scale follows.', { colour: 'H' })}
@@ -156,7 +161,7 @@ function colourScale(copy) {
       ${colourBlock('secondary', 'Secondary', 'Accents, focus and a tint of its own.', true)}
       ${colourBlock('tertiary', 'Tertiary', 'One more tint, to group content.', true)}
       <section class="colour">
-        <div class="colour-name"><h2>Grey</h2><p class="colour-job ui">Text, hairlines and neutral Surfaces.</p></div>
+        <div class="colour-name"><h2 class="setting-title ui">Grey</h2><p class="colour-job ui">Text, hairlines and neutral Surfaces.</p></div>
         <div class="colour-body">
           <div class="colour-controls ui">${slider('Temperature', 'inputs.gray-temperature', -100, 100, 'Makes neutral colours cooler or warmer, without changing the brand colours.', { colour: 'T' })}</div>
           <div class="ramp figures" data-ramp="gray"></div>
@@ -235,9 +240,9 @@ const AXES = {
   YTFI: ['Figure height', 'How tall the digits are.'],
 };
 const AXIS_ORDER = Object.keys(AXES);
-// Each description is written once, so moving between roles leaves no tooltips behind.
+// Each description is written once, so moving between roles or chapters leaves no tooltips behind.
 const once = new Map();
-const tipOnce = (key, text) => {
+export const tipOnce = (key, text) => {
   if (!once.has(key)) once.set(key, tip(text));
   return once.get(key);
 };
@@ -261,7 +266,10 @@ export function axesMarkup(face) {
   }).join('');
   const spacing = axisSlider('spacing', 'Letter spacing', 'The space between the letters, in parts of the text size.', -0.1, 0.3, 0.005);
   const sets = face?.sets?.length
-    ? `<fieldset class="axis-sets ui"><legend>Alternate letters</legend>${face.sets.map(([set, name]) => `<label><input type="checkbox" data-set="${set}">${escapeHtml(name || set)}</label>`).join('')}</fieldset>`
+    ? `<fieldset class="axis-sets ui"><legend>Alternate letters</legend>${face.sets.map(([set, name]) => {
+        const help = tipOnce('alternate', 'Swaps these letters for the typeface’s own alternate forms. Off, it keeps its usual ones.');
+        return `<label ${help}><input type="checkbox" data-set="${set}" ${help}>${escapeHtml(name || set)}</label>`;
+      }).join('')}</fieldset>`
     : '';
   return `<div class="fields two">${sliders}${spacing}</div>${sets}`;
 }
@@ -289,8 +297,8 @@ function lineStack(end, side) {
 }
 const lineWidthField = (key, name, help) => `<label class="line-px" data-line-label="${key}"><input class="figures" type="text" inputmode="numeric" autocomplete="off" spellcheck="false" data-line-px="${key}" aria-label="${name}, in pixels" ${tip(help)}><span class="figures">px</span></label>`;
 const lineArrow = (key, name, help, kind) => `<span class="line-arrow" data-arrow="${key}" data-kind="${kind}" role="slider" tabindex="0" aria-label="${name}" aria-valuemin="${LINE.min}" aria-valuemax="${LINE.max}" ${tip(help)}>${kind === 'view'
-    ? '<svg width="14" height="12" viewBox="0 0 14 12" aria-hidden="true"><path d="M7 1 13 11H1Z" fill="var(--kn-background)" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>'
-    : '<svg width="14" height="12" viewBox="0 0 14 12" aria-hidden="true"><path d="M1 1h12L7 11Z" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>'}</span>`;
+    ? '<svg width="0.875rem" height="0.75rem" viewBox="0 0 14 12" aria-hidden="true"><path d="M7 1 13 11H1Z" fill="var(--kn-background)" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>'
+    : '<svg width="0.875rem" height="0.75rem" viewBox="0 0 14 12" aria-hidden="true"><path d="M1 1h12L7 11Z" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>'}</span>`;
 function scaleLine() {
   const breakpoint = (side) => `The ${side} breakpoint. Drag it anywhere on the line, as long as left is not above right. Between the two the base follows a straight line, and outside them it stays fixed. On the same width the scale changes at once. The arrow keys move it one pixel at a time.`;
   return `<div class="scale-line ui" data-scale-line>
@@ -310,7 +318,7 @@ function scaleLine() {
   </div>`;
 }
 function typeScale(copy) {
-  const rows = STEP_ROWS.map(([key, name]) => `<div class="step">
+  const rows = STEP_ROWS.map(([key, name, height]) => `<div class="step" style="height: ${height}rem">
     <span class="step-name ui">${name}</span>
     <span class="stepper ui">
       <button type="button" data-step="${key}" data-delta="-1" aria-label="${name} one step smaller" ${tip('One step smaller. Other styles keep their size, and neighbours cannot cross.')}>−</button>
@@ -334,10 +342,10 @@ const realCard = (copy) => `<article class="kn-card" data-kn-variant="link" data
 function space(copy) {
   return `${head('space', copy)}
     ${slider('Density', 'inputs.density-profile', 0, 100, 'One setting for all the space on the page: gaps, columns, padding and the rhythm of the bands.', { low: 'Very compact', high: 'Very loose' })}
-    <section class="sample-band" data-kn-surface="tint">
+    <div class="sample-stage"><section class="sample-band" data-kn-surface="tint">
       <h2 data-kn-type="heading-3">${escapeHtml(copy['space.title'])}</h2>
       <div class="sample-cards">${realCard(copy).repeat(3)}</div>
-    </section>
+    </section></div>
     ${why('space-shape', 'Why this space and shape', copy)}${next('space', copy)}`;
 }
 function corners(copy) {
@@ -368,7 +376,7 @@ function shadow(copy) {
         ${slider('Strength', 'inputs.shadow.strength', 0, 100, 'How dark the shadow is. At zero there is none, and hairlines take over. It catches at 50.')}
         ${slider('Hardness', 'inputs.shadow.hardness', 0, 100, 'From very diffuse to a hard, solid offset.')}
         ${slider('Elevation', 'inputs.shadow.elevation', 0, 100, 'How far things lift from the page.')}
-        <div class="dial-row"><svg width="44" height="44" viewBox="0 0 44 44" fill="none" stroke="currentColor" aria-hidden="true"><circle cx="22" cy="22" r="20.5" stroke-opacity=".3"></circle><circle cx="22" cy="22" r="3" fill="currentColor" stroke="none"></circle><g data-dial><path d="M22 22v13"></path><path d="M17.5 31l4.5 5 4.5-5" stroke-linejoin="round"></path></g></svg>
+        <div class="dial-row"><svg width="2.75rem" height="2.75rem" viewBox="0 0 44 44" fill="none" stroke="currentColor" aria-hidden="true"><circle cx="22" cy="22" r="20.5" stroke-opacity=".3"></circle><circle cx="22" cy="22" r="3" fill="currentColor" stroke="none"></circle><g data-dial><path d="M22 22v13"></path><path d="M17.5 31l4.5 5 4.5-5" stroke-linejoin="round"></path></g></svg>
           ${slider('Shadow falls', 'shadow-direction', -90, 90, 'Which way shadows fall. The arrow shows it. Straight down by default.', { low: 'Left', high: 'Right' })}</div>
         ${choice('Colour', 'inputs.shadow.color', SHADOW_COLOURS, 'The text colour by default. On dark Surfaces a default shadow stays black.')}
         <div class="field">Casts a shadow<div class="chips">${targets.map(([key, name, help]) => `<button class="chip" type="button" data-target="${key}" ${tip(help)}>${name}</button>`).join('')}</div></div>
@@ -387,7 +395,6 @@ const flags = (items) => `<div class="chips ui">${items.map(([path, name, help])
 const showPanel = (panel, name, help) => `<button class="plain show-panel ui" type="button" data-show-panel="${panel}" ${tip(help)}>${escapeHtml(name)}</button>`;
 const SURFACE_CHOICES = [['page', 'Page colour'], ['raised', 'Raised'], ['tint', 'Tint'], ['brand', 'Brand colour'], ['inverse', 'Dark']];
 const AXIS_CHOICES = [['row', 'Side by side'], ['column', 'Stacked']];
-const ALIGN_CHOICES = [['start', 'Start'], ['center', 'Centre'], ['end', 'End']];
 
 // A small drawing of an arrangement. Items that are off stay in their place, greyed.
 const MINI = { identity: 'Identity', links: 'Links', search: 'Search', language: 'Globe', menu: 'Menu', cta: 'CTA' };
@@ -422,12 +429,10 @@ function headerPage(copy) {
       </div>
       ${flags([['header.autohide', 'Slides away', `Slides out of the window when you scroll down, and back when you scroll up. ${onlySticky}`]])}`)}
     ${setting('Identity', `<div class="fields">
-        ${choice('Brand', 'inputs.header.identity', [['logo', 'Logo'], ['name', 'Name'], ['both', 'Logo and name']], 'What the brand is. Without a logo the name is used whatever you choose.')}
-        ${textField('Slogan', 'project.slogan', 'Optional words beside or under the brand. They go first when space runs out.')}
-        ${choice('Logo and name', 'inputs.header.brand-axis', AXIS_CHOICES, 'How logo and name stand to each other.')}
-        ${choice('Aligned', 'inputs.header.brand-align', ALIGN_CHOICES, 'Side by side: top, middle or bottom. Stacked: left, centre or right.')}
-        ${choice('Brand and slogan', 'inputs.header.identity-axis', AXIS_CHOICES, 'How the brand and the slogan stand to each other.')}
-        ${choice('Aligned', 'inputs.header.identity-align', ALIGN_CHOICES, 'Side by side: top, middle or bottom. Stacked: left, centre or right.')}
+        ${choice('Brand', 'inputs.header.identity', [['logo', 'Logo'], ['name', 'Name'], ['both', 'Logo and name']], 'What the brand is, in the header and the footer alike. Without a logo the name is used whatever you choose.')}
+        ${textField('Slogan', 'project.slogan', 'Optional words beside or under the brand, in the header only. They go first when space runs out.')}
+        ${choice('Logo and name', 'inputs.header.brand-axis', AXIS_CHOICES, 'How logo and name stand to each other, in the header and the footer alike: centred on each other, or stacked from the same edge. Only when both show.')}
+        ${choice('Slogan\'s place', 'inputs.header.slogan-place', [['beside', 'Beside'], ['below', 'Below']], 'Beside the brand, centred on it after a thin line. Or below the name and starting where it starts, and below the logo when there is no name. Only with a slogan.')}
       </div>`)}
     ${setting('The large menu', `
       ${flags([
@@ -448,33 +453,36 @@ function headerPage(copy) {
     ${why('frame', 'Why this frame', copy)}${next('header', copy)}`;
 }
 
-// A small drawing of a footer model: its rows, with the left and right columns in each.
-const FOOTER_DRAWINGS = [
-  ['one', 'One band', 'Identity and links in a single band.', [['a', 'b']]],
-  ['two', 'Two rows', 'The identity beside links and contact, in one colour.', [['tall', 'b'], ['tall', 'b']]],
-  ['utility', 'With a thin band', 'Two rows, and a thin band for legal links in a second colour.', [['tall', 'b'], ['tall', 'b'], ['thin', 'thin']]],
-  ['statement', 'With a statement', 'A sentence across both columns, above the rest.', [['wide'], ['a', 'b'], ['thin', 'thin']]],
-  ['tall-identity', 'Tall left column', 'The identity and a text beside three rows on the right.', [['tall', 'b'], ['tall', 'b'], ['tall', 'b']]],
-  ['tall-links', 'Tall right column', 'A long list of links beside three rows on the left.', [['a', 'tall'], ['a', 'tall'], ['a', 'tall']]],
+// The footer's miniature: its two bands, the upper taller, each with four cells at the real 1/3 and 2/3.
+// Each cell is a button that turns it on or off, says which it is, and tells in its tooltip what the sample shows there.
+const FOOTER_BANDS = [
+  ['upper', 'Upper band', { a1: 'the brand, as the header shows it', b1: 'social media icons', a2: 'a short statement of what the brand stands for', b2: 'links for navigation' }],
+  ['lower', 'Lower band', { a1: 'the address', b1: 'the registration number and registered office', a2: 'links to the cookie and privacy policies', b2: 'links to change privacy settings and revoke consents' }],
 ];
-const footerDrawing = (rows) => `<span class="mini-footer">${rows.map((row) => `<span class="mini-row">${row.map((cell) => `<i data-cell="${cell}"></i>`).join('')}</span>`).join('')}</span>`;
+const footerMiniature = () => `<div class="footer-mini ui">${FOOTER_BANDS.map(([band, name, samples]) => `<div class="footer-mini-band" data-mini-band="${band}">${Object.entries(samples).map(([cell, sample]) => {
+  const label = `${name}, ${cell.toUpperCase()}`;
+  return `<button class="footer-mini-cell" type="button" data-flag="inputs.footer.${band}.cells.${cell}" aria-label="${label}" ${tip(`${label}: the preview shows ${sample} here. Click to turn the cell on or off.`)}></button>`;
+}).join('')}</div>`).join('')}</div>`;
 function footerPage(copy) {
   return `${head('footer', copy)}
-    ${setting('Model', `<div class="picks picks-grid ui">${FOOTER_DRAWINGS.map(([id, name, help, rows]) => `<button class="pick" type="button" data-pick="inputs.footer.model" data-value="${id}" ${tip(help)}>${footerDrawing(rows)}<span class="pick-name">${escapeHtml(name)}</span></button>`).join('')}</div>`)}
+    ${setting('Cells', footerMiniature())}
     ${setting('Colours', `<div class="fields">
-        ${choice('Main colour', 'inputs.footer.surface', SURFACE_CHOICES, 'The colour of the footer\'s main rows.')}
-        ${choice('Thin band', 'inputs.footer.second-surface', SURFACE_CHOICES, 'The colour of the thin band, in the models that have one.')}
+        ${choice('Upper band', 'inputs.footer.upper.surface', SURFACE_CHOICES, 'The colour of the upper band. It behaves like any other band on the page.')}
+        ${choice('Lower band', 'inputs.footer.lower.surface', SURFACE_CHOICES, 'The colour of the lower band, which is always thin.')}
+      </div>`)}
+    ${setting('Empty cells', `<div class="fields">
+        ${choice('An empty cell gives way to', 'inputs.footer.fill', [['column', 'The cell above or below'], ['row', 'The cell beside it']], 'Which neighbour takes the room where a cell could fill either way. An empty row or column always goes, and the content stays at its own edge, at the top.')}
+      </div>`)}
+    ${setting('Attachment', `<div class="fields">
+        ${choice('The footer sits', 'inputs.footer.attachment', [['flow', 'At the end of the page'], ['reveal', 'At the edge of the screen']], 'At the end of the page, it scrolls in from below. At the edge of the screen, it lies still under the page, which slides off it. That holds only while the whole footer fits in the window.')}
       </div>`)}
     ${setting('Lines', `
       ${flags([
-        ['footer.horizontal-rules', 'Between rows', 'A line between rows of one colour, in the models with several. Never between two colours or through a merged cell.'],
-        ['footer.vertical-rule', 'Between columns', 'A line between the left and the right column.'],
+        ['footer.horizontal-rules', 'Between rows', 'A line between rows of one colour. Never between two colours or through a merged cell.'],
+        ['footer.vertical-rule', 'Between columns', 'A line between the left and the right column. Never through a merged cell.'],
       ])}
       <div class="fields">
-        ${choice('Lines end', 'inputs.footer.rule-extent', [['content', 'At the content'], ['full', 'At the column\'s edge']], 'Whether a line stops where the text stops, or runs the whole width of its column.')}
-      </div>`)}
-    ${setting('How it appears', `<div class="fields">
-        ${choice('Scrolling', 'inputs.footer.attachment', [['flow', 'Last on the page'], ['reveal', 'Revealed under the page']], 'Last on the page, it scrolls in from below. Revealed, it lies still under the page, which slides off it. That holds only while the whole footer fits in the window.')}
+        ${choice('Lines end', 'inputs.footer.rule-extent', [['content', 'At the content'], ['full', 'At the window\'s edge']], 'Whether a line stops where the text stops, or runs on to the edge of the window.')}
       </div>`)}
     ${next('footer', copy)}`;
 }
@@ -498,48 +506,74 @@ function pagePage(copy) {
 const SEPARATORS = [['slash', '/'], ['chevron', '›'], ['arrow', '→'], ['dot', '·']];
 function breadcrumbsPage(copy) {
   return `${head('breadcrumbs', copy)}
-    ${flags([['breadcrumbs.show', 'Show a trail', 'A trail at the top of every page but the start page. Off, a page\'s place comes from the menu alone.']])}
-    ${setting('Where it stands', `<div class="fields">
-        ${choice('Place', 'inputs.breadcrumbs.placement', [['first-band', 'In the first band, above the heading'], ['own-band', 'In a thin band of its own']], 'In the first band it takes that band\'s colours, and the page opens higher. In a band of its own it stands the same on every page.')}
-      </div>`)}
+    ${flags([['breadcrumbs.show', 'Show a trail', 'A trail directly above the page\'s H1, on every page but the start page. Off, a page\'s place comes from the menu alone.']])}
     ${setting('How it looks', `<div class="picks picks-two ui">${SEPARATORS.map(([id, mark]) => `<button class="pick" type="button" data-pick="inputs.breadcrumbs.separator" data-value="${id}" ${tip('The mark between the steps.')}><span class="pick-trail">Services <b>${mark}</b> Planning</span></button>`).join('')}</div>
       <div class="fields">
         ${choice('First step', 'inputs.breadcrumbs.home', [['word', 'The word Home'], ['name', 'The site\'s name'], ['icon', 'A house']], 'How the trail begins. With a house, the word stays for those who hear the page.')}
         ${choice('On a phone', 'inputs.breadcrumbs.narrow', [['trail', 'The whole trail, on several lines'], ['parent', 'Only the way up one level']], 'A long trail takes room from the heading on a narrow screen. Only the way up shows as ← Planning.')}
       </div>
       ${flags([['breadcrumbs.current', 'Current page', 'The trail ends with the page itself, as plain text. Off, it ends with the page above.']])}`)}
+    <p class="component-note ui">${escapeHtml(copy['breadcrumbs.place'])} Where the H1 is, you choose under Opening a page.</p>
     ${next('breadcrumbs', copy)}`;
 }
 
-/* ---- The page's opening: one hero in the preview, and its choices here, from the background up to the words. ---- */
+/* ---- The page's opening: one hero in the preview, and its choices here, in the owner's order: size, picture, text, colour, heading. ---- */
 const hero = (name, value, drawing, help) => `<button class="pick" type="button" data-pick="inputs.hero.${name}" data-value="${value}" ${tip(help)}>${drawing}</button>`;
 const heroDrawing = (kind, word) => `<span class="pick-screen" data-draw="${kind}" aria-hidden="true"><i></i><i></i></span><span class="pick-word">${escapeHtml(word)}</span>`;
+// Each choice is its value, its word, what it does, and its drawing where that goes by another name than the value.
+const heroPick = (name, [value, word, help, kind = value]) => hero(name, value, heroDrawing(kind, word), help);
+const HERO_SIZES = [
+  ['third', '1/3', 'A third of the screen. A longer text makes it taller, and so does a picture above the text on a phone.'],
+  ['half', '1/2', 'Half of the screen. A longer text makes it taller, and so does a picture above the text on a phone.'],
+  ['two-thirds', '2/3', 'Two thirds of the screen. A longer text makes it taller, and so does a picture above the text on a phone.'],
+  ['full', '1/1', 'All of the screen. A visitor sees nothing else before scrolling.'],
+];
+const HERO_PICTURES = [
+  ['none', 'None', 'No picture: the words alone, on the colour below.'],
+  ['behind', 'Behind', 'The picture fills the hero, under an overlay that lets the text hold its contrast.'],
+  ['start-bleed', 'Left bleed', 'The picture runs to the window\'s left edge and to the hero\'s top and bottom, with the text on the right. On a phone it stands above the text.'],
+  ['end-bleed', 'Right bleed', 'The picture runs to the window\'s right edge and to the hero\'s top and bottom, with the text on the left. On a phone it stands above the text.'],
+  ['start', 'Left', 'The picture stands on the left, inside the content width, with the hero\'s space above and below it and the text on the right. On a phone it stands above the text.'],
+  ['end', 'Right', 'The picture stands on the right, inside the content width, with the hero\'s space above and below it and the text on the left. On a phone it stands above the text.'],
+];
+const HERO_PLACES = [
+  ['top', 'Top', 'The text at the top. Over a picture behind it, the overlay is strongest at the top and fades away below the text.'],
+  ['center', 'Middle', 'The text in the middle. Over a picture behind it, the overlay covers all of the picture.', 'middle'],
+  ['bottom', 'Bottom', 'The text at the bottom. Over a picture behind it, the overlay fades in above the text and is at full strength where the text begins.'],
+];
+const HERO_ALIGNS = [
+  ['start', 'Left', 'The text at the left of the content width. A picture at the side already gives the text its half.', 'align-start'],
+  ['center', 'Centre', 'The text block in the middle of the content width, with its lines still left-aligned. A picture at the side already gives the text its half.', 'align-center'],
+  ['end', 'Right', 'The text block at the right of the content width, with its lines still left-aligned. A picture at the side already gives the text its half.', 'align-end'],
+];
+// Two settings of their own, in all four combinations: where the page's H1 is, and how the hero's heading looks.
+const HERO_H1 = [
+  ['hero', 'In the hero', 'The hero\'s heading is the page\'s H1, with the trail first in the hero\'s text. The next section\'s heading is an H2.', 'h1-hero'],
+  ['below', 'Under it', 'The next section\'s heading is the page\'s H1, with the trail directly above it. The hero\'s text keeps its look and is no heading in the code, since a lower heading before the H1 reads as the wrong order to screen readers and search engines.', 'h1-below'],
+];
+const HERO_LOOKS = [
+  ['heading-1', 'H1', 'The look of the first heading, as on every other page. With the H1 under the hero, two headings of the same size stand close, so Display often reads better.'],
+  ['display', 'Display', 'The largest look, for an opening that speaks loudly. With the H1 under the hero, it also keeps the hero\'s text apart from the heading below it.'],
+];
+const heroChoice = (label, name, choices) => `<div class="picks-labelled ui" role="group" aria-label="${escapeHtml(label)}">
+    <span class="pick-name-above">${escapeHtml(label)}</span>
+    <div class="picks picks-two">${choices.map((item) => heroPick(name, item)).join('')}</div>
+  </div>`;
 function heroPage(copy) {
   return `${head('opening', copy)}
-    ${setting('Picture', `<div class="picks picks-four ui">
-      ${hero('picture', 'none', heroDrawing('none', 'None'), 'Words alone, on the colour below.')}
-      ${hero('picture', 'beside', heroDrawing('beside', 'Beside'), 'The picture stands next to the text, and under it on a phone.')}
-      ${hero('picture', 'behind', heroDrawing('behind', 'Behind'), 'The picture fills the hero, under an overlay that lets the text hold its contrast.')}
-    </div>
-    <div class="fields">
-      ${choice('Colour', 'inputs.hero.surface', [['none', 'None'], ...SURFACE_CHOICES], 'The colour behind the text. With none, what lies beneath shows. A picture behind the text leaves no colour to choose.')}
-      ${choice('Overlay', 'inputs.hero.overlay', [['dark', 'Dark, with light text'], ['light', 'Light, with dark text']], 'What lies between a picture behind the text and the text. It is as strong as the text needs, and no more.')}
+    ${setting('Size', `<div class="picks picks-four ui">${HERO_SIZES.map((item) => heroPick('height', item)).join('')}</div>`)}
+    ${setting('Picture', `<div class="picks picks-six ui">${HERO_PICTURES.map((item) => heroPick('picture', item)).join('')}</div>`)}
+    ${setting('Text', `<div class="picks picks-three ui">${HERO_PLACES.map((item) => heroPick('place', item)).join('')}</div>
+    <div class="picks picks-three ui">${HERO_ALIGNS.map((item) => heroPick('align', item)).join('')}</div>`)}
+    ${setting('Behind the text', `<div class="fields">
+      ${choice('Colour', 'inputs.hero.surface', [['none', 'None'], ...SURFACE_CHOICES], 'The colour behind the text. With none, what lies beneath shows.')}
+      ${choice('Overlay', 'inputs.hero.overlay', [['dark', 'Dark, with light text'], ['light', 'Light, with dark text']], 'What lies between the picture and the text. It is as strong as the text needs, and no more.')}
     </div>`)}
-    ${setting('Share of the screen', `<div class="picks picks-four ui">
-      ${hero('height', 'third', heroDrawing('third', '1/3'), 'A third of the screen. The text fills that height, so it stays centred.')}
-      ${hero('height', 'half', heroDrawing('half', '1/2'), 'Half of the screen. A longer text makes it taller.')}
-      ${hero('height', 'two-thirds', heroDrawing('two-thirds', '2/3'), 'Two thirds of the screen. A longer text makes it taller.')}
-      ${hero('height', 'full', heroDrawing('full', 'All'), 'All of the screen. A visitor sees nothing else before scrolling.')}
+    ${setting('Heading', `<div class="picks-beside">
+      ${heroChoice('The page\'s H1', 'h1', HERO_H1)}
+      ${heroChoice('The hero\'s heading looks like', 'type', HERO_LOOKS)}
     </div>`)}
-    ${setting('Text', `<div class="picks picks-four ui">
-      ${hero('place', 'center', heroDrawing('center', 'Centred'), 'The text in the middle of the hero.')}
-      ${hero('place', 'bottom', heroDrawing('bottom', 'At the bottom'), 'The text at the bottom. Over a picture, the overlay fades in above it, and the picture is clear at the top.')}
-    </div>`)}
-    ${setting('Heading', `<div class="picks picks-four ui">
-      ${hero('type', 'heading-1', heroDrawing('heading-1', 'H1'), 'The first heading\'s size, as on every other page.')}
-      ${hero('type', 'display', heroDrawing('display', 'Display'), 'The largest size, for an opening that speaks loudly.')}
-    </div>`)}
-    <p class="component-note ui">The preview shows one screen, 16:10 on a desktop and upright on a tablet and a phone. The grey bars stand for what follows the hero.</p>
+    <p class="component-note ui">The preview shows one screen, 16:10 on a desktop and upright on a tablet and a phone. The heading under the hero is real, and the grey bars stand for what follows it.</p>
     ${setting('On this page', `<dl class="component-list"><div><dt class="ui">Hero</dt><dd>${escapeHtml(DESCRIPTIONS.get('Hero') ?? '')}</dd></div></dl>`)}
     ${why('components', 'About the components', copy)}${next('opening', copy)}`;
 }
@@ -547,11 +581,18 @@ function heroPage(copy) {
 /* ---- The components: they take everything from the pages before, and show in the preview. ---- */
 const DESCRIPTIONS = new Map(COMPONENT_GROUPS.flatMap(([, items]) => items));
 DESCRIPTIONS.set('Pagination', 'Moves through a long list, page by page.');
+const LOOK_COLUMNS = { 2: 'picks-two', 3: 'picks-three', 4: 'picks-four', 5: 'picks-five' };
+// A look's row: one short word a variation. It changes what the preview shows, not the design.
+const lookRow = (component, [key, label, choices]) => `<div class="look ui" role="group" aria-label="${escapeHtml(`${component}: ${label}`)}">
+    <span class="look-name">${escapeHtml(label)}</span>
+    <div class="picks ${LOOK_COLUMNS[choices.length]}">${choices.map(([value, word, help]) => `<button class="pick" type="button" data-look-key="${key}" data-look-value="${value}" ${tip(help)}><span class="pick-word">${escapeHtml(word)}</span></button>`).join('')}</div>
+  </div>`;
 const componentPage = (id) => (copy) => {
-  const [, names, defaults, variants] = componentPages.find(([page]) => page === id);
-  return `${head(id, copy)}
-    ${setting('In the preview', `<div class="chips ui">${[...defaults, ...variants].map((specimen) => `<button class="chip" type="button" data-show-specimen="${specimen}" ${tip('Scroll the preview to this.')}>${escapeHtml(copy[`specimen.${specimen}`])}</button>`).join('')}</div>`)}
-    <p class="component-note ui">These are the real components, at their real widths. They take their colours, typefaces, space, corners and shadows from the pages before, so there is nothing more to set here.</p>
+  const [, names] = componentPages.find(([page]) => page === id);
+  // The report opens the states below its Buttons; here they are among the choices.
+  return `${head(id, copy, id === 'buttons' ? { text: copy['buttons.tool-lead'] } : {})}
+    ${TOOL_PAGES[id].filter(({ looks }) => looks).map(({ name, title = name, looks }) => setting(title, looks.map((look) => lookRow(title, look)).join(''))).join('')}
+    <p class="component-note ui">These are the real components, at their real widths. They take their colours, typefaces, space, corners and shadows from the pages before. The choices above are ways of looking, made per use by whoever builds a page, so they stay out of the design and its history.</p>
     ${setting('On this page', `<dl class="component-list">${names.map((name) => `<div><dt class="ui">${escapeHtml(name)}</dt><dd>${escapeHtml(DESCRIPTIONS.get(name) ?? '')}</dd></div>`).join('')}</dl>`)}
     ${next(id, copy)}`;
 };

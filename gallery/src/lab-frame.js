@@ -23,7 +23,7 @@ export function setupFrameLab() {
     page.querySelector('.kn-header')?.remove();
     const template = document.querySelector(`template[data-lab-header="${['A', 'B', 'C'].includes(config.arrangement) ? config.arrangement : 'A'}"]`);
     const header = template.content.firstElementChild.cloneNode(true);
-    for (const [item, selector] of Object.entries({ slogan: '.kn-header-slogan', name: '.kn-header-name', links: '.kn-header-link-menu', language: '.kn-header-language, [data-kn-moved="language"]', search: '.kn-header-search-trigger, [data-kn-panel="search"], [data-kn-moved="search"]', cta: '.kn-header-cta' })) {
+    for (const [item, selector] of Object.entries({ slogan: '.kn-header-slogan', name: '.kn-brand-name', links: '.kn-header-link-menu', language: '.kn-header-language, [data-kn-moved="language"]', search: '.kn-header-search-trigger, [data-kn-panel="search"], [data-kn-moved="search"]', cta: '.kn-header-cta' })) {
       if (!config[item]) header.querySelectorAll(selector).forEach((node) => node.remove());
     }
     header.dataset.knAttachment = config.headerAttachment === 'sticky' ? 'sticky' : 'flow';

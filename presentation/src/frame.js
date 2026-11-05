@@ -1,21 +1,20 @@
 // What a design's settings for the header, the footer and the page mean for this document's sample content.
-import { footerBands } from '../../src/components/footer-models.js';
+import { icons } from '../../src/components/icons.js';
+import { brandParts, footerBrand } from '../../src/components/brand.js';
+import { footerFromDesign } from '../../src/components/footer.js';
 import { menu, search, languages, cta } from './samples.js';
-import { heroHasRoom } from './catalog.js';
 
 export function identityProps(settings, project) {
   const logo = project.logo || project['logo-dark'];
-  const showLogo = logo && settings.identity !== 'name';
+  const show = brandParts(settings.identity, !!logo);
   return {
     label: project.name,
     href: '#home',
-    name: !logo || settings.identity !== 'logo' ? project.name : undefined,
+    name: show.name ? project.name : undefined,
     slogan: project.slogan || undefined,
-    logo: showLogo ? { light: logo, dark: project['logo-dark'] || logo } : undefined,
+    logo: show.logo ? { light: logo, dark: project['logo-dark'] || logo } : undefined,
     brandAxis: settings['brand-axis'],
-    brandAlign: settings['brand-align'],
-    axis: settings['identity-axis'],
-    align: settings['identity-align'],
+    sloganPlace: settings['slogan-place'],
   };
 }
 export function headerProps(settings, project) {
@@ -40,49 +39,56 @@ export function headerProps(settings, project) {
   };
 }
 
+// A page's first heading is its H1, and h1 says where that is. In the hero, the hero's heading is the <h1> and the next
+// section's an <h2>. Under the hero, the hero's text is no heading at all, since a lower heading before the H1 reads as the
+// wrong order, and the next section's heading is the <h1>. The component and the tool's live sample both follow these.
+export const nextHeadingProps = (settings) => (settings.h1 === 'below' ? { level: 1, type: 'heading-1' } : { level: 2, type: 'heading-2' });
+
 export function heroProps(settings, images) {
   const behind = settings.picture === 'behind';
-  const beside = settings.picture === 'beside';
+  const side = behind || settings.picture === 'none' ? undefined : settings.picture;
   return {
+    level: settings.h1 === 'below' ? false : 1,
     surface: behind ? `picture-${settings.overlay}` : settings.surface === 'none' ? undefined : settings.surface,
-    picture: behind ? images.hero : beside ? images.landscapes[0] : undefined,
-    alt: beside ? '' : undefined,
+    picture: behind ? images.hero : side ? images.landscapes[0] : undefined,
+    side,
+    alt: side ? '' : undefined,
     type: settings.type,
     height: settings.height,
-    place: heroHasRoom(settings.height) ? settings.place : 'center',
+    place: settings.place,
+    align: settings.align,
   };
 }
 
-const DARK_SURFACES = ['brand', 'inverse'];
-export function footerContent(settings, project) {
-  const logo = DARK_SURFACES.includes(settings.surface) ? project['logo-dark'] || project.logo : project.logo || project['logo-dark'];
-  const name = project.name.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+const SOCIAL = [['LinkedIn', 'linkedin'], ['Facebook', 'facebook'], ['YouTube', 'youtube'], ['Spotify', 'spotify'], ['Email', 'mail'], ['RSS', 'rss']];
+const social = `<ul class="kn-footer-social">${SOCIAL.map(([label, icon]) => `<li><a href="#${icon}" aria-label="${label}"><svg class="kn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true" focusable="false">${icons[icon]}</svg></a></li>`).join('')}</ul>`;
+// What stands in each cell of the sample footer. A site decides this for itself. The brand follows the header's settings.
+export function footerContent(settings, project, header = {}) {
   return {
-    identity: logo ? `<img src="${logo.replaceAll('"', '&quot;')}" alt="${name}" style="max-width:14rem;max-height:3rem">` : `<p data-kn-type="heading-3">${name}</p>`,
-    about: 'Clear information. Practical next steps.',
-    explore: {
-      heading: 'Explore',
-      links: [
-        { label: 'Services', href: '#services' },
-        { label: 'Resources', href: '#resources' },
-        { label: 'About', href: '#about' },
-        { label: 'Contact', href: '#contact' },
-      ],
+    upper: {
+      a1: { content: footerBrand({ identity: header.identity, axis: header['brand-axis'], name: project.name, logo: { light: project.logo, dark: project['logo-dark'] }, surface: settings.upper.surface }) },
+      b1: { content: social },
+      a2: { text: 'Clear information and practical next steps, for anyone planning what comes next.' },
+      b2: {
+        links: [
+          { label: 'Products', href: '#products' },
+          { label: 'Services', href: '#services' },
+          { label: 'Markets', href: '#markets' },
+          { label: 'Technology', href: '#technology' },
+          { label: 'Knowledge', href: '#knowledge' },
+          { label: 'About', href: '#about' },
+        ],
+      },
     },
-    contact: { heading: 'Contact the team', text: 'Ask about planning, delivery or ongoing support.', links: [{ label: 'Start a conversation', href: '#contact' }] },
-    statement: 'A clear next step is never far away',
-    legal: 'Clear information. Practical next steps.',
-    legalLinks: [
-      { label: 'Privacy', href: '#privacy' },
-      { label: 'Cookie choices', href: '#cookies', consentOpen: true },
-    ],
+    lower: {
+      a1: { text: '12 Example Street, 123 45 Sampleton' },
+      b1: { text: 'Registration no. 000000-0000. Registered office: Sampleton.' },
+      a2: { links: [{ label: 'Cookie policy', href: '#cookie-policy' }, { label: 'Privacy policy', href: '#privacy-policy' }] },
+      b2: { links: [{ label: 'Change privacy settings', href: '#privacy-settings', consentOpen: true }, { label: 'Revoke consents', href: '#revoke-consents', consentOpen: true }] },
+    },
   };
 }
-export const footerProps = (settings, project) => ({
-  bands: footerBands(settings, footerContent(settings, project)),
-  attachment: settings.attachment,
-  rules: settings['rule-extent'],
-});
+export const footerProps = (settings, project, header) => footerFromDesign(settings, footerContent(settings, project, header));
 // The trail on the sample page. The first step is the site's name, or the word Home, or a house.
 export const breadcrumbProps = (settings, project) => ({
   items: [

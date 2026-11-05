@@ -14,7 +14,7 @@ import Table from '../../../src/components/Table.astro';
 import Callout from '../../../src/components/Callout.astro';
 import Breadcrumbs from '../../../src/components/Breadcrumbs.astro';
 import { workshopColumns, workshopRows } from '../content-samples';
-import { identity, menu, languages, search, cta, footerBands } from '../frame-samples';
+import { identity, menu, languages, search, cta, footerProps } from '../frame-samples';
 import { coreCss } from '../../../src/css/index.js';
 import { derive } from '../../../src/generator/index.js';
 import { galleryInputs } from '../design.js';
@@ -39,15 +39,14 @@ import '../../../src/components/index.css';
     </Header>
   </template>)}
   <Page>
-    <Hero id="home" surface="brand" eyebrow="Juniper Atlas / Field notes" heading="A wider view begins nearby" deck="Scroll, narrow the window, or open the menu to explore the page frame."><Button href="#notes">Read the notebook</Button></Hero>
+    <Hero id="home" surface="brand" eyebrow="Juniper Atlas / Field notes" heading="A wider view begins nearby" deck="Scroll, narrow the window, or open the menu to explore the page frame."><Breadcrumbs slot="before" items={[{ label: 'Juniper Atlas', href: '#home' }, { label: 'Notebook', href: '#notes' }, { label: 'A wider view begins nearby' }]} /><Button href="#notes">Read the notebook</Button></Hero>
     <Band data-lab-long id="notes">
-      <Breadcrumbs items={[{ label: 'Juniper Atlas', href: '#home' }, { label: 'Notebook', href: '#notes' }, { label: 'Notes from the shared path' }]} />
       <ReadingArea><AsideBlock slot="aside" heading="Keep a question nearby" sticky surface="tint"><p>What did you notice that someone else walked past?</p><a href="#contact">Visit the open table</a></AsideBlock>
         <BodyText><h2>Notes from the shared path</h2><Callout title="Bring a notebook"><p>The first walk begins at the garden table. Leave a little room for another perspective.</p></Callout><Table caption="This week at Juniper Atlas" columns={workshopColumns} rows={workshopRows} striped />{Array.from({ length: 15 }, (_, i) => <><h3>{i + 1} / Look a little closer</h3><p>We followed the path past the old bridge and stopped where the trees opened onto a meadow. Each person noticed something different: the curve of the bank, the sound of water, a place to sit. Back at the shared table, these small observations became a set of sketches. We tested the simplest ideas first, leaving space for people to add their own experience. A useful place grows through this patient exchange, one ordinary detail at a time.</p></>)}</BodyText>
       </ReadingArea>
     </Band>
     <Band id="contact" data-lab-long><span id="cookie-policy"></span><BodyText><h2>Bring a question to the table</h2><p>The next useful idea may begin with an ordinary conversation.</p><Button data-kn-dialog="lab-dialog">Open an invitation</Button></BodyText></Band>
-    <Footer slot="footer" bands={footerBands.map((band) => ({ ...band, cells: band.cells.map((cell) => ({ ...cell, links: cell.links?.map((link) => ({ ...link, href: link.label === 'Preferences' ? '#cookie-policy' : link.href, label: link.label === 'Preferences' ? 'Cookie policy' : link.label, consentOpen: link.label === 'Preferences' })) })) }))} />
+    <Footer slot="footer" {...footerProps} />
   </Page>
   <ConsentBanner id="lab-consent" categories={consentCategories} texts={consentTexts} policyHref="#cookie-policy" />
   <dialog id="lab-dialog" class="lab-dialog" data-kn-surface="page"><p>There is always room for one more perspective.</p><form method="dialog"><Button type="submit">Close invitation</Button></form></dialog>

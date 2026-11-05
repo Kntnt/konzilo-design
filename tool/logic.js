@@ -130,6 +130,42 @@ export function spreadLabels(a, b, width, total, gap = 8) {
   }
   return [left, right];
 }
+// With one arrow moved only its own label goes, and stops short of the other, which keeps its place:
+// nothing but what is in the hand moves. Any other time the two stand as spreadLabels has it.
+export function placeLabels(before, a, b, width, total, gap = 8) {
+  const same = before?.width === width && before?.total === total;
+  if (same && before.a === a && before.b === b) return before;
+  const centred = (at) => Math.min(total - width, Math.max(0, at - width / 2));
+  let left;
+  let right;
+  if (same && before.b === b) {
+    right = before.right;
+    left = Math.min(centred(a), right - width - gap);
+  } else if (same && before.a === a) {
+    left = before.left;
+    right = Math.max(centred(b), left + width + gap);
+  } else {
+    [left, right] = spreadLabels(a, b, width, total, gap);
+  }
+  return { a, b, width, total, left, right };
+}
+
+// A request sent as a page goes away may carry 64 KiB, and one logo can weigh more than that. So a
+// logo the server already holds stays behind as a mark in its place, and the server puts it back.
+export const KEPT_LOGO = 'kept';
+const LOGOS = ['logo', 'logo-dark'];
+export const logosOf = (project) => Object.fromEntries(LOGOS.map((key) => [key, project[key]]));
+export function withoutSavedLogos(model, saved) {
+  const project = { ...model.project };
+  for (const key of LOGOS) if (project[key] && project[key] === saved[key]) project[key] = KEPT_LOGO;
+  return { ...model, project };
+}
+export function withKeptLogos(incoming, held) {
+  if (!incoming?.project) return incoming;
+  const project = { ...incoming.project };
+  for (const key of LOGOS) if (project[key] === KEPT_LOGO) project[key] = held[key];
+  return { ...incoming, project };
+}
 
 // A camera's photo is far more than a page shows, and a presentation carries every picture it has.
 export const PICTURE_MAX_SIDE = 2000;
@@ -138,38 +174,41 @@ export const pictureSize = (width, height) => {
   return [Math.round(width * scale), Math.round(height * scale)];
 };
 
-// The divider between the controls and the preview.
+// The divider between the controls and the preview. The controls' words and the preview's margins are
+// in rem, so what they need grows with the reader's text size: `scale` is that size over the default.
+// The frames' window widths and the divider are real pixels, whatever the text size.
 export const DIVIDER = 9;
 export const SNAP = 18;
 const MIN_CONTROLS = 490;
 const COMFORTABLE_CONTROLS = 540;
 const MOBILE = 390;
-const MOBILE_ALONE = 440;
+const MOBILE_ALONE_MARGIN = 50;
 const MIN_ALONE = 431;
 const MIN_BOTH = 640;
-export const clampControls = (width, view, windowWidth) =>
-  Math.max(
-    MIN_CONTROLS,
-    Math.min(width, windowWidth - DIVIDER - (view === 'both' ? MIN_BOTH : MIN_ALONE)),
-  );
+export const clampControls = (width, view, windowWidth, scale = 1) =>
+  Math.round(Math.max(
+    MIN_CONTROLS * scale,
+    Math.min(width, windowWidth - DIVIDER - (view === 'both' ? MIN_BOTH : MIN_ALONE) * scale),
+  ));
 // The controls get a comfortable measure; the preview gets the rest, up to real size.
-export function optimalControls(view, windowWidth, desktopWidth) {
+export function optimalControls(view, windowWidth, desktopWidth, scale = 1) {
   const preview =
     view === 'phone'
-      ? MOBILE_ALONE
+      ? MOBILE + MOBILE_ALONE_MARGIN * scale
       : view === 'desktop'
-        ? desktopWidth + 32
-        : MOBILE + desktopWidth + 48;
+        ? desktopWidth + 32 * scale
+        : MOBILE + desktopWidth + 48 * scale;
   const wanted = windowWidth - DIVIDER - preview;
   return clampControls(
-    view === 'phone' ? wanted : Math.max(COMFORTABLE_CONTROLS, wanted),
+    view === 'phone' ? wanted : Math.max(COMFORTABLE_CONTROLS * scale, wanted),
     view,
     windowWidth,
+    scale,
   );
 }
-export function dragControls(pointer, view, windowWidth, desktopWidth) {
-  const optimal = optimalControls(view, windowWidth, desktopWidth);
-  const width = clampControls(Math.round(pointer), view, windowWidth);
+export function dragControls(pointer, view, windowWidth, desktopWidth, scale = 1) {
+  const optimal = optimalControls(view, windowWidth, desktopWidth, scale);
+  const width = clampControls(Math.round(pointer), view, windowWidth, scale);
   const caught = Math.abs(width - optimal) <= SNAP;
   return { width: caught ? optimal : width, atOptimal: caught };
 }

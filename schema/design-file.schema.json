@@ -506,27 +506,11 @@
             "column"
           ]
         },
-        "brand-align": {
+        "slogan-place": {
           "type": "string",
           "enum": [
-            "start",
-            "center",
-            "end"
-          ]
-        },
-        "identity-axis": {
-          "type": "string",
-          "enum": [
-            "row",
-            "column"
-          ]
-        },
-        "identity-align": {
-          "type": "string",
-          "enum": [
-            "start",
-            "center",
-            "end"
+            "beside",
+            "below"
           ]
         },
         "link-menu": {
@@ -584,17 +568,6 @@
     "footer-settings": {
       "type": "object",
       "properties": {
-        "model": {
-          "type": "string",
-          "enum": [
-            "one",
-            "two",
-            "utility",
-            "statement",
-            "tall-identity",
-            "tall-links"
-          ]
-        },
         "attachment": {
           "type": "string",
           "enum": [
@@ -602,25 +575,18 @@
             "reveal"
           ]
         },
-        "surface": {
+        "fill": {
           "type": "string",
           "enum": [
-            "page",
-            "raised",
-            "tint",
-            "brand",
-            "inverse"
+            "column",
+            "row"
           ]
         },
-        "second-surface": {
-          "type": "string",
-          "enum": [
-            "page",
-            "raised",
-            "tint",
-            "brand",
-            "inverse"
-          ]
+        "upper": {
+          "$ref": "#/$defs/footer-band-settings"
+        },
+        "lower": {
+          "$ref": "#/$defs/footer-band-settings"
         },
         "horizontal-rules": {
           "type": "boolean"
@@ -634,6 +600,42 @@
             "content",
             "full"
           ]
+        }
+      },
+      "required": [],
+      "additionalProperties": false
+    },
+    "footer-band-settings": {
+      "type": "object",
+      "properties": {
+        "surface": {
+          "type": "string",
+          "enum": [
+            "page",
+            "raised",
+            "tint",
+            "brand",
+            "inverse"
+          ]
+        },
+        "cells": {
+          "type": "object",
+          "properties": {
+            "a1": {
+              "type": "boolean"
+            },
+            "b1": {
+              "type": "boolean"
+            },
+            "a2": {
+              "type": "boolean"
+            },
+            "b2": {
+              "type": "boolean"
+            }
+          },
+          "required": [],
+          "additionalProperties": false
         }
       },
       "required": [],
@@ -665,13 +667,6 @@
       "properties": {
         "show": {
           "type": "boolean"
-        },
-        "placement": {
-          "type": "string",
-          "enum": [
-            "first-band",
-            "own-band"
-          ]
         },
         "separator": {
           "type": "string",
@@ -1896,6 +1891,7 @@
         "target": {
           "enum": [
             0,
+            1.1,
             3,
             4.5
           ]
@@ -2000,6 +1996,9 @@
             },
             "link-hover": {
               "$ref": "#/$defs/contrast-link-hover"
+            },
+            "background-page": {
+              "$ref": "#/$defs/contrast-background-page"
             }
           },
           "required": [
@@ -3212,6 +3211,63 @@
       ],
       "additionalProperties": false
     },
+    "contrast-background-page": {
+      "type": "object",
+      "properties": {
+        "foreground": {
+          "type": "string",
+          "pattern": "^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$"
+        },
+        "background": {
+          "type": "string",
+          "pattern": "^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$"
+        },
+        "ratio": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 21
+        },
+        "target": {
+          "const": 1.1
+        },
+        "passed": {
+          "type": "boolean"
+        },
+        "samples": {
+          "type": "object",
+          "properties": {
+            "#000000": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 21
+            },
+            "#ffffff": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 21
+            }
+          },
+          "additionalProperties": false,
+          "dependentRequired": {
+            "#000000": [
+              "#ffffff"
+            ],
+            "#ffffff": [
+              "#000000"
+            ]
+          }
+        }
+      },
+      "required": [
+        "foreground",
+        "background",
+        "ratio",
+        "target",
+        "passed",
+        "samples"
+      ],
+      "additionalProperties": false
+    },
     "hero-settings": {
       "type": "object",
       "properties": {
@@ -3219,8 +3275,11 @@
           "type": "string",
           "enum": [
             "none",
-            "beside",
-            "behind"
+            "behind",
+            "start",
+            "end",
+            "start-bleed",
+            "end-bleed"
           ]
         },
         "surface": {
@@ -3253,8 +3312,17 @@
         "place": {
           "type": "string",
           "enum": [
+            "top",
             "center",
             "bottom"
+          ]
+        },
+        "align": {
+          "type": "string",
+          "enum": [
+            "start",
+            "center",
+            "end"
           ]
         },
         "type": {
@@ -3262,6 +3330,13 @@
           "enum": [
             "heading-1",
             "display"
+          ]
+        },
+        "h1": {
+          "type": "string",
+          "enum": [
+            "hero",
+            "below"
           ]
         }
       },

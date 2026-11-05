@@ -45,76 +45,16 @@ export function pictures(ramps, own = {}) {
     people: [0, 1, 2, 3].map((index) => own[`person-${index + 1}`] ?? person(index)),
   };
 }
+// A site's menu at a typical size. The link menu shows the first three, and the menu button all of them.
+const page = (label, description) => ({ label, href: `#${label.toLowerCase().replaceAll(' ', '-')}`, ...(description && { description }) });
 export const menu = [
-  {
-    label: 'Services',
-    href: '#services',
-    children: [
-      {
-        label: 'Planning',
-        href: '#planning',
-        description: 'A practical route forward',
-      },
-      {
-        label: 'Support',
-        href: '#support',
-        description: 'Help when you need it',
-      },
-    ],
-  },
-  {
-    label: 'Resources',
-    href: '#resources',
-    children: [
-      { label: 'Guides', href: '#guides' },
-      { label: 'Reports', href: '#reports' },
-    ],
-  },
-  {
-    label: 'About',
-    href: '#about',
-    children: [
-      { label: 'Our approach', href: '#approach' },
-      { label: 'Contact', href: '#contact' },
-    ],
-  },
+  { ...page('Products'), children: [page('Compact series', 'For where space is short'), page('Modular series', 'Built to grow with the need'), page('Accessories', 'What completes the set'), page('Spare parts', 'Kept in stock and sent at once')] },
+  { ...page('Services'), children: [page('Planning', 'A practical route forward'), page('Delivery', 'Keep responsibilities and dates clear'), page('Review', 'Check the work against the agreed plan'), page('Support', 'Help when you need it')] },
+  { ...page('Markets'), children: [page('Healthcare', 'Where reliability comes first'), page('Education', 'For schools and universities'), page('Transport', 'From depots to the open road'), page('Public sector', 'Under public procurement rules')] },
+  { ...page('Technology'), linkMenu: false, children: [page('Design'), page('Benefits'), page('Specifications'), page('Patents')] },
+  { ...page('Knowledge'), linkMenu: false },
+  { ...page('About'), linkMenu: false, children: [page('About us'), page('Career'), page('History'), page('Board of directors'), page('Management team'), page('Contact us')] },
 ];
-menu[0].children.push(
-  {
-    label: 'Delivery',
-    href: '#delivery',
-    description: 'Keep responsibilities and dates clear',
-  },
-  {
-    label: 'Review',
-    href: '#review',
-    description: 'Check the work against the agreed plan',
-  },
-);
-menu[1].children.push(
-  {
-    label: 'Notes',
-    href: '#notes',
-    description: 'Short answers to common questions',
-  },
-  {
-    label: 'Downloads',
-    href: '#downloads',
-    description: 'Useful documents in one place',
-  },
-);
-menu[2].children.push(
-  {
-    label: 'The team',
-    href: '#team',
-    description: 'The people who do the work',
-  },
-  {
-    label: 'Questions',
-    href: '#questions',
-    description: 'What to expect before you begin',
-  },
-);
 export const search = {
   action: '#search',
   label: 'Search resources',
@@ -251,74 +191,6 @@ export const categories = [
     ],
   },
 ];
-export const footerBands = (project, variant = 'standard') => {
-  const logo = project['logo-dark'] || project.logo;
-  const escaped = project.name.replace(
-    /[&<>"']/g,
-    (c) =>
-      ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[
-        c
-      ],
-  );
-  const identity = logo
-    ? `<img src="${logo.replaceAll('"', '&quot;')}" alt="${escaped}" style="max-width:14rem;max-height:3rem">`
-    : `<p data-kn-type="heading-3">${escaped}</p>`;
-  const first = {
-    surface: 'brand',
-    cells: [
-      { id: 'identity', column: 'A', content: identity },
-      {
-        id: 'links',
-        column: 'B',
-        links: [
-          { label: 'Services', href: '#services' },
-          { label: 'Contact', href: '#contact' },
-        ],
-      },
-    ],
-  };
-  if (variant === 'simple') return [first];
-  first.cells[0].rows = 2;
-  first.cells[1].heading = 'Explore';
-  first.cells[1].links.push(
-    { label: 'Resources', href: '#resources' },
-    { label: 'About', href: '#about' },
-  );
-  return [
-    first,
-    {
-      surface: 'brand',
-      cells: [
-        {
-          id: 'contact',
-          column: 'B',
-          heading: 'Contact the team',
-          text: 'Ask about planning, delivery or ongoing support.',
-          links: [{ label: 'Start a conversation', href: '#contact' }],
-        },
-      ],
-    },
-    {
-      surface: 'inverse',
-      compact: true,
-      cells: [
-        {
-          id: 'legal',
-          column: 'A',
-          text: 'Clear information. Practical next steps.',
-        },
-        {
-          id: 'privacy',
-          column: 'B',
-          links: [
-            { label: 'Privacy', href: '#privacy' },
-            { label: 'Cookie choices', href: '#cookies', consentOpen: true },
-          ],
-        },
-      ],
-    },
-  ];
-};
 export const items = (landscapes) =>
   [
     'A practical starting point',

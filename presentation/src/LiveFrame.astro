@@ -1,9 +1,7 @@
 ---
 // Only the design tool uses these: a header with every item, for each arrangement, to leave items out of.
 import Header from '../../src/components/Header.astro';
-import Breadcrumbs from '../../src/components/Breadcrumbs.astro';
 import { menu, search, languages, cta } from './samples.js';
-import { breadcrumbProps } from './frame.js';
 
 const identity = { label: 'Example', href: '#home', name: 'Example', slogan: 'Slogan', logo: { light: 'data:,', dark: 'data:,' } };
 ---
@@ -20,9 +18,6 @@ const identity = { label: 'Example', href: '#home', name: 'Example', slogan: 'Sl
     </Header>
   </template>
 ))}
-<template data-kn-live-breadcrumbs>
-  <Breadcrumbs {...breadcrumbProps({ home: 'word', separator: 'slash', current: true, narrow: 'trail' }, { name: 'Example' })} />
-</template>
 <script>
   import { setupLiveFrame } from './frame-live.js';
   setupLiveFrame();

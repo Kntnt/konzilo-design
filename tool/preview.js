@@ -53,6 +53,14 @@ function syncFrom(source, target) {
   const now = performance.now();
   if (now < quietUntil || !shown(target === frames.wide ? 'wide' : 'narrow')) return;
   if (ignore === source && now < ignoreUntil) return;
+  // The end of one is the end of the other, so a footer that shows at one end shows at both.
+  const here = source.frame.contentWindow;
+  if (here.scrollY > 0 && here.scrollY + here.innerHeight >= source.frame.contentDocument.documentElement.scrollHeight - 1) {
+    ignore = target;
+    ignoreUntil = now + 80;
+    target.frame.contentWindow.scrollTo({ top: target.frame.contentDocument.documentElement.scrollHeight, behavior: 'instant' });
+    return;
+  }
   let from = marks(source);
   let to = marks(target);
   // A footer revealed under the page has no place in it to scroll to, so neither end counts its footer.
@@ -96,10 +104,6 @@ export function followPage(page, smooth) {
     } else scrollEnd(end, selector, smooth);
   }
 }
-export function showSpecimen(specimen) {
-  quietUntil = performance.now() + 750;
-  for (const end of Object.values(frames)) scrollEnd(end, `[data-component="${specimen}"]`, true);
-}
 export function showPanelInPreview(panel) {
   shownPanel = panel;
   for (const { frame } of Object.values(frames)) frame.contentWindow?.postMessage({ type: 'kn-frame-panel', panel }, location.origin);
@@ -117,17 +121,22 @@ export function measure(ui) {
   view.toggleAttribute('data-real-size', !ui.fit);
   frames.wide.end.parentElement.style.setProperty('--desktop-width', `${ui.width}px`);
   fitButton.textContent = `${Math.round(scale * 100)} %`;
-  fitButton.title = ui.fit ? 'Scaled so the whole page fits. Click for real size, then scroll sideways to see the rest.' : 'Real size. Click to scale the page so all of it fits.';
+  const help = document.getElementById(fitButton.dataset.gTooltip);
+  if (help) help.textContent = ui.fit ? 'Scaled so the whole page fits. Click for real size, then scroll sideways to see the rest.' : 'Real size. Click to scale the page so all of it fits.';
 }
 // A drag can step faster than the screen draws, so both ends take the newest design once a frame.
 let painting = false;
+let postedLooks = null;
 function postDesign() {
   painting = false;
   const { resolved, css, project, ui } = design;
   // The frames hold the section in view themselves, and that must not move the other end.
-  quietUntil = Math.max(quietUntil, performance.now() + 200);
+  // A look can also bring its component into view, and each end goes there on its own.
+  const looks = JSON.stringify(ui.looks);
+  quietUntil = Math.max(quietUntil, performance.now() + (looks === postedLooks ? 200 : 750));
+  postedLooks = looks;
   const images = pictures(resolved.ramps, ui.own);
-  const message = { type: 'kn-design', pictures: flatPictures(images), hero: { settings: resolved.hero, images: { hero: images.hero, landscapes: images.landscapes } }, showPictures: ui.pictures !== 'off', css, mode: ui.mode, project, surfaces: Object.keys(resolved.surfaces), frame: { header: resolved.header, footer: resolved.footer, page: resolved.page, breadcrumbs: resolved.breadcrumbs } };
+  const message = { type: 'kn-design', looks: ui.looks, pictures: flatPictures(images), hero: { settings: resolved.hero, images: { hero: images.hero, landscapes: images.landscapes } }, showPictures: ui.pictures !== 'off', css, mode: ui.mode, project, surfaces: Object.keys(resolved.surfaces), frame: { header: resolved.header, footer: resolved.footer, page: resolved.page, breadcrumbs: resolved.breadcrumbs } };
   for (const { frame } of Object.values(frames)) frame.contentWindow?.postMessage(message, location.origin);
   const widths = { narrow: 390, wide: ui.width };
   for (const [name, end] of Object.entries(frames)) {

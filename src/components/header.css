@@ -27,21 +27,25 @@
   .kn-header-group > * { flex: none; white-space: nowrap; }
   .kn-header a:not(.kn-button), .kn-header-control { color: inherit; text-decoration: none; }
   .kn-header a:not(.kn-button):is(:hover, [aria-current]) { text-decoration: underline; text-underline-offset: 0.25em; text-decoration-thickness: 1px; }
-  .kn-header-identity, .kn-header-brand { display: flex; }
-  .kn-header-identity { gap: calc(0.25rem * var(--kn-header-identity-scale)) calc(0.875rem * var(--kn-header-identity-scale)); }
-  .kn-header-brand { gap: calc(0.375rem * var(--kn-header-identity-scale)) calc(0.625rem * var(--kn-header-identity-scale)); }
-  :is(.kn-header-identity, .kn-header-brand)[data-kn-axis="column"] { flex-direction: column; }
-  :is(.kn-header-identity, .kn-header-brand)[data-kn-align="start"] { align-items: flex-start; }
-  :is(.kn-header-identity, .kn-header-brand)[data-kn-align="center"] { align-items: center; }
-  :is(.kn-header-identity, .kn-header-brand)[data-kn-align="end"] { align-items: flex-end; }
-  .kn-header-logo, .kn-header-logo > span { display: block; }
-  .kn-header-logo :is(img, svg) { display: block; block-size: calc(2.25rem * var(--kn-header-identity-scale)); inline-size: auto; max-inline-size: none; }
-  .kn-header-logo [data-kn-logo="dark"] { display: none; }
-  .kn-header[data-kn-logo-polarity="dark"] .kn-header-logo:has([data-kn-logo="dark"]) [data-kn-logo="light"] { display: none; }
-  .kn-header[data-kn-logo-polarity="dark"] .kn-header-logo [data-kn-logo="dark"] { display: block; }
-  .kn-header-name { font-family: var(--kn-typeface-heading); font-feature-settings: var(--kn-type-heading-5-features); font-stretch: var(--kn-type-heading-5-stretch, normal); font-variation-settings: var(--kn-type-heading-5-variation, normal); font-weight: var(--kn-type-heading-6-weight); font-size: calc(var(--kn-type-heading-5-size) * var(--kn-header-identity-scale)); line-height: 1.15; letter-spacing: var(--kn-type-heading-5-letter-spacing); }
+  /* The identity is one link. Its boxes reach only from baseline to cap height, so the link reaches past them
+     without taking room in the bar. */
+  .kn-header-identity { display: flex; align-items: center; column-gap: calc(0.875rem * var(--kn-header-identity-scale)); padding-block: 0.5rem; margin-block: -0.5rem; }
+  .kn-header .kn-brand-logo [data-kn-logo="dark"] { display: none; }
+  .kn-header[data-kn-logo-polarity="dark"] .kn-brand-logo:has([data-kn-logo="dark"]) [data-kn-logo="light"] { display: none; }
+  .kn-header[data-kn-logo-polarity="dark"] .kn-brand-logo [data-kn-logo="dark"] { display: block; }
   .kn-header-slogan { font-size: calc(var(--kn-type-small-size) * var(--kn-header-identity-scale)); line-height: 1.3; color: var(--kn-text-muted); transition: color var(--kn-duration-feedback) var(--kn-easing-standard); }
-  .kn-header-identity[data-kn-axis="row"] .kn-header-slogan { padding-inline-start: calc(0.875rem * var(--kn-header-identity-scale)); border-inline-start: 1px solid var(--kn-border); }
+  /* Beside the brand, after a hairline as tall as the slogan's line, centred with it. */
+  .kn-header-identity[data-kn-slogan-place="beside"] .kn-header-slogan { position: relative; padding-inline-start: calc(0.875rem * var(--kn-header-identity-scale)); }
+  .kn-header-identity[data-kn-slogan-place="beside"] .kn-header-slogan::after { content: ""; position: absolute; inset-inline-start: 0; inset-block-start: calc(50% - 0.5lh); block-size: 1lh; border-inline-start: 1px solid var(--kn-border); }
+  /* Below the name, or below the logo without one, from the same start edge. */
+  .kn-header-identity[data-kn-slogan-place="below"] { flex-direction: column; align-items: flex-start; row-gap: calc(0.5rem * var(--kn-header-identity-scale)); }
+  /* Logo and name side by side: the logo stands beside the two lines, each centred on the other. The outer
+     rows take what the taller of the two leaves over. Once the name has given way, the rule above holds. */
+  .kn-header:not([data-kn-collapsed~="name"]) .kn-header-identity[data-kn-slogan-place="below"]:has(> .kn-brand[data-kn-axis="row"] > .kn-brand-logo + .kn-brand-name) { display: grid; grid-template-columns: auto auto; grid-template-rows: 1fr auto auto 1fr; justify-content: start; align-items: center; column-gap: calc(0.625rem * var(--kn-header-identity-scale)); row-gap: 0; }
+  .kn-header:not([data-kn-collapsed~="name"]) .kn-header-identity[data-kn-slogan-place="below"] > .kn-brand[data-kn-axis="row"]:has(> .kn-brand-logo + .kn-brand-name) { display: contents; }
+  .kn-header:not([data-kn-collapsed~="name"]) .kn-header-identity[data-kn-slogan-place="below"] > .kn-brand[data-kn-axis="row"] > .kn-brand-logo:has(+ .kn-brand-name) { grid-column: 1; grid-row: 1 / -1; }
+  .kn-header:not([data-kn-collapsed~="name"]) .kn-header-identity[data-kn-slogan-place="below"] > .kn-brand[data-kn-axis="row"] > .kn-brand-logo + .kn-brand-name { grid-column: 2; grid-row: 2; }
+  .kn-header:not([data-kn-collapsed~="name"]) .kn-header-identity[data-kn-slogan-place="below"]:has(> .kn-brand[data-kn-axis="row"] > .kn-brand-logo + .kn-brand-name) > .kn-header-slogan { grid-column: 2; grid-row: 3; margin-block-start: calc(0.5rem * var(--kn-header-identity-scale)); }
   .kn-header-link-menu ul { display: flex; gap: var(--kn-space-component-gap); list-style: none; margin: 0; padding: 0; }
   .kn-header-link-menu, .kn-header-menu-button { font-size: var(--kn-type-small-size); font-weight: var(--kn-type-heading-6-weight); letter-spacing: var(--kn-type-small-letter-spacing); }
   .kn-header .kn-header-control { background: transparent; box-shadow: none; border-radius: var(--kn-radius-control); color: var(--kn-text); padding: 0.4em 0; }
@@ -54,8 +58,9 @@
   .kn-header-hamburger { display: none; }
   .kn-header-menu-button[data-kn-icon="menu"] .kn-header-hamburger { display: block; }
   .kn-header-menu-button[data-kn-automatic] { display: none; }
-  .kn-header[data-kn-collapsed~="slogan"] .kn-header-slogan,
-  .kn-header[data-kn-collapsed~="name"] .kn-header-brand:has(.kn-header-logo) .kn-header-name,
+  /* A slogan that stayed because it freed no width never outlasts the name. */
+  .kn-header:is([data-kn-collapsed~="slogan"], [data-kn-collapsed~="name"]) .kn-header-slogan,
+  .kn-header[data-kn-collapsed~="name"] .kn-brand:has(.kn-brand-logo) .kn-brand-name,
   .kn-header[data-kn-collapsed~="links"] .kn-header-link-menu,
   .kn-header[data-kn-collapsed~="word"] .kn-header-menu-word,
   .kn-header[data-kn-collapsed~="word"] .kn-header-chevron,
@@ -86,7 +91,7 @@
   .kn-megamenu-number { font-family: var(--kn-typeface-label); color: var(--kn-link); }
   .kn-megamenu-column ul { display: grid; gap: 0.875rem; list-style: none; margin: 0; padding: 0; }
   .kn-megamenu-column li a { display: grid; gap: 0.0625rem; }
-  .kn-megamenu-description { font-size: var(--kn-type-small-size); color: var(--kn-text-muted); }
+  .kn-megamenu-description { font-size: 0.75em; color: var(--kn-text-muted); }
   .kn-megamenu-above { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; }
   .kn-megamenu-below { display: flex; flex-wrap: wrap; gap: 0.5rem 1.75rem; padding-block-start: 1.25rem; border-block-start: 1px solid var(--kn-border); font-size: var(--kn-type-small-size); color: var(--kn-text-muted); }
   .kn-header-language { position: relative; }

@@ -3,27 +3,33 @@ import type { HTMLAttributes } from 'astro/types';
 import type { Surface } from './frame-types';
 import Band from './Band.astro';
 import HeadingGroup from './HeadingGroup.astro';
-// The page's opening. Its background and its heading's size are free choices of their own: no surface
-// lets what lies beneath show, a picture Surface lays the picture behind, and any other picture stands beside the text.
+import { heroAttributes } from './hero-attributes.js';
+// The page's opening, or an ordinary section further down. Its background and its heading's size are free choices of their
+// own: no surface lets what lies beneath show, a picture Surface lays the picture behind, and any other picture stands on
+// the side named by side, inside the content width or, with -bleed, out to the window's edge and the hero's top and bottom.
+// A page's first heading is its H1, so the hero that opens a page has level 1, or false where the H1 stands under it, and one
+// further down has level 2. The slot before holds the trail, where the H1 is the hero's: it stands above the eyebrow.
 interface Props extends HTMLAttributes<'section'> {
   heading: string;
   eyebrow?: string;
   deck?: string;
-  level?: 1 | 2 | 3 | 4 | 5 | 6;
+  level?: 1 | 2 | 3 | 4 | 5 | 6 | false;
   type?: 'heading-1' | 'display';
   surface?: Surface;
   picture?: string;
+  side?: 'start' | 'end' | 'start-bleed' | 'end-bleed';
   alt?: string;
   loading?: 'lazy' | 'eager';
   height?: 'third' | 'half' | 'two-thirds' | 'full';
-  place?: 'center' | 'bottom';
+  place?: 'top' | 'center' | 'bottom';
+  align?: 'start' | 'center' | 'end';
 }
-const { heading, eyebrow, deck, level = 1, type = 'heading-1', surface, picture, alt, loading = 'eager', height, place = 'center', class: className, ...attributes } = Astro.props;
+const { heading, eyebrow, deck, level = 1, type = 'heading-1', surface, picture, side = 'end', alt, loading = 'eager', height, place, align, class: className, ...attributes } = Astro.props;
 const behind = surface?.startsWith('picture-');
 const beside = picture && !behind;
 if (beside && alt === undefined) throw new TypeError('A picture beside a Hero requires alternative text');
 ---
-<Band {...attributes} class:list={['kn-hero', className]} contentClass="kn-hero-content" surface={surface} picture={behind ? picture : undefined} data-kn-picture={beside ? 'beside' : undefined} data-kn-height={height} data-kn-place={place === 'bottom' ? 'bottom' : undefined}>
+<Band {...attributes} {...heroAttributes({ side: beside ? side : undefined, height, place, align })} class:list={['kn-hero', className]} contentClass="kn-hero-content" surface={surface} picture={behind ? picture : undefined}>
   <div class="kn-hero-text">
     <slot name="before" />
     <HeadingGroup heading={heading} eyebrow={eyebrow} deck={deck} level={level} type={type} />

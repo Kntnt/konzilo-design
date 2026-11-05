@@ -36,20 +36,20 @@ Records the page model and the Reading Area, with their status and reasoning.
     The page start under a sticky header is the header's: it exists only with a sticky header and goes with its transparency; the page only lets its first band begin at the window's top, and that band declares light or dark.
 6. **The surface scrolls with the page** (*decided* 2026-10-31), an image and a gradient alike: the surface belongs to the sheet, and a still backdrop would leave unclear what slides off the footer under `reveal`; still backgrounds have also long failed in Safari on iPhone and iPad. An image lies at the page's top, as wide as the page, with the fill colour below it, or repeats as a pattern. The cost, accepted: on a long page the image shows only at the top.
 
-**The Reading Area** (*läsyta*). Proposed 2026-10-31 and settled with the owner the same evening, one question at a time; points he decided are marked *decided*, the rest he has seen without objection.
+**The Reading Area**. Proposed 2026-10-31 and settled with the owner the same evening, one question at a time; points he decided are marked *decided*, the rest he has seen without objection.
 
-**Names** (*decided*): English is canonical, in code and Blueprint, reusing Blueprint's words; Swedish is for talk.
+**Names** (*decided*): English is canonical, in code and Blueprint, reusing Blueprint's words.
 
-| What | English | Swedish |
-|---|---|---|
-| The container | Reading Area | läsyta |
-| The readable column | Narrow | spalten |
-| The space beside it | Aside | sidofältet |
-| Content belonging to the whole, at the top of the Aside | Aside Block | sidoblock |
-| A note anchored to a point in the text | Sidenote | marginalanteckning |
-| An element wider than Narrow | Breakout | utbrytning |
+| What | Name |
+|---|---|
+| The container | Reading Area |
+| The readable column | Narrow |
+| The space beside it | Aside |
+| Content belonging to the whole, at the top of the Aside | Aside Block |
+| A note anchored to a point in the text | Sidenote |
+| An element wider than Narrow | Breakout |
 
-Reading Area pairs with the content area (*innehållsyta*), inside which it lies.
+Reading Area pairs with the content area, inside which it lies.
 
 1. **Task:** the Reading Area lays content out across the width; nothing else. It has no background and no vertical padding, since vertical rhythm belongs to the bands.
 2. **Placement:** in a band, never directly on the page (page.md, point 3), and never in another Reading Area, the header or the footer. Several may follow one another, each independent: the Aside does not continue across a band.

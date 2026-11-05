@@ -29,8 +29,8 @@ const { landscapes, panorama } = context(project, resolved, ownPictures);
 {id === 'embed' && (
   <div class="sample-pair">
     {[false, true].map((thumbnail) => (
-      <div data-embed-example={thumbnail ? 'thumbnail' : 'consent'}>
-        <p class="grid-caption" data-kn-type="label">
+      <div data-embed-example={thumbnail ? 'thumbnail' : 'consent'} data-look={`embed-state:${thumbnail ? 'thumbnail' : 'consent'}`}>
+        <p class="grid-caption" data-kn-type="label" data-report-only>
           {t(thumbnail ? 'embed.thumbnail' : 'embed.before-consent')}
         </p>
         <Embed

@@ -1,9 +1,11 @@
 ---
-import { ids, componentPages, FRAME_PAGES } from '../../catalog.js';
+import { ids } from '../../catalog.js';
+import { TOOL_PAGES } from '../../looks.js';
 import { project, resolved, copy, t, ownPictures } from '../../data.js';
 import Samples from '../../Samples.astro';
 import LiveFrame from '../../LiveFrame.astro';
 import LiveHero from '../../LiveHero.astro';
+import LiveLooks from '../../LiveLooks.astro';
 import { pictures, flatPictures } from '../../samples.js';
 import '../../specimen.css';
 export function getStaticPaths() {
@@ -29,15 +31,17 @@ const full = isFull(id);
     <style id="kn-live-core" is:inline />
   </head>
   <body data-kn-surface="page" data-specimen={id}>
-    {id === 'catalogue' ? componentPages.filter(([page]) => !FRAME_PAGES.includes(page)).map(([page, , defaults, variants]) => (
+    {id === 'catalogue' ? Object.entries(TOOL_PAGES).map(([page, components]) => (
       <div data-component-page={page} class="catalogue-page">
         <h2 class="catalogue-title">{t(`${page}.title`)}</h2>
-        {[...defaults, ...variants].map((specimen) => (
-          <section data-component={specimen}>
-            <p class="catalogue-name">{t(`specimen.${specimen}`)}</p>
-            <div class="sample-root" data-full={isFull(specimen) || undefined}>
-              <Samples id={specimen} project={project} resolved={resolved} />
-            </div>
+        {components.map(({ id: component, name, specimens }) => (
+          <section data-component={component}>
+            <p class="catalogue-name">{name}</p>
+            {Object.entries(specimens).map(([specimen, look]) => (
+              <div class="sample-root" data-full={isFull(specimen) || undefined} data-look={look || undefined}>
+                <Samples id={specimen} project={project} resolved={resolved} catalogue />
+              </div>
+            ))}
           </section>
         ))}
       </div>
@@ -48,6 +52,7 @@ const full = isFull(id);
     )}
     {id === 'preview' && <LiveFrame />}
     {['catalogue', 'preview'].includes(id) && <LiveHero />}
+    {id === 'catalogue' && <LiveLooks />}
     {['catalogue', 'preview'].includes(id) && <script id="kn-built-pictures" type="application/json" is:inline set:html={JSON.stringify(flatPictures(pictures(resolved.ramps, ownPictures))).replaceAll('<', '\\u003c')} />}
     <script is:inline>
       document.querySelectorAll('.kn-field[class*="is-"]').forEach((field) => {
@@ -85,8 +90,8 @@ const full = isFull(id);
         if (builtPictures && event.data.pictures && event.data.pictures.join() !== shown.pictures) {
           built ??= JSON.parse(builtPictures.textContent);
           const place = (node, source) => {
-            node.dataset.knPicture ??= built.findIndex((known) => source?.includes(known));
-            return event.data.pictures[node.dataset.knPicture];
+            node.dataset.knBuiltPicture ??= built.findIndex((known) => source?.includes(known));
+            return event.data.pictures[node.dataset.knBuiltPicture];
           };
           for (const img of document.querySelectorAll('img')) {
             const fresh = place(img, img.getAttribute('src'));

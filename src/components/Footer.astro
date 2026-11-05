@@ -1,23 +1,34 @@
 ---
 import type { HTMLAttributes } from 'astro/types';
-import type { FooterBandData, Surface } from './frame-types';
-import { layoutFooter } from './footer.js';
-import FooterBand from './FooterBand.astro';
-import FooterCell from './FooterCell.astro';
+import type { FooterBandData, FooterCellName, Surface } from './frame-types';
+import { FOOTER_CELLS, layoutFooter } from './footer.js';
+// Two bands of four cells. What stands in a cell comes from the site: as data, or in a slot named for the
+// band and the cell, such as `upper-a1`. A cell the data does not mention is filled if it has a slot.
 interface Props extends HTMLAttributes<'footer'> {
-  bands: FooterBandData[]; attachment?: 'flow' | 'reveal'; rules?: 'content' | 'full';
-  pageSurface?: Surface;
+  upper?: FooterBandData; lower?: FooterBandData; fill?: 'column' | 'row';
+  attachment?: 'flow' | 'reveal'; rules?: 'content' | 'full';
+  horizontalRules?: boolean; verticalRule?: boolean; pageSurface?: Surface;
 }
-const { bands, attachment = 'flow', rules = 'content', pageSurface = 'page', class: className, ...attributes } = Astro.props;
-const layout = layoutFooter(bands, { pageSurface });
+const { upper, lower, fill, attachment = 'flow', rules = 'content', horizontalRules, verticalRule, pageSurface = 'page', class: className, ...attributes } = Astro.props;
+const withSlots = (name: string, band?: FooterBandData) => ({ ...band, cells: Object.fromEntries((FOOTER_CELLS as FooterCellName[]).map((cell) => [cell, band?.cells?.[cell] ?? Astro.slots.has(`${name}-${cell}`)])) });
+const layout = layoutFooter({ upper: withSlots('upper', upper), lower: withSlots('lower', lower), fill, horizontalRules, verticalRule }, { pageSurface });
+const headingOf = (level = 2) => `h${level}` as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
 ---
-{layout.cells.length > 0 && <footer {...attributes} class:list={['kn-footer', className]} data-kn-attachment={attachment} data-kn-rules={rules} data-kn-top-line={layout.topLine || undefined}>
-  <div class="kn-footer-grid">
-    {layout.bands.map((band) => <FooterBand surface={band.surface} cells={band.cells} compact={band.compact} layout={band} decorativeOnly />)}
-    {layout.cells.map((cell) => <FooterCell cell={cell} surface={cell.surface} row={cell.row} compact={cell.compact} ownB={cell.ownB} edgeTop={cell.edgeTop} edgeBottom={cell.edgeBottom} stackFirst={cell.stackFirst} stackLast={cell.stackLast}>
-      {cell.slot ? <slot name={cell.slot} /> : <Fragment set:html={cell.content ?? ''} />}
-    </FooterCell>)}
-  </div>
+{layout.bands.length > 0 && <footer {...attributes} class:list={['kn-footer', className]} data-kn-attachment={attachment} data-kn-rules={rules} data-kn-top-line={layout.topLine || undefined}>
+  {layout.bands.map((band) => <div class="kn-footer-band" data-kn-band={band.name} data-kn-surface={band.surface} data-kn-rows={band.rows} data-kn-joined={band.joined || undefined}>
+    {band.join && <div class="kn-footer-rule" aria-hidden="true" data-kn-join="true" />}
+    {band.horizontal && <div class="kn-footer-rule" aria-hidden="true" data-kn-only={band.horizontal} />}
+    {band.vertical && <div class="kn-footer-vertical-rule" aria-hidden="true" data-kn-row={band.vertical} />}
+    {band.cells.map((cell) => { const Heading = headingOf(cell.level); return <div class="kn-footer-cell" data-kn-cell={cell.name} data-kn-column={cell.column} data-kn-columns={cell.columns} data-kn-row={cell.row}>
+      <div class="kn-footer-box">
+        {cell.heading && <Heading data-kn-type="heading-5">{cell.heading}</Heading>}
+        {cell.text && <p class="kn-footer-muted">{cell.text}</p>}
+        {cell.links?.length ? <ul class="kn-footer-links">{cell.links.map((link) => <li><a href={link.href} data-kn-consent-open={link.consentOpen || undefined} aria-current={link.current ? 'page' : undefined}>{link.label}</a></li>)}</ul> : null}
+        {cell.content && <Fragment set:html={cell.content} />}
+        <slot name={`${band.name}-${cell.name}`} />
+      </div>
+    </div>; })}
+  </div>)}
 </footer>}
 <script>
   import { setupFooters } from './footer.js';

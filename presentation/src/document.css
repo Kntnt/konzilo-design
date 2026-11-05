@@ -34,8 +34,8 @@ p {
 #sidebar {
   position: fixed;
   inset: 0 auto 0 0;
-  width: 260px;
-  padding: 24px 22px 0;
+  width: 16.25rem;
+  padding: 1.5rem 1.375rem 0;
   display: flex;
   flex-direction: column;
   border-inline-end: 1px solid var(--kn-border);
@@ -45,26 +45,26 @@ p {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  margin-inline: -8px;
-  padding-inline: 8px;
+  margin-inline: -0.5rem;
+  padding-inline: 0.5rem;
 }
 .sidebar-identity {
-  padding-bottom: 12px;
+  padding-bottom: 0.75rem;
   border-bottom: 1px solid var(--kn-border);
 }
 .sidebar-identity p {
-  margin: 0 0 8px;
+  margin: 0 0 0.5rem;
 }
 .sidebar-identity img {
   max-width: 100%;
-  max-height: 48px;
+  max-height: 3rem;
 }
 .nav-chapter {
-  margin-top: 10px;
+  margin-top: 0.625rem;
 }
 a.nav-chapter-link {
   display: block;
-  padding-block: 3px;
+  padding-block: 0.1875rem;
   color: var(--kn-text-muted);
   text-decoration: none;
 }
@@ -72,7 +72,7 @@ a.nav-chapter-link[aria-current], .nav-chapter.is-active a.nav-chapter-link {
   color: var(--kn-text);
 }
 .nav-pages {
-  margin-top: 4px;
+  margin-top: 0.25rem;
 }
 .js .nav-chapter:not(.is-active) .nav-pages {
   display: none;
@@ -80,9 +80,9 @@ a.nav-chapter-link[aria-current], .nav-chapter.is-active a.nav-chapter-link {
 .nav-pages a, a.nav-comments {
   display: flex;
   justify-content: space-between;
-  gap: 8px;
-  padding: 3px 10px;
-  margin-inline: -10px;
+  gap: 0.5rem;
+  padding: 0.1875rem 0.625rem;
+  margin-inline: -0.625rem;
   color: var(--kn-text);
   text-decoration: none;
   font-size: var(--kn-type-small-size);
@@ -94,20 +94,20 @@ a.nav-chapter-link[aria-current], .nav-chapter.is-active a.nav-chapter-link {
   box-shadow: inset 3px 0 var(--kn-accent);
 }
 a.nav-comments {
-  margin-block: 6px;
-  padding-block: 8px;
+  margin-block: 0.375rem;
+  padding-block: 0.5rem;
 }
 #sidebar .nav-comments {
   flex: none;
 }
 #main {
-  margin-left: 260px;
+  margin-left: 16.25rem;
   min-width: 0;
 }
 .document-page {
   min-height: 100vh;
-  padding: clamp(24px, 4vw, 64px);
-  padding-bottom: 100px;
+  padding: clamp(1.5rem, 4vw, 4rem);
+  padding-bottom: 6.25rem;
   overflow-wrap: anywhere;
 }
 .js .document-page:not(.is-current) {
@@ -120,22 +120,22 @@ a.nav-comments {
   margin-bottom: var(--kn-space-band);
 }
 .page-heading h1 {
-  margin: 16px 0 20px;
+  margin: 1rem 0 1.25rem;
 }
 .page-heading h1:focus {
   outline: none;
 }
 .page-heading p {
-  margin-block: 12px;
+  margin-block: 0.75rem;
 }
 .page-heading > [data-kn-type='label'] {
   color: var(--kn-text-muted);
 }
 .cover-logo {
   display: block;
-  max-width: min(100%, 320px);
-  max-height: 120px;
-  margin-block: 48px;
+  max-width: min(100%, 20rem);
+  max-height: 7.5rem;
+  margin-block: 3rem;
 }
 .start-page {
   display: flex;
@@ -145,14 +145,14 @@ a.nav-comments {
   margin-top: 5vh;
 }
 .start-content > p {
-  margin-block: 28px;
+  margin-block: 1.75rem;
 }
 .start-content .kn-button {
-  margin-block: 20px;
+  margin-block: 1.25rem;
 }
 .motivation {
   border-inline-start: 2px solid var(--kn-accent);
-  padding-inline-start: 24px;
+  padding-inline-start: 1.5rem;
   margin-bottom: var(--kn-space-band);
   white-space: pre-line;
 }
@@ -165,15 +165,15 @@ a.nav-comments {
 .page-turn {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 24px;
+  gap: 1.5rem;
   margin-top: auto;
-  padding-top: 64px;
+  padding-top: 4rem;
 }
 .page-turn a {
   display: grid;
-  gap: 8px;
+  gap: 0.5rem;
   border-top: 1px solid var(--kn-border-strong);
-  padding-block: 20px;
+  padding-block: 1.25rem;
   text-decoration: none;
 }
 .page-turn a span {
@@ -197,13 +197,13 @@ a.nav-comments {
 .brand-column {
   padding: var(--kn-space-plate);
   border-radius: var(--kn-radius-card);
-  min-height: 240px;
+  min-height: 15rem;
 }
 .brand-column h2 {
   color: inherit;
 }
 .ramp-row {
-  margin-block: 40px;
+  margin-block: 2.5rem;
 }
 .ramp-cells {
   display: grid;
@@ -214,8 +214,8 @@ a.nav-comments {
 .ramp-cells > div {
   display: grid;
   align-content: end;
-  gap: 12px;
-  padding: 36px 8px 12px;
+  gap: 0.75rem;
+  padding: 2.25rem 0.5rem 0.75rem;
   font-size: var(--kn-type-small-size);
 }
 .ramp-cells span {
@@ -233,7 +233,7 @@ a.nav-comments {
   margin-top: 0;
 }
 .surface-grid figcaption {
-  margin-top: 12px;
+  margin-top: 0.75rem;
   color: var(--kn-text-muted);
 }
 input[type='checkbox'], input[type='range'] {
@@ -241,25 +241,25 @@ input[type='checkbox'], input[type='range'] {
 }
 details {
   border-block-start: 1px solid var(--kn-border);
-  margin-block: 28px;
-  padding-top: 20px;
+  margin-block: 1.75rem;
+  padding-top: 1.25rem;
 }
 summary {
   font-weight: 600;
 }
 summary + * {
-  margin-top: 24px;
+  margin-top: 1.5rem;
 }
 .tuning-pair {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 32px;
+  gap: 2rem;
 }
 .scale-control {
   display: grid;
   grid-template-columns: 1fr auto;
-  gap: 12px;
-  margin: 32px 0;
+  gap: 0.75rem;
+  margin: 2rem 0;
 }
 .scale-control input {
   grid-column: 1 / -1;
@@ -270,20 +270,20 @@ summary + * {
 }
 .scale-line {
   border-block-start: 1px solid var(--kn-border);
-  padding-block: 20px;
+  padding-block: 1.25rem;
 }
 .scale-line p {
-  margin: 0 0 12px;
+  margin: 0 0 0.75rem;
 }
 .spacing-steps > div {
   display: flex;
   align-items: center;
-  gap: 24px;
-  margin-block: 20px;
+  gap: 1.5rem;
+  margin-block: 1.25rem;
 }
 .spacing-steps i {
   display: block;
-  height: 16px;
+  height: 1rem;
   background: var(--kn-accent);
 }
 .shape-object {
@@ -299,7 +299,7 @@ summary + * {
   padding: var(--kn-space-plate);
   border: 1px solid var(--kn-border);
   border-radius: var(--kn-radius-card);
-  min-height: 180px;
+  min-height: 11.25rem;
   display: flex;
   align-items: center;
 }
@@ -307,7 +307,7 @@ summary + * {
   margin: 0;
 }
 .specimen {
-  margin-block: 36px;
+  margin-block: 2.25rem;
   min-width: 0;
 }
 .specimen-stage {
@@ -317,12 +317,13 @@ summary + * {
   border: 1px solid var(--kn-border);
 }
 .specimen-stage[data-fixed] {
-  height: 560px;
+  height: 35rem;
 }
 .specimen-stage iframe {
   display: block;
   border: 0;
   width: 100%;
+  height: 35rem;
   margin-inline: auto;
 }
 .table-scroll {
@@ -335,11 +336,11 @@ table {
 }
 th, td {
   text-align: start;
-  padding: 12px;
+  padding: 0.75rem;
   border-bottom: 1px solid var(--kn-border);
 }
 dd {
-  margin: 8px 0 24px;
+  margin: 0.5rem 0 1.5rem;
   overflow-wrap: anywhere;
 }
 pre {
@@ -351,9 +352,9 @@ pre {
 .comment-panel {
   position: fixed;
   inset: 0 0 0 auto;
-  width: min(460px, 100%);
+  width: min(28.75rem, 100%);
   z-index: 40;
-  padding: 24px;
+  padding: 1.5rem;
   overflow-y: auto;
   border-inline-start: 1px solid var(--kn-border-strong);
   box-shadow: var(--kn-shadow-panel);
@@ -363,27 +364,27 @@ pre {
   align-items: center;
   flex-wrap: wrap;
   justify-content: space-between;
-  gap: 12px;
+  gap: 0.75rem;
 }
 .comment-panel textarea {
   width: 100%;
   display: block;
-  margin-block: 12px;
+  margin-block: 0.75rem;
   resize: vertical;
 }
 .comment-entry {
   border-bottom: 1px solid var(--kn-border);
-  padding-block: 16px;
+  padding-block: 1rem;
 }
 .comment-entry p {
   white-space: pre-wrap;
 }
 .comment-entry button {
-  margin-inline-end: 12px;
+  margin-inline-end: 0.75rem;
 }
 .reader-name {
   display: grid;
-  gap: 12px;
+  gap: 0.75rem;
 }
 .comment-actions button, .comment-entry button, #comment-add, #comment-close {
   font-size: var(--kn-type-small-size);
@@ -392,20 +393,20 @@ pre {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 16px;
-  margin-top: 32px;
+  gap: 1rem;
+  margin-top: 2rem;
 }
-@media (width < 1100px) {
+@media (width < 68.75rem) {
   .ramp-cells {
     grid-template-columns: repeat(5, minmax(0, 1fr));
   }
 }
-@media (width < 900px) {
+@media (width < 56.25rem) {
   .mobile-bar {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 12px 20px;
+    padding: 0.75rem 1.25rem;
     border-bottom: 1px solid var(--kn-border);
     background: var(--kn-background);
     position: sticky;
@@ -417,23 +418,23 @@ pre {
     display: none;
   }
   #sidebar {
-    top: 60px;
-    width: min(320px, 100%);
+    top: 3.75rem;
+    width: min(20rem, 100%);
     box-shadow: var(--kn-shadow-panel);
   }
   #main {
     margin-left: 0;
   }
   .document-page {
-    padding: 32px 20px 96px;
+    padding: 2rem 1.25rem 6rem;
   }
 }
-@media (width < 600px) {
+@media (width < 37.5rem) {
   .brand-swatches, .surface-grid, .tuning-pair {
     grid-template-columns: minmax(0, 1fr);
   }
   .ramp-cells > div {
-    padding-inline: 4px;
+    padding-inline: 0.25rem;
   }
   .ramp-cells span {
     font-size: var(--kn-type-label-size);
@@ -445,20 +446,20 @@ pre {
     border-top: 1px solid var(--kn-border-strong);
   }
   .page-turn {
-    gap: 16px;
+    gap: 1rem;
   }
 }
 
 .page-toolbar {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
-  margin-bottom: 8px;
-  padding-block: 12px;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+  padding-block: 0.75rem;
   border-bottom: 1px solid var(--kn-border);
   background: var(--kn-background);
 }
-@media (width >= 900px) {
+@media (width >= 56.25rem) {
   .page-toolbar {
     position: sticky;
     top: 0;
@@ -495,8 +496,8 @@ html:not(.js) .page-toolbar {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
-  gap: 16px;
-  margin-bottom: 10px;
+  gap: 1rem;
+  margin-bottom: 0.625rem;
   font-size: var(--kn-type-small-size);
 }
 .specimen-name {
@@ -511,12 +512,12 @@ html:not(.js) .page-toolbar {
 }
 .comment-toggle {
   position: fixed;
-  top: 16px;
-  right: 24px;
+  top: 1rem;
+  right: 1.5rem;
   z-index: 30;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 0.5rem;
   padding: 0.5em 0.9em;
   font-size: var(--kn-type-small-size);
   border: 1px solid var(--kn-border-strong);
@@ -550,7 +551,7 @@ html:not(.js) .page-toolbar {
 .weights {
   display: flex;
   flex-wrap: wrap;
-  gap: 24px 64px;
+  gap: 1.5rem 4rem;
   margin-block: var(--kn-space-band);
 }
 .weights p {
@@ -571,7 +572,7 @@ html:not(.js) .page-toolbar {
   margin-top: var(--kn-space-component-gap);
 }
 .tuning-pair p {
-  margin: 0 0 8px;
+  margin: 0 0 0.5rem;
 }
 .tuning-sample {
   font-size: var(--kn-type-heading-2-size);
@@ -615,33 +616,33 @@ html:not(.js) .page-toolbar {
   accent-color: var(--kn-button-background);
 }
 .shape-grid {
-  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(13.125rem, 1fr));
   align-items: start;
 }
 .shape-control {
-  padding-block: 4px;
+  padding-block: 0.25rem;
 }
 .shape-object h2, .shape-object p {
   margin: 0;
 }
 .shadow-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 64px;
-  padding: 32px 20px;
+  grid-template-columns: repeat(auto-fit, minmax(16.25rem, 1fr));
+  gap: 4rem;
+  padding: 2rem 1.25rem;
 }
-@media (width < 900px) {
+@media (width < 56.25rem) {
   .comment-toggle {
     top: auto;
-    bottom: 16px;
-    right: 16px;
+    bottom: 1rem;
+    right: 1rem;
   }
 }
-@media (width < 600px) {
+@media (width < 37.5rem) {
   .comment-toggle-label {
     position: absolute;
-    width: 1px;
-    height: 1px;
+    width: 0.0625rem;
+    height: 0.0625rem;
     overflow: hidden;
     clip-path: inset(50%);
   }

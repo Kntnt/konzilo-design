@@ -18,10 +18,9 @@
 @import "./cta-band.css";
 @import "./key-figures.css";
 @import "./search-box.css";
+@import "./brand.css";
 @import "./header.css";
 @import "./footer.css";
-@import "./footer-band.css";
-@import "./footer-cell.css";
 @import "./table.css";
 @import "./accordion.css";
 @import "./quotation.css";

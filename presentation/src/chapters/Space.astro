@@ -1,4 +1,5 @@
 ---
+import { rem } from '../../../src/generator/fluid.js';
 import { resolved as r, inputs, t, num } from '../data.js';
 import { range } from '../words.js';
 import Button from '../../../src/components/Button.astro';
@@ -9,7 +10,7 @@ const { id } = Astro.props;
 {id === 'space' && <>
   <p class="prose">{t(inputs['density-profile'] < 35 ? 'space.compact' : inputs['density-profile'] > 70 ? 'space.loose' : 'space.balanced')}</p>
   <Components specimens={['space-section']} />
-  <details><summary>{t('steps')}</summary><div class="spacing-steps">{Object.entries(r.space.steps).map(([step, value]) => <div><span>{step}</span><i style={{ width: `${value.max}px` }}></i><span>{range(value)}</span></div>)}</div></details>
+  <details><summary>{t('steps')}</summary><div class="spacing-steps">{Object.entries(r.space.steps).map(([step, value]) => <div><span>{step}</span><i style={{ width: rem(value.max) }}></i><span>{range(value)}</span></div>)}</div></details>
 </>}
 {id === 'corners' && <>
   <p>{t(inputs['corner-profile'] === 0 ? 'corners.square' : inputs['corner-profile'] < 60 ? 'corners.discreet' : 'corners.round')}</p>

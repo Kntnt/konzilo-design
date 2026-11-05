@@ -14,7 +14,7 @@ const { id, project, resolved } = Astro.props;
 ---
 
 {id.startsWith('header-') && <Header {...headerProps(resolved.header, project)} />}
-{id === 'footer' && <Footer {...footerProps(resolved.footer, project)} />}
+{id === 'footer' && <Footer {...footerProps(resolved.footer, project, resolved.header)} />}
 {id === 'page' && (
   <Page {...pageProps(resolved.page)}>
     <Header slot="header" {...headerProps(resolved.header, project)} />
@@ -25,33 +25,21 @@ const { id, project, resolved } = Astro.props;
         type="heading-3"
       />
     </Band>
-    <Footer slot="footer" {...footerProps(resolved.footer, project)} />
+    <Footer slot="footer" {...footerProps(resolved.footer, project, resolved.header)} />
   </Page>
 )}
 {id === 'band' && (
   <div class="sample-stack sample-bands">
-    <Band surface="tint">
-      <HeadingGroup
-        eyebrow="The first band"
-        heading="Related content shares a Surface"
-        type="heading-3"
-        deck="The content stays on the same rail as the header and footer."
-      />
-    </Band>
-    <Band surface="brand">
-      <HeadingGroup
-        eyebrow="The next band"
-        heading="A different Surface marks a new section"
-        type="heading-3"
-      />
-    </Band>
-    <Band surface="inverse">
-      <HeadingGroup
-        eyebrow="The final band"
-        heading="A clear ending completes the sequence"
-        type="heading-3"
-      />
-    </Band>
+    {['tint', 'brand', 'inverse'].map((surface) => (
+      <Band surface={surface} data-look={`band-colour:${surface}`}>
+        <HeadingGroup
+          eyebrow="A band"
+          heading="A Surface marks a section"
+          type="heading-3"
+          deck="The content stays on the same rail as the header and footer."
+        />
+      </Band>
+    ))}
   </div>
 )}
 {id === 'reading-area' && (

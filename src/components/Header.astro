@@ -19,8 +19,9 @@ interface Props extends HTMLAttributes<'header'> {
   skipTo?: string;
 }
 const { identity, arrangement = 'A', attachment = 'flow', start = 'below', autohide = false, surface = 'page', menu = [], linkMenu = false, menuButton = false, languages = [], search, cta, level = 2, numbered = false, skipTo = '#content', id = nextId('kn-header'), class: className, ...attributes } = Astro.props;
-const hasMenu = !!menuButton || (linkMenu && menu.length > 0) || !!search || languages.length > 0 || !!cta;
-const groups = arrangementGroups(arrangement, { links: linkMenu && menu.length > 0, menu: hasMenu, language: languages.length > 0, search: !!search, cta: !!cta });
+const inLinkMenu = linkMenu && menu.some((item) => item.linkMenu !== false);
+const hasMenu = !!menuButton || inLinkMenu || !!search || languages.length > 0 || !!cta;
+const groups = arrangementGroups(arrangement, { links: inLinkMenu, menu: hasMenu, language: languages.length > 0, search: !!search, cta: !!cta });
 const searchHref = search && `${search.action}${search.action.includes('?') ? '&' : '?'}q=`;
 ---
 <header {...attributes} id={id} class:list={['kn-header', className]} data-kn-arrangement={arrangement} data-kn-attachment={attachment} data-kn-start={start} data-kn-autohide={String(autohide)} data-kn-opaque-surface={surface} data-kn-surface={surface}>

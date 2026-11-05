@@ -1,7 +1,7 @@
 ---
 import type { HTMLAttributes } from 'astro/types';
 import { icons } from './icons.js';
-// A text-sized Lucide icon, decorative unless given an accessible label.
+// A text-sized icon, decorative unless given an accessible label.
 interface Props extends Omit<HTMLAttributes<'svg'>, 'name'> {
   name: keyof typeof icons;
   label?: string;

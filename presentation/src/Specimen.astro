@@ -8,7 +8,7 @@ const { id } = Astro.props;
     <button class="specimen-comment" type="button" data-specimen-comment={id}>{t('comment')}</button>
   </div>
   <div class="specimen-stage" data-fixed={id === 'preview' || undefined}>
-    <iframe title={t(`specimen.${id}`)} data-specimen-frame={id} height="560" />
+    <iframe title={t(`specimen.${id}`)} data-specimen-frame={id} />
     <noscript><p>{t('specimen.no-script')}</p></noscript>
   </div>
 </section>

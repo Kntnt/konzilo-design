@@ -11,6 +11,6 @@ const variants = entry?.[3] || [];
 
 ---
 {page?.id === 'header' && <p class="prose">{t('header.try')}</p>}
-{page?.id === 'breadcrumbs' && <p class="prose">{t(hidden ? 'breadcrumbs.off' : crumbs.placement === 'own-band' ? 'breadcrumbs.own-band' : 'breadcrumbs.first-band')}</p>}
+{page?.id === 'breadcrumbs' && <p class="prose">{t(hidden ? 'breadcrumbs.off' : 'breadcrumbs.place')}</p>}
 {defaults.map((id) => <Specimen id={id} />)}
 {variants.length > 0 && <details class="variants"><summary>{t(page.id === 'buttons' ? 'states' : 'variants')}</summary>{variants.map((id) => <Specimen id={id} />)}</details>}

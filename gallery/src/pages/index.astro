@@ -261,6 +261,9 @@ const bandRows = { page: ['Link', 'Article', 'Person'], tint: ['Link', 'Article'
       <Hero id="hero" level={2} eyebrow="07 / Hero · Picture" heading="A wider view begins nearby" deck="A shared walk can change the way we see a familiar place." picture={landscape} alt="Invented green hills beneath a golden sun">
         <LinkGroup><Button href="#reading-area">Read the field notes</Button><Button href="#text-image" variant="arrow">Explore the studio</Button></LinkGroup>
       </Hero>
+      <Hero level={2} eyebrow="07 / Hero · Bleeding picture" heading="The picture runs out to the window" deck="To the window's edge on its side, and to the hero's top and bottom, with the text on the opposite side." picture={landscape} side="start-bleed" alt="Invented green hills beneath a golden sun" height="half" place="bottom">
+        <LinkGroup><Button href="#reading-area" variant="arrow">Read the field notes</Button></LinkGroup>
+      </Hero>
       <Hero surface="brand" level={2} eyebrow="07 / Hero · Plate" heading="Bring your next idea to the table" deck="A clear invitation on a checked brand Surface.">
         <LinkGroup><Button href="#cta-band">Join a workshop</Button></LinkGroup>
       </Hero>
@@ -363,7 +366,7 @@ const bandRows = { page: ['Link', 'Article', 'Person'], tint: ['Link', 'Article'
       </Band>)}
       {footerVariants.map((variant, index) => <Band surface="page">
         <HeadingGroup class="g-section-heading" heading={`${18 + index} / Footer · ${variant.title}`} />
-        <div class="g-frame-preview"><Footer bands={variant.bands} rules={variant.rules} /></div>
+        <div class="g-frame-preview"><Footer {...variant.props} /></div>
       </Band>)}
       <Band surface="page" id="tables" contentClass="g-stack">
         <HeadingGroup heading="33 / Table" deck="Captions, column headings and aligned figures keep shared information easy to compare." />
@@ -479,7 +482,7 @@ const bandRows = { page: ['Link', 'Article', 'Person'], tint: ['Link', 'Article'
         <Form class="g-demo-form" action="#forms-status" method="get" aria-label="All field types on brand" fields={allFields.map((field) => ({ ...field, name: `brand-${field.name}` }))} columns={2}><Button slot="actions" type="submit">Check the fields</Button></Form>
       </Band>
       <Band surface="raised" id="consent-banner">
-        <HeadingGroup class="g-section-heading" heading="45 / Consent Banner" deck="Open the banner inside the frame lab to try equal-weight acceptance and refusal, custom settings and the footer’s Preferences link." />
+        <HeadingGroup class="g-section-heading" heading="45 / Consent Banner" deck="Open the banner inside the frame lab to try equal-weight acceptance and refusal, custom settings and the footer’s Change privacy settings link." />
         <Button id="g-show-consent" variant="outline" aria-describedby="g-tip-consent">Open banner in frame lab</Button>
         <span class="g-consent-tip g-tip" id="g-tip-consent" role="tooltip" data-kn-surface="inverse">Opens the non-modal consent banner inside section 14’s frame. The surrounding gallery stays readable.</span>
         <p class="g-note"><a href="#frame-lab">Go to the frame lab</a> to review the banner and settings.</p>

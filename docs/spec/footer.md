@@ -1,21 +1,58 @@
 # The footer
 
-Records the footer model and attachment, with their status and reasoning.
+Records the footer's two bands of cells and its attachment, with their status and reasoning.
 
-**Owner, approved 2026-10-31 ("Ser bra ut"):** the footer model and its 24 variants. In short:
+**Owner, decided 2026-11-05:** the controls of the six models did not give enough freedom to choose a combination, so the footer becomes two bands of cells. The model of 2026-10-31 and the six models of 2026-11-03 are replaced, see below.
 
-- Up to four bands, each on one colour; a band with no cells is not rendered.
-- Columns A, a third, and B, two thirds, inside the content area; B's content pushed to the end edge as a block.
-- Merged cells over rows or both columns.
-- Runs of same-colour bands, with section space at their outer edges and a smaller gap inside; a compact utility band.
-- Optional hairlines, never between colours or through a merged cell, stopping at the content by default. A hairline over column B alone therefore starts at the B block's start edge, not at the column's (*decided* 2026-11-02, the owner found it running too far past the text).
-- On narrow screens, each run stacks its A cells before its B cells, and a row spanning both columns is a unit of its own.
+The footer has two bands, shown each on its own or together.
 
-**Stacking (resolved 2026-11-01):** CSS `order` would part reading and keyboard order from the stacking order, so `Footer.astro` writes the cells in stacking order and places them on the wide grid with named lines and explicit rows; its one-column layout keeps that document order.
+- **The upper band** behaves like every other Band on the page in its space and colour; the only difference is that it belongs to the footer.
+- **The lower band** is always thin (the compact treatment of the old model), and its cells behave exactly as the upper band's.
+- **The cells:** each band is a grid of 2 x 2 cells. The columns are A and B and the rows 1 and 2, in spreadsheet notation. Column A takes a third of the available width inside the content area and column B two thirds, parted by the usual column gap. A row is as tall as it needs.
+- **The content box:** each cell has a content box that wants to be as small as it can. Its text is always start-aligned. Column A's boxes stand against the cell's start edge and column B's against its end edge, and every box stands at the cell's top. All of this is logical, so right-to-left mirrors it.
+- **Who decides:** whoever designs the site decides what stands in the cells and what colour the bands have. By default the upper band is on the dark brand Surface and the lower on the nearly black `inverse` Surface.
+
+**When cells are empty** (the owner's list, as rules for the filled cells of one band):
+
+| Filled | What happens |
+|---|---|
+| None | The band is not rendered. Both bands empty: no footer at all. |
+| One | It spans all four cells. |
+| Two in one column | Each spans its whole row; the other column is gone. |
+| Two in one row | The empty row has no height; the cells keep their own columns. |
+| Two diagonally, or three | The owner's "or": with `fill: row` the cell beside an empty cell spans that row, and with `fill: column` the cell above or below an empty cell spans that column. |
+
+When a cell fills another, it spreads over both, but its content box stays as it was: at its own column's edge, at the top, and as small as its content allows. A cell in column B that spans a row therefore keeps its box at the end edge.
+
+The assistant reads the owner's "or" as a design choice (2026-11-05, for review): the setting `fill`, one per footer, applying to both bands, with `column` as the default. `footerSpans` in `footer.js` holds these rules, and a test holds them to a table of all 16 combinations under both values.
+
+**On narrow screens** (the approved stacking, kept): one column, A cells before B cells within each band, document order equal to stacking order, and every box at the start edge. CSS `order` would part reading and keyboard order from the stacking order (resolved 2026-11-01), so `Footer.astro` writes each band's cells in stacking order and places them on the wide grid.
+
+**What stays of the model of 2026-10-31:**
+
+- Optional hairlines, never between two colours or through a merged cell, stopping at the content by default. A hairline over column B alone therefore starts at the start edge of B's widest content box, not at the column's (*decided* 2026-11-02, the owner found it running too far past the text). The owner did not ask to remove them on 2026-11-05.
+- Adjacent bands with the same background get less space between them than at a change of background: section space at their outer edges and a smaller gap inside. Footer bands on one colour close up in the same way, and only there can a hairline part them.
+
+**Replaced 2026-11-05, no longer in force:** up to four bands, cells merged by hand over rows or both columns, same-colour runs of more than two bands, B's content pushed to the end as one shared block, and the design file's `model`, `surface` and `second-surface` with the six models (2026-11-03). Old keys have no migration: validation refuses them.
+
+**Sample content** (the owner, for the preview and the presentation; made-up values in English):
+
+| Cell | Upper band | Lower band |
+|---|---|---|
+| A1 | The brand, as the header shows it | Address |
+| B1 | Icons for LinkedIn, Facebook, YouTube, Spotify, email and RSS (`src/components/icons.js`) | Registration number and registered office |
+| A2 | A position statement, or a similar short text presenting the brand | Cookie policy • Privacy policy (links) |
+| B2 | Links for navigation: a selection from the megamenu, all of it, or links that do not fit there | Change privacy settings • Revoke consents (links) |
+
+**The brand follows the header** (the owner, 2026-11-05): what is chosen in the header holds in the footer too. A1 of the upper band shows what `header.identity` says, logo only, name only, or logo and name, following `brand-axis` too and optically centred as in the header (header.md, point 13), with no slogan. It has the header's sizes, and the logo for the band's Surface: a band dark in both modes takes the dark logo, and one that follows the mode holds both, for CSS to choose. Changing them changes the preview's footer where it stands. A site gets the same from `footerBrand` in `src/components/brand.js`, as a cell's `content`.
+
+**The tool's control** (the owner): a miniature of this structure, in which one clicks the cells to turn them on and off and sees the result in the preview. Eight cells in all.
 
 ### Attachment
 
 **Owner (2026-10-31):** the footer is either fixed at the bottom of the page, as its last part, uncovered as one scrolls down; or fixed at the bottom of the window, lying under the page and hidden by it until one has scrolled far enough for the whole footer to show. He describes how it is experienced, not how it is built, and thinks it is part of the footer component. **Agreed**, with the remark that the setting is the footer's but the page must cooperate: under `reveal` the page must be opaque and lie over the footer.
+
+**Owner (2026-11-05):** it must be possible to fix the footer at the end of the page or at the edge of the screen, more of a reveal effect, with the end of the page as the standard. The tool says "At the end of the page" and "At the edge of the screen". The definition below stands.
 
 **Definition** (proposed 2026-10-31; he has built on it without objection, and decided the two further points below). The footer's attachment takes one of two values:
 
@@ -36,8 +73,8 @@ Two further points, taken with the owner one at a time (2026-10-31):
 - **Short pages** (*decided*; he welcomed the catch): on a page shorter than the window, the footer stands at the window's bottom edge under both values. The space between the last content and the footer is the page's surface, below the last band. It follows from the page model (page.md), where nothing behind the page ever shows; and on a short page `flow` and `reveal` look alike, since the whole footer shows at once.
 - **A visible edge under `reveal`** (*decided*): the page's bottom edge always shows, or the footer's content seems to appear out of nothing behind an invisible line. It shows by a colour change between the page's last band and the footer's first, the page's shadow on the footer, or the line at the page's bottom edge; where the bands have the same colour and neither shadow nor line is chosen, the component adds the shadow. The cost, accepted: no reveal without a visible edge.
 
-**Built 2026-11-01:** `Footer.astro`, `footer.js` and the Page implement all six invariants and both further points. Reveal eligibility is continually measured, keyboard focus uncovers the footer, short pages grow on the page Surface and an equal-colour reveal edge gets the Page’s shadow automatically, with its hairline when the shadow is off. Footer layout is calculated at build time, so runs, merged cells, hairlines and stacking need no script. The assistant’s technical choices and validation limits are in components.md.
+**Built 2026-11-01, the attachment; 2026-11-05, the cells:** `Footer.astro`, `footer.js` and the Page implement all six invariants and both further points. Reveal eligibility is continually measured, keyboard focus uncovers the footer, short pages grow on the page Surface and an equal-colour reveal edge gets the Page’s shadow automatically, with its hairline when the shadow is off. Footer layout is calculated at build time, so the cells, hairlines and stacking need no script. The assistant’s technical choices are in components.md.
 
-**Settings in the design** (the owner's wish, 2026-11-03; the assistant chose the details while the owner was away, for review): the design file's `footer` holds a model, the main colour and the thin band's colour, lines between rows and between columns, where lines end, and the attachment. The models are six of the approved variants with a job to do, in `footer-models.js`: one band; two rows; two rows with a thin band; a statement across both columns above the rest; a tall left column; a tall right column. The other approved variants were tests of the layout's rules, which still hold. In the tool's preview, `footer-html.js` writes the same markup as `Footer.astro`, and a test holds the two together.
+**Settings in the design** (2026-11-05, replacing those of 2026-11-03): the design file's `footer` holds `attachment` (`flow`, the default, or `reveal`), `fill` (`column`, the default, or `row`), `upper` and `lower`, each with a `surface` and `cells` (`a1`, `b1`, `a2`, `b2`, all on by default), and the lines: `horizontal-rules`, `vertical-rule` and `rule-extent`. In the tool's preview, `footer-html.js` writes the same markup as `Footer.astro`, and a test holds the two together.
 
 **Related, already in the model:** the page's shadow on the footer (page.md, point 4), and the line above the footer, drawn only when the first band has the page's colour and the page casts no shadow.

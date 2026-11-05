@@ -9,7 +9,8 @@ import Table from '../../../src/components/Table.astro';
 import { fields, categories, consentTexts } from '../samples.js';
 import { t } from '../data.js';
 const { id } = Astro.props;
-const states = ['default', 'hover', 'focus', 'active', 'disabled'];
+// A field has no look for the pointer on it or for being pressed.
+const states = ['default', 'focus', 'disabled'];
 ---
 
 {['form', 'form-brand'].includes(id) && (
@@ -60,10 +61,10 @@ const states = ['default', 'hover', 'focus', 'active', 'disabled'];
   </Form>
 )}
 {id === 'form-states' && (
-  <div class="sample-state-row">
+  <div class="sample-state-row" style="--state-columns:3">
     {states.map((state) => (
-      <div>
-        <p data-kn-type="label">{t(`state.${state}`)}</p>
+      <div data-look={`field-state:${state}`}>
+        <p data-kn-type="label" data-report-only>{t(`state.${state}`)}</p>
         <Field
           class={`is-${state}`}
           name={`field-${state}`}

@@ -18,7 +18,7 @@ const Heading = `h${level}` as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
       {cta && <Button class="kn-header-cta" href={cta.href} data-kn-dialog={cta.dialog} aria-haspopup={cta.dialog ? 'dialog' : undefined} aria-controls={cta.dialog} data-kn-moved="cta">{cta.label}</Button>}
     </div>}
     {Astro.slots.has('above') && <div class="kn-megamenu-above"><slot name="above" /></div>}
-    {items.length > 0 && <div class="kn-megamenu-columns" style={{ '--kn-header-menu-columns': Math.min(5, items.length) }}>
+    {items.length > 0 && <div class="kn-megamenu-columns" style={{ '--kn-header-menu-columns': Math.min(6, items.length) }}>
       {items.map((item, i) => <div class="kn-megamenu-column">
         <Heading class="kn-megamenu-heading" data-kn-type="heading-6"><a href={item.href} aria-current={item.current ? 'page' : undefined}>
           {numbered && <span class="kn-megamenu-number" aria-hidden="true">{String(i + 1).padStart(2, '0')} /</span>}{item.label}

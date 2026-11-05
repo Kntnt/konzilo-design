@@ -133,6 +133,8 @@ test('search variant uses the shared inverse box, field, submit and suggestions 
   assert.equal(one(box, '.kn-search-links a').attributes.href, '/walks/'); assert.equal(one(box, '[data-kn-close]'), undefined);
   const header = parse(await render('SearchPanel', { id: 'search-panel', search: { action: '/search/' } })); assert.ok(one(header, '.kn-search-box [data-kn-close]'));
   assert.match(await css('visitor-filters'), /data-kn-enhanced[^\n]+kn-visitor-filter-submit \{ display: none/);
+  assert.match(await css('visitor-filters'), /kn-visitor-filter-panel \{ display: grid/, 'each filter has a row of its own');
+  assert.match(await css('form'), /kn-field-select > \.kn-icon \{[^}]*inset-inline-end: 1em/, 'a select\'s arrow keeps its distance from the edge');
 });
 
 test('consent offers accept and reject together with identical classes, and no optional switch is preselected', async () => {

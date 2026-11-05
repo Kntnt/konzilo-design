@@ -1,6 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
+import { chromium } from 'playwright-core';
 import { readingColumns, breakoutBesideBlock, placeSidenotes, readingExtent, stickyEligible, setupReadingAreas } from '../src/components/reading-area.js';
+import { render } from './helpers/render.js';
+import { derive, defaultInputs } from '../src/generator/index.js';
+import { coreCss } from '../src/css/index.js';
+import { componentsCss } from '../src/css/components.js';
 
 test('columns follow the supplied measure, gap and Aside minimum, including the exact boundary', () => {
   const geometry = { narrow: 720, gap: 40, asideMin: 224 };
@@ -121,5 +127,45 @@ test('the runtime measures roles, applies placement, responds to resize and rest
       if (previous[key]) Object.defineProperty(globalThis, key, previous[key]);
       else delete globalThis[key];
     }
+  }
+});
+
+test('a Reading Area on a phone scrolls no one sideways, and its measure still measures', { timeout: 60000 }, async () => {
+  const area = await render('ReadingArea', {}, { default: '<p>Words in the reading column.</p>', aside: '<aside class="kn-aside-block"><p>Words beside it.</p></aside>' });
+  const script = `${await readFile(new URL('../src/components/reading-area.js', import.meta.url), 'utf8')}\nsetupReadingAreas();`;
+  const browser = await chromium.launch();
+  try {
+    for (const dir of ['ltr', 'rtl']) {
+      const page = await browser.newPage();
+      await page.setContent(`<!doctype html><html dir="${dir}"><head><style>${coreCss(derive(defaultInputs()))}${await componentsCss()}</style></head><body data-kn-surface="page">${area.replace(/<script[\s\S]*?<\/script>/g, '')}</body></html>`);
+      await page.addScriptTag({ type: 'module', content: script });
+      await page.waitForSelector('.kn-reading-area-measure', { state: 'attached' });
+      const narrow = await page.evaluate(() => {
+        const probe = document.body.appendChild(document.createElement('div'));
+        probe.style.cssText = 'position: fixed; inline-size: var(--kn-layout-narrow);';
+        const width = probe.getBoundingClientRect().width;
+        probe.remove();
+        return width;
+      });
+      const look = () => page.evaluate(() => {
+        const root = document.documentElement;
+        const { inlineSize } = getComputedStyle(document.querySelector('.kn-reading-area-measure'));
+        scrollTo(root.dir === 'rtl' ? -9999 : 9999, 0);
+        const scrolled = scrollX;
+        scrollTo(0, 0);
+        return { overflow: root.scrollWidth - root.clientWidth, scrolled, measured: parseFloat(inlineSize), columns: document.querySelector('.kn-reading-area').dataset.knColumns };
+      });
+      for (const width of [390, 320]) {
+        await page.setViewportSize({ width, height: 844 });
+        await page.waitForFunction(() => document.querySelector('.kn-reading-area').dataset.knColumns === '1');
+        assert.deepEqual(await look(), { overflow: 0, scrolled: 0, measured: narrow, columns: '1' }, `${dir} at ${width} px`);
+      }
+      await page.setViewportSize({ width: 1440, height: 900 });
+      await page.waitForFunction(() => document.querySelector('.kn-reading-area').dataset.knColumns === '2');
+      assert.deepEqual(await look(), { overflow: 0, scrolled: 0, measured: narrow, columns: '2' }, `${dir} wide`);
+      await page.close();
+    }
+  } finally {
+    await browser.close();
   }
 });

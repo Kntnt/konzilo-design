@@ -59,7 +59,7 @@ These eight kind names and their meanings, and the two rank tints added on 2026-
 | `raised` | Raised content such as a card, following the mode | plates.md §4 | Working name from spec; decided kind | Expresses its relation to its ground. |
 | `tint` | Light brand tint, following the mode | plates.md §4 | Working name from spec; decided kind | Retains the approved treatment name. |
 | `brand` | Dark brand Surface, dark in both modes | plates.md §4 | Working name from spec; decided kind | Retains the approved brand treatment. |
-| `inverse` | Dark neutral Surface, dark in both modes | plates.md §4 | Working name from spec; decided kind | Preserves the decided name; it does not mean invert the current mode. |
+| `inverse` | Dark neutral Surface, dark in both modes: grey 950 in light mode and grey 800 in dark mode | plates.md §4 and the one rule of 2026-11-05 | Working name from spec; decided kind | Preserves the decided name; it does not mean invert the current mode. |
 | `accent` | Brand fill for buttons and small marks | plates.md §4 | Working name from spec; decided kind | Shares the accent concept with its context role, in a different scope. |
 | `picture-light` | Image treatment with light polarity and tested overlay or text Surface | plates.md §4 | Working name from spec; decided kind | Describes the image context's polarity, not an unchecked image brightness. |
 | `picture-dark` | Image treatment with dark polarity and tested overlay or text Surface | plates.md §4 | Working name from spec; decided kind | Completes the approved picture pair. |
@@ -70,6 +70,7 @@ These eight kind names and their meanings, and the two rank tints added on 2026-
 | `data-kn-mode="dark"` | Explicit local dark-mode selection; also usable at the root | plates.md §4; proposed here | Proposed here | Keeps the two mode values together under one attribute. |
 | `.kn-mode-light` | Class alternative for explicit light mode | plates.md §7; proposed here | Proposed here | Follows the class alternative if the owner chooses that syntax. |
 | `.kn-mode-dark` | Class alternative for explicit dark mode | plates.md §7; proposed here | Proposed here | Completes the same alternative. |
+| `--kn-in-light`, `--kn-in-dark` | The mode as two switches, for a kind that keeps one `color-scheme` in both modes, where `light-dark()` cannot follow the mode; set wherever `--kn-mode` is | generator.md, Surfaces; 2026-11-05 | The assistant's choice, for the owner's rule of 2026-11-05 | Say when a value applies; emitted CSS only, for no component to read. |
 
 No local mode attribute means inherit the selected mode; it does not mean follow the operating system. A light local mode does not turn `brand` or `inverse` light. Picture and accent values in both modes are generated and checked; this draft adds no new mode rule for them. The yellow-to-olive generator issue remains open in plates.md.
 
@@ -288,9 +289,27 @@ The reusable repository stores no actual presentation identity or project-specif
 | `inputs.type.ratio.min` | Ratio at the narrowest window | tool.md §2; proposed here | Proposed here | Uses the same endpoint convention as body size. |
 | `inputs.type.ratio.max` | Ratio at the widest window | tool.md §2; proposed here | Proposed here | Completes the pair for one scale, not two scale presets. |
 | `inputs.header` | The header's settings: arrangement, attachment, items, identity, large menu and search box | header.md | *Built* 2026-11-03 | Named for the component they go to. |
-| `inputs.footer` | The footer's settings: model, colours, lines and attachment | footer.md | *Built* 2026-11-03 | Named for the component they go to. |
+| `inputs.header.identity` | What the brand is, in the header and the footer: `logo` (default), `name` or `both` | header.md, point 13 | *Decided* 2026-11-05 | The value's three words are what shows. |
+| `inputs.header.brand-axis` | How logo and name stand: `row` (default) or `column` | header.md, point 13 | *Decided* 2026-11-05 | Keeps the axis words of flex layout, as the attribute does. |
+| `inputs.header.slogan-place` | Where the slogan stands: `beside` (default) or `below` | header.md, point 13 | *Decided* 2026-11-05, replacing `brand-align`, `identity-axis` and `identity-align` | `place` is the word `inputs.hero.place` already uses for where something stands; the owner's own words for the two values. |
+| `inputs.footer` | The footer's settings: attachment, how empty cells fill, its two bands and its lines | footer.md | *Built* 2026-11-05, replacing the models of 2026-11-03 | Named for the component they go to. |
+| `inputs.footer.attachment` | `flow` (default) or `reveal` | footer.md, Attachment | *Decided* 2026-10-31 | The spec's own two words; the tool says "At the end of the page" and "At the edge of the screen". |
+| `inputs.footer.fill` | How a cell fills where it could go either way: `column` (default) or `row` | footer.md | *Decided* 2026-11-05 | Names what the cell does, along the axis it does it. |
+| `inputs.footer.upper`, `inputs.footer.lower` | The two bands, each with `surface` and `cells` | footer.md | *Decided* 2026-11-05 | The owner's own words for them. |
+| `inputs.footer.upper.surface`, `inputs.footer.lower.surface` | The band's Surface: `page`, `raised`, `tint`, `brand` (the upper's default) or `inverse` (the lower's default) | footer.md | *Decided* 2026-11-05 | Keeps the Surface word and its kinds. |
+| `inputs.footer.upper.cells`, `inputs.footer.lower.cells` | The cells `a1`, `b1`, `a2` and `b2`, each on or off, all on by default | footer.md | *Decided* 2026-11-05 | The owner's spreadsheet notation, in lower case as keys are. |
+| `inputs.footer.horizontal-rules`, `inputs.footer.vertical-rule`, `inputs.footer.rule-extent` | Lines between rows and between columns, and where they end: `content` (default) or `full` | footer.md | *Built* 2026-11-03 | Unchanged by the decision of 2026-11-05. |
 | `inputs.page` | The page's shadow on the footer, its edge line and its fill in each mode | page.md | *Built* 2026-11-03 | Named for the component they go to. |
-| `inputs.breadcrumbs` | Whether a trail shows, its place, mark, first step, end, and form on a phone | components.md | *Built* 2026-11-03 | Named for the component they go to. |
+| `inputs.breadcrumbs` | Whether a trail shows, its mark, first step, end, and form on a phone | components.md | *Built* 2026-11-03 | Named for the component they go to. |
+| `inputs.hero` | The design's default Hero; a page may depart from it | components.md, Band compositions | *Built* 2026-11-05 | Named for the component it goes to. |
+| `inputs.hero.picture` | Where the picture stands: `none`, `behind` (default), `start`, `end`, `start-bleed` or `end-bleed` | components.md, Band compositions | *Decided* 2026-11-05 | The values are logical, so right-to-left works; the tool says Left and Right. |
+| `inputs.hero.surface` | The Surface without a picture behind: `none` (default), `page`, `raised`, `tint`, `brand` or `inverse` | components.md, Band compositions | *Decided* 2026-11-05 | Reuses the Surface kinds; `none` lets what lies beneath show. |
+| `inputs.hero.overlay` | The scrim over a picture behind: `dark` (default) or `light` | components.md, Band compositions | *Decided* 2026-11-05 | Selects `picture-dark` or `picture-light`. |
+| `inputs.hero.height` | Share of the screen: `third`, `half`, `two-thirds` (default) or `full` | components.md, Band compositions | *Decided* 2026-11-05 | Written as `data-kn-height`. |
+| `inputs.hero.place` | The text up and down: `top`, `center` or `bottom` (default) | components.md, Band compositions | *Decided* 2026-11-05 | Written as `data-kn-place`. |
+| `inputs.hero.align` | The text block across: `start` (default), `center` or `end` | components.md, Band compositions | *Decided* 2026-11-05 | Written as `data-kn-align`. |
+| `inputs.hero.type` | The look of the hero's heading: `heading-1` (default) or `display` | components.md, Band compositions | *Decided* 2026-11-05 | Reuses the text styles' words. |
+| `inputs.hero.h1` | Where the page's H1 is: `hero` (default) or `below` | components.md, The H1, the trail and the hero's heading | *Decided* 2026-11-05 | Names the element, not a look: `heading-1` is the text style, which `type` chooses, while `h1` is the `<h1>` itself, so the two keys cannot be read as one. `below` is `inputs.header.slogan-place`'s word for under. |
 | `inputs.layout.wide`, `inputs.layout.narrow` | Wide and Narrow, in default-setting pixels | page.md | *Built* 2026-11-03 | The resolved `layout` keys they set. |
 | `inputs.type.breakpoints` | Where the ratio and body size endpoints apply | tool.md §2 | *Decided* 2026-11-03 | The owner's word for the two arrows on the number line. |
 | `inputs.type.breakpoints.min` | The left breakpoint, in default-setting pixels | tool.md §2 | *Decided* 2026-11-03 | Uses the same endpoint convention as ratio and body size. |
@@ -408,20 +427,25 @@ The class grammar and selectors are shared by Astro and the plain HTML export.
 
 ## Header and Footer names (2026-11-01)
 
-**The assistant’s technical choices, 2026-11-01.** The class grammar above also covers Header’s named parts, `.kn-megamenu`, `.kn-skip-link`, `.kn-footer`, `.kn-footer-band` and `.kn-footer-cell`. These consume the existing context, type, space, radius, duration and shadow roles. No new generated token or colour role is introduced.
+**The assistant’s technical choices, 2026-11-01.** The class grammar above also covers Header’s named parts, `.kn-megamenu`, `.kn-skip-link`, `.kn-footer`, `.kn-footer-band`, `.kn-footer-cell` and, since 2026-11-05, `.kn-footer-box`, `.kn-footer-social` and `.kn-footer-logo`, and since the same day `.kn-brand`, `.kn-brand-logo` and `.kn-brand-name`, the brand the header and a footer share, in place of the header's own names for them. These consume the existing context, type, space, radius, duration and shadow roles. No new generated token or colour role is introduced.
 
 | Custom property | What it is |
 |---|---|
 | `--kn-header-height` | Measured bar height, published on the root and its Page in rem. |
 | `--kn-header-visible-height` | The sticky height currently shown; zero while fully away or in flow. Root scroll padding and the Reading Area follow it. |
-| `--kn-header-identity-scale` | Unitless, width-driven last-resort scale of the identity; independent of scrolling. |
+| `--kn-header-identity-scale` | Unitless, width-driven last-resort scale of the identity; independent of scrolling. A brand elsewhere has no scale, and reads it as 1. |
 | `--kn-header-panel-top` | Measured window position of the bar’s bottom edge, in rem. |
-| `--kn-header-menu-columns` | Number of level-1 columns, capped at five before responsive steps to two and one. |
+| `--kn-header-menu-columns` | Number of level-1 columns, capped at six before responsive steps to two and one. |
 | `--kn-footer-height` | The measured footer height reserved by the Page under reveal, in rem. |
-| `--kn-footer-edge` | Local run-edge space: band space, or the compact utility edge. |
+| `--kn-footer-edge-start`, `--kn-footer-edge-end`, `--kn-footer-row-gap` | Local space at a band's edges and between its rows: as any Band, thin in the lower band, closed up where two bands share a colour. |
 | `--kn-footer-inner`, `--kn-footer-side` | Local grid relations for the shared content rail and its margins. |
 | `--kn-footer-separator` | Local width of the footer link list’s bullet strip, in em. |
 | `--kn-reading-sticky-inset` | Existing Reading Area inset, now the visible sticky header height plus component gap. |
+| `--kn-hero-screen`, `--kn-hero-height` | What a Hero's height is a share of, and the share chosen by `data-kn-height`. |
+| `--kn-scrim` | A picture Surface's scrim as one colour at its checked opacity, for a layer that masks say where to show. |
+| `--kn-scrim-fade`, `--kn-scrim-fade-length` | That layer's mask where text stands on part of the picture, from clear to whole over the length. |
+| `--kn-scrim-header` | That layer's mask behind a transparent header, whole over the header's height and then clearing. |
+| `--kn-scrim-fade-direction` | Which way that mask runs: `to bottom` (default) with the text at the bottom, `to top` with the text at the top. |
 
 | Attribute | What it is |
 |---|---|
@@ -430,7 +454,12 @@ The class grammar and selectors are shared by Astro and the plain HTML export.
 | `data-kn-start="below|under"`, `data-kn-autohide="true|false"` | Requested Header start and sliding behaviour. |
 | `data-kn-opaque-surface="page|brand"` | Header’s own opaque Surface; `data-kn-surface` carries its current complete context. |
 | `data-kn-group="start|end"` | The Header group, in document order. |
-| `data-kn-axis="row|column"`, `data-kn-align="start|center|end"` | The identity’s two pair layouts. Footer Cell also uses align, adding `stretch`. |
+| `data-kn-axis="row|column"` on `.kn-brand` | How logo and name stand, in the header and in a footer. |
+| `data-kn-slogan-place="beside|below"` | Where the slogan stands, on `.kn-header-identity`. |
+| `data-kn-align="center|end"` | On a Hero, where its text block stands across the content width; `start`, the default, writes no attribute. |
+| `data-kn-picture="start|end|start-bleed|end-bleed"` | A Hero's picture beside its text: on that side inside the content width, or out to the window's edge and the hero's top and bottom. Absent with no such picture. |
+| `data-kn-place="top|bottom"` | Where a Hero's text stands up and down; `center`, the default, writes no attribute. |
+| `data-kn-height="third|half|two-thirds|full"` | A Hero's minimum share of the screen; tall text grows past it. |
 | `data-kn-enhanced`, `data-kn-transparent`, `data-kn-away` | Header enhancement and current appearance states. |
 | `data-kn-collapsed` | Space-separated accepted giving-way steps: `slogan name links word language cta search`. |
 | `data-kn-logo="light|dark"`, `data-kn-logo-polarity="light|dark"` | Image version and the Header’s script-resolved standard `color-scheme`; no CSS polarity branching. |
@@ -445,12 +474,10 @@ The class grammar and selectors are shared by Astro and the plain HTML export.
 | `data-kn-effective-attachment="flow|reveal"` | Footer’s currently eligible attachment; always flow in print. |
 | `data-kn-footer-attachment="flow|reveal"` | The Page’s matching reservation and opaque main-layer state. |
 | `data-kn-rules="content|full"` | Footer hairline extent. |
-| `data-kn-band`, `data-kn-run`, `data-kn-run-start`, `data-kn-run-end` | Build-time Footer band number, same-Surface run and its outer edges. |
-| `data-kn-cell`, `data-kn-column="A|B"`, `data-kn-columns="1|2"` | Cell address, column and column span; row spans are explicit named grid rows. |
-| `data-kn-compact`, `data-kn-own-b` | Compact utility spacing and later-run independent B alignment. |
-| `data-kn-edge-top`, `data-kn-edge-bottom` | Run-edge spacing of cells and vertical hairlines. |
-| `data-kn-stack-first`, `data-kn-stack-last` | Outer spacing of the actual document’s stacked cells. |
-| `data-kn-only="a|b|both"`, `data-kn-stop-top`, `data-kn-stop-bottom` | Hairline segments that avoid merged cells and stop at content. |
+| `data-kn-band="upper|lower"`, `data-kn-rows="1|2"`, `data-kn-joined` | Which Footer band, how many rows it has, and that the two bands share a colour and close up. |
+| `data-kn-cell="a1|b1|a2|b2"`, `data-kn-column="A|B"`, `data-kn-columns="1|2"`, `data-kn-row="1|2|all"` | Cell address, the column that places its box, and what it covers. A vertical hairline uses `data-kn-row` too. |
+| `data-kn-only="a|b|both"`, `data-kn-join` | A hairline between a band's rows, over the columns no merged cell covers, or between two bands on one colour. |
+| `data-kn-logo="light|dark"` on `.kn-footer-logo` | Which mode a footer logo is for, on a band whose colour follows the mode. |
 | `data-kn-top-line` | Build-time Footer separator before attachment is measured, also used in static examples. |
 | `data-kn-edge-line="true"` | Explicit Page bottom-edge hairline. |
 | `data-kn-auto-shadow`, `data-kn-auto-line` | Measured Page edge treatment under the Footer’s attachment. |
@@ -495,6 +522,10 @@ The `kn:headerchange` window event asks Reading Areas to recheck sticky eligibil
 
 The public query keys are `q`, the declared filter names and `page`; repeated values express OR. `kn:filterschange` synchronises panels after a local choice; it is not a source-query API. `consent.js` exports `hasConsent`, `setConsent` and `openConsentSettings`; the `kn:consentchange` window event carries the version and category choices, including withdrawal. `kn:consentbanneropen` on the banner opens the deferred lab example. These events change presentation and consent state, not design inputs.
 
+
+## Dark-mode rule names (2026-11-05)
+
+***Decided* with the owner's rule of 2026-11-05 (plates.md):** `background-page` is the contrast-pair name for a band's background against the page in the same mode, following the names `text-alt` and `link-hover`: what is checked, then what over. It adds no role, and the page and the picture kinds do not have it. `BAND_MINIMUM` names its target and `BAND_STEPS` the steps of a ramp that carry a band.
 
 ## Owner’s review names (2026-11-02)
 

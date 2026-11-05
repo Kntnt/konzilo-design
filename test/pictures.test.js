@@ -138,7 +138,7 @@ test('a presentation carries each picture once, and a design\'s own in place of 
 
 test('in the tool a photo reaches both ends, the toggle hides what can go, and colours leave the photos alone', { timeout: 240000 }, async () => {
   const directory = await scratch();
-  const path = await design(directory, { picture: 'beside' });
+  const path = await design(directory, { picture: 'end' });
   const upload = join(directory, 'camera.png');
   // A red 4x3 picture, drawn by a browser so the test needs no image of its own.
   const tool = await startTool({ designFile: path, port: 0, open: false });
@@ -194,6 +194,7 @@ test('in the tool a photo reaches both ends, the toggle hides what can go, and c
     assert.equal(await ends[0].locator('body').evaluate(() => window.__photos), 0);
 
     // The toggle is a way of looking, and leaves the design and the file alone.
+    await page.waitForFunction(() => document.getElementById('status-text').textContent === 'Saved');
     const before = await readFile(path, 'utf8');
     await page.locator('[data-pictures="off"]').click();
     for (const end of ends) {

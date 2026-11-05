@@ -1,8 +1,8 @@
 @layer kn-components {
   .kn-visitor-filters { display: grid; gap: var(--kn-space-component-gap); margin-block-end: var(--kn-space-column-gap); }
-  .kn-visitor-filter-panel { display: flex; flex-wrap: wrap; align-items: end; gap: 1em; padding: 1.25em; border: 1px solid var(--kn-border); border-radius: var(--kn-radius-card); }
-  .kn-visitor-filter-select { flex: 0 1 12em; }
-  .kn-visitor-filter-search { flex: 1 1 16em; }
+  /* Each filter has a row of its own: choices on one row widen the result, and each further row narrows it. */
+  .kn-visitor-filter-panel { display: grid; gap: 1.25em; padding: 1.25em; border: 1px solid var(--kn-border); border-radius: var(--kn-radius-card); }
+  .kn-visitor-filter-submit { justify-self: start; }
   .kn-visitor-filter-input { position: relative; }
   .kn-visitor-filter-input > .kn-icon { position: absolute; inset-inline-start: 0.75em; inset-block-start: 50%; translate: 0 -50%; pointer-events: none; color: var(--kn-text-muted); }
   .kn-visitor-filter-input > input { padding-inline-start: 2.25em; }

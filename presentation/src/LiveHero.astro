@@ -1,6 +1,12 @@
 ---
-// Only the design tool uses this: the page's opening follows the design as its settings change.
+// Only the design tool uses this: the page's opening follows the design as its settings change, and with it the page's
+// H1 and its trail, which comes from a built template.
+import Breadcrumbs from '../../src/components/Breadcrumbs.astro';
+import { breadcrumbProps } from './frame.js';
 ---
+<template data-kn-live-breadcrumbs>
+  <Breadcrumbs {...breadcrumbProps({ home: 'word', separator: 'slash', current: true, narrow: 'trail' }, { name: 'Example' })} />
+</template>
 <script>
   import { followHero } from './hero-live.js';
   followHero();

@@ -8,6 +8,8 @@ Precedence over any conflicting skill, README, or other doc unless the user over
 - No file here, tracked or ignored, names, describes or points to a customer or a customer
   project. Customer projects refer to this repository, never the reverse.
 - Every file in English.
+- Every length is in rem, with px only where truly necessary, such as hairlines: `docs/spec/tool.md`
+  point 3, held by `test/lengths.test.js`.
 - Commit, push or publish only when Thomas asks.
 
 ## Non-obvious

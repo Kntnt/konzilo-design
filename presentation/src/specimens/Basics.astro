@@ -8,7 +8,9 @@ import Quotation from '../../../src/components/Quotation.astro';
 import { sample } from '../samples.js';
 import { t } from '../data.js';
 const { id } = Astro.props;
-const states = ['default', 'hover', 'focus', 'active'];
+const buttonStates = ['default', 'hover', 'focus', 'active'];
+// A link in running text has a hover and a focus of its own, and nothing for being pressed.
+const linkStates = ['default', 'hover', 'focus'];
 ---
 
 {id === 'body-text' && (
@@ -41,15 +43,17 @@ const states = ['default', 'hover', 'focus', 'active'];
         data-kn-surface={surface}
         class="sample-state-row"
         style="--state-columns:4"
+        data-look={`button-colour:${surface}`}
       >
-        {states.map((state) => (
-          <div>
-            <p data-kn-type="label">{t(`state.${state}`)}</p>
+        {buttonStates.map((state) => (
+          <div data-look={`button-state:${state}`}>
+            <p data-kn-type="label" data-report-only>{t(`state.${state}`)}</p>
             <LinkGroup direction="stack">
               {['filled', 'outline', 'arrow'].map((variant) => (
                 <Button
                   variant={variant}
                   class={`is-${state}`}
+                  data-look={`button-kind:${variant}`}
                 >
                   Continue
                 </Button>
@@ -67,14 +71,17 @@ const states = ['default', 'hover', 'focus', 'active'];
       <div
         data-kn-surface={surface}
         class="sample-state-row"
-        style="--state-columns:4"
+        style="--state-columns:3"
+        data-look={`link-colour:${surface}`}
       >
-        {states.map((state) => (
-          <div>
-            <p data-kn-type="label">{t(`state.${state}`)}</p>
-            <a href="#guide" class={`is-${state}`}>
-              {sample.link}
-            </a>
+        {linkStates.map((state) => (
+          <div data-look={`link-state:${state}`}>
+            <p data-kn-type="label" data-report-only>{t(`state.${state}`)}</p>
+            <BodyText>
+              <a href="#guide" class={`is-${state}`}>
+                {sample.link}
+              </a>
+            </BodyText>
           </div>
         ))}
       </div>
@@ -105,7 +112,7 @@ const states = ['default', 'hover', 'focus', 'active'];
   </div>
 )}
 
-{id === 'button-default' && <div class="sample-stack">{['page', 'brand'].map((surface) => <div class="sample-pad" data-kn-surface={surface}><LinkGroup>{['filled', 'outline', 'arrow'].map((variant) => <Button variant={variant}>Continue</Button>)}</LinkGroup><p><a href="#guide">Read the guide</a></p></div>)}</div>}
+{id === 'button-default' && <div class="sample-stack">{['page', 'brand'].map((surface) => <div class="sample-pad" data-kn-surface={surface} data-look={`group-colour:${surface}`}><LinkGroup>{['filled', 'outline', 'arrow'].map((variant) => <Button variant={variant}>Continue</Button>)}</LinkGroup><p data-report-only><a href="#guide">Read the guide</a></p></div>)}</div>}
 {id === 'article' && <article class="article-specimen">
   <HeadingGroup eyebrow="Planning" heading="Information you can act on" deck="A clear plan gives everyone a useful next step." />
   <BodyText><p>{sample.paragraph}</p><ul><li>Understand the goal.</li><li>Agree on responsibilities.</li><li>Review the next step.</li></ul><h2 data-kn-type="heading-3">Keep the plan useful</h2><p>{sample.paragraph}</p></BodyText>

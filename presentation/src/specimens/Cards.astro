@@ -4,7 +4,7 @@ import CardGrid from '../../../src/components/CardGrid.astro';
 import ContentCard from '../../../src/components/ContentCard.astro';
 import { context } from './context.js';
 import { t, ownPictures } from '../data.js';
-const { id, project, resolved } = Astro.props;
+const { id, project, resolved, catalogue } = Astro.props;
 const { list, people, landscapes } = context(project, resolved, ownPictures);
 ---
 
@@ -17,6 +17,7 @@ const { list, people, landscapes } = context(project, resolved, ownPictures);
         href="#services"
         picture={{ src: landscapes[index], alt: '' }}
         surface={id === 'card' ? 'raised' : undefined}
+        data-report-only={index > 0 || undefined}
       />
     ))}
   </CardGrid>
@@ -37,6 +38,8 @@ const { list, people, landscapes } = context(project, resolved, ownPictures);
           alt: 'Abstract head and shoulders in tints',
         }}
         surface={index < 2 ? 'tint' : undefined}
+        data-look={['card-plate:plate', undefined, 'card-plate:none'][index]}
+        data-report-only={index === 1 || undefined}
       />
     ))}
   </CardGrid>
@@ -48,6 +51,7 @@ const { list, people, landscapes } = context(project, resolved, ownPictures);
         {...item}
         surface="raised"
         imageInset={false}
+        data-report-only={index > 0 || undefined}
         cta={{ label: 'Read more', style: 'link', icon: '→' }}
       />
     ))}
@@ -55,9 +59,9 @@ const { list, people, landscapes } = context(project, resolved, ownPictures);
 )}
 {id === 'card-grid' && (
   <div class="sample-stack card-grid-comparison">
-    {[2, 4].map((columns) => (
-      <div>
-        <p class="grid-caption" data-kn-type="label">
+    {(catalogue ? [2, 3, 4] : [2, 4]).map((columns) => (
+      <div data-look={`grid-columns:${columns}`}>
+        <p class="grid-caption" data-kn-type="label" data-report-only>
           {t('card-grid.columns', { count: columns })}
         </p>
         <CardGrid columns={columns}>

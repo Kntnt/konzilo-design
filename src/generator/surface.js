@@ -1,5 +1,5 @@
 import { contrast, hexToRgb, luminance } from './color.js';
-import { ramp, STEPS } from './ramps.js';
+import { BAND_MINIMUM, ramp, STEPS } from './ramps.js';
 import { resolveColor, shadowsForSurface } from './shadow.js';
 
 export const KINDS = Object.freeze(['page', 'raised', 'tint', 'brand', 'inverse', 'accent', 'picture-light', 'picture-dark']);
@@ -9,8 +9,8 @@ export const RANK_TINTS = Object.freeze({ secondary: 'tint-secondary', tertiary:
 export const kindsFor = (palette) => [...KINDS, ...STATUS_KINDS, ...Object.entries(RANK_TINTS).filter(([rank]) => palette[rank]).map(([, kind]) => kind)];
 export const MODES = Object.freeze(['light', 'dark']);
 export const ROLES = Object.freeze(['background', 'background-alt', 'background-hover', 'text', 'text-muted', 'border', 'border-strong', 'link', 'accent', 'focus', 'info', 'success', 'warning', 'error', 'button-background', 'button-text', 'button-background-hover']);
-// Accent is also checked at 3:1, so it can carry non-text emphasis.
-export const ROLE_TARGETS = Object.freeze({ text: 4.5, 'text-muted': 4.5, border: 0, 'border-strong': 3, link: 4.5, accent: 3, focus: 3, info: 4.5, success: 4.5, warning: 4.5, error: 4.5, 'button-background': 3, 'button-text': 4.5, 'button-text-hover': 4.5, 'text-alt': 4.5, 'text-muted-alt': 4.5, 'link-alt': 4.5, 'text-hover': 4.5, 'link-hover': 4.5 });
+// Accent is also checked at 3:1, so it can carry non-text emphasis. background-page holds a band apart from the page.
+export const ROLE_TARGETS = Object.freeze({ text: 4.5, 'text-muted': 4.5, border: 0, 'border-strong': 3, link: 4.5, accent: 3, focus: 3, info: 4.5, success: 4.5, warning: 4.5, error: 4.5, 'button-background': 3, 'button-text': 4.5, 'button-text-hover': 4.5, 'text-alt': 4.5, 'text-muted-alt': 4.5, 'link-alt': 4.5, 'text-hover': 4.5, 'link-hover': 4.5, 'background-page': BAND_MINIMUM });
 // Steps carrying the status Surfaces and their borders; the status roles use 300 and 600, uncapped.
 const STATUS_CEILING = Object.freeze({ 100: 0.05, 200: 0.08, 800: 0.09, 900: 0.06 });
 export const STATUS_SEEDS = Object.freeze({ info: '#1d6fd1', success: '#16803c', warning: '#b77900', error: '#c53030' });
@@ -27,8 +27,15 @@ export function pictureContrast(foreground, scrim, image) {
   return (Math.max(fg, bg) + 0.05) / (Math.min(fg, bg) + 0.05);
 }
 
-export function surfacePairs(surface) {
-  return Object.fromEntries(Object.entries(ROLE_TARGETS).map(([role, target]) => {
+// Given its page, a band also gets the pair that holds it apart from that page in the same mode. The page cannot
+// differ from itself and a picture shows an image rather than a fill, so neither has that pair.
+export function surfacePairs(surface, page = surface) {
+  const band = surface !== page && !surface.scrim;
+  return Object.fromEntries(Object.entries(ROLE_TARGETS).filter(([role]) => band || role !== 'background-page').map(([role, target]) => {
+    if (role === 'background-page') {
+      const ratio = contrast(surface.roles.background, page.roles.background);
+      return [role, { foreground: surface.roles.background, background: page.roles.background, ratio, target, passed: ratio >= target, samples: {} }];
+    }
     const buttonText = role === 'button-text' || role === 'button-text-hover';
     const alternate = role.endsWith('-alt');
     const hover = !buttonText && role.endsWith('-hover');
@@ -56,37 +63,55 @@ export function solveRole(recipe, palette, target, ratio, polarity) {
   return { recipe, color: original }; // The matrix records the failure.
 }
 
+// One rule from light mode to dark mode (owner, 2026-11-05): the step each kind's background stands on in each mode,
+// and its family. The page is white in light and 950 in dark. Light bands mirror, 100 in light being 900 in dark. Dark
+// bands keep their step, but in dark mode are never darker than 800: the page and the light bands have 950 and 900.
+const LIGHT_BAND = Object.freeze({ light: 100, dark: 900 });
+const STANDS = Object.freeze({
+  page: { family: 'gray', light: 'white', dark: 950 },
+  raised: { family: 'gray', ...LIGHT_BAND },
+  brand: { family: 'primary', light: 800, dark: 800 },
+  inverse: { family: 'gray', light: 950, dark: 800 },
+  // Accent's fills are the primary's, while its muted text and borders are grey.
+  accent: { family: 'primary', lines: 'gray', light: 700, dark: 700 },
+});
+const standsOf = (kind) => STANDS[kind] ?? { family: kind === 'tint' ? 'primary' : kind.split('-')[1], ...LIGHT_BAND };
+// What stands on a background follows its polarity and step, never its kind. A hover fill must show against both the
+// background and the alternate fill. On 700 and 800 a lighter hover would fail link-hover, so these go darker, and 800's
+// alternate is 900 because 700 fails link-alt; on 900 and 950 the hover goes lighter.
+const ON_STEP = Object.freeze({
+  light: {
+    white: { alternate: 100, hover: 200, border: 200 },
+    100: { alternate: 'white', hover: 200, border: 200 },
+  },
+  dark: {
+    700: { alternate: 800, hover: 900, muted: 300, border: 800 },
+    800: { alternate: 900, hover: 950, muted: 200, border: 700 },
+    900: { alternate: 950, hover: 800, muted: 300, border: 800 },
+    950: { alternate: 900, hover: 800, muted: 300, border: 800 },
+  },
+});
+// A picture stands on no step: its grey family's roles are fixed, and its scrim's colour is also its alternate fill.
+const PICTURES = Object.freeze({
+  'picture-light': { polarity: 'light', family: 'gray', alternate: 'white', hover: 200, border: 200 },
+  'picture-dark': { polarity: 'dark', family: 'gray', alternate: 'black', hover: 800, muted: 300, border: 800 },
+});
+
 function recipesFor(kind, mode, palette) {
   const accent = palette.secondary ? 'secondary' : 'primary';
-  const rank = kind === 'tint' ? 'primary' : kind.startsWith('tint-') ? kind.slice(5) : kind.startsWith('status-') ? kind.slice(7) : null;
-  const polarity = ['brand', 'inverse', 'accent', 'picture-dark'].includes(kind) ? 'dark'
-    : kind === 'picture-light' ? 'light' : mode;
+  const picture = PICTURES[kind];
+  const stands = picture ?? standsOf(kind);
+  const { family, lines = family } = stands;
+  const polarity = picture ? picture.polarity : stands[mode] in ON_STEP.light ? 'light' : 'dark';
   const dark = polarity === 'dark';
-  const background = kind === 'accent' ? 'primary-700'
-    : kind === 'brand' ? 'primary-800' : kind === 'inverse' ? 'gray-950'
-    : kind.startsWith('picture-') ? (dark ? 'black' : 'white')
-    : rank !== null ? ref(rank, dark ? 900 : 100)
-    : kind === 'raised' ? ref('gray', dark ? 900 : 100) : dark ? 'gray-950' : 'white';
-  const family = kind === 'brand' ? 'primary' : rank !== null ? rank : 'gray';
-  // A hover fill must show against both the background and the alternate rows. On the dark
-  // brand Surfaces a lighter step would fail link-hover, so these fills go darker instead.
-  const hover = kind === 'brand' ? 'primary-950' : kind === 'accent' ? 'primary-900'
-    : kind === 'inverse' || kind === 'picture-dark' ? 'gray-800'
-    : kind === 'picture-light' ? 'gray-200'
-    : rank !== null ? ref(rank, dark ? 800 : 200)
-    : ref('gray', dark ? 800 : 200);
-  // Brand 700 fails link-alt at 4.5:1; 900 preserves the approved foregrounds.
-  const alternate = kind.startsWith('picture-') ? background
-    : kind === 'brand' ? 'primary-900' : kind === 'accent' ? 'primary-800'
-    : kind === 'inverse' ? 'gray-900'
-    : rank !== null ? dark ? ref(rank, 950) : 'white'
-    : kind === 'raised' ? dark ? 'gray-950' : 'white' : dark ? 'gray-900' : 'gray-100';
+  const row = picture ?? ON_STEP[polarity][stands[mode]];
+  const fill = (step) => ['white', 'black'].includes(step) ? step : ref(family, step);
   return { polarity, recipes: {
-    background, 'background-alt': alternate, 'background-hover': hover, text: dark ? 'white' : 'gray-900',
-    'text-muted': dark ? ref(family, kind === 'brand' ? 200 : 300) : 'gray-600',
-    border: ref(family, dark ? kind === 'brand' ? 700 : 800 : 200),
-    'border-strong': ref(family, dark ? 400 : 500), link: ref('primary', dark ? 300 : 800),
-    accent: ref(kind.startsWith('status-') ? rank : accent, dark ? 300 : 600), focus: ref(accent, dark ? 300 : 600),
+    background: fill(picture ? picture.alternate : stands[mode]), 'background-alt': fill(row.alternate), 'background-hover': fill(row.hover), text: dark ? 'white' : 'gray-900',
+    'text-muted': dark ? ref(lines, row.muted) : 'gray-600',
+    border: ref(lines, row.border),
+    'border-strong': ref(lines, dark ? 400 : 500), link: ref('primary', dark ? 300 : 800),
+    accent: ref(kind.startsWith('status-') ? family : accent, dark ? 300 : 600), focus: ref(accent, dark ? 300 : 600),
     ...Object.fromEntries(Object.keys(STATUS_SEEDS).map((name) => [name, ref(name, dark ? 300 : 600)])),
     'button-background': dark ? 'white' : 'primary-700',
     'button-text': dark ? 'primary-700' : 'white',
@@ -96,7 +121,7 @@ function recipesFor(kind, mode, palette) {
 
 export function surfaces(settings, palette) {
   const seeds = settings['brand-colors'];
-  const status = Object.fromEntries(Object.entries(STATUS_SEEDS).map(([name, seed]) => [name, Object.fromEntries(ramp(seed, { ceiling: STATUS_CEILING }).map(({ step, hex }) => [step, hex]))]));
+  const status = Object.fromEntries(Object.entries(STATUS_SEEDS).map(([name, seed]) => [name, Object.fromEntries(ramp(seed, { ceiling: STATUS_CEILING, pages: ['#ffffff', palette.gray[950]] }).map(({ step, hex }) => [step, hex]))]));
   const all = { ...palette, ...status };
   return Object.fromEntries(kindsFor(palette).map((kind) => [kind, Object.fromEntries(MODES.map((mode) => {
     const { polarity, recipes } = recipesFor(kind, mode, all);
@@ -104,9 +129,12 @@ export function surfaces(settings, palette) {
     const solveRoles = () => {
       surface.adjustments = {};
       for (const [role, target] of Object.entries(ROLE_TARGETS)) {
-        // Filled-button recipes are fixed pairs, not foregrounds on the Surface.
-        if (role.startsWith('button-') || role.endsWith('-alt') || role.endsWith('-hover')) continue;
-        const ratio = (hex) => surface.scrim ? Math.min(...['#000000', '#ffffff'].map((image) => pictureContrast(hex, surface.scrim, image))) : contrast(hex, surface.roles.background);
+        // Filled-button recipes are fixed pairs and the fills fixed colours, not foregrounds on the Surface.
+        if (role.startsWith('button-') || role.startsWith('background-') || role.endsWith('-alt') || role.endsWith('-hover')) continue;
+        // A foreground must hold on every fill it is checked over, not only on the background: a seed anchored at the
+        // dark end of a step leaves too little margin for a hover fill lighter than the background.
+        const fills = ['alt', 'hover'].filter((fill) => ROLE_TARGETS[`${role}-${fill}`]).map((fill) => surface.roles[`background-${fill}`]);
+        const ratio = (hex) => Math.min(...fills.map((fill) => contrast(hex, fill)), ...(surface.scrim ? ['#000000', '#ffffff'].map((image) => pictureContrast(hex, surface.scrim, image)) : [contrast(hex, surface.roles.background)]));
         const solved = solveRole(recipes[role], all, target, ratio, polarity);
         surface.roles[role] = solved.color;
         if (solved.recipe !== recipes[role]) surface.adjustments[role] = { from: recipes[role], to: solved.recipe };
@@ -134,7 +162,7 @@ export function surfaces(settings, palette) {
 
 export function contrastCheck(surfaces) {
   const matrix = Object.fromEntries(Object.keys(surfaces).map((kind) => [kind, Object.fromEntries(MODES.map((mode) => [mode, {
-    pairs: surfacePairs(surfaces[kind][mode]), adjustments: structuredClone(surfaces[kind][mode].adjustments),
+    pairs: surfacePairs(surfaces[kind][mode], surfaces.page[mode]), adjustments: structuredClone(surfaces[kind][mode].adjustments),
   }]))]));
   const passed = Object.values(matrix).every((modes) => Object.values(modes).every(({ pairs }) => Object.values(pairs).every((pair) => pair.passed)));
   return { status: passed ? 'passed' : 'failed', matrix };
@@ -150,9 +178,9 @@ export function checkContrast(resolved) {
   for (const kind of kinds) for (const mode of MODES) {
     const stored = resolved['contrast-check'].matrix[kind][mode];
     const computed = actual.matrix[kind][mode];
-    for (const role of Object.keys(ROLE_TARGETS)) {
+    for (const role of new Set([...Object.keys(computed.pairs), ...Object.keys(stored.pairs)])) {
       const a = stored.pairs[role], b = computed.pairs[role];
-      if (!a || !a.passed || a.ratio < b.target ||
+      if (!a || !b || !a.passed || a.ratio < b.target ||
           ['foreground', 'background', 'ratio', 'target', 'passed'].some((key) => a[key] !== b[key]) ||
           Object.keys(a.samples).length !== Object.keys(b.samples).length ||
           Object.keys(b.samples).some((image) => a.samples[image] !== b.samples[image])) {

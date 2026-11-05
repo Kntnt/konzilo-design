@@ -77,8 +77,9 @@ test('the real Page and Bands frame all examples, including the seven new compon
   const main = html.match(/<main\b[^>]*>([\s\S]*?)<\/main>/)[1];
   assert.doesNotMatch(main, /<section\b(?![^>]*class="[^"]*kn-band)/);
   const heroes = main.match(/<section\b[^>]*class="kn-band kn-hero"[^>]*>/g);
-  assert.equal(heroes.length, 4);
-  assert.ok(heroes.some((tag) => tag.includes('data-kn-picture="beside"')));
+  assert.equal(heroes.length, 5);
+  assert.ok(heroes.some((tag) => tag.includes('data-kn-picture="end"')));
+  assert.ok(heroes.some((tag) => tag.includes('data-kn-picture="start-bleed"')));
   assert.ok(heroes.some((tag) => tag.includes('data-kn-surface="brand"')));
   assert.ok(heroes.some((tag) => !tag.includes('data-kn-surface')));
   assert.match(main, /class="kn-band kn-hero"[^>]*data-kn-surface="picture-dark"[^>]*--kn-picture-image:/);
@@ -275,22 +276,22 @@ test('rendered header groups, skip link, identity, panel controls, current links
   }
 });
 
-test('rendered footer cells follow stacking order in the DOM and use named wide-grid rows', () => {
+test('rendered footer cells follow stacking order in the DOM and sit in the cells the layout gives them', () => {
   const tree = parse(html);
   const footers = all(tree, '.kn-footer');
   assert.equal(footers.length, footerVariants.length);
   footerVariants.forEach((variant, index) => {
-    const layout = layoutFooter(variant.bands);
-    const cells = all(footers[index], '.kn-footer-cell');
-    assert.deepEqual(cells.map((cell) => cell.attributes['data-kn-cell']), layout.cells.map((cell) => `${cell.column}${cell.row}`));
-    for (const [i, cell] of cells.entries()) {
-      assert.equal(cell.attributes['data-kn-surface'], layout.cells[i].surface);
-      assert.match(cell.attributes.style, /grid-row:r\d-start \/ r\d-end/);
-      assert.ok(!cell.attributes.style.includes('order'));
-    }
-    assert.equal(all(footers[index], '.kn-footer-background').length, layout.bands.length);
-    assert.equal(all(footers[index], '.kn-footer-rule').length, layout.bands.filter((band) => band.horizontal).length);
-    assert.equal(all(footers[index], '.kn-footer-vertical-rule').length, layout.bands.filter((band) => band.vertical).length);
+    const layout = layoutFooter(variant.props);
+    const bands = all(footers[index], '.kn-footer-band');
+    assert.equal(bands.length, layout.bands.length);
+    layout.bands.forEach((band, b) => {
+      assert.equal(bands[b].attributes['data-kn-surface'], band.surface);
+      const cells = all(bands[b], '.kn-footer-cell');
+      assert.deepEqual(cells.map((cell) => [cell.attributes['data-kn-cell'], cell.attributes['data-kn-columns'], cell.attributes['data-kn-row']]), band.cells.map((cell) => [cell.name, String(cell.columns), cell.row]));
+      for (const cell of cells) assert.ok(!cell.attributes.style);
+      assert.equal(all(bands[b], '.kn-footer-rule').length, (band.horizontal ? 1 : 0) + (band.join ? 1 : 0));
+      assert.equal(all(bands[b], '.kn-footer-vertical-rule').length, band.vertical ? 1 : 0);
+    });
   });
 });
 

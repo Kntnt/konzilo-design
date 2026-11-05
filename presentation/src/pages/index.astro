@@ -1,5 +1,6 @@
 ---
 import { resolved, copy, t, project, date } from '../data.js';
+import { brandParts } from '../../../src/components/brand.js';
 import { pageList } from '../catalog.js';
 import { slug } from '../../../tool/presentation.js';
 import { runtimeKeys } from '../copy-runtime.js';
@@ -13,6 +14,8 @@ import '../document.css';
 const pages = pageList();
 const chapters = [...new Set(pages.map((page) => page.chapter))];
 const runtimeCopy = Object.fromEntries(runtimeKeys.map((key) => [key, t(key)]));
+// The document shows the brand as the design's header does.
+const brand = brandParts(resolved.header.identity, !!project.logo);
 const config = { slug: slug(project.name), pages, project, date, type: resolved.type, typeScale: resolved['type-scale'], lang: copy.lang, title: t('document.title'), filename: t('document.filename'), copy: runtimeCopy };
 const json = (value) => JSON.stringify(value).replaceAll('<', '\\u003c');
 ---
@@ -27,7 +30,7 @@ const json = (value) => JSON.stringify(value).replaceAll('<', '\\u003c');
   <body data-kn-surface="page">
     <header class="mobile-bar"><span>{t('document.title')}</span><button id="menu-toggle" type="button" aria-expanded="false" aria-controls="sidebar">{t('nav.menu')}</button></header>
     <aside id="sidebar" data-kn-surface="raised">
-      <div class="sidebar-identity">{project.logo ? <img src={project.logo} alt={project.name} /> : <p data-kn-type="heading-4">{project.name}</p>}<p data-kn-type="small">{t('document.title')}</p></div>
+      <div class="sidebar-identity">{brand.logo && <img src={project.logo} alt={brand.name ? '' : project.name} />}{brand.name && <p data-kn-type="heading-4">{project.name}</p>}<p data-kn-type="small">{t('document.title')}</p></div>
       <nav aria-label={t('nav.label')}>
         {chapters.filter((chapter) => chapter !== 'comments').map((chapter) => {
           const entries = pages.filter((page) => page.chapter === chapter);
@@ -60,7 +63,7 @@ const json = (value) => JSON.stringify(value).replaceAll('<', '\\u003c');
       </Sheet>)}
     </main>
     <button id="comment-toggle" class="comment-toggle" type="button" data-kn-surface="raised" aria-expanded="false" aria-controls="comment-panel">
-      <svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
+      <svg aria-hidden="true" viewBox="0 0 24 24" width="1.125rem" height="1.125rem" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
       <span class="comment-toggle-label">{t('comment')}</span>
       <span class="comment-toggle-count" data-page-count hidden>0</span>
     </button>

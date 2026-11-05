@@ -1,3 +1,4 @@
+import { rem } from '../../src/generator/fluid.js';
 import { sizeAt } from '../../src/generator/type.js';
 import { PICTURE_URL } from './samples.js';
 
@@ -392,7 +393,7 @@ function updateScale() {
   for (const line of document.querySelectorAll('[data-scale-style]')) {
     const style = line.dataset.scaleStyle;
     const current = sizeAt(config.typeScale, config.type[style].step, width);
-    line.style.fontSize = `${current}px`;
+    line.style.fontSize = rem(current);
     const features = config.type[style].features;
     line.style.fontFeatureSettings = features && width >= features['from-window'] ? features.value : 'normal';
     document.querySelector(`[data-type-size="${style}"]`).textContent = translate('value.px', { value: number.format(current) });

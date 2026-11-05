@@ -1,4 +1,5 @@
 import type { Identity, MenuItem, Language, Search, Cta, FooterBandData } from '../../src/components/frame-types';
+import { icons } from '../../src/components/icons.js';
 export const identity: Identity = {
   label: 'Juniper Atlas', href: '#home', name: 'Juniper Atlas', slogan: 'Ideas for shared places',
   logo: { svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40" aria-hidden="true"><path fill="currentColor" fill-rule="evenodd" d="M20 2a18 18 0 1 1 0 36 18 18 0 0 1 0-36Zm0 7a11 11 0 1 0 0 22 11 11 0 0 0 0-22Z"/><circle cx="20" cy="20" r="4.5" fill="currentColor"/></svg>' },
@@ -13,30 +14,36 @@ export const languages: Language[] = [{ label: 'English', code: 'en', href: '#ho
 export const search: Search = { action: '#search', links: [{ label: 'Workshops', href: '#notes' }, { label: 'Field notes', href: '#notes' }, { label: 'Contact', href: '#contact' }] };
 export const cta: Cta = { label: 'Let’s talk', href: '#contact' };
 const logo = '<a href="#home" data-kn-type="heading-3">Juniper Atlas</a>';
-const about = 'A small invented studio exploring useful ideas for shared places.';
+const statement = 'A small invented studio exploring useful ideas for shared places.';
 const quick = [{ label: 'Studio', href: '#home' }, { label: 'Projects', href: '#notes' }, { label: 'Notebook', href: '#notes' }, { label: 'Contact', href: '#contact' }];
-const legal = [{ label: 'Privacy', href: '#contact' }, { label: 'Accessibility', href: '#contact' }, { label: 'Preferences', href: '#contact' }];
-export const footerBands: FooterBandData[] = [
-  { surface: 'brand', cells: [{ id: 'identity', column: 'A', content: logo }, { id: 'quick', column: 'B', links: quick, align: 'center' }] },
-  { surface: 'brand', cells: [{ id: 'about', column: 'A', text: about }, { id: 'visit', column: 'B', heading: 'Come with a question', text: 'Open tables every Thursday, 10–16.', level: 2 }] },
-  { surface: 'inverse', compact: true, cells: [{ id: 'copyright', column: 'A', text: '© 2026 Juniper Atlas' }, { id: 'legal', column: 'B', links: legal }] },
-];
-const pair = (surface: FooterBandData['surface']): FooterBandData => ({ surface, cells: [{ id: 'identity', column: 'A', content: logo }, { id: 'quick', column: 'B', links: quick, align: 'center' }] });
-const detail = (surface: FooterBandData['surface']): FooterBandData => ({ surface, rule: true, verticalRule: true, cells: [{ id: 'about', column: 'A', text: about }, { id: 'address', column: 'B', text: '17 Meadow Lane · Greenhaven', links: legal }] });
-export const footerVariants: { title: string; bands: FooterBandData[]; rules?: 'content' | 'full' }[] = [
-  { title: 'One band / brand', bands: [pair('brand')] },
-  { title: 'One band / page and separating hairline', bands: [pair('page')] },
-  { title: 'Two bands / one run', bands: [pair('brand'), detail('brand')] },
-  { title: 'Two colours / compact utility', bands: footerBands },
-  { title: 'Four bands / four Surfaces', bands: [pair('tint'), detail('raised'), detail('brand'), { ...detail('inverse'), compact: true }] },
-  { title: 'Two colours / three runs', bands: [pair('brand'), detail('brand'), detail('tint'), detail('brand')] },
-  { title: 'Merged opening row', bands: [{ surface: 'brand', cells: [{ id: 'statement', column: 'A', columns: 2, heading: 'A little room for a new perspective', level: 3 }] }, pair('brand'), detail('brand')] },
-  { title: 'Merged middle row / interrupted vertical line', bands: [{ ...pair('brand'), verticalRule: true }, { surface: 'brand', rule: true, verticalRule: true, cells: [{ id: 'statement', column: 'A', columns: 2, text: 'The notebook stays open for the next idea.' }] }, detail('brand')] },
-  { title: 'Tall A cell / three rows', bands: [{ surface: 'brand', verticalRule: true, cells: [{ id: 'identity', column: 'A', rows: 3, content: logo, text: about }, { id: 'quick', column: 'B', links: quick }] }, { surface: 'brand', rule: true, verticalRule: true, cells: [{ id: 'visit', column: 'B', text: 'Visit the open table.' }] }, { surface: 'brand', rule: true, verticalRule: true, cells: [{ id: 'legal', column: 'B', links: legal }] }] },
-  { title: 'Tall B cell / hairline stops at A', bands: [{ surface: 'brand', verticalRule: true, cells: [{ id: 'identity', column: 'A', content: logo }, { id: 'links', column: 'B', rows: 3, heading: 'Places to begin', level: 3, links: quick, text: 'Follow an observation into the next shared project.' }] }, { surface: 'brand', rule: true, verticalRule: true, cells: [{ id: 'about', column: 'A', text: about }] }, { surface: 'brand', rule: true, verticalRule: true, cells: [{ id: 'address', column: 'A', text: '17 Meadow Lane · Greenhaven' }] }] },
-  { title: 'Missing cells / columns remain', bands: [pair('brand'), { surface: 'brand', cells: [{ id: 'visit', column: 'B', text: 'Open tables every Thursday.' }] }, { surface: 'brand', cells: [{ id: 'address', column: 'A', text: '17 Meadow Lane · Greenhaven' }] }] },
-  { title: 'Empty band / one continuous run', bands: [pair('tint'), { surface: 'inverse', cells: [] }, detail('tint')] },
-  { title: 'Both hairlines / content extent', bands: [{ ...pair('brand'), verticalRule: true }, detail('brand'), detail('brand')] },
-  { title: 'Both hairlines / full extent', rules: 'full', bands: [{ ...pair('brand'), verticalRule: true }, detail('brand'), detail('brand')] },
-  { title: 'Hairlines across colour changes', bands: [{ ...pair('tint'), verticalRule: true }, detail('raised'), detail('brand'), detail('inverse')] },
+const social = `<ul class="kn-footer-social">${[['LinkedIn', 'linkedin'], ['Facebook', 'facebook'], ['YouTube', 'youtube'], ['Spotify', 'spotify'], ['Email', 'mail'], ['RSS', 'rss']].map(([label, icon]) => `<li><a href="#${icon}" aria-label="${label}"><svg class="kn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true" focusable="false">${icons[icon as keyof typeof icons]}</svg></a></li>`).join('')}</ul>`;
+const upperCells = { a1: { content: logo }, b1: { content: social }, a2: { text: statement }, b2: { links: quick } };
+const lowerCells = {
+  a1: { text: '17 Meadow Lane, Greenhaven' },
+  b1: { text: 'Registration no. 000000-0000. Registered office: Greenhaven.' },
+  a2: { links: [{ label: 'Cookie policy', href: '#cookie-policy' }, { label: 'Privacy policy', href: '#contact' }] },
+  b2: { links: [{ label: 'Change privacy settings', href: '#cookie-policy', consentOpen: true }, { label: 'Revoke consents', href: '#cookie-policy' }] },
+};
+// The upper band with only the named cells; the lower band stays out of it.
+const only = (...cells: (keyof typeof upperCells)[]): FooterBandData => ({ surface: 'brand', cells: Object.fromEntries(cells.map((cell) => [cell, upperCells[cell]])) });
+const upper: FooterBandData = { surface: 'brand', cells: upperCells };
+const lower: FooterBandData = { surface: 'inverse', cells: lowerCells };
+export const footerProps: FooterProps = { upper, lower };
+export interface FooterProps { upper?: FooterBandData; lower?: FooterBandData; fill?: 'column' | 'row'; rules?: 'content' | 'full'; horizontalRules?: boolean; verticalRule?: boolean }
+export const footerVariants: { title: string; props: FooterProps }[] = [
+  { title: 'All eight cells', props: footerProps },
+  { title: 'Upper band alone', props: { upper } },
+  { title: 'Lower band alone', props: { lower } },
+  { title: 'One cell in column A / the box stays at the start edge', props: { upper: only('a2') } },
+  { title: 'One cell in column B / the box stays at the end edge', props: { upper: only('b2') } },
+  { title: 'Two in column A / each takes its row', props: { upper: only('a1', 'a2') } },
+  { title: 'Two in column B / each takes its row', props: { upper: only('b1', 'b2') } },
+  { title: 'Two in row 2 / row 1 has no height', props: { upper: only('a2', 'b2') } },
+  { title: 'Two diagonally / fill by column', props: { upper: only('a1', 'b2') } },
+  { title: 'Two diagonally / fill by row', props: { upper: only('a1', 'b2'), fill: 'row' } },
+  { title: 'Three cells / fill by column', props: { upper: only('a2', 'b1', 'b2') } },
+  { title: 'Three cells / fill by row', props: { upper: only('a2', 'b1', 'b2'), fill: 'row' } },
+  { title: 'One colour / the bands close up', props: { upper, lower: { surface: 'brand', cells: lowerCells } } },
+  { title: 'Both hairlines / content extent', props: { upper, lower: { surface: 'brand', cells: lowerCells }, horizontalRules: true, verticalRule: true } },
+  { title: 'Both hairlines / full extent, through a tall cell and between two colours', props: { upper: only('a2', 'b1', 'b2'), lower, rules: 'full', horizontalRules: true, verticalRule: true } },
 ];

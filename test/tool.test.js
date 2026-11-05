@@ -34,6 +34,11 @@ import {
   lineShare,
   lineWidth,
   spreadLabels,
+  placeLabels,
+  logosOf,
+  withoutSavedLogos,
+  withKeptLogos,
+  KEPT_LOGO,
   optimalControls,
   clampControls,
   dragControls,
@@ -47,7 +52,8 @@ import { newDesign, backUp, backupPath } from '../tool/new-design.js';
 import { writeDesignMd } from '../tool/design-md.js';
 import { designMd, MARKER } from '../src/design-md/index.js';
 import { defaultPresentationPath } from '../tool/presentation.js';
-import { pictures, flatPictures, PICTURE_SLOTS, footerBands } from '../presentation/src/samples.js';
+import { pictures, flatPictures, PICTURE_SLOTS } from '../presentation/src/samples.js';
+import { footerContent } from '../presentation/src/frame.js';
 import { context } from '../presentation/src/specimens/context.js';
 const cache = pathResolve('node_modules/.cache/konzilo-tests');
 async function scratch(fn) {
@@ -66,11 +72,11 @@ test('the default design\'s resolved JSON and core CSS change only on purpose', 
   const hash = (value) => createHash('sha256').update(value).digest('hex');
   assert.equal(
     hash(JSON.stringify(r)),
-    '2e76164ad0b0cc80de9344d54cfb60e022198fc192ab6a34822cbfb77dc51120',
+    '6672a0eb15277ad8c29eba3997fffef59cc9d7d4fcc006180be5fa2f03bb5540',
   );
   assert.equal(
     hash(coreCss(r)),
-    '4801e983ea62f501843c2466d4e28f9c8b3f254baada3e4f987ea3c6b2364cc2',
+    'dc4436acaa9bdf59bc7b634d98fa1cfb651e22fe6502f51a78a8dbc85da4c765',
   );
 });
 
@@ -99,10 +105,10 @@ test('specimen identity uses a labelled logo alone, or the supplied name', () =>
     const { identity } = context(project, resolved);
     assert.equal(identity.label, 'Example');
     assert.equal(identity.name, identity.logo ? undefined : 'Example');
-    const footer = footerBands(project)[0].cells[0].content;
+    const footer = footerContent({ upper: { surface: 'brand' } }, project).upper.a1.content;
     assert.match(
       footer,
-      identity.logo ? /<img .*alt="Example"/ : />Example<\/p>/,
+      identity.logo ? /<img .*alt="Example"/ : />Example<\/span><\/span>/,
     );
   }
 });
@@ -245,7 +251,7 @@ test('a design is written as DESIGN.md: exact tokens, in the format\'s order, an
   assert.match(front, /^  primary: "#6366F1"$/m);
   assert.match(front, new RegExp(`^  page-text: "${file.resolved.surfaces.page.light.roles.text}"$`, 'm'));
   assert.match(front, new RegExp(`^  dark-page-text: "${file.resolved.surfaces.page.dark.roles.text}"$`, 'm'));
-  assert.match(front, /^  display:\n    fontFamily: "Mona Sans"\n    fontSize: "62px"\n    fontWeight: 260\n/m);
+  assert.match(front, /^  display:\n    fontFamily: "Mona Sans"\n    fontSize: "3.875rem"\n    fontWeight: 260\n/m);
   assert.match(front, /fontVariation: "\\"wdth\\" 112, \\"opsz\\" 100"/);
   assert.match(front, /fontFeature: "\\"ss02\\", \\"ss07\\""/);
   assert.doesNotMatch(text, /undefined|NaN|\[object/);
@@ -287,6 +293,16 @@ test('the divider has one optimal position per preview mode and catches there', 
   assert.equal(clampControls(100, 'both', 1512), 490);
   assert.equal(clampControls(5000, 'both', 1512), 863);
   assert.equal(clampControls(5000, 'phone', 1512), 1072);
+});
+
+test('at a larger text size the controls and the preview\'s margins need more room, and the frames\' window widths stay real', () => {
+  assert.equal(optimalControls('both', 1600, 1440, 1.25), 675);
+  assert.equal(optimalControls('both', 2560, 1440, 1.25), 675);
+  assert.equal(optimalControls('both', 2800, 1440, 1.25), 901);
+  assert.equal(optimalControls('desktop', 2800, 1440, 1.25), 1311);
+  assert.equal(optimalControls('phone', 1600, 1440, 1.25), 1052);
+  assert.equal(clampControls(100, 'both', 1600, 1.25), 613);
+  assert.deepEqual(dragControls(690, 'both', 1600, 1440, 1.25), { width: 675, atOptimal: true });
 });
 
 test('each end of the preview reports what it shows and how much a setting reaches it', () => {
@@ -353,6 +369,43 @@ test('two labels on the line stay centred until they would touch, and keep insid
   assert.deepEqual(spreadLabels(250, 250, 100, 500), [146, 254], 'on one width they part evenly');
   assert.deepEqual(spreadLabels(0, 0, 100, 500), [0, 108], 'at the left end');
   assert.deepEqual(spreadLabels(500, 500, 100, 500), [292, 400], 'at the right end');
+});
+
+test('with one arrow moved only its own label goes, and stops short of the other, which keeps its place', () => {
+  const at = ({ left, right }) => [left, right];
+  const first = placeLabels(undefined, 100, 400, 100, 500);
+  assert.deepEqual(at(first), [50, 350], 'centred');
+  assert.equal(placeLabels(first, 100, 400, 100, 500), first, 'nothing moved, nothing changes');
+  // The left arrow up to the right one and past where the labels would meet: the right label stays.
+  const close = placeLabels(first, 380, 400, 100, 500);
+  assert.deepEqual(at(close), [242, 350]);
+  assert.deepEqual(at(placeLabels(close, 100, 400, 100, 500)), [50, 350], 'and centred again once there is room');
+  // The right arrow down to the left one: the left label stays.
+  assert.deepEqual(at(placeLabels(first, 100, 110, 100, 500)), [50, 158]);
+  // Both moved, or the line itself: they stand as they would from the start.
+  assert.deepEqual(at(placeLabels(first, 250, 250, 100, 500)), [146, 254]);
+  assert.deepEqual(at(placeLabels(close, 380, 400, 100, 600)), spreadLabels(380, 400, 100, 600));
+  // At any place the two keep clear of each other and inside the line.
+  let places = placeLabels(undefined, 100, 400, 100, 500);
+  for (const [a, b] of [[0, 400], [0, 0], [500, 500], [500, 500], [0, 500], [250, 500], [250, 260], [240, 260]]) {
+    places = placeLabels(places, a, b, 100, 500);
+    assert.ok(places.left >= 0 && places.right <= 400 && places.left + 108 <= places.right, `${a} and ${b}: ${at(places)}`);
+  }
+});
+
+test('a save sent as the page goes away leaves behind the logos the server holds, and the server puts them back', () => {
+  const big = `data:image/png;base64,${'A'.repeat(100000)}`;
+  const model = { inputs: { a: 1 }, project: { name: 'Example', logo: big, version: '1.0', 'logo-dark': null } };
+  const light = withoutSavedLogos(model, logosOf(model.project));
+  assert.equal(light.project.logo, KEPT_LOGO);
+  assert.equal(light.project['logo-dark'], null, 'a removed logo is news');
+  assert.ok(JSON.stringify(light).length < 1000);
+  assert.equal(model.project.logo, big, 'the model itself keeps it');
+  assert.deepEqual(Object.keys(light.project), Object.keys(model.project));
+  assert.deepEqual(withKeptLogos(light, model.project), model);
+  const changed = { ...model, project: { ...model.project, logo: `${big}B` } };
+  assert.equal(withoutSavedLogos(changed, logosOf(model.project)).project.logo, changed.project.logo, 'one the server does not hold goes along');
+  assert.deepEqual(withKeptLogos(changed, model.project), changed, 'and what is not the mark is left as it is');
 });
 
 test('a long chapter name keeps its last word in the menu', () => {

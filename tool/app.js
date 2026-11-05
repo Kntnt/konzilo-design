@@ -1,4 +1,5 @@
 import { derive, hexToOklch, oklchToHex, contrast } from '/src/generator/index.js';
+import { rem } from '/src/generator/fluid.js';
 import { coreCss } from '/src/css/index.js';
 import { faceOf } from '/src/fonts/catalog.js';
 import {
@@ -20,16 +21,18 @@ import {
   breakpointLimits,
   lineShare,
   lineWidth,
-  spreadLabels,
+  placeLabels,
+  logosOf,
+  withoutSavedLogos,
   LINE,
   DIVIDER,
 } from './logic.js';
-import { CHAPTERS, PAGES, ROLES, STEP_ROWS, axesMarkup, documentMarkup, pageName, tip, takeTips, escapeHtml } from './pages.js';
-import { HAS_SECOND_SURFACE, HAS_ROWS } from '/src/components/footer-models.js';
-import { setupPreview, paint, measure, followPage, showPanelInPreview, showSpecimen } from './preview.js';
-import { heroHasRoom } from '/presentation/src/catalog.js';
+import { capture, thaw, createHistory, historyAction, isSlider, isTextField, TYPING_PAUSE } from './history.js';
+import { CHAPTERS, PAGES, ROLES, STEP_ROWS, axesMarkup, documentMarkup, pageName, tip, tipOnce, takeTips, escapeHtml } from './pages.js';
+import { setupPreview, paint, measure, followPage, showPanelInPreview } from './preview.js';
 import { setupTooltips } from '/gallery/src/tooltips.js';
 import { pictures, flatPictures, PICTURE_SLOTS } from '/presentation/src/samples.js';
+import { lookDefaults } from '/presentation/src/looks.js';
 
 const inPreviewWindow = new URLSearchParams(location.search).get('window') === 'preview';
 const tool = document.getElementById('tool');
@@ -43,6 +46,7 @@ const divider = document.getElementById('divider');
 const optimalLine = document.getElementById('optimal-line');
 const widthReadout = document.getElementById('divider-width');
 const previewPane = document.getElementById('preview-pane');
+const exportAi = document.getElementById('design-md');
 if (inPreviewWindow) {
   document.documentElement.dataset.window = 'preview';
   tool.toggleAttribute('data-preview-window', true);
@@ -64,6 +68,8 @@ const ui = {
   role: ROLES.some(([role]) => role === saved.role) ? saved.role : 'main',
   mode: saved.mode === 'dark' ? 'dark' : 'light',
   pictures: saved.pictures === 'off' ? 'off' : 'on',
+  // Which variation of each component the preview shows. It lasts while the window is open, and is never saved.
+  looks: lookDefaults(),
   own: data.pictures,
   view: ['both', 'phone', 'desktop'].includes(saved.view) ? saved.view : 'both',
   width: [1440, 1024, 768].includes(saved.width) ? saved.width : 1440,
@@ -93,9 +99,10 @@ const setValue = (path, value) => {
   if (value === '') delete object[key];
   else object[key] = value;
 };
+// Once per text, so a message that comes back leaves no tooltips behind.
 const tipOn = (element, text) => {
   const holder = document.createElement('span');
-  holder.innerHTML = `<span ${tip(text)}></span>`;
+  holder.innerHTML = `<span ${tipOnce(text, text)}></span>`;
   for (const attribute of holder.firstChild.attributes) element.setAttribute(attribute.name, attribute.value);
 };
 
@@ -121,18 +128,31 @@ function renderMenu() {
 }
 function renderPageRow() {
   const chapter = CHAPTERS.find(([, pages]) => pages.includes(ui.page));
-  document.getElementById('pages').innerHTML = chapter[1]
-    .map((id) => `<button class="page-link" type="button" data-go="${id}" aria-current="${id === ui.page}">${escapeHtml(pageName(id, copy))}</button>`)
-    .join('');
+  const row = document.getElementById('pages');
+  // Written when the chapter changes and not at each page, so a link clicked keeps the focus.
+  if (row.dataset.chapter !== chapter[0]) {
+    row.dataset.chapter = chapter[0];
+    row.innerHTML = chapter[1]
+      .map((id) => {
+        const name = escapeHtml(pageName(id, copy));
+        // The name is there twice: once to read, and once in the current page's weight to hold the link's width.
+        return `<button class="page-link" type="button" data-go="${id}" data-name="${name}" ${tipOnce(`page-${id}`, `Go to the page: ${copy[`${id}.title`]}.`)}>${name}</button>`;
+      })
+      .join('');
+    document.body.insertAdjacentHTML('beforeend', takeTips());
+  }
+  for (const link of row.children) link.setAttribute('aria-current', String(link.dataset.go === ui.page));
   for (const button of document.querySelectorAll('.chapter')) button.setAttribute('aria-current', String(button.dataset.chapter === chapter[0]));
   for (const page of form.querySelectorAll('[data-page]')) page.hidden = page.dataset.page !== ui.page;
 }
+// The document scrolls in its own box, or with the whole window when the panes stand one above the other.
+const scroller = () => (getComputedStyle(doc).overflowY === 'visible' ? document.scrollingElement : doc);
 function goTo(page) {
   if (page === ui.page) return;
   ui.page = page;
   setPanel(null);
   renderPageRow();
-  doc.scrollTop = 0;
+  scroller().scrollTop = 0;
   followPage(page, true);
   remember();
   share();
@@ -150,6 +170,7 @@ function writeChrome() {
   for (const button of document.querySelectorAll('[data-mode]')) button.setAttribute('aria-pressed', String(button.dataset.mode === ui.mode));
   for (const button of document.querySelectorAll('[data-view]')) button.setAttribute('aria-pressed', String(button.dataset.view === ui.view));
   for (const button of document.querySelectorAll('[data-pictures]')) button.setAttribute('aria-pressed', String(button.dataset.pictures === ui.pictures));
+  for (const button of form.querySelectorAll('[data-look-key]')) button.setAttribute('aria-pressed', String(ui.looks[button.dataset.lookKey] === button.dataset.lookValue));
   document.getElementById('desktop-width').value = String(ui.width);
   document.getElementById('bring-back').hidden = ui.where !== 'window';
   const own = document.getElementById('own-window');
@@ -157,11 +178,14 @@ function writeChrome() {
   const full = document.getElementById('full-window');
   full.textContent = ui.where === 'full' ? 'Back to controls' : 'Full window';
 }
+// The reader's text size over the default, which the room the controls and the preview need follows.
+const rootSize = () => parseFloat(getComputedStyle(document.documentElement).fontSize);
+const textScale = () => rootSize() / 16;
 function layout() {
   const width = tool.clientWidth;
   if (!width) return;
   ui.windowWidth = width;
-  ui.controls = ui.atOptimal ? optimalControls(ui.view, width, ui.width) : clampControls(ui.controls, ui.view, width);
+  ui.controls = ui.atOptimal ? optimalControls(ui.view, width, ui.width, textScale()) : clampControls(ui.controls, ui.view, width, textScale());
   tool.style.setProperty('--controls-width', `${ui.controls}px`);
   divider.dataset.optimal = String(ui.atOptimal);
   measure(ui);
@@ -248,14 +272,15 @@ function writeForm() {
     }
     let value = getValue(path);
     if (path === 'inputs.type.heading-1-color') value ||= 'text';
-    control.value = value ?? '';
+    // Set only when it differs, so a field keeps its caret and its own text undo.
+    if (control.value !== String(value ?? '')) control.value = value ?? '';
   }
   for (const select of form.querySelectorAll('[data-font]')) {
     const value = chosenFace(select.dataset.font);
     const known = [...select.options].some((option) => option.value === value);
     select.value = known ? value : 'other';
     const other = form.querySelector(`[data-other="${select.dataset.font}"]`);
-    other.value = known ? '' : value;
+    if (other.value !== (known ? '' : value)) other.value = known ? '' : value;
     // Its place stays reserved, so choosing Other moves nothing.
     other.style.visibility = known ? 'hidden' : '';
   }
@@ -263,8 +288,9 @@ function writeForm() {
     const source = model.project[key];
     const image = form.querySelector(`[data-logo-image="${key}"]`);
     image.hidden = !source;
-    if (source) image.src = source;
-    else image.removeAttribute('src');
+    // An image set again is decoded again.
+    if (!source) image.removeAttribute('src');
+    else if (image.getAttribute('src') !== source) image.src = source;
     form.querySelector(`[data-logo-word="${key}"]`).textContent = source ? '' : 'Click to add a logo';
     form.querySelector(`[data-remove-logo="${key}"]`).hidden = !source;
   }
@@ -288,19 +314,15 @@ function writeFrameControls() {
   const sticky = header.attachment === 'sticky';
   form.querySelector('[data-path="inputs.header.start"]').disabled = !sticky;
   form.querySelector('[data-flag="inputs.header.autohide"]').disabled = !sticky;
-  form.querySelector('[data-path="inputs.footer.second-surface"]').disabled = !HAS_SECOND_SURFACE.includes(footer.model);
-  form.querySelector('[data-flag="inputs.footer.horizontal-rules"]').disabled = !HAS_ROWS.includes(footer.model);
-  // A picture behind the text leaves no colour to choose, and only a picture behind it has an overlay.
-  const { picture, height } = model.inputs.hero;
-  form.querySelector('[data-path="inputs.hero.surface"]').disabled = picture === 'behind';
-  form.querySelector('[data-path="inputs.hero.overlay"]').disabled = picture !== 'behind';
-  // At a third of the screen the text has nowhere to move to, so it shows as it will stand: centred.
-  if (!heroHasRoom(height)) {
-    const place = (value) => form.querySelector(`[data-pick="inputs.hero.place"][data-value="${value}"]`);
-    place('center').setAttribute('aria-pressed', 'true');
-    place('bottom').setAttribute('aria-pressed', 'false');
+  // Behind the hero's text lies either a picture, with its overlay, or a colour, so one control stands in the place of both.
+  const pictureBehind = model.inputs.hero.picture === 'behind';
+  form.querySelector('[data-path="inputs.hero.surface"]').closest('label').hidden = pictureBehind;
+  form.querySelector('[data-path="inputs.hero.overlay"]').closest('label').hidden = !pictureBehind;
+  // In the footer's miniature a cell that is on wears its band's colour, and one that is off stands empty on the page.
+  for (const cell of form.querySelectorAll('.footer-mini-cell')) {
+    if (cell.getAttribute('aria-pressed') === 'true') cell.dataset.knSurface = footer[cell.parentElement.dataset.miniBand].surface;
+    else delete cell.dataset.knSurface;
   }
-  form.querySelector('[data-pick="inputs.hero.place"][data-value="bottom"]').disabled = !heroHasRoom(height);
   // Without a trail nothing else about it can apply.
   for (const control of form.querySelectorAll('[data-page="breadcrumbs"] :is(select, .pick, .chip)'))
     if (control.dataset.flag !== 'inputs.breadcrumbs.show') control.disabled = !model.inputs.breadcrumbs.show;
@@ -326,6 +348,7 @@ function writeScaleLine() {
   placeScaleLine();
 }
 // Arrows stand exactly on their widths; the labels keep clear of one another and of the line's ends.
+const labelPlaces = {};
 function placeScaleLine() {
   const line = form.querySelector('[data-scale-line]');
   const track = line.querySelector('[data-line-track]');
@@ -344,9 +367,9 @@ function placeScaleLine() {
   }
   for (const attribute of ['data-stack', 'data-line-label']) {
     const [left, right] = ['min', 'max'].map((end) => line.querySelector(`[${attribute}="${end}"]`));
-    const [leftAt, rightAt] = spreadLabels(at.min, at.max, left.offsetWidth, total);
-    left.style.left = `${leftAt}px`;
-    right.style.left = `${rightAt}px`;
+    const placed = (labelPlaces[attribute] = placeLabels(labelPlaces[attribute], at.min, at.max, left.offsetWidth, total));
+    left.style.left = `${placed.left}px`;
+    right.style.left = `${placed.right}px`;
   }
   const view = line.querySelector('[data-line-label="view"]');
   view.style.left = `${Math.min(total - view.offsetWidth, Math.max(0, at.view - view.offsetWidth / 2))}px`;
@@ -380,14 +403,11 @@ function writeResolved(resolved) {
     form.querySelector(`[data-step-value="${key}"]`).value = String(absolute[key]);
     const size = sizeAt(resolved['type-scale'], resolved.type[key].step, windowWidth);
     form.querySelector(`[data-size="${key}"]`).value = `${Math.round(size)} px`;
-    form.querySelector(`[data-step-sample="${key}"]`).style.fontSize = `${size.toFixed(1)}px`;
+    form.querySelector(`[data-step-sample="${key}"]`).style.fontSize = rem(Number(size.toFixed(1)));
     const [min, max] = stepLimits(model.inputs.type.steps, key);
     for (const button of form.querySelectorAll(`[data-step="${key}"]`))
       button.disabled = Number(button.dataset.delta) < 0 ? absolute[key] <= min : absolute[key] >= max;
   }
-  // While a control is held the rows may only grow: a shorter page would pull it out from under the pointer.
-  const stepRows = form.querySelector('[data-step-rows]');
-  if (lineDrag || form.querySelector('input[type="range"]:active')) stepRows.style.minHeight = `${Math.max(stepRows.offsetHeight, parseFloat(stepRows.style.minHeight) || 0)}px`;
   document.getElementById('scale-warning').textContent = Math.max(resolved.type.display.size.min, resolved.type.display.size.max) > 100 ? 'The largest heading exceeds 100 px. A higher ratio usually needs fewer steps.' : '';
   writeAxes(resolved);
   writeScaleLine();
@@ -400,7 +420,10 @@ function writeResolved(resolved) {
 /* ---- One change: check it, show it everywhere, save it. ---- */
 let valid = false;
 let generating = false;
+// The design as last reckoned, passing or not: the controls show this one.
 let current = null;
+// The last that passed: the preview keeps this one until another passes.
+let good = null;
 function setStatus(state, text) {
   statusBox.dataset.state = state;
   statusText.textContent = text;
@@ -408,7 +431,7 @@ function setStatus(state, text) {
 function showNotice(text, link) {
   delete notice.dataset.kind;
   // The menu is as tall as its lines need, and the notice stands just under it.
-  notice.style.top = `${document.querySelector('.menu').offsetHeight + 8}px`;
+  notice.style.top = `${document.querySelector('.menu').offsetHeight / rootSize() + 0.5}rem`;
   notice.replaceChildren();
   const words = document.createElement('span');
   words.textContent = text;
@@ -426,6 +449,8 @@ function showNotice(text, link) {
   close.textContent = '×';
   close.setAttribute('aria-label', 'Close this message');
   close.addEventListener('click', () => { notice.hidden = true; });
+  tipOn(close, 'Close this message.');
+  document.body.insertAdjacentHTML('beforeend', takeTips());
   notice.append(close);
   notice.hidden = false;
 }
@@ -439,43 +464,50 @@ function writePictures(resolved) {
   });
 }
 function sync() {
+  let failure = '';
   try {
-    const resolved = derive(model.inputs);
-    const error = contrastError(resolved['contrast-check']);
-    if (error) throw new Error(error);
-    valid = true;
-    current = resolved;
+    current = derive(model.inputs);
+    failure = contrastError(current['contrast-check']);
+  } catch (error) {
+    failure = error.message;
+  }
+  valid = !failure;
+  exportAi.disabled = !valid;
+  if (valid) {
     if (notice.dataset.kind === 'contrast') {
       notice.hidden = true;
       delete notice.dataset.kind;
     }
     presentation.disabled = generating;
-    const css = coreCss(resolved);
-    document.getElementById('kn-live-core').textContent = css;
-    paint(resolved, css, model.project, ui);
-    if (!inPreviewWindow) {
-      writeResolved(resolved);
-      writeSliders(resolved);
-      writePictures(resolved);
-    }
-    return true;
-  } catch (error) {
-    valid = false;
+    good = { resolved: current, css: coreCss(current) };
+    document.getElementById('kn-live-core').textContent = good.css;
+  } else {
     presentation.disabled = true;
     setStatus('error', 'Not saved');
-    showNotice(`This setting fails the contrast check, so the preview keeps the last good design. ${error.message}`);
+    showNotice(`This setting fails the contrast check, so the preview keeps the last good design. ${failure}`);
     notice.dataset.kind = 'contrast';
-    if (!inPreviewWindow && current) writeSliders(current);
-    return false;
   }
+  // What only changes how the preview is looked at still reaches it.
+  if (good) paint(good.resolved, good.css, model.project, ui);
+  // Whichever design the preview keeps, each control shows what the model holds.
+  if (!inPreviewWindow && current) {
+    writeResolved(current);
+    writeSliders(current);
+    writePictures(current);
+  }
+  return valid;
 }
 let saveTimer = null;
+// A change not yet on its way to the server, whether it waits for the pause or for the save before it.
+let unsent = false;
 let saving = Promise.resolve();
-async function request(endpoint, method, type, body) {
+let savedLogos = logosOf(data.project);
+async function request(endpoint, method, type, body, options) {
   const send = () => fetch(endpoint, {
     method,
     headers: { 'Content-Type': type, 'X-Konzilo-Token': data.token },
     body,
+    ...options,
   });
   let response = await send();
   // A restarted tool has a new session. With the same file open the work here goes on; with another, saving would overwrite that design.
@@ -489,7 +521,14 @@ async function request(endpoint, method, type, body) {
   if (!response.ok) throw new Error(answer.error);
   return answer;
 }
-const post = (endpoint) => request(endpoint, 'POST', 'application/json', JSON.stringify(model));
+// The logos as they were sent, which the server holds once it has answered.
+async function post(endpoint) {
+  unsent = false;
+  const logos = logosOf(model.project);
+  const answer = await request(endpoint, 'POST', 'application/json', JSON.stringify(model));
+  savedLogos = logos;
+  return answer;
+}
 // A camera's photo is made a JPEG of a sensible size here, so the folder holds what a presentation carries.
 async function pictureFile(file) {
   const bitmap = await createImageBitmap(file);
@@ -512,22 +551,40 @@ async function changePicture(slot, method, type, body) {
     showNotice(`The picture could not be saved. ${error.message}`);
   }
 }
+function saveAnswered(answer) {
+  // A setting since then that fails the contrast check still says it is not saved.
+  if (!unsent && valid) setStatus('saved', 'Saved');
+  tipStatus(answer.path);
+}
+function saveRefused(error) {
+  setStatus('error', 'Not saved');
+  showNotice(error.message);
+}
 function scheduleSave() {
   clearTimeout(saveTimer);
+  unsent = true;
   setStatus('busy', 'Saving');
   saveTimer = setTimeout(() => {
     saveTimer = null;
     saving = saving.then(async () => {
+      // A setting that fails the contrast check is held back, and the next that passes goes in its place.
+      if (!unsent || !valid) return;
       try {
-        const answer = await post('/api/save');
-        if (!saveTimer) setStatus('saved', 'Saved');
-        tipStatus(answer.path);
+        saveAnswered(await post('/api/save'));
       } catch (error) {
-        setStatus('error', 'Not saved');
-        showNotice(error.message);
+        saveRefused(error);
       }
     });
   }, 450);
+}
+// The page is going away, and the pause with it. The same token and the same checks as any save: with a
+// restarted tool the token is old, so the server refuses this before it could reach another design.
+function flushSave() {
+  if (!unsent || !valid) return;
+  clearTimeout(saveTimer);
+  saveTimer = null;
+  unsent = false;
+  request('/api/save', 'POST', 'application/json', JSON.stringify(withoutSavedLogos(model, savedLogos)), { keepalive: true }).then(saveAnswered, saveRefused);
 }
 /* ---- The roles: each sets its own typeface and its own axes. ---- */
 const STYLE_OF_ROLE = { main: 'body', heading: 'heading-3', 'heading-1': 'heading-1', display: 'display', label: 'label', monospace: 'mono' };
@@ -651,18 +708,133 @@ function writeAxes(resolved) {
   form.querySelector('[data-face-name]').textContent = stack.split(',')[0].replaceAll('"', '').replace('system-ui', 'System sans-serif').replace('ui-monospace', 'System monospace');
 }
 const tipStatus = (path) => { statusBox.title = `Every change is saved to ${path}`; };
-window.addEventListener('pointerup', () => {
-  const stepRows = form.querySelector('[data-step-rows]');
-  if (stepRows) stepRows.style.minHeight = '';
-});
 let tuning = null;
-function changed() {
+function show() {
   document.documentElement.toggleAttribute('data-tuning', true);
   clearTimeout(tuning);
   tuning = setTimeout(() => document.documentElement.removeAttribute('data-tuning'), 250);
   if (sync()) scheduleSave();
   share();
 }
+function changed() {
+  noteChange();
+  show();
+}
+
+/* ---- History: one step a gesture. A change only marks a step open, and the model is read when it closes, so a drag costs nothing. ---- */
+const designHistory = createHistory(capture(model));
+const undoButton = document.getElementById('undo');
+const redoButton = document.getElementById('redo');
+// The colour sliders' own values, so a colour outside the gamut comes back where its sliders stood.
+const sliderState = new WeakMap();
+let pointerHeld = false;
+let keyHeld = false;
+let openStep = null;
+let stepTimer = null;
+function writeHistoryButtons() {
+  const focused = document.activeElement;
+  const byKeyboard = focused?.matches(':focus-visible');
+  undoButton.disabled = !designHistory.canUndo && !openStep;
+  redoButton.disabled = !designHistory.canRedo || Boolean(openStep);
+  // A button disabled under the focus would swallow the keys that follow.
+  if ((focused === undoButton || focused === redoButton) && focused.disabled) {
+    focused.blur();
+    if (byKeyboard) (focused === undoButton ? redoButton : undoButton).focus({ preventScroll: true });
+  }
+}
+function closeStep() {
+  clearTimeout(stepTimer);
+  if (!openStep) return;
+  const place = openStep;
+  openStep = null;
+  if (designHistory.record(capture(model, designHistory.present), place)) sliderState.set(designHistory.present, structuredClone(lch));
+  writeHistoryButtons();
+}
+// What is in the hand closes when it is let go, what is being typed when it pauses, and the rest at once.
+function closeWhenDone() {
+  clearTimeout(stepTimer);
+  if (openStep && !pointerHeld && !keyHeld) stepTimer = setTimeout(closeStep, isTextField(document.activeElement) ? TYPING_PAUSE : 0);
+}
+function noteChange() {
+  if (!openStep) {
+    openStep = { page: ui.page, role: ui.role, scroll: scroller().scrollTop };
+    writeHistoryButtons();
+  }
+  closeWhenDone();
+}
+function restoreColours(state) {
+  const slid = sliderState.get(state);
+  for (const key of COLOURS) {
+    const hex = model.inputs['brand-colors'][key]?.toLowerCase();
+    if (!hex) continue;
+    if (key !== 'primary') remembered[key] = hex;
+    const { L, C, H } = slid && oklchToHex(slid[key].L, slid[key].C, slid[key].H) === hex ? slid[key] : hexToOklch(hex);
+    lch[key] = { L, C, H };
+  }
+}
+// The same way out as an ordinary change, and to the page of the change, since a change out of sight confuses.
+function moveThroughHistory(action) {
+  if (pointerHeld) return;
+  closeStep();
+  const step = action === 'undo' ? designHistory.undo() : designHistory.redo();
+  if (!step) return;
+  model = thaw(step.state);
+  restoreColours(step.state);
+  // So that choosing the same file again counts as a change.
+  for (const input of form.querySelectorAll('[data-logo]')) input.value = '';
+  ui.touched = null;
+  writeForm();
+  show();
+  goTo(step.place.page);
+  if (step.place.page === 'main-typeface' && step.place.role !== ui.role) {
+    ui.role = step.place.role;
+    showRole();
+    remember();
+  }
+  // Last, since the page and the role decide how far it can scroll.
+  scroller().scrollTop = step.place.scroll;
+  writeHistoryButtons();
+}
+function historyKey(event) {
+  const action = historyAction(event);
+  if (!action || isTextField(event.target)) return;
+  event.preventDefault();
+  if (inPreviewWindow) channel.postMessage({ type: 'history', action });
+  else moveThroughHistory(action);
+}
+function letGo() {
+  pointerHeld = false;
+  closeWhenDone();
+}
+window.addEventListener('pointerdown', (event) => {
+  // A list's menu keeps the pointer's way back up to itself.
+  pointerHeld = !event.target.closest?.('select');
+  keyHeld = false;
+}, true);
+window.addEventListener('pointerup', letGo, true);
+window.addEventListener('pointercancel', letGo, true);
+window.addEventListener('pointermove', (event) => {
+  if (pointerHeld && !event.buttons) letGo();
+}, true);
+window.addEventListener('keydown', (event) => {
+  // With Cmd down a Mac sends no keyup, so that is not a key held.
+  if (isSlider(event.target) && !event.metaKey && !event.ctrlKey) keyHeld = true;
+  historyKey(event);
+}, true);
+window.addEventListener('keyup', () => {
+  if (!keyHeld) return;
+  keyHeld = false;
+  closeWhenDone();
+}, true);
+document.addEventListener('focusout', (event) => {
+  if (isTextField(event.target)) closeStep();
+});
+window.addEventListener('blur', () => {
+  keyHeld = false;
+  if (!pointerHeld) closeStep();
+});
+undoButton.addEventListener('click', () => moveThroughHistory('undo'));
+redoButton.addEventListener('click', () => moveThroughHistory('redo'));
 
 /* ---- The form. ---- */
 const END_OF = { 'inputs.type.ratio.min': 'narrow', 'inputs.type.body-size.min': 'narrow', 'inputs.type.ratio.max': 'wide', 'inputs.type.body-size.max': 'wide' };
@@ -781,10 +953,9 @@ form.addEventListener('input', (event) => {
   } else if (control.dataset.font) {
     setFace(control.dataset.font, control.value === 'other' ? form.querySelector(`[data-other="${control.dataset.font}"]`).value || 'Local Typeface' : control.value);
     writeForm();
-    if (sync()) scheduleSave();
+    changed();
     renderAxes();
     if (current) writeAxes(current);
-    share();
     return;
   } else if (control.dataset.other) {
     setFace(control.dataset.other, control.value || 'Local Typeface');
@@ -817,6 +988,7 @@ form.addEventListener('click', (event) => {
   const button = event.target.closest('button');
   if (!button) return;
   if (button.dataset.go) return goTo(button.dataset.go);
+  if (button.dataset.lookKey) return setUi({ looks: { ...ui.looks, [button.dataset.lookKey]: button.dataset.lookValue } });
   if (button.dataset.roleTab) {
     ui.role = button.dataset.roleTab;
     showRole();
@@ -853,8 +1025,6 @@ form.addEventListener('click', (event) => {
     setValue(button.dataset.pick, button.dataset.value);
   } else if (button.dataset.showPanel) {
     return setPanel(ui.panel === button.dataset.showPanel ? null : button.dataset.showPanel);
-  } else if (button.dataset.showSpecimen) {
-    return showSpecimen(button.dataset.showSpecimen);
   } else if (button.dataset.target) {
     const targets = model.inputs.shadow.targets;
     targets[button.dataset.target] = !targets[button.dataset.target];
@@ -926,9 +1096,9 @@ divider.addEventListener('pointerdown', (event) => {
   const box = tool.getBoundingClientRect();
   tool.toggleAttribute('data-dragging', true);
   optimalLine.hidden = false;
-  optimalLine.style.insetInlineStart = `${optimalControls(ui.view, box.width, ui.width)}px`;
+  optimalLine.style.insetInlineStart = `${optimalControls(ui.view, box.width, ui.width, textScale())}px`;
   const move = (moved) => {
-    const { width, atOptimal } = dragControls(moved.clientX - box.left - DIVIDER / 2, ui.view, box.width, ui.width);
+    const { width, atOptimal } = dragControls(moved.clientX - box.left - DIVIDER / 2, ui.view, box.width, ui.width, textScale());
     ui.controls = width;
     ui.atOptimal = atOptimal;
     layout();
@@ -958,14 +1128,14 @@ divider.addEventListener('keydown', (event) => {
     ui.atOptimal = true;
   } else if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
     event.preventDefault();
-    const { width, atOptimal } = dragControls(ui.controls + (event.key === 'ArrowLeft' ? -24 : 24), ui.view, ui.windowWidth, ui.width);
+    const { width, atOptimal } = dragControls(ui.controls + (event.key === 'ArrowLeft' ? -24 : 24), ui.view, ui.windowWidth, ui.width, textScale());
     ui.controls = width;
     ui.atOptimal = atOptimal;
   } else return;
   layout();
   remember();
 });
-document.getElementById('design-md').addEventListener('click', async () => {
+exportAi.addEventListener('click', async () => {
   if (!valid) return;
   clearTimeout(saveTimer);
   saveTimer = null;
@@ -1069,12 +1239,15 @@ channel.addEventListener('message', ({ data: message }) => {
     share();
   } else if (message.type === 'ui') {
     setUi(message.patch);
+  } else if (message.type === 'history') {
+    moveThroughHistory(message.action);
   } else if (message.type === 'bring-back') {
     previewWindow?.close();
     backToPane();
   }
 });
 window.addEventListener('pagehide', () => {
+  flushSave();
   if (!inPreviewWindow && ui.where === 'window') channel.postMessage({ type: 'main-gone' });
 });
 
@@ -1082,11 +1255,15 @@ window.addEventListener('pagehide', () => {
 renderMenu();
 tipOn(divider, 'Drag to share the width. It catches at the best position. Double-click to go back to it.');
 tipOn(presentation, 'Save the design and create the browsable presentation in a ZIP archive.');
-tipOn(document.getElementById('design-md'), 'Save the design and write it beside the design file as DESIGN.md, a file to give an AI agent that is to design pages from it.');
+tipOn(exportAi, 'Save the design and write it beside the design file as DESIGN.md, a file to give an AI agent that is to design pages from it.');
 tipOn(document.getElementById('own-window'), 'Open the preview in a window of its own, to put on your other screen.');
 tipOn(document.getElementById('full-window'), 'Let the preview fill the whole window, or put it back.');
 tipOn(document.getElementById('bring-back'), 'Close the preview window and put the preview back beside the controls.');
 tipOn(document.getElementById('desktop-width'), 'The width of the desktop window. The page responds as it does at that width.');
+tipOn(document.getElementById('fit'), 'Scaled so the whole page fits. Click for real size, then scroll sideways to see the rest.');
+const modifier = /Mac|iPhone|iPad/.test(navigator.platform) ? 'Cmd' : 'Ctrl';
+tipOn(undoButton, `Undo the last change, on the page it was made on. ${modifier}+Z.`);
+tipOn(redoButton, `Redo the change just undone. ${modifier}+Shift+Z or Ctrl+Y.`);
 if (!inPreviewWindow) {
   form.innerHTML = documentMarkup(copy);
   document.body.insertAdjacentHTML('beforeend', takeTips());
@@ -1106,6 +1283,8 @@ layout();
 setupPreview(() => {
   sync();
   followPage(ui.page, false);
+  // The keys go where the focus is, and after a click in the preview that is inside a frame.
+  for (const frame of document.querySelectorAll('iframe')) frame.contentWindow?.addEventListener('keydown', historyKey);
 });
 new ResizeObserver(layout).observe(tool);
 // The line's page may be hidden when the design is written, and the divider changes its width.

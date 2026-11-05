@@ -1,4 +1,5 @@
 ---
+import { rem } from '../../../src/generator/fluid.js';
 import { resolved as r, inputs, t, num, copy } from '../data.js';
 import { faceName, families, rolesFor, typeOrder } from '../words.js';
 import Components from './Components.astro';
@@ -46,7 +47,7 @@ const scale = (ratio) => t(Object.hasOwn(copy, `scale.${ratio}`) ? `scale.${rati
   </div>
   <div class="scale-lines">{typeOrder.map((style) => <div class="scale-line">
     <p data-kn-type="small">{t(`type.${style}`)} · <output data-type-size={style}>{t('value.px', { value: num(r.type[style].size.max) })}</output></p>
-    <p data-kn-type={style} data-scale-style={style} style={{ fontSize: `${r.type[style].size.max}px` }}>{t('type.sample')}</p>
+    <p data-kn-type={style} data-scale-style={style} style={{ fontSize: rem(r.type[style].size.max) }}>{t('type.sample')}</p>
   </div>)}</div>
 </>}
 {id === 'other-typefaces' && <>

@@ -6,11 +6,20 @@
   .kn-field-required, .kn-field-help { color: var(--kn-text-muted); }
   .kn-field-control { display: block; inline-size: 100%; min-inline-size: 0; min-block-size: 2.75rem; padding: 0.6em 0.75em; border: 1px solid var(--kn-border-strong); border-radius: var(--kn-radius-control); background: var(--kn-background); color: var(--kn-text); font: inherit; }
   textarea.kn-field-control { resize: block; }
+  /* A browser's own arrow stands too close to the edge, and cannot be moved, so a select draws its own. */
+  .kn-field-select { position: relative; display: block; }
+  .kn-field-select > select { appearance: none; padding-inline-end: 2.75em; cursor: pointer; }
+  .kn-field-select > .kn-icon { position: absolute; inset-inline-end: 1em; inset-block-start: 50%; translate: 0 -50%; pointer-events: none; }
+  .kn-field-select > select:disabled + .kn-icon { color: var(--kn-text-muted); }
   .kn-field-options { display: grid; gap: 0.25em; }
   .kn-field-option { display: flex; align-items: center; gap: 0.6em; min-block-size: 2.75rem; cursor: pointer; }
-  /* The browser draws these parts itself. They stay light on every Surface, as the owner decided. */
-  .kn-field-option input, .kn-field-control[type="number"] { color-scheme: light; }
+  /* The browser draws these parts itself. They stay light on every Surface, as the owner decided. Only the parts: colour-scheme
+     on a whole field would turn its background, text and border, which are light-dark() roles, to the light ones. */
+  .kn-field-option input, .kn-field-control[type="number"]::-webkit-inner-spin-button { color-scheme: light; }
   .kn-field-option input { accent-color: var(--kn-accent); inline-size: 1.1em; block-size: 1.1em; flex: none; }
+  /* The browser's own dimming gives way to the colours above, so a disabled field says it in checked roles of the Surface. */
+  .kn-field-control:disabled { background: var(--kn-background-alt); border-color: var(--kn-border); color: var(--kn-text-muted); cursor: default; }
+  .kn-field-option:has(input:disabled) { color: var(--kn-text-muted); cursor: default; }
   .kn-field-help, .kn-field-error { margin: 0; }
   .kn-field-error { display: flex; gap: 0.5em; align-items: baseline; color: var(--kn-error); }
   .kn-field-error[hidden] { display: none; }

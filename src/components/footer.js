@@ -3,62 +3,76 @@ export function revealEligible({ attachment, footerHeight, viewportHeight, print
   return attachment === 'reveal' && !print && footerHeight > 0 && footerHeight <= viewportHeight;
 }
 
-export function layoutFooter(input, { pageSurface = 'page', pageShadow = false } = {}) {
-  if (input.length > 4) throw new RangeError('Footer supports at most four bands');
-  const occupied = new Map();
-  const source = input.map((band, index) => ({ ...band, row: index + 1, cells: (band.cells ?? []).map((cell) => ({ ...cell, row: index + 1, rows: cell.rows ?? 1, columns: cell.columns ?? 1 })) }));
-  for (const band of source) for (const cell of band.cells) {
-    if (!['A', 'B'].includes(cell.column) || !Number.isInteger(cell.rows) || cell.rows < 1 || cell.row + cell.rows - 1 > input.length || ![1, 2].includes(cell.columns) || (cell.columns === 2 && cell.column !== 'A')) throw new RangeError('Invalid footer cell span');
-    for (let row = cell.row; row < cell.row + cell.rows; row++) {
-      if (source[row - 1].cells.length && source[row - 1].surface !== band.surface) throw new RangeError('Footer cells cannot span different Surfaces');
-      for (const column of cell.columns === 2 ? ['A', 'B'] : [cell.column]) {
-        const key = `${column}${row}`;
-        if (occupied.has(key)) throw new RangeError('Footer cells overlap');
-        occupied.set(key, cell);
-      }
-    }
+// A band's four cells, in the order they stack on a narrow screen: A before B.
+export const FOOTER_CELLS = ['a1', 'a2', 'b1', 'b2'];
+
+// What the filled cells of one band cover. An empty column or row always gives way to the other, and where
+// a cell could fill either way, `fill` says which. Whatever a cell covers, its content box stays where it was.
+export function footerSpans(cells, fill = 'column') {
+  const on = (cell) => !!cells[cell];
+  return FOOTER_CELLS.filter(on).map((cell) => {
+    const [column, row] = cell;
+    const across = column === 'a' ? 'b' : 'a';
+    const over = row === '1' ? '2' : '1';
+    return {
+      cell,
+      wide: (!on(`${across}1`) && !on(`${across}2`)) || (fill === 'row' && !on(`${across}${row}`)),
+      tall: (!on(`a${over}`) && !on(`b${over}`)) || (fill === 'column' && !on(`${column}${over}`)),
+    };
+  });
+}
+
+function layoutBand(name, band, { fill, horizontalRules, verticalRule }) {
+  const spans = footerSpans(band?.cells ?? {}, fill);
+  // A row with nothing of its own has no height, so where every cell is tall the band has one row.
+  const rows = spans.every(({ tall }) => tall) ? 1 : 2;
+  const cells = spans.map(({ cell, wide, tall }) => ({
+    ...(typeof band.cells[cell] === 'object' ? band.cells[cell] : {}),
+    name: cell,
+    column: cell[0].toUpperCase(),
+    columns: wide ? 2 : 1,
+    row: tall ? 'all' : cell[1],
+  }));
+  const tallIn = (column) => cells.some((cell) => cell.column === column && cell.row === 'all');
+  const wideIn = (row) => cells.some((cell) => cell.columns === 2 && (cell.row === row || cell.row === 'all'));
+  return {
+    name,
+    surface: band?.surface ?? { upper: 'brand', lower: 'inverse' }[name],
+    rows,
+    cells,
+    // Hairlines stop at a merged cell, and never cross one.
+    horizontal: horizontalRules && rows === 2 ? (tallIn('A') ? 'b' : tallIn('B') ? 'a' : 'both') : null,
+    vertical: !verticalRule || (wideIn('1') && wideIn('2')) ? null : wideIn('1') ? '2' : wideIn('2') ? '1' : 'all',
+  };
+}
+
+export function layoutFooter({ upper, lower, fill = 'column', horizontalRules = false, verticalRule = false } = {}, { pageSurface = 'page', pageShadow = false } = {}) {
+  const options = { fill, horizontalRules, verticalRule };
+  const bands = [layoutBand('upper', upper, options), layoutBand('lower', lower, options)].filter((band) => band.cells.length);
+  // Two bands on one colour close up, as any two Bands do, and only there can a line part them.
+  if (bands.length === 2 && bands[0].surface === bands[1].surface) {
+    bands.forEach((band) => { band.joined = true; });
+    bands[1].join = horizontalRules;
   }
-  const bands = source.filter((band) => band.cells.length);
-  let run = -1;
-  bands.forEach((band, index) => {
-    const previous = bands[index - 1], next = bands[index + 1];
-    band.runStart = !previous || previous.surface !== band.surface;
-    band.runEnd = !next || next.surface !== band.surface;
-    if (band.runStart) run++;
-    band.run = run;
-    band.ownB = run > 0;
-    band.wide = band.cells.some((cell) => cell.columns === 2);
-    const coverA = occupied.get(`A${band.row}`), coverB = occupied.get(`B${band.row}`);
-    const crossesA = coverA && coverA.row < band.row;
-    const crossesB = coverB && coverB.row < band.row;
-    band.horizontal = band.rule && index > 0 && previous.surface === band.surface && !(crossesA && crossesB) ? crossesA ? 'b' : crossesB ? 'a' : 'both' : null;
-    band.vertical = !!band.verticalRule && !band.wide && !(coverA?.columns === 2);
+  return { bands, topLine: bands.length > 0 && bands[0].surface === pageSurface && !pageShadow };
+}
+
+// What a design's settings and a site's content give a Footer. A cell that is off stays empty, whatever the
+// site has for it, and a cell that is on without content here is filled by a slot of the same name.
+export function footerFromDesign(settings, content = {}) {
+  const band = (name) => ({
+    surface: settings[name].surface,
+    cells: Object.fromEntries(FOOTER_CELLS.map((cell) => [cell, settings[name].cells[cell] ? content[name]?.[cell] ?? true : false])),
   });
-  bands.forEach((band, index) => {
-    band.stopTop = band.vertical && !band.runStart && !bands[index - 1]?.vertical;
-    band.stopBottom = band.vertical && !band.runEnd && !bands[index + 1]?.vertical;
-    band.cells.forEach((cell) => {
-      const last = source[cell.row + cell.rows - 2];
-      cell.edgeTop = band.runStart;
-      cell.edgeBottom = !!last.runEnd || !last.cells.length;
-      cell.surface = band.surface;
-      cell.compact = !!band.compact;
-      cell.ownB = band.ownB;
-    });
-  });
-  // Each spanning row is its own unit. Otherwise a run stacks all A before B.
-  const units = [];
-  for (const band of bands) {
-    const unit = units.at(-1);
-    if (!unit || band.runStart || band.wide || unit.at(-1).wide) units.push([band]);
-    else unit.push(band);
-  }
-  const cells = units.flatMap((unit) => ['A', 'B'].flatMap((column) => unit.flatMap((band) => band.cells.filter((cell) => cell.column === column))));
-  cells.forEach((cell, index) => {
-    cell.stackFirst = !cells[index - 1] || cells[index - 1].surface !== cell.surface;
-    cell.stackLast = !cells[index + 1] || cells[index + 1].surface !== cell.surface;
-  });
-  return { bands, cells, topLine: bands.length > 0 && bands[0].surface === pageSurface && !pageShadow };
+  return {
+    upper: band('upper'),
+    lower: band('lower'),
+    fill: settings.fill,
+    attachment: settings.attachment,
+    rules: settings['rule-extent'],
+    horizontalRules: settings['horizontal-rules'],
+    verticalRule: settings['vertical-rule'],
+  };
 }
 
 const initialized = new WeakMap();
@@ -81,7 +95,7 @@ export function setupFooters(root = document) {
       const last = main.lastElementChild;
       // A short page's blank space is the page Surface, beyond the final band.
       const blank = last && main.getBoundingClientRect().bottom > last.getBoundingClientRect().bottom + 1;
-      const first = footer.querySelector('.kn-footer-background');
+      const first = footer.querySelector('.kn-footer-band');
       const same = first && getComputedStyle(blank || !last || !last.hasAttribute('data-kn-surface') ? page : last).backgroundColor === getComputedStyle(first).backgroundColor;
       const chosenShadow = main.dataset.knShadow === 'true';
       const chosenLine = main.dataset.knEdgeLine === 'true';

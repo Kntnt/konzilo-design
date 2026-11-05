@@ -1,31 +1,80 @@
 @layer kn-components {
-  .kn-footer { --kn-footer-edge: var(--kn-space-band); container-type: inline-size; position: relative; z-index: 0; font-size: var(--kn-type-small-size); line-height: var(--kn-type-small-line-height); }
+  .kn-footer { container-type: inline-size; position: relative; z-index: 0; font-size: var(--kn-type-small-size); line-height: var(--kn-type-small-line-height); }
   .kn-footer[data-kn-effective-attachment="reveal"] { position: fixed; inset-block-end: 0; inset-inline: 0; }
   .kn-footer[data-kn-top-line] { border-block-start: 1px solid var(--kn-border); }
-  .kn-footer-grid {
-    --kn-footer-inner: min(calc(100% - 2 * var(--kn-layout-side-margin)), var(--kn-layout-wide));
+
+  /* A band is a grid on the content area's rail, with its background running edge to edge. B's content
+     track is as wide as its widest content box, so a hairline over column B alone can stop at the content. */
+  .kn-footer-band {
+    --kn-footer-inner: var(--kn-layout-content-area);
     --kn-footer-side: calc((100% - var(--kn-footer-inner)) / 2);
+    --kn-footer-edge-start: var(--kn-space-band);
+    --kn-footer-edge-end: var(--kn-space-band);
+    --kn-footer-row-gap: var(--kn-space-band-run);
     display: grid;
     grid-template-columns: [full-start] var(--kn-footer-side) [a-start] calc((var(--kn-footer-inner) - var(--kn-space-column-gap)) / 3) [a-end] var(--kn-space-column-gap) [b-start] minmax(0, 1fr) [bc-start] auto [b-end] var(--kn-footer-side) [full-end];
-    grid-template-rows: [r1-start] auto [r1-end r2-start] auto [r2-end r3-start] auto [r3-end r4-start] auto [r4-end];
+    grid-template-rows: auto;
+    row-gap: var(--kn-footer-row-gap);
+    padding-block: var(--kn-footer-edge-start) var(--kn-footer-edge-end);
   }
-  .kn-footer-muted { color: var(--kn-text-muted); max-inline-size: 30em; }
-  .kn-footer-links { --kn-footer-separator: 1.4em; display: flex; flex-wrap: wrap; list-style: none; padding: 0; margin: 0; margin-inline-start: calc(-1 * var(--kn-footer-separator)); inline-size: calc(100% + var(--kn-footer-separator)); clip-path: inset(-0.25rem -0.25rem -0.25rem calc(var(--kn-footer-separator) - 0.25rem)); }
+  .kn-footer-band[data-kn-rows="2"] { grid-template-rows: auto auto; }
+  .kn-footer-band[data-kn-band="lower"] { --kn-footer-edge-start: 1.25rem; --kn-footer-edge-end: 1.25rem; --kn-footer-row-gap: 0.5rem; font-size: var(--kn-type-label-size); }
+  /* Two bands on one colour close up, as any two Bands do. */
+  .kn-footer-band[data-kn-joined][data-kn-band="upper"] { --kn-footer-edge-end: 0rem; }
+  .kn-footer-band[data-kn-joined][data-kn-band="lower"] { --kn-footer-edge-start: var(--kn-space-band-run); }
+
+  /* A cell takes all it covers. Its content box is as small as its content allows, at the top, against the
+     cell's start edge in column A and its end edge in column B, whatever else the cell has come to cover. */
+  .kn-footer-cell { display: flex; align-items: flex-start; min-inline-size: 0; overflow-wrap: anywhere; }
+  .kn-footer-cell:where([data-kn-column="A"]) { grid-column: a-start / a-end; }
+  .kn-footer-cell:where([data-kn-column="B"]) { grid-column: bc-start / b-end; justify-content: flex-end; }
+  .kn-footer-cell:where([data-kn-columns="2"]) { grid-column: a-start / b-end; }
+  .kn-footer-cell:where([data-kn-row="1"]) { grid-row: 1; }
+  .kn-footer-cell:where([data-kn-row="2"]) { grid-row: 2; }
+  .kn-footer-cell:where([data-kn-row="all"]) { grid-row: 1 / -1; }
+  .kn-footer-box { display: grid; justify-items: start; row-gap: var(--kn-space-component-gap); min-inline-size: 0; text-align: start; }
+  .kn-footer-box > * { margin-block: 0; max-inline-size: 100%; }
+  /* The list's start overhangs the box by one separator, which hides the separators at line starts. */
+  .kn-footer-box > .kn-footer-links { max-inline-size: none; }
+
+  .kn-footer-muted { color: var(--kn-text-muted); }
+  .kn-footer-box > .kn-footer-muted { max-inline-size: 30em; }
+  /* A hair more than the box needs, or a box whose width is rounded down breaks a line that fits. */
+  .kn-footer-links { --kn-footer-separator: 1.4em; display: flex; flex-wrap: wrap; list-style: none; padding: 0; margin: 0; margin-inline-start: calc(-1 * var(--kn-footer-separator)); inline-size: calc(100% + var(--kn-footer-separator) + 0.0625rem); clip-path: inset(-0.25rem -0.25rem -0.25rem calc(var(--kn-footer-separator) - 0.25rem)); }
   .kn-footer-links:dir(rtl) { clip-path: inset(-0.25rem calc(var(--kn-footer-separator) - 0.25rem) -0.25rem -0.25rem); }
   .kn-footer-links li::before { content: "•"; display: inline-block; inline-size: var(--kn-footer-separator); text-align: center; color: var(--kn-text-muted); }
   .kn-footer a { color: var(--kn-text); text-decoration: underline; text-decoration-color: transparent; text-underline-offset: 0.22em; }
   .kn-footer a:is(:hover, [aria-current]) { text-decoration-color: currentColor; }
-  .kn-footer[data-kn-rules="full"] .kn-footer-vertical-rule { margin-block: 0; }
+  /* A row of icon links, such as social media. Each is at least the size a finger or pointer needs. */
+  .kn-footer-social { display: flex; flex-wrap: wrap; gap: 0.5rem; list-style: none; padding: 0; margin: 0; }
+  .kn-footer-social a { display: grid; place-items: center; min-inline-size: 1.5rem; min-block-size: 1.5rem; }
+  .kn-footer-social .kn-icon { inline-size: 1.5rem; block-size: 1.5rem; }
+
+  /* A very wide logo keeps its shape within the cell. */
+  .kn-footer .kn-brand-logo :is(img, svg) { max-inline-size: 14rem; object-fit: contain; }
+  /* A logo for each mode, on a band whose colour follows the mode. */
+  .kn-footer-logo[data-kn-logo="dark"], [data-kn-mode="dark"] .kn-footer-logo[data-kn-logo="light"] { display: none; }
+  [data-kn-mode="dark"] .kn-footer-logo[data-kn-logo="dark"] { display: block; }
+
+  /* Hairlines never part two colours or cross a merged cell, and stop at the content unless told otherwise. */
+  .kn-footer-rule { grid-column: a-start / b-end; grid-row: 2; align-self: start; margin-block-start: calc(var(--kn-footer-row-gap) / -2); border-block-start: 1px solid var(--kn-border); }
+  .kn-footer-rule[data-kn-only="a"] { grid-column: a-start / a-end; }
+  .kn-footer-rule[data-kn-only="b"] { grid-column: bc-start / b-end; }
+  .kn-footer-rule[data-kn-join] { grid-row: 1; margin-block-start: calc(var(--kn-footer-edge-start) / -2); }
+  .kn-footer-vertical-rule { grid-column: a-end / b-start; grid-row: 1 / -1; justify-self: center; border-inline-start: 1px solid var(--kn-border); }
+  .kn-footer-vertical-rule[data-kn-row="1"] { grid-row: 1; }
+  .kn-footer-vertical-rule[data-kn-row="2"] { grid-row: 2; }
   .kn-footer[data-kn-rules="full"] .kn-footer-rule { grid-column: full-start / full-end; }
   .kn-footer[data-kn-rules="full"] .kn-footer-rule[data-kn-only="a"] { grid-column: full-start / a-end; }
   .kn-footer[data-kn-rules="full"] .kn-footer-rule[data-kn-only="b"] { grid-column: b-start / full-end; }
+  .kn-footer[data-kn-rules="full"] .kn-footer-vertical-rule:not([data-kn-row="2"]) { margin-block-start: calc(-1 * var(--kn-footer-edge-start)); }
+  .kn-footer[data-kn-rules="full"] .kn-footer-vertical-rule:not([data-kn-row="1"]) { margin-block-end: calc(-1 * var(--kn-footer-edge-end)); }
+
+  /* On a narrow screen one column, with the cells in document order and every box at the start edge. */
   @container (inline-size <= 37.5rem) {
-    .kn-footer-grid { display: flex; flex-direction: column; }
-    .kn-footer-grid .kn-footer-cell { display: grid; grid-template-columns: minmax(0, 1fr); justify-content: start; padding: calc(var(--kn-space-band-run) / 2) var(--kn-layout-side-margin); }
-    .kn-footer-grid .kn-footer-cell > * { grid-column: 1; }
-    .kn-footer-grid .kn-footer-cell[data-kn-stack-first] { padding-block-start: var(--kn-footer-edge); }
-    .kn-footer-grid .kn-footer-cell[data-kn-stack-last] { padding-block-end: var(--kn-footer-edge); }
-    .kn-footer-background, .kn-footer-rule, .kn-footer-vertical-rule { display: none; }
+    .kn-footer-band { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; padding-inline: var(--kn-layout-side-margin); }
+    .kn-footer-band .kn-footer-cell { grid-column: 1; grid-row: auto; justify-content: flex-start; }
+    .kn-footer-rule, .kn-footer-vertical-rule { display: none; }
   }
   @media print {
     .kn-footer[data-kn-effective-attachment] { position: static; }

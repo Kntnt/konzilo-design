@@ -1,6 +1,3 @@
-// At a third of the screen a hero's text fills the height, so it has nowhere to move to.
-export const heroHasRoom = (height) => height !== 'third';
-
 export const componentPages = [
   ['header', ['Header'], ['header-a-menu'], []],
   ['footer', ['Footer'], ['footer'], []],

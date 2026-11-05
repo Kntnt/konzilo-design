@@ -1,5 +1,6 @@
 // The design tool's preview: it changes the sample page's header, footer and page as the settings change,
 // without a build. The header comes from a built template with every item, and leaves out what is off.
+// The trail goes with the page's H1, in hero-live.js.
 import { setupHeaders } from '../../src/components/header.js';
 import { setupFooters, layoutFooter } from '../../src/components/footer.js';
 import { footerHtml } from '../../src/components/footer-html.js';
@@ -9,24 +10,33 @@ function identity(header, settings, project) {
   const wanted = identityProps(settings, project);
   const link = header.querySelector('.kn-header-identity');
   link.setAttribute('aria-label', wanted.label);
-  link.dataset.knAxis = wanted.axis;
-  link.dataset.knAlign = wanted.align;
-  const brand = header.querySelector('.kn-header-brand');
+  link.dataset.knSloganPlace = wanted.sloganPlace;
+  const brand = link.querySelector('.kn-brand');
   brand.dataset.knAxis = wanted.brandAxis;
-  brand.dataset.knAlign = wanted.brandAlign;
-  const logo = brand.querySelector('.kn-header-logo');
+  const logo = brand.querySelector('.kn-brand-logo');
   if (wanted.logo) {
     const [light, dark] = logo.querySelectorAll('img');
     light.src = wanted.logo.light;
     dark.src = wanted.logo.dark;
     for (const image of [light, dark]) image.alt = wanted.name ? '' : wanted.label;
   } else logo.remove();
-  const name = brand.querySelector('.kn-header-name');
-  if (wanted.name) name.textContent = wanted.name;
+  const name = brand.querySelector('.kn-brand-name');
+  if (wanted.name) name.firstElementChild.textContent = wanted.name;
   else name.remove();
-  const slogan = header.querySelector('.kn-header-slogan');
-  if (wanted.slogan) slogan.textContent = wanted.slogan;
+  const slogan = link.querySelector('.kn-header-slogan');
+  if (wanted.slogan) slogan.firstElementChild.textContent = wanted.slogan;
   else slogan.remove();
+}
+// An image set again is decoded again, and blinks, so the one already showing moves over to where it is wanted.
+function keepImages(from, into) {
+  const showing = [...from.querySelectorAll('img')];
+  for (const image of into.querySelectorAll('img')) {
+    const same = showing.findIndex((old) => old.getAttribute('src') === image.getAttribute('src') && old.dataset.knLogo === image.dataset.knLogo);
+    if (same < 0) continue;
+    const [old] = showing.splice(same, 1);
+    for (const { name, value } of image.attributes) old.setAttribute(name, value);
+    image.replaceWith(old);
+  }
 }
 function buildHeader(settings, project) {
   const header = document.querySelector(`template[data-kn-live-header="${settings.arrangement}"]`).content.firstElementChild.cloneNode(true);
@@ -66,25 +76,45 @@ function buildHeader(settings, project) {
   }
   return header;
 }
-function placeBreadcrumbs(main, settings, project) {
-  main.querySelector('.kn-breadcrumb-band')?.remove();
-  main.querySelector('.kn-hero-text > .kn-breadcrumbs')?.remove();
-  if (!settings.show) return;
-  const trail = document.querySelector('template[data-kn-live-breadcrumbs]').content.firstElementChild.cloneNode(true);
-  trail.dataset.knSeparator = settings.separator;
-  trail.dataset.knHome = settings.home === 'icon' ? 'icon' : 'word';
-  trail.dataset.knCurrent = String(settings.current);
-  trail.dataset.knNarrow = settings.narrow;
-  trail.querySelector('.kn-breadcrumbs-label').textContent = settings.home === 'name' ? project.name : 'Home';
-  if (settings.placement === 'own-band') {
-    const band = document.createElement('section');
-    band.className = 'kn-band kn-breadcrumb-band';
-    const content = document.createElement('div');
-    content.className = 'kn-band-content';
-    content.append(trail);
-    band.append(content);
-    main.prepend(band);
-  } else main.querySelector('.kn-hero-text').prepend(trail);
+// The footer stays the same element, its measuring with it. Cells that have not changed stay too, so a logo
+// does not blink, and a page scrolled to its end stays there as the footer's height changes. What a cell was
+// written with is kept beside it, since the page marks its images as it goes.
+const writtenCells = new WeakMap();
+function updateFooter(page, main, props) {
+  const old = page.querySelector(':scope > .kn-footer');
+  const held = document.createElement('template');
+  held.innerHTML = footerHtml(layoutFooter(props), props);
+  // In this document, for an image moved between documents is loaded again.
+  const next = document.importNode(held.content, true).firstElementChild;
+  const end = () => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'instant' });
+  const atEnd = window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 2;
+  if (!next) {
+    old?.dispatchEvent(new Event('kn:dispose'));
+    old?.remove();
+  } else if (!old) {
+    main.after(next);
+    setupFooters(page);
+  } else {
+    for (const cell of next.querySelectorAll('.kn-footer-cell')) {
+      const live = old.querySelector(`[data-kn-band="${cell.parentElement.dataset.knBand}"] > [data-kn-cell="${cell.dataset.knCell}"]`);
+      if (live && writtenCells.get(live) === cell.innerHTML) {
+        for (const { name, value } of cell.attributes) live.setAttribute(name, value);
+        cell.replaceWith(live);
+      } else {
+        writtenCells.set(cell, cell.innerHTML);
+        if (live) keepImages(live, cell);
+      }
+    }
+    old.replaceChildren(...next.childNodes);
+    old.dataset.knAttachment = next.dataset.knAttachment;
+    old.dataset.knRules = next.dataset.knRules;
+    old.dispatchEvent(new Event('kn:refresh'));
+  }
+  if (atEnd) {
+    end();
+    // Under `reveal` the page reserves the footer's new height when the footer has been measured.
+    requestAnimationFrame(end);
+  }
 }
 export function setupLiveFrame() {
   if (document.body.dataset.specimen !== 'preview') return;
@@ -99,26 +129,22 @@ export function setupLiveFrame() {
       if (open !== (trigger.dataset.knTrigger === panel)) trigger.click();
     }
   };
-  function apply({ header, footer, page: settings, breadcrumbs }, project) {
+  function apply({ header, footer, page: settings }, project) {
     const headerKey = JSON.stringify([header, project.name, project.logo, project['logo-dark'], project.slogan]);
     if (headerKey !== shown.header) {
       const old = page.querySelector(':scope > .kn-header');
+      const next = buildHeader(header, project);
       old?.dispatchEvent(new Event('kn:dispose'));
+      if (old) keepImages(old, next);
       old?.remove();
-      page.prepend(buildHeader(header, project));
+      page.prepend(next);
       setupHeaders(page);
       showPanel();
       // An open search box takes the focus, and the control being used should keep it.
       if (panel) parent.postMessage({ type: 'kn-frame-panel-shown' }, location.origin);
     }
-    const footerKey = JSON.stringify([footer, project.name, project.logo, project['logo-dark']]);
-    if (footerKey !== shown.footer) {
-      const old = page.querySelector(':scope > .kn-footer');
-      old.dispatchEvent(new Event('kn:dispose'));
-      const { bands, ...options } = footerProps(footer, project);
-      old.outerHTML = footerHtml(layoutFooter(bands), options);
-      setupFooters(page);
-    }
+    const footerKey = JSON.stringify([footer, header.identity, header['brand-axis'], project.name, project.logo, project['logo-dark']]);
+    if (footerKey !== shown.footer) updateFooter(page, main, footerProps(footer, project, header));
     const pageKey = JSON.stringify(settings);
     if (pageKey !== shown.page) {
       if (settings.shadow) main.dataset.knShadow = 'true';
@@ -131,12 +157,7 @@ export function setupLiveFrame() {
       }
       page.querySelector(':scope > .kn-footer')?.dispatchEvent(new Event('kn:refresh'));
     }
-    const breadcrumbKey = JSON.stringify([breadcrumbs, project.name]);
-    if (breadcrumbKey !== shown.breadcrumbs) {
-      placeBreadcrumbs(main, breadcrumbs, project);
-      page.querySelector(':scope > .kn-header')?.dispatchEvent(new Event('kn:refresh'));
-    }
-    shown = { header: headerKey, footer: footerKey, page: pageKey, breadcrumbs: breadcrumbKey };
+    shown = { header: headerKey, footer: footerKey, page: pageKey };
   }
   window.addEventListener('message', (event) => {
     if (event.source !== parent) return;

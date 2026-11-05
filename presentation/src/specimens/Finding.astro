@@ -28,10 +28,12 @@ const results = Array.from({ length: 12 }, (_, index) => ({
       items={list.map(({ picture, ...item }) => item)}
       columns={3}
       surface="raised"
+      data-look="loop-layout:cards"
     />
     <ContentLoop
       presentation="rows"
       images={false}
+      data-look="loop-layout:rows"
       items={[
         {
           title: 'Service overview',

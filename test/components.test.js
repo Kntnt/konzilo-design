@@ -70,9 +70,10 @@ test('every component has a typed wrapper; seven library runtimes and only the d
     } else assert.doesNotMatch(source, /<script/);
     assert.doesNotMatch(source, /<h[1-6]\b/);
   }
-  assert.equal(Object.keys(icons).length, 23);
+  assert.equal(Object.keys(icons).length, 28);
   for (const markup of Object.values(icons)) assert.doesNotMatch(markup, /<svg|<script|\bhref=/);
   assert.match(await readFile(new URL('LICENSE-lucide.txt', directory), 'utf8'), /ISC License/);
+  assert.match(await readFile(new URL('LICENSE-tabler.txt', directory), 'utf8'), /MIT License/);
 });
 
 test('bands join each supported identical Surface with CSS adjacency in both directions', async () => {
@@ -91,8 +92,9 @@ test('Body Text leaves headings with an explicit visual type alone', async () =>
   for (const level of [1, 2, 3, 4, 5, 6]) assert.ok(css.includes(`.kn-body-text h${level}:not([data-kn-type])`), `h${level}`);
 });
 
-test('the browser-drawn parts of form controls stay light on every Surface', async () => {
+test('the browser-drawn parts of form controls stay light on every Surface, and only the parts', async () => {
   const css = await readFile(new URL('../src/components/form.css', import.meta.url), 'utf8');
-  assert.match(css, /\.kn-field-option input, \.kn-field-control\[type="number"\] \{ color-scheme: light; \}/);
+  assert.match(css, /\.kn-field-option input, \.kn-field-control\[type="number"\]::-webkit-inner-spin-button \{ color-scheme: light; \}/);
+  assert.doesNotMatch(css, /\.kn-field-control(?:\[type="number"\])?(?:,[^{]*)? \{[^}]*color-scheme/);
 });
 

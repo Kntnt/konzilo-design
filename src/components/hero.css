@@ -1,42 +1,113 @@
 @layer kn-components {
   .kn-hero { display: flex; align-items: center; }
+  .kn-hero[data-kn-place="top"] { align-items: flex-start; }
   .kn-hero[data-kn-place="bottom"] { align-items: flex-end; }
   /* A share of what the header leaves of the window. A hero under a transparent header has all of it. Tall content grows past it. */
   .kn-page[data-kn-header-start="under"] { --kn-hero-screen: 100svh; }
-  .kn-hero[data-kn-height="third"] { min-block-size: calc(var(--kn-hero-screen, calc(100svh - var(--kn-header-height))) / 3); }
-  .kn-hero[data-kn-height="half"] { min-block-size: calc(var(--kn-hero-screen, calc(100svh - var(--kn-header-height))) / 2); }
-  .kn-hero[data-kn-height="two-thirds"] { min-block-size: calc(var(--kn-hero-screen, calc(100svh - var(--kn-header-height))) * 2 / 3); }
-  .kn-hero[data-kn-height="full"] { min-block-size: var(--kn-hero-screen, calc(100svh - var(--kn-header-height))); }
-  .kn-hero-text { display: grid; gap: var(--kn-space-column-gap); min-inline-size: 0; overflow-wrap: anywhere; }
-  .kn-hero-text .kn-heading-group-deck { max-inline-size: var(--kn-layout-narrow); }
-  .kn-hero[data-kn-picture="beside"] > .kn-hero-content { display: flex; flex-wrap: wrap; align-items: center; gap: var(--kn-space-column-gap); }
-  /* Matching bases and growth ratios keep 7:5 whenever both cells share a row. */
-  .kn-hero[data-kn-picture="beside"] .kn-hero-text { flex: 7 1 28rem; }
-  .kn-hero-media { flex: 5 1 20rem; min-inline-size: 0; align-self: stretch; display: grid; overflow: clip; border-radius: var(--kn-radius-card); }
-  .kn-hero-media img { inline-size: 100%; block-size: 100%; min-block-size: 18rem; object-fit: cover; }
-  /* A picture beside the text takes all of a tall hero's height, and the text stands where it is placed. */
-  .kn-hero[data-kn-picture="beside"][data-kn-height] { align-items: stretch; }
-  .kn-hero[data-kn-picture="beside"][data-kn-place="bottom"] > .kn-hero-content { align-items: flex-end; }
+  .kn-hero[data-kn-height] { min-block-size: var(--kn-hero-height); }
+  .kn-hero[data-kn-height="third"] { --kn-hero-height: calc(var(--kn-hero-screen, calc(100svh - var(--kn-header-height))) / 3); }
+  .kn-hero[data-kn-height="half"] { --kn-hero-height: calc(var(--kn-hero-screen, calc(100svh - var(--kn-header-height))) / 2); }
+  .kn-hero[data-kn-height="two-thirds"] { --kn-hero-height: calc(var(--kn-hero-screen, calc(100svh - var(--kn-header-height))) * 2 / 3); }
+  .kn-hero[data-kn-height="full"] { --kn-hero-height: var(--kn-hero-screen, calc(100svh - var(--kn-header-height))); }
+  /* The space above and below a hero's text is even at every height, so it keeps its end padding even where the next band of its kind would join it. */
+  .kn-band.kn-hero.kn-hero.kn-hero.kn-hero { padding-block-end: var(--kn-space-band); }
+  /* The column gap parts the heading group from what follows it, and what stands before the group brings its own. */
+  .kn-hero-text { display: grid; min-inline-size: 0; overflow-wrap: anywhere; }
+  .kn-hero-text > .kn-heading-group ~ * { margin-block-start: var(--kn-space-column-gap); }
+  .kn-hero-text :is(.kn-heading-group-heading, .kn-heading-group-deck) { max-inline-size: var(--kn-layout-narrow); }
   .kn-hero .kn-heading-group-heading[data-kn-type="display"] { max-inline-size: 14em; }
-  /* Text at the bottom of a picture: the overlay stands on the text itself and fades in above it, so it has its
-     full, tested strength where the top line lands, however long the text runs, and the picture is clear above. */
-  .kn-hero[data-kn-place="bottom"][data-kn-surface^="picture-"] {
+
+  /* With no picture beside it, the text block is as wide as its words and moves across the content width. Its own lines stay start-aligned. */
+  .kn-hero:not([data-kn-picture]) .kn-hero-text { inline-size: fit-content; max-inline-size: 100%; }
+  .kn-hero:not([data-kn-picture])[data-kn-align="center"] .kn-hero-text { margin-inline: auto; }
+  .kn-hero:not([data-kn-picture])[data-kn-align="end"] .kn-hero-text { margin-inline-start: auto; }
+
+  /* A picture beside the text. The hero's content runs from window edge to window edge, on lines that the two halves
+     of the content width share, so a picture inside the content width and one out to the window differ only in where they end. */
+  .kn-hero[data-kn-picture] { align-items: stretch; }
+  .kn-hero[data-kn-picture] > .kn-hero-content {
+    --kn-hero-half: calc(var(--kn-layout-content-area) / 2);
+    --kn-hero-gap: calc(var(--kn-space-column-gap) / 2);
+    display: grid;
+    inline-size: 100%;
+    grid-template-columns: [window-start] 1fr [rail-start] var(--kn-hero-half) [middle] var(--kn-hero-half) [rail-end] 1fr [window-end];
+    grid-template-rows: 1fr;
+    align-items: center;
+  }
+  .kn-hero[data-kn-picture][data-kn-place="top"] > .kn-hero-content { align-items: start; }
+  .kn-hero[data-kn-picture][data-kn-place="bottom"] > .kn-hero-content { align-items: end; }
+  .kn-hero-media { position: relative; align-self: stretch; min-inline-size: 0; overflow: clip; border-radius: var(--kn-radius-card); }
+  .kn-hero-media img { position: absolute; inset: 0; inline-size: 100%; block-size: 100%; object-fit: cover; }
+  .kn-hero[data-kn-picture^="end"] .kn-hero-text { grid-area: 1 / rail-start / auto / middle; margin-inline-end: var(--kn-hero-gap); }
+  .kn-hero[data-kn-picture^="start"] .kn-hero-text { grid-area: 1 / middle / auto / rail-end; margin-inline-start: var(--kn-hero-gap); }
+  .kn-hero[data-kn-picture^="end"] .kn-hero-media { grid-area: 1 / middle / auto / rail-end; margin-inline-start: var(--kn-hero-gap); }
+  .kn-hero[data-kn-picture^="start"] .kn-hero-media { grid-area: 1 / rail-start / auto / middle; margin-inline-end: var(--kn-hero-gap); }
+  /* Bleeding: out to the window on its side and past the hero's padding, whatever the page's rhythm has made that, and clipped at the hero's edges. */
+  .kn-hero[data-kn-picture$="-bleed"] { overflow: clip; }
+  .kn-hero[data-kn-picture$="-bleed"] .kn-hero-media {
+    margin-block: calc(-1 * (var(--kn-space-band) + var(--kn-header-height))) calc(-1 * var(--kn-space-band));
+    border-radius: 0;
+  }
+  .kn-hero[data-kn-picture="end-bleed"] .kn-hero-media { grid-column-end: window-end; }
+  .kn-hero[data-kn-picture="start-bleed"] .kn-hero-media { grid-column-start: window-start; }
+  /* A transparent header's words lie on a bleeding picture too, so they get the hero's own colour to stand on. */
+  .kn-page[data-kn-header-start="under"] > .kn-page-main > .kn-hero:first-child[data-kn-picture$="-bleed"] .kn-hero-media::after {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto;
+    block-size: calc(var(--kn-header-height) + 6rem);
+    background: linear-gradient(to bottom, var(--kn-background) var(--kn-header-height), transparent);
+  }
+  /* On a phone the picture stands above the text, and a chosen picture never vanishes: its row holds at least a 16:9 share of its
+     width and the gap below it, and the hero grows past its chosen height when text and picture together need more. Past that it
+     takes what the text leaves. It lies out of the flow in that row, and a bleeding one also has the padding above, so its row needs that
+     much less. The content width is written out with the window's width, since a percentage says nothing in a row of no set height. */
+  @media (width <= 40rem) {
+    .kn-hero[data-kn-picture] > .kn-hero-content { position: relative; grid-template-rows: minmax(calc(min(100vw - 2 * var(--kn-layout-side-margin), var(--kn-layout-wide)) * 9 / 16 + var(--kn-space-column-gap)), 1fr) auto; }
+    .kn-hero[data-kn-picture$="-bleed"] > .kn-hero-content { grid-template-rows: minmax(calc(100vw * 9 / 16 - var(--kn-space-band) + var(--kn-space-column-gap)), 1fr) auto; }
+    .kn-hero[data-kn-picture] .kn-hero-text { grid-area: 2 / rail-start / auto / rail-end; margin-inline: 0; }
+    .kn-hero[data-kn-picture] .kn-hero-media { position: absolute; inset: 0 0 var(--kn-space-column-gap); grid-area: 1 / rail-start / 2 / rail-end; margin-inline: 0; }
+    .kn-hero[data-kn-picture$="-bleed"] .kn-hero-media { grid-column: window-start / window-end; margin-block-end: 0; }
+  }
+
+  /* Text at the top or the bottom of a picture behind it: the overlay stands on the text itself, so it has its full,
+     tested strength all the way through the text, however long it runs, and fades away beyond it, where the picture is clear.
+     It is one layer in the overlay's colour, and its masks say where it shows. Masks add up to at most the whole layer,
+     so nothing laid on the fade can darken the picture past the tested strength. */
+  .kn-hero:is([data-kn-place="top"], [data-kn-place="bottom"])[data-kn-surface^="picture-"] {
     --kn-scrim-fade-length: clamp(6rem, 24svh, 16rem);
     background-image: var(--kn-picture-image, none);
     isolation: isolate;
     overflow: clip;
   }
-  .kn-hero[data-kn-place="bottom"][data-kn-surface^="picture-"] > .kn-hero-content { position: relative; }
-  .kn-hero[data-kn-place="bottom"][data-kn-surface^="picture-"] > .kn-hero-content::before {
+  .kn-hero:is([data-kn-place="top"], [data-kn-place="bottom"])[data-kn-surface^="picture-"] > .kn-hero-content { position: relative; }
+  .kn-hero:is([data-kn-place="top"], [data-kn-place="bottom"])[data-kn-surface^="picture-"] > .kn-hero-content::before {
     content: "";
     position: absolute;
     z-index: -1;
-    inset-block: calc(-1 * var(--kn-scrim-fade-length)) calc(-1 * var(--kn-space-band));
     inset-inline: calc((100% - 100vw) / 2);
-    background: var(--kn-scrim-fade);
+    background: var(--kn-scrim);
+    mask-image: var(--kn-scrim-fade);
   }
-  /* A transparent header's words lie on the picture too, so they keep the overlay's strength. */
-  .kn-page[data-kn-header-start="under"] > .kn-page-main > .kn-hero:first-child[data-kn-place="bottom"][data-kn-surface^="picture-"] {
-    background-image: var(--kn-scrim-header), var(--kn-picture-image, none);
+  .kn-hero[data-kn-place="bottom"][data-kn-surface^="picture-"] > .kn-hero-content::before {
+    inset-block: calc(-1 * var(--kn-scrim-fade-length)) calc(-1 * var(--kn-space-band));
+  }
+  /* The mirror: full strength from the hero's top, past any header over it, down to the text's last line. */
+  .kn-hero[data-kn-place="top"][data-kn-surface^="picture-"] { --kn-scrim-fade-direction: to top; }
+  .kn-hero[data-kn-place="top"][data-kn-surface^="picture-"] > .kn-hero-content::before {
+    inset-block: calc(-1 * (var(--kn-space-band) + var(--kn-header-height))) calc(-1 * var(--kn-scrim-fade-length));
+  }
+  /* A transparent header's words lie on the picture too, so they keep the overlay's strength. With the text at the top
+     they already stand on the full overlay. With it at the bottom the header gets a mask of its own, and the layer starts
+     far enough above the text to hold it, past the hero's top wherever the text leaves that. Both masks stand on the layer's
+     bottom, the hero's: the fade's as tall as the text and its own length, and the header's as tall as the hero, which is its
+     chosen height or, with more text, the layer less the chosen height. */
+  .kn-page[data-kn-header-start="under"] > .kn-page-main > .kn-hero:first-child[data-kn-place="bottom"][data-kn-surface^="picture-"] > .kn-hero-content::before {
+    --kn-scrim-reach: calc(var(--kn-hero-height, 0rem) + var(--kn-header-height) + var(--kn-space-band));
+    inset-block-start: calc(-1 * var(--kn-scrim-reach));
+    mask-image: var(--kn-scrim-fade), var(--kn-scrim-header);
+    mask-position: bottom;
+    mask-repeat: no-repeat;
+    mask-size: 100% calc(100% - var(--kn-scrim-reach) + var(--kn-scrim-fade-length)), 100% max(var(--kn-hero-height, 0rem), calc(100% - var(--kn-hero-height, 0rem)));
   }
 }

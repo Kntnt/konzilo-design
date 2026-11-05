@@ -1,9 +1,10 @@
 @layer kn-components {
-  .kn-breadcrumbs { margin-block: 1em; color: var(--kn-text-muted); }
-  .kn-breadcrumbs > ol { display: flex; flex-wrap: wrap; gap: 0.35em 0; list-style: none; margin: 0; padding: 0; }
+  /* It stands directly above the page's H1, and is quiet: all of it muted, a little under small text and never under a label. */
+  .kn-breadcrumbs { margin-block: 0 var(--kn-space-component-gap); color: var(--kn-text-muted); }
+  .kn-breadcrumbs > ol { display: flex; flex-wrap: wrap; gap: 0.35em 0; list-style: none; margin: 0; padding: 0; font-size: max(var(--kn-type-label-size), 0.92em); }
   .kn-breadcrumbs > ol > li { display: inline-flex; align-items: baseline; min-inline-size: 0; margin: 0; overflow-wrap: anywhere; }
-  .kn-breadcrumbs a { color: var(--kn-text); text-decoration: none; }
-  .kn-breadcrumbs a:hover { text-decoration: underline; text-underline-offset: 0.18em; }
+  .kn-breadcrumbs a { color: inherit; text-decoration: none; }
+  .kn-breadcrumbs a:hover { color: var(--kn-text); text-decoration: underline; text-underline-offset: 0.18em; }
   .kn-breadcrumbs-separator::before { content: "/"; display: inline-block; margin-inline: 0.65em; }
   .kn-breadcrumbs[data-kn-separator="chevron"] .kn-breadcrumbs-separator::before { content: "\203A"; }
   .kn-breadcrumbs[data-kn-separator="arrow"] .kn-breadcrumbs-separator::before { content: "\2192"; }
@@ -23,8 +24,4 @@
     .kn-breadcrumbs[data-kn-narrow="parent"] > ol > li:nth-last-child(2) a::before { content: "\2190"; margin-inline-end: 0.5em; }
     .kn-breadcrumbs[data-kn-narrow="parent"]:dir(rtl) > ol > li:nth-last-child(2) a::before { content: "\2192"; }
   }
-  /* A thin band of its own, under the header. */
-  .kn-band.kn-breadcrumb-band { padding-block: 0.75rem; }
-  .kn-breadcrumb-band .kn-breadcrumbs { margin-block: 0; }
-  .kn-hero-text > .kn-breadcrumbs:first-child { margin-block: 0 var(--kn-space-component-gap); }
 }

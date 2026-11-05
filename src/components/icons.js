@@ -1,4 +1,4 @@
-// Lucide inner SVG markup; ISC licence in LICENSE-lucide.txt.
+// Inner SVG markup. Lucide's, ISC licence in LICENSE-lucide.txt, unless marked below.
 export const icons = {
   "house": "<path d=\"M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8\" />\n  <path d=\"M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z\" />",
   "cookie": "<path d=\"M11 17h.01\" />\n  <path d=\"M11.496 2c.324-.016.558.292.529.615a4 4 0 004.235 4.368.713.713 0 01.758.757 4 4 0 004.366 4.237c.323-.03.63.204.614.527a10 10 0 01-2.915 6.566A1 1 0 114.93 4.918 10 10 0 0111.496 2\" />\n  <path d=\"M12 12h.01\" />\n  <path d=\"M16 16h.01\" />\n  <path d=\"M16 3h.01\" />\n  <path d=\"M21 4h.01\" />\n  <path d=\"M21 8h.01\" />\n  <path d=\"M7 14h.01\" />\n  <path d=\"M9 8h.01\" />",
@@ -22,5 +22,11 @@ export const icons = {
   "triangle-alert": "<path d=\"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3\" />\n  <path d=\"M12 9v4\" />\n  <path d=\"M12 17h.01\" />",
   "circle-check": "<circle cx=\"12\" cy=\"12\" r=\"10\" />\n  <path d=\"m16 9-5.5 5.5L8 12\" />",
   "circle-x": "<circle cx=\"12\" cy=\"12\" r=\"10\" />\n  <path d=\"m15 9-6 6\" />\n  <path d=\"m9 9 6 6\" />",
-  "calendar": "<path d=\"M8 2v3\" />\n  <path d=\"M16 2v3\" />\n  <rect x=\"3\" y=\"3\" width=\"18\" height=\"18\" rx=\"2\" />\n  <path d=\"M3 9h18\" />"
+  "calendar": "<path d=\"M8 2v3\" />\n  <path d=\"M16 2v3\" />\n  <rect x=\"3\" y=\"3\" width=\"18\" height=\"18\" rx=\"2\" />\n  <path d=\"M3 9h18\" />",
+  // Links to social media and feeds: Tabler's outline icons; MIT licence in LICENSE-tabler.txt.
+  "linkedin": "<path d=\"M8 11v5\" />\n  <path d=\"M8 8v.01\" />\n  <path d=\"M12 16v-5\" />\n  <path d=\"M16 16v-3a2 2 0 1 0 -4 0\" />\n  <path d=\"M3 7a4 4 0 0 1 4 -4h10a4 4 0 0 1 4 4v10a4 4 0 0 1 -4 4h-10a4 4 0 0 1 -4 -4l0 -10\" />",
+  "facebook": "<path d=\"M7 10v4h3v7h4v-7h3l1 -4h-4v-2a1 1 0 0 1 1 -1h3v-4h-3a5 5 0 0 0 -5 5v2h-3\" />",
+  "youtube": "<path d=\"M2 8a4 4 0 0 1 4 -4h12a4 4 0 0 1 4 4v8a4 4 0 0 1 -4 4h-12a4 4 0 0 1 -4 -4v-8\" />\n  <path d=\"M10 9l5 3l-5 3l0 -6\" />",
+  "spotify": "<path d=\"M3 12a9 9 0 1 0 18 0a9 9 0 1 0 -18 0\" />\n  <path d=\"M8 11.973c2.5 -1.473 5.5 -.973 7.5 .527\" />\n  <path d=\"M9 15c1.5 -1 4 -1 5 .5\" />\n  <path d=\"M7 9c2 -1 6 -2 10 .5\" />",
+  "rss": "<path d=\"M4 19a1 1 0 1 0 2 0a1 1 0 1 0 -2 0\" />\n  <path d=\"M4 4a16 16 0 0 1 16 16\" />\n  <path d=\"M4 11a9 9 0 0 1 9 9\" />",
 };

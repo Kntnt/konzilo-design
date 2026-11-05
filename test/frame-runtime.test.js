@@ -96,7 +96,7 @@ test('Header measures skipped steps, publishes geometry, defers appearance until
     main.querySelector = () => band;
     doc.querySelectorAll = () => [header];
     dispose = setupHeaders();
-    assert.equal(header.dataset.knCollapsed, 'name links word language', 'the stacked slogan frees no width and is retained');
+    assert.equal(header.dataset.knCollapsed, 'name links word language', 'a slogan below a wider brand frees no width, so it is no step of its own');
     assert.equal(root.style['--kn-header-height'], '4rem');
     assert.equal(root.style['--kn-header-visible-height'], '4rem');
     assert.equal(header.dataset.knSurface, 'brand');

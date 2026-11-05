@@ -1,18 +1,20 @@
 ---
 import type { HTMLAttributes } from 'astro/types';
-// An eyebrow, semantic heading and optional introductory deck.
+// An eyebrow, semantic heading and optional introductory deck. With level false the look stays and the meaning goes: the
+// heading is a plain paragraph, and the group a plain block, since an hgroup without a heading is not valid.
 interface Props extends HTMLAttributes<'hgroup'> {
   heading: string;
   eyebrow?: string;
   deck?: string;
-  level?: 1 | 2 | 3 | 4 | 5 | 6;
+  level?: 1 | 2 | 3 | 4 | 5 | 6 | false;
   type?: 'display' | 'heading-1' | 'heading-2' | 'heading-3' | 'heading-4' | 'heading-5' | 'heading-6';
 }
 const { heading, eyebrow, deck, level = 2, type = 'heading-2', class: className, ...attributes } = Astro.props;
-const Heading = `h${level}` as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
+const Group = level === false ? 'div' : 'hgroup';
+const Heading = level === false ? 'p' : `h${level}` as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
 ---
-<hgroup {...attributes} class:list={['kn-heading-group', className]}>
+<Group {...attributes} class:list={['kn-heading-group', className]}>
   {eyebrow && <p class="kn-heading-group-eyebrow" data-kn-type="label">{eyebrow}</p>}
   <Heading class="kn-heading-group-heading" data-kn-type={type}>{heading}</Heading>
   {deck && <p class="kn-heading-group-deck" data-kn-type="lead">{deck}</p>}
-</hgroup>
+</Group>
