@@ -70,7 +70,7 @@ test('every component has a typed wrapper; seven library runtimes and only the d
     } else assert.doesNotMatch(source, /<script/);
     assert.doesNotMatch(source, /<h[1-6]\b/);
   }
-  assert.equal(Object.keys(icons).length, 28);
+  assert.equal(Object.keys(icons).length, 30);
   for (const markup of Object.values(icons)) assert.doesNotMatch(markup, /<svg|<script|\bhref=/);
   assert.match(await readFile(new URL('LICENSE-lucide.txt', directory), 'utf8'), /ISC License/);
   assert.match(await readFile(new URL('LICENSE-tabler.txt', directory), 'utf8'), /MIT License/);

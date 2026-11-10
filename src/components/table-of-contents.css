@@ -8,4 +8,26 @@
   .kn-toc ol ol a { color: var(--kn-text-muted); }
   .kn-toc a:hover { text-decoration: underline; text-underline-offset: 0.18em; }
   .kn-toc[data-kn-surface] { padding: var(--kn-space-plate); border-radius: var(--kn-radius-card); }
+  /* A following menu (directives.md, `toc`) marks the section being read on a rail along its links. Its reading
+     line is the Reading Area's sticky inset, which the runtime reads, resolved, from this scroll margin. Only
+     colours change as the mark moves, so no line of the menu reflows. */
+  .kn-toc[data-kn-follow] { scroll-margin-block-start: var(--kn-reading-sticky-inset, calc(var(--kn-header-visible-height, 0rem) + var(--kn-space-component-gap))); }
+  .kn-toc[data-kn-follow] > ol { border-inline-start: 1px solid var(--kn-border); }
+  .kn-toc[data-kn-follow] li { margin-block: 0; }
+  .kn-toc[data-kn-follow] ol ol { padding-inline-start: 0; }
+  .kn-toc[data-kn-follow] a {
+    display: block;
+    margin-inline-start: -0.125rem;
+    padding-block: 0.3em;
+    padding-inline: 0.875em 0;
+    border-inline-start: 0.1875rem solid transparent;
+    color: var(--kn-text-muted);
+    transition: color var(--kn-duration-feedback) var(--kn-easing-standard), border-color var(--kn-duration-feedback) var(--kn-easing-standard);
+  }
+  .kn-toc[data-kn-follow] ol ol a { padding-inline-start: 1.875em; }
+  .kn-toc[data-kn-follow] a:hover { color: var(--kn-text); }
+  .kn-toc[data-kn-follow] a[aria-current="true"] { color: var(--kn-text); border-inline-start-color: var(--kn-accent); }
+  @media (forced-colors: active) {
+    .kn-toc[data-kn-follow] a[aria-current="true"] { border-inline-start-color: currentColor; }
+  }
 }

@@ -1,13 +1,25 @@
 @layer kn-components {
+  /* The columns a caller sets. A series from the directives, .kn-cards, takes its columns from its number of cards instead (cards.css). */
   .kn-card-grid {
     --kn-card-grid-minimum: 15rem;
     --kn-card-grid-columns: 3;
     display: grid;
     gap: var(--kn-space-column-gap);
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, max(var(--kn-card-grid-minimum), calc((100% - (var(--kn-card-grid-columns) - 1) * var(--kn-space-column-gap)) / var(--kn-card-grid-columns)))), 1fr));
+    /* A share a hair under its fraction, which 1fr gives back, so a browser's rounding never pushes the last column to a row of its own. */
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, max(var(--kn-card-grid-minimum), calc((100% - (var(--kn-card-grid-columns) - 1) * var(--kn-space-column-gap)) * 0.99 / var(--kn-card-grid-columns)))), 1fr));
     align-items: stretch;
   }
   .kn-card-grid[data-kn-columns="1"] { --kn-card-grid-columns: 1; }
   .kn-card-grid[data-kn-columns="2"] { --kn-card-grid-columns: 2; }
-  .kn-card-grid[data-kn-columns="4"] { --kn-card-grid-columns: 4; }
+  /* Four columns, or two, or one: never three and one, as Key Figures. The terms times 999 are the switches. */
+  .kn-card-grid[data-kn-columns="4"] {
+    --kn-card-grid-columns: 4;
+    --kn-card-grid-four: calc(4 * var(--kn-card-grid-minimum) + 3 * var(--kn-space-column-gap));
+    --kn-card-grid-two: calc(2 * var(--kn-card-grid-minimum) + var(--kn-space-column-gap));
+    grid-template-columns: repeat(auto-fit, minmax(max(
+      (100% - 3 * var(--kn-space-column-gap)) * 0.99 / 4,
+      min((100% - var(--kn-space-column-gap)) * 0.99 / 2, (var(--kn-card-grid-four) - 100%) * 999),
+      min(100%, (var(--kn-card-grid-two) - 100%) * 999)
+    ), 1fr));
+  }
 }

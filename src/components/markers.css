@@ -1,0 +1,126 @@
+/* A list's markers (docs/spec/directives.md, List): the numberings, the signs and the room they need, on the attributes
+   markerAttributes gives each level. A level without them keeps the design's bullets and numbers, in body-text.css. */
+
+/* The numberings, so a numbered list stays a real <ol>. kn-<numbering> is the bare number, and its punctuation's forms
+   stand beside it. A latin or greek numbering doubles after its last letter, y, z, aa, bb, as a symbolic counter does;
+   double-latin begins doubled and counts aa to zz, aaa to zzz and aaaa to zzzz before it falls back to single letters. */
+@counter-style kn-decimal { system: extends decimal; suffix: " "; }
+@counter-style kn-lower-latin { system: symbolic; symbols: a b c d e f g h i j k l m n o p q r s t u v w x y z; suffix: " "; }
+@counter-style kn-upper-latin { system: symbolic; symbols: A B C D E F G H I J K L M N O P Q R S T U V W X Y Z; suffix: " "; }
+@counter-style kn-lower-roman { system: extends lower-roman; suffix: " "; }
+@counter-style kn-upper-roman { system: extends upper-roman; suffix: " "; }
+@counter-style kn-lower-greek { system: symbolic; symbols: α β γ δ ε ζ η θ ι κ λ μ ν ξ ο π ρ σ τ υ φ χ ψ ω; suffix: " "; }
+@counter-style kn-double-latin { system: fixed; symbols: aa bb cc dd ee ff gg hh ii jj kk ll mm nn oo pp qq rr ss tt uu vv ww xx yy zz aaa bbb ccc ddd eee fff ggg hhh iii jjj kkk lll mmm nnn ooo ppp qqq rrr sss ttt uuu vvv www xxx yyy zzz aaaa bbbb cccc dddd eeee ffff gggg hhhh iiii jjjj kkkk llll mmmm nnnn oooo pppp qqqq rrrr ssss tttt uuuu vvvv wwww xxxx yyyy zzzz; fallback: kn-lower-latin; suffix: " "; }
+@counter-style kn-decimal-period { system: extends kn-decimal; suffix: ". "; }
+@counter-style kn-decimal-parenthesis { system: extends kn-decimal; suffix: ") "; }
+@counter-style kn-decimal-brackets { system: extends kn-decimal; prefix: "("; suffix: ") "; }
+@counter-style kn-lower-latin-period { system: extends kn-lower-latin; suffix: ". "; }
+@counter-style kn-lower-latin-parenthesis { system: extends kn-lower-latin; suffix: ") "; }
+@counter-style kn-lower-latin-brackets { system: extends kn-lower-latin; prefix: "("; suffix: ") "; }
+@counter-style kn-upper-latin-period { system: extends kn-upper-latin; suffix: ". "; }
+@counter-style kn-upper-latin-parenthesis { system: extends kn-upper-latin; suffix: ") "; }
+@counter-style kn-upper-latin-brackets { system: extends kn-upper-latin; prefix: "("; suffix: ") "; }
+@counter-style kn-lower-roman-period { system: extends kn-lower-roman; suffix: ". "; }
+@counter-style kn-lower-roman-parenthesis { system: extends kn-lower-roman; suffix: ") "; }
+@counter-style kn-lower-roman-brackets { system: extends kn-lower-roman; prefix: "("; suffix: ") "; }
+@counter-style kn-upper-roman-period { system: extends kn-upper-roman; suffix: ". "; }
+@counter-style kn-upper-roman-parenthesis { system: extends kn-upper-roman; suffix: ") "; }
+@counter-style kn-upper-roman-brackets { system: extends kn-upper-roman; prefix: "("; suffix: ") "; }
+@counter-style kn-lower-greek-period { system: extends kn-lower-greek; suffix: ". "; }
+@counter-style kn-lower-greek-parenthesis { system: extends kn-lower-greek; suffix: ") "; }
+@counter-style kn-lower-greek-brackets { system: extends kn-lower-greek; prefix: "("; suffix: ") "; }
+@counter-style kn-double-latin-period { system: extends kn-double-latin; suffix: ". "; }
+@counter-style kn-double-latin-parenthesis { system: extends kn-double-latin; suffix: ") "; }
+@counter-style kn-double-latin-brackets { system: extends kn-double-latin; prefix: "("; suffix: ") "; }
+
+@layer kn-components {
+  /* Each numbering's counter style, and the room its widest markers need before the text. */
+  [data-kn-numbering="decimal"] { --kn-list-style: kn-decimal; --kn-list-marker: kn-decimal; --kn-list-room: 1.5em; }
+  [data-kn-numbering="lower-latin"] { --kn-list-style: kn-lower-latin; --kn-list-marker: kn-lower-latin; --kn-list-room: 1.5em; }
+  [data-kn-numbering="upper-latin"] { --kn-list-style: kn-upper-latin; --kn-list-marker: kn-upper-latin; --kn-list-room: 1.75em; }
+  [data-kn-numbering="lower-roman"] { --kn-list-style: kn-lower-roman; --kn-list-marker: kn-lower-roman; --kn-list-room: 2.25em; }
+  [data-kn-numbering="upper-roman"] { --kn-list-style: kn-upper-roman; --kn-list-marker: kn-upper-roman; --kn-list-room: 2.75em; }
+  [data-kn-numbering="lower-greek"] { --kn-list-style: kn-lower-greek; --kn-list-marker: kn-lower-greek; --kn-list-room: 1.5em; }
+  [data-kn-numbering="double-latin"] { --kn-list-style: kn-double-latin; --kn-list-marker: kn-double-latin; --kn-list-room: 2em; }
+  [data-kn-numbering="decimal"][data-kn-punctuation="period"] { --kn-list-marker: kn-decimal-period; } [data-kn-numbering="decimal"][data-kn-punctuation="parenthesis"] { --kn-list-marker: kn-decimal-parenthesis; } [data-kn-numbering="decimal"][data-kn-punctuation="brackets"] { --kn-list-marker: kn-decimal-brackets; }
+  [data-kn-numbering="lower-latin"][data-kn-punctuation="period"] { --kn-list-marker: kn-lower-latin-period; } [data-kn-numbering="lower-latin"][data-kn-punctuation="parenthesis"] { --kn-list-marker: kn-lower-latin-parenthesis; } [data-kn-numbering="lower-latin"][data-kn-punctuation="brackets"] { --kn-list-marker: kn-lower-latin-brackets; }
+  [data-kn-numbering="upper-latin"][data-kn-punctuation="period"] { --kn-list-marker: kn-upper-latin-period; } [data-kn-numbering="upper-latin"][data-kn-punctuation="parenthesis"] { --kn-list-marker: kn-upper-latin-parenthesis; } [data-kn-numbering="upper-latin"][data-kn-punctuation="brackets"] { --kn-list-marker: kn-upper-latin-brackets; }
+  [data-kn-numbering="lower-roman"][data-kn-punctuation="period"] { --kn-list-marker: kn-lower-roman-period; } [data-kn-numbering="lower-roman"][data-kn-punctuation="parenthesis"] { --kn-list-marker: kn-lower-roman-parenthesis; } [data-kn-numbering="lower-roman"][data-kn-punctuation="brackets"] { --kn-list-marker: kn-lower-roman-brackets; }
+  [data-kn-numbering="upper-roman"][data-kn-punctuation="period"] { --kn-list-marker: kn-upper-roman-period; } [data-kn-numbering="upper-roman"][data-kn-punctuation="parenthesis"] { --kn-list-marker: kn-upper-roman-parenthesis; } [data-kn-numbering="upper-roman"][data-kn-punctuation="brackets"] { --kn-list-marker: kn-upper-roman-brackets; }
+  [data-kn-numbering="lower-greek"][data-kn-punctuation="period"] { --kn-list-marker: kn-lower-greek-period; } [data-kn-numbering="lower-greek"][data-kn-punctuation="parenthesis"] { --kn-list-marker: kn-lower-greek-parenthesis; } [data-kn-numbering="lower-greek"][data-kn-punctuation="brackets"] { --kn-list-marker: kn-lower-greek-brackets; }
+  [data-kn-numbering="double-latin"][data-kn-punctuation="period"] { --kn-list-marker: kn-double-latin-period; } [data-kn-numbering="double-latin"][data-kn-punctuation="parenthesis"] { --kn-list-marker: kn-double-latin-parenthesis; } [data-kn-numbering="double-latin"][data-kn-punctuation="brackets"] { --kn-list-marker: kn-double-latin-brackets; }
+  [data-kn-numbering] { --kn-list-before: ""; --kn-list-after: ""; --kn-list-extra: 0em; }
+  [data-kn-numbering][data-kn-punctuation="period"] { --kn-list-after: "."; }
+  [data-kn-numbering][data-kn-punctuation="parenthesis"] { --kn-list-after: ")"; }
+  [data-kn-numbering][data-kn-punctuation="brackets"] { --kn-list-before: "("; --kn-list-after: ")"; --kn-list-extra: 0.4em; }
+  /* Ten items or more need room for two digits, and a hundred for three. */
+  [data-kn-numbering="decimal"]:has(> li:nth-child(10)) { --kn-list-room: 2em; }
+  [data-kn-numbering="decimal"]:has(> li:nth-child(100)) { --kn-list-room: 2.5em; }
+  /* A latin or greek letter doubles after its last, so a long list needs room for two. */
+  :is([data-kn-numbering="lower-latin"], [data-kn-numbering="upper-latin"]):has(> li:nth-child(27)), [data-kn-numbering="lower-greek"]:has(> li:nth-child(25)) { --kn-list-room: 2.25em; }
+
+  ol[data-kn-numbering]:not(.kn-timeline) { padding-inline-start: calc(var(--kn-list-room) + var(--kn-list-extra)); list-style-type: var(--kn-list-marker); }
+  :is(ol[data-kn-numbering]:not(.kn-timeline) > li::marker, ol[data-kn-numbering]:not(.kn-timeline)[data-kn-dotted] > li::before) { color: var(--kn-text-muted); font-variant-numeric: tabular-nums; }
+
+  /* A dotted level: the number of the item above, a full stop and its own, which a counter style cannot hold, so it is
+     drawn before the item from a counter for each depth, hanging where a marker would. Each depth keeps the numbers of the
+     depths above as their own levels wrote them. Setting these counters takes the place of the browser's own reset of
+     the list's numbers, so they are reset here too, from start: by its value up to 30 in every engine, and by attr() beyond
+     that in an engine that reads it. */
+  ol[data-kn-numbering]:not(.kn-timeline) { --kn-list-start: 0; }
+  ol[data-kn-numbering]:not(.kn-timeline)[start="0"] { --kn-list-start: -1; } ol[data-kn-numbering]:not(.kn-timeline)[start="1"] { --kn-list-start: 0; } ol[data-kn-numbering]:not(.kn-timeline)[start="2"] { --kn-list-start: 1; } ol[data-kn-numbering]:not(.kn-timeline)[start="3"] { --kn-list-start: 2; } ol[data-kn-numbering]:not(.kn-timeline)[start="4"] { --kn-list-start: 3; } ol[data-kn-numbering]:not(.kn-timeline)[start="5"] { --kn-list-start: 4; }
+  ol[data-kn-numbering]:not(.kn-timeline)[start="6"] { --kn-list-start: 5; } ol[data-kn-numbering]:not(.kn-timeline)[start="7"] { --kn-list-start: 6; } ol[data-kn-numbering]:not(.kn-timeline)[start="8"] { --kn-list-start: 7; } ol[data-kn-numbering]:not(.kn-timeline)[start="9"] { --kn-list-start: 8; } ol[data-kn-numbering]:not(.kn-timeline)[start="10"] { --kn-list-start: 9; } ol[data-kn-numbering]:not(.kn-timeline)[start="11"] { --kn-list-start: 10; }
+  ol[data-kn-numbering]:not(.kn-timeline)[start="12"] { --kn-list-start: 11; } ol[data-kn-numbering]:not(.kn-timeline)[start="13"] { --kn-list-start: 12; } ol[data-kn-numbering]:not(.kn-timeline)[start="14"] { --kn-list-start: 13; } ol[data-kn-numbering]:not(.kn-timeline)[start="15"] { --kn-list-start: 14; } ol[data-kn-numbering]:not(.kn-timeline)[start="16"] { --kn-list-start: 15; } ol[data-kn-numbering]:not(.kn-timeline)[start="17"] { --kn-list-start: 16; }
+  ol[data-kn-numbering]:not(.kn-timeline)[start="18"] { --kn-list-start: 17; } ol[data-kn-numbering]:not(.kn-timeline)[start="19"] { --kn-list-start: 18; } ol[data-kn-numbering]:not(.kn-timeline)[start="20"] { --kn-list-start: 19; } ol[data-kn-numbering]:not(.kn-timeline)[start="21"] { --kn-list-start: 20; } ol[data-kn-numbering]:not(.kn-timeline)[start="22"] { --kn-list-start: 21; } ol[data-kn-numbering]:not(.kn-timeline)[start="23"] { --kn-list-start: 22; }
+  ol[data-kn-numbering]:not(.kn-timeline)[start="24"] { --kn-list-start: 23; } ol[data-kn-numbering]:not(.kn-timeline)[start="25"] { --kn-list-start: 24; } ol[data-kn-numbering]:not(.kn-timeline)[start="26"] { --kn-list-start: 25; } ol[data-kn-numbering]:not(.kn-timeline)[start="27"] { --kn-list-start: 26; } ol[data-kn-numbering]:not(.kn-timeline)[start="28"] { --kn-list-start: 27; } ol[data-kn-numbering]:not(.kn-timeline)[start="29"] { --kn-list-start: 28; }
+  ol[data-kn-numbering]:not(.kn-timeline)[start="30"] { --kn-list-start: 29; }
+  ol[data-kn-numbering]:not(.kn-timeline) { counter-reset: list-item var(--kn-list-start) kn-list-1 var(--kn-list-start); counter-reset: list-item calc(attr(start type(<integer>), 1) - 1) kn-list-1 calc(attr(start type(<integer>), 1) - 1); }
+  ol[data-kn-numbering]:not(.kn-timeline) > li { counter-increment: kn-list-1; --kn-list-1: counter(kn-list-1, var(--kn-list-style)); --kn-list-number: var(--kn-list-1); }
+  ol[data-kn-numbering]:not(.kn-timeline) ol[data-kn-numbering]:not(.kn-timeline) { counter-reset: list-item var(--kn-list-start) kn-list-2 var(--kn-list-start); counter-reset: list-item calc(attr(start type(<integer>), 1) - 1) kn-list-2 calc(attr(start type(<integer>), 1) - 1); }
+  ol[data-kn-numbering]:not(.kn-timeline) ol[data-kn-numbering]:not(.kn-timeline) > li { counter-increment: kn-list-2; --kn-list-1: inherit; --kn-list-2: counter(kn-list-2, var(--kn-list-style)); --kn-list-number: var(--kn-list-2); }
+  ol[data-kn-numbering]:not(.kn-timeline) ol[data-kn-numbering]:not(.kn-timeline)[data-kn-dotted] > li { --kn-list-2: var(--kn-list-1) "." counter(kn-list-2, var(--kn-list-style)); }
+  ol[data-kn-numbering]:not(.kn-timeline) ol[data-kn-numbering]:not(.kn-timeline) ol[data-kn-numbering]:not(.kn-timeline) { counter-reset: list-item var(--kn-list-start) kn-list-3 var(--kn-list-start); counter-reset: list-item calc(attr(start type(<integer>), 1) - 1) kn-list-3 calc(attr(start type(<integer>), 1) - 1); }
+  ol[data-kn-numbering]:not(.kn-timeline) ol[data-kn-numbering]:not(.kn-timeline) ol[data-kn-numbering]:not(.kn-timeline) > li { counter-increment: kn-list-3; --kn-list-1: inherit; --kn-list-2: inherit; --kn-list-3: counter(kn-list-3, var(--kn-list-style)); --kn-list-number: var(--kn-list-3); }
+  ol[data-kn-numbering]:not(.kn-timeline) ol[data-kn-numbering]:not(.kn-timeline) ol[data-kn-numbering]:not(.kn-timeline)[data-kn-dotted] > li { --kn-list-3: var(--kn-list-2) "." counter(kn-list-3, var(--kn-list-style)); }
+  ol[data-kn-numbering]:not(.kn-timeline) ol[data-kn-numbering]:not(.kn-timeline) ol[data-kn-numbering]:not(.kn-timeline) ol[data-kn-numbering]:not(.kn-timeline) { counter-reset: list-item var(--kn-list-start) kn-list-4 var(--kn-list-start); counter-reset: list-item calc(attr(start type(<integer>), 1) - 1) kn-list-4 calc(attr(start type(<integer>), 1) - 1); }
+  ol[data-kn-numbering]:not(.kn-timeline) ol[data-kn-numbering]:not(.kn-timeline) ol[data-kn-numbering]:not(.kn-timeline) ol[data-kn-numbering]:not(.kn-timeline) > li { counter-increment: kn-list-4; --kn-list-1: inherit; --kn-list-2: inherit; --kn-list-3: inherit; --kn-list-4: counter(kn-list-4, var(--kn-list-style)); --kn-list-number: var(--kn-list-4); }
+  ol[data-kn-numbering]:not(.kn-timeline) ol[data-kn-numbering]:not(.kn-timeline) ol[data-kn-numbering]:not(.kn-timeline) ol[data-kn-numbering]:not(.kn-timeline)[data-kn-dotted] > li { --kn-list-4: var(--kn-list-3) "." counter(kn-list-4, var(--kn-list-style)); }
+  ol[data-kn-numbering]:not(.kn-timeline)[data-kn-dotted] { --kn-list-room: 2.25em; list-style-type: none; }
+  ol[data-kn-numbering]:not(.kn-timeline)[data-kn-dotted] ol[data-kn-numbering]:not(.kn-timeline)[data-kn-dotted] { --kn-list-room: 3em; }
+  ol[data-kn-numbering]:not(.kn-timeline)[data-kn-dotted] > li { position: relative; }
+  ol[data-kn-numbering]:not(.kn-timeline)[data-kn-dotted] > li::before { content: var(--kn-list-before) var(--kn-list-number) var(--kn-list-after); position: absolute; inset-inline-end: 100%; padding-inline-end: 0.3em; white-space: nowrap; }
+
+  /* A sign: a check or a cross before each item, drawn with borders, which forced colours keep, so no image is needed.
+     The check takes the accent, the colour of small marks; the cross the muted text, so it reads as what is left out. */
+  ul[data-kn-sign]:not(.kn-reasons, .kn-card-grid) { --kn-sign-size: 0.8em; --kn-sign-line: 0.13em; list-style: none; padding-inline-start: 1.6em; }
+  ul[data-kn-sign]:not(.kn-reasons, .kn-card-grid) > li { position: relative; }
+  ul[data-kn-sign]:not(.kn-reasons, .kn-card-grid) > li::before,
+  ul[data-kn-sign="cross"]:not(.kn-reasons, .kn-card-grid) > li::after {
+    content: "";
+    position: absolute;
+    inset-inline-start: -1.4em;
+    inset-block-start: 0.35em;
+    inset-block-start: calc(0.5lh - var(--kn-sign-size) / 2);
+    inline-size: var(--kn-sign-size);
+    block-size: var(--kn-sign-size);
+  }
+  /* The check's two strokes are the corner of a box turned a quarter, the same in either direction of writing. */
+  ul[data-kn-sign="check"]:not(.kn-reasons, .kn-card-grid) > li::before {
+    inline-size: calc(var(--kn-sign-size) * 0.45);
+    margin-inline-start: calc(var(--kn-sign-size) * 0.25);
+    translate: 0 calc(var(--kn-sign-size) * -0.08);
+    border-style: solid;
+    border-color: var(--kn-accent);
+    border-width: 0 var(--kn-sign-line) var(--kn-sign-line) 0;
+    rotate: 45deg;
+  }
+  /* The cross is two strokes, each a box's side turned an eighth either way. */
+  ul[data-kn-sign="cross"]:not(.kn-reasons, .kn-card-grid) > li::before,
+  ul[data-kn-sign="cross"]:not(.kn-reasons, .kn-card-grid) > li::after {
+    inline-size: 0;
+    margin-inline-start: calc((var(--kn-sign-size) - var(--kn-sign-line)) / 2);
+    border-inline-start: var(--kn-sign-line) solid var(--kn-text-muted);
+    rotate: 45deg;
+  }
+  ul[data-kn-sign="cross"]:not(.kn-reasons, .kn-card-grid) > li::after { rotate: -45deg; }
+}

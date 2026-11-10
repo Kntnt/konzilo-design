@@ -40,8 +40,11 @@
   }
   .kn-body-text pre code { font-size: inherit; }
   .kn-body-text blockquote cite { display: block; margin-block-start: 0.5em; font-size: var(--kn-type-small-size); font-style: normal; }
-  .kn-body-text .contains-task-list { padding-inline-start: 0; list-style: none; }
-  .kn-body-text .task-list-item input { inline-size: 1.1em; block-size: 1.1em; margin-block: 0; margin-inline: 0 0.6em; accent-color: var(--kn-accent); color-scheme: light; vertical-align: -0.15em; }
+  /* A task list: a box in place of the bullet, item by item, so an item that is no task keeps its bullet. The box hangs
+     where a bullet would, with the item's words lined up with the others', and is centred on the first line, in a
+     paragraph too where the reader writes a loose list. */
+  .kn-body-text .task-list-item { position: relative; list-style: none; }
+  .kn-body-text .task-list-item > input[type="checkbox"], .kn-body-text .task-list-item > p:first-child > input[type="checkbox"]:first-child { position: absolute; inset-inline-end: 100%; inset-block-start: 0.3em; inset-block-start: calc(0.5lh - 0.9167rem / 2); inline-size: 0.9167rem; block-size: 0.9167rem; margin-block: 0; margin-inline: 0 0.55em; font: inherit; line-height: inherit; accent-color: var(--kn-accent); color-scheme: light; }
   .kn-body-text [data-footnotes] { margin-block-start: 2em; padding-block-start: 1em; border-block-start: 1px solid var(--kn-border); color: var(--kn-text-muted); font-size: var(--kn-type-small-size); line-height: var(--kn-type-small-line-height); letter-spacing: var(--kn-type-small-letter-spacing); }
   /* The footnotes' heading is for a screen reader alone. */
   .sr-only { position: absolute; inline-size: 0.0625rem; block-size: 0.0625rem; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
@@ -234,7 +237,8 @@
   .konzilo-form :is(.konzilo-form-checkbox, .konzilo-form-acceptance) > :is(.konzilo-form-help, .konzilo-form-problem) { grid-column: 1 / -1; }
   .konzilo-form :is(.konzilo-form-choice, .konzilo-form-checkbox, .konzilo-form-acceptance) label { cursor: pointer; }
   /* The browser draws these parts itself, and they stay light on every Surface, as on Field. */
-  .konzilo-form :is(input[type="checkbox"], input[type="radio"]) { flex: none; inline-size: 1.1em; block-size: 1.1em; margin: 0; accent-color: var(--kn-accent); color-scheme: light; cursor: pointer; }
+  /* In rem, as Field's choices: em would follow the input's own font, which WebKit sets smaller than the others. */
+  .konzilo-form :is(input[type="checkbox"], input[type="radio"]) { flex: none; inline-size: 0.9167rem; block-size: 0.9167rem; margin: 0; accent-color: var(--kn-accent); color-scheme: light; cursor: pointer; }
   .konzilo-form :is(.konzilo-form-help, .konzilo-form-problem) { margin: 0; font-size: var(--kn-type-small-size); line-height: var(--kn-type-small-line-height); letter-spacing: var(--kn-type-small-letter-spacing); }
   .konzilo-form .konzilo-form-help { color: var(--kn-text-muted); }
   .konzilo-form .konzilo-form-problem { color: var(--kn-error); }
@@ -277,7 +281,7 @@
   dialog.konzilo-lightbox figure img { border-radius: 0; }
 
   /* An embed: as Embed, a panel that loads nothing until the visitor allows it. Once allowed it holds the player alone. */
-  figure.konzilo-embed { display: flex; flex-direction: column; align-items: start; justify-content: center; gap: var(--kn-space-component-gap); min-block-size: 14rem; margin-inline: 0; padding: var(--kn-space-plate); background: var(--kn-background-alt); color: var(--kn-text); border-radius: var(--kn-radius-card); overflow-wrap: anywhere; }
+  figure.konzilo-embed { display: flex; flex-direction: column; align-items: start; justify-content: center; gap: var(--kn-space-component-gap); min-block-size: 14rem; margin-inline: 0; padding: var(--kn-space-plate) min(var(--kn-space-plate), 6%); background: var(--kn-background-alt); color: var(--kn-text); border-radius: var(--kn-radius-card); overflow-wrap: anywhere; }
   figure.konzilo-embed:has(> iframe) { display: block; min-block-size: 0; padding: 0; background: none; overflow: clip; }
   figure.konzilo-embed > p { margin: 0; }
   figure.konzilo-embed > .konzilo-embed-question {

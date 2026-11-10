@@ -1,0 +1,23 @@
+/* Description List (docs/spec/directives.md, `list` with type="description"): terms and their descriptions. The reader
+   looks for the term, so it stands beside its descriptions, a third of the width, with a hairline above each pair, and
+   above them where the list is narrow. The term looks like a heading by its text type, but is none. */
+@layer kn-components {
+  :where(.kn-description-list) { margin-block: 0 1em; }
+  .kn-description-list { container-type: inline-size; margin-inline: 0; padding: 0; }
+  .kn-description-list-item {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+    align-items: first baseline;
+    gap: 0.5em var(--kn-space-column-gap);
+    padding-block: var(--kn-space-component-gap);
+    border-block-start: 1px solid var(--kn-border);
+    overflow-wrap: anywhere;
+  }
+  .kn-description-list-item:last-child { padding-block-end: 0; }
+  .kn-description-list-item > dt { grid-column: 1; margin: 0; color: var(--kn-text); }
+  .kn-description-list-item > dd { grid-column: 2; margin: 0; }
+  @container (width < 32rem) {
+    .kn-description-list-item { grid-template-columns: minmax(0, 1fr); }
+    .kn-description-list-item > :is(dt, dd) { grid-column: 1; }
+  }
+}

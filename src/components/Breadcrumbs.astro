@@ -6,8 +6,11 @@ interface Props extends HTMLAttributes<'nav'> {
   separator?: 'slash' | 'chevron' | 'arrow' | 'dot'; home?: 'word' | 'icon'; current?: boolean; narrow?: 'trail' | 'parent';
 }
 const { items, label = 'Breadcrumb', separator = 'slash', home = 'word', current = true, narrow = 'trail', class: className, ...attributes } = Astro.props;
+// The page's own level stays in the markup when it is hidden, since the narrow form counts from it, so only the steps shown
+// count: a trail with no step but the start page left to show is none.
+const shown = items.length - (current ? 0 : 1);
 ---
-{items.length >= 2 && <nav {...attributes} class:list={['kn-breadcrumbs', className]} aria-label={label} data-kn-type="small" data-kn-separator={separator} data-kn-home={home} data-kn-current={String(current)} data-kn-narrow={narrow}>
+{shown >= 2 && <nav {...attributes} class:list={['kn-breadcrumbs', className]} aria-label={label} data-kn-type="small" data-kn-separator={separator} data-kn-home={home} data-kn-current={String(current)} data-kn-narrow={narrow}>
   <ol role="list">{items.map((item, index) => <li>
     {index > 0 && <span class="kn-breadcrumbs-separator" aria-hidden="true" />}
     {index === items.length - 1 ? <span aria-current="page">{item.label}</span> : item.href ? <a href={item.href}>{index === 0 && <Icon name="house" class="kn-breadcrumbs-house" />}<span class="kn-breadcrumbs-label">{item.label}</span></a> : <span>{item.label}</span>}

@@ -1,0 +1,12 @@
+---
+// A form as the Konzilo core writes it, form.konzilo-form (docs/spec/konzilo.md), for the sections that read forms.
+interface Props { id: string; label: string; send: string; fields: { name: string; label: string; type?: 'text' | 'email' | 'textarea'; required?: boolean }[] }
+const { id, label, send, fields } = Astro.props;
+const form = `konzilo-form-${id}`;
+---
+<form class="konzilo-form" id={form} method="post" action={`/_konzilo/forms/${id}`} aria-label={label}><div class="konzilo-form-fields">{fields.map(({ name, label: text, type = 'text', required = false }) => {
+  const field = `${form}-${name}`;
+  return <div class={`konzilo-form-field konzilo-form-${type}`}><label for={field}>{text}{required && <Fragment> <span class="konzilo-form-required">(required)</span></Fragment>}</label>{type === 'textarea'
+    ? <textarea id={field} name={name} required={required} maxlength="5000"></textarea>
+    : <input type={type} id={field} name={name} required={required} maxlength={type === 'email' ? '254' : '200'} autocomplete={type === 'email' ? 'email' : undefined}>}<p class="konzilo-form-problem" id={`${field}-problem`} hidden></p></div>;
+})}<button type="submit" class="konzilo-form-send">{send}</button></div></form>

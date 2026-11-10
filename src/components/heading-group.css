@@ -1,6 +1,28 @@
 @layer kn-components {
   .kn-heading-group { display: grid; gap: calc(var(--kn-space-component-gap) / 2); }
   .kn-heading-group > * { margin: 0; }
+  /* A band of a heading and its content: the heading stands a column-gap above what follows it in the band's flow. */
+  .kn-band-content > .kn-heading-group:not(:last-child) { margin-block-end: var(--kn-space-column-gap); }
+  /* In body text, as in a section's body or a tab's panel, a heading group is spaced as a heading there is: room above it,
+     and a little under it, so it stays with what it heads. It weighs nothing, so a flow's first child keeps no room above. */
+  :where(.kn-body-text .kn-heading-group) { margin-block: 1.6em 0.6em; }
   .kn-heading-group-heading { text-wrap: balance; }
   .kn-heading-group-eyebrow, .kn-heading-group-deck { color: var(--kn-text-muted); }
+  /* An article's subheadline, the headline's third part under the main headline. It has no type of its own in the markup:
+     its step is set here, by its place, between the headline's and the standfirst's. */
+  .kn-heading-group-subheadline {
+    font-family: var(--kn-typeface-heading);
+    font-size: var(--kn-type-heading-4-size);
+    line-height: var(--kn-type-heading-4-line-height);
+    font-weight: var(--kn-type-heading-4-weight);
+    letter-spacing: var(--kn-type-heading-4-letter-spacing);
+    font-feature-settings: var(--kn-type-heading-4-features);
+    font-stretch: var(--kn-type-heading-4-stretch, normal);
+    font-variation-settings: var(--kn-type-heading-4-variation, normal);
+    text-wrap: balance;
+  }
+  /* A deck may hold a link or words in bold, as the editor wrote them. */
+  .kn-heading-group-deck a { color: var(--kn-link); text-decoration: underline; text-underline-offset: 0.18em; text-decoration-thickness: 0.06em; }
+  .kn-heading-group-deck a:hover { text-decoration-thickness: 0.12em; }
+  .kn-heading-group-deck :is(strong, b) { font-weight: var(--kn-type-heading-6-weight); color: var(--kn-text); }
 }

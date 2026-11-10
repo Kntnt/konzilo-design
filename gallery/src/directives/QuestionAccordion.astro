@@ -1,0 +1,18 @@
+---
+import { allQuestions, iconHtml } from '../../../src/directives/index.js';
+// :::accordion as the contract writes it: expand="one" names every item alike, first="open" opens the first, and
+// headings that are all questions carry the questions fact.
+interface Props { items: { heading: string; html: string }[]; expand?: 'one' | 'many'; first?: 'open' | 'closed'; name?: string; level?: 3 | 4 | 5 | 6 }
+const { items, expand = 'many', first = 'closed', name, level = 3 } = Astro.props;
+const Heading = `h${level}` as 'h3';
+const single = expand === 'one';
+---
+<div class="kn-accordion" data-kn-accordion-mode={single ? 'single' : 'multiple'} data-kn-questions={allQuestions(items.map(({ heading }) => heading)) ? '' : undefined}>
+  {items.map(({ heading, html }, index) => <details class="kn-accordion-item" name={single ? name : undefined} open={first === 'open' && index === 0}>
+    <summary class="kn-accordion-summary">
+      <Heading class="kn-accordion-label" data-kn-type="heading-6">{heading}</Heading>
+      <Fragment set:html={iconHtml('chevron-down', 'kn-accordion-chevron')} />
+    </summary>
+    <div class="kn-body-text kn-accordion-content" set:html={html} />
+  </details>)}
+</div>

@@ -465,6 +465,28 @@ test('the identity has its four controls, none disabled, nothing on the left mov
     return now.length && now.every((image, index) => image === window.keptImages[index]);
   });
   assert.equal(kept, true, 'the logos are the same elements');
+  // An arrangement and a toggle change the header where it stands: the same element, and logos that are neither moved
+  // in from another document nor given their address again, so neither loads again.
+  await preview.evaluate(() => {
+    window.keptHeader = document.querySelector('.kn-page > .kn-header');
+    window.keptLogos = [...window.keptHeader.querySelectorAll('img')];
+    window.logoLoads = 0;
+    for (const image of window.keptLogos) image.addEventListener('load', () => { window.logoLoads += 1; });
+  });
+  const pick = (value) => page.locator(`[data-pick="inputs.header.arrangement"][data-value="${value}"]`);
+  const arrangement = await page.locator('[data-pick="inputs.header.arrangement"][aria-pressed="true"]').getAttribute('data-value');
+  const cta = page.locator('[data-flag="inputs.header.cta"]');
+  const hasCta = async () => (await cta.getAttribute('aria-pressed')) === 'true';
+  const ctaBefore = await hasCta();
+  for (const [step, value] of [[() => pick(arrangement === 'B' ? 'C' : 'B').click(), null], [() => cta.click(), !ctaBefore], [() => cta.click(), ctaBefore], [() => pick(arrangement).click(), null]]) {
+    await step();
+    await preview.waitForFunction(([wanted, shows]) => document.querySelector('.kn-page > .kn-header').dataset.knArrangement === wanted && (shows === null || !!document.querySelector('.kn-header-bar .kn-header-cta') === shows), [await page.locator('[data-pick="inputs.header.arrangement"][aria-pressed="true"]').getAttribute('data-value'), value]);
+    const still = await preview.evaluate(() => {
+      const header = document.querySelector('.kn-page > .kn-header');
+      return { header: header === window.keptHeader, logos: [...header.querySelectorAll('img')].every((image) => window.keptLogos.includes(image)), loads: window.logoLoads, enhanced: header.dataset.knEnhanced };
+    });
+    assert.deepEqual(still, { header: true, logos: true, loads: 0, enhanced: 'true' }, 'the header changes where it stands');
+  }
   // Beside, the slogan goes first. Below a wider name it frees no width, stays until the name goes, and goes with it.
   const narrow = await (await page.locator('#preview-narrow').elementHandle()).contentFrame();
   const name = await page.evaluate(() => document.querySelector('[data-path="project.name"]').value);

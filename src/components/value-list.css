@@ -1,0 +1,30 @@
+/* Value List (docs/spec/directives.md, `list` with type="values"): values with their labels, such as opening hours and
+   telephone numbers. The value is what the reader looks for, so it stands out under its small, muted label, and the
+   pairs stand side by side where they fit, each under a hairline. Key Figures stays for a few large numbers. */
+@layer kn-components {
+  :where(.kn-value-list) { margin-block: 0 1em; }
+  .kn-value-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 14rem), 1fr));
+    gap: var(--kn-space-component-gap) var(--kn-space-column-gap);
+    margin-inline: 0;
+    padding: 0;
+  }
+  .kn-value-list-item { display: flex; flex-direction: column; gap: 0.25em; min-inline-size: 0; padding-block-start: var(--kn-space-component-gap); border-block-start: 1px solid var(--kn-border); overflow-wrap: anywhere; }
+  .kn-value-list-item > dt { margin: 0; color: var(--kn-text-muted); }
+  .kn-value-list-value {
+    margin: 0;
+    color: var(--kn-text);
+    font-family: var(--kn-typeface-heading);
+    font-size: var(--kn-type-heading-4-size);
+    line-height: var(--kn-type-heading-4-line-height);
+    font-weight: var(--kn-type-heading-4-weight);
+    letter-spacing: var(--kn-type-heading-4-letter-spacing);
+    font-feature-settings: var(--kn-type-heading-4-features);
+    font-stretch: var(--kn-type-heading-4-stretch, normal);
+    font-variation-settings: var(--kn-type-heading-4-variation, normal);
+    font-variant-numeric: lining-nums;
+  }
+  /* A value that is a link, such as a telephone number, keeps the link's colour and line. */
+  .kn-value-list-value a { color: var(--kn-link); }
+}

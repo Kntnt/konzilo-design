@@ -1,0 +1,35 @@
+---
+import Actions from './Actions.astro';
+import { sectionParts } from '../../../src/directives/index.js';
+// :::section, grouped as sectionParts groups it: the media, the head and the body, each written only where it holds something.
+// The deck is passed only where sectionParts makes the paragraph one; its length fact comes from sectionParts itself.
+interface Props {
+  id?: string;
+  surface?: string;
+  picture?: { src: string; alt: string };
+  badges?: { src: string; alt: string }[];
+  eyebrows?: string[];
+  heading?: string;
+  deck?: string;
+  actions?: { label: string; href: string; main?: boolean }[];
+}
+const { id, surface = 'page', picture, badges = [], eyebrows = [], heading, deck, actions } = Astro.props;
+const deckLong = deck !== undefined && sectionParts([{ kind: 'heading' }, { kind: 'paragraph', text: deck }, { kind: 'other' }]).deckLong;
+---
+<section class="kn-band kn-section" id={id} data-kn-surface={surface === 'page' ? undefined : surface}>
+  <div class="kn-band-content">
+    {picture && <div class="kn-section-media">
+      <img class="kn-section-picture" src={picture.src} alt={picture.alt}>
+      {badges.length > 0 && <ul class="kn-section-badges" role="list">{badges.map((item) => <li><img src={item.src} alt={item.alt}></li>)}</ul>}
+    </div>}
+    {heading && <header class="kn-section-head">
+      <hgroup class="kn-heading-group">
+        {eyebrows.map((eyebrow) => <p class="kn-heading-group-eyebrow" data-kn-type="label">{eyebrow}</p>)}
+        <h2 class="kn-heading-group-heading" data-kn-type="heading-2">{heading}</h2>
+        {deck && <p class="kn-heading-group-deck" data-kn-type="lead" data-kn-deck={deckLong ? 'long' : undefined}>{deck}</p>}
+      </hgroup>
+      {actions && <Actions items={actions} />}
+    </header>}
+    {Astro.slots.has('default') && <div class="kn-section-body kn-body-text"><slot /></div>}
+  </div>
+</section>

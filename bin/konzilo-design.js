@@ -7,7 +7,7 @@ import { emitCss } from '../src/css/index.js';
 import { componentsCss } from '../src/css/components.js';
 import { backUp } from './lib/backup.js';
 
-const usage = 'Usage: konzilo-design resolve <file> | css <file> [-o out.css] | check <file> | components-css [-o out.css] | fonts <file> [-o folder] | logos <file> [-o folder] | tool <file> [--port N] [--no-open] | presentation <file> [-o out.zip] | design-md <file> [-o DESIGN.md]';
+const usage = 'Usage: konzilo-design resolve <file> | css <file> [-o out.css] | check <file> | components-css [-o out.css] | fonts <file> [-o folder] | logos <file> [-o folder] | tool <file> [--port N] [--no-open] | presentation <file> [-o out.zip] | design-md <file> [-o out.zip|out.md]';
 
 // The package a site installs leaves the tool and the presentation out: they run from the design system's repository.
 async function fromRepository(path, command) {

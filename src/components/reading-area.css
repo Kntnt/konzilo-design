@@ -24,6 +24,8 @@
   .kn-reading-area[data-kn-columns="2"] .kn-sidenote { position: absolute; inset-block-start: var(--kn-sidenote-position); inset-inline-end: 0; inline-size: calc(100% - var(--kn-layout-narrow) - var(--kn-space-column-gap)); margin-block: 0; }
   .kn-reading-area[data-kn-columns="2"][data-kn-side="start"] .kn-sidenote { inset-inline-start: 0; inset-inline-end: auto; }
   .kn-reading-area [data-kn-sticky-active] { position: sticky; inset-block-start: var(--kn-reading-sticky-inset); }
+  /* A stop the following menu leads to lands at the reading line, under the header, where the menu marks it. */
+  .kn-reading-area-flow [id] { scroll-margin-block-start: var(--kn-space-component-gap); }
   .kn-reading-area-flow [data-kn-width] { margin-inline-end: 0; }
   .kn-reading-area-flow [data-kn-width="narrow"] { inline-size: min(100%, var(--kn-layout-narrow)); margin-inline-start: 0; }
   .kn-reading-area-flow [data-kn-width="wide"] { inline-size: var(--kn-reading-content-size); margin-inline-start: calc(-1 * var(--kn-reading-flow-offset)); }

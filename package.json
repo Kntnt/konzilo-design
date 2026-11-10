@@ -23,6 +23,7 @@
     "src/components",
     "src/css",
     "src/design-md",
+    "src/directives",
     "src/fonts/catalog.js",
     "src/generator",
     "src/konzilo"
@@ -32,6 +33,7 @@
     "./css": "./src/css/index.js",
     "./design-md": "./src/design-md/index.js",
     "./design-props": "./src/components/design-props.js",
+    "./directives": "./src/directives/index.js",
     "./components/*": "./src/components/*",
     "./components.css": "./src/components/index.css",
     "./konzilo": "./src/konzilo/index.js",

@@ -1,3 +1,5 @@
+import { frameScheduler } from './schedule.js';
+
 // One document owns one versioned category catalogue. Services only ask this API.
 export function mergeChoice(categories, choice = {}, previous = {}) {
   return Object.fromEntries(categories.map(({ id, required }) => [id, !!required || (typeof choice[id] === 'boolean' ? choice[id] : previous[id] === true)]));
@@ -39,12 +41,16 @@ export function setupConsent(root = document) {
   const abort = new AbortController();
   const on = (node, name, handler) => node.addEventListener(name, handler, { signal: abort.signal });
   const doc = document.documentElement;
-  let returnTo, restoring = false;
+  let returnTo, restoring = false, written;
+  // Written on the root only when it changed, since the frame's observers watch what it moves.
   function measure() {
     const height = banner.hidden ? 0 : banner.getBoundingClientRect().height;
-    doc.style.setProperty('--kn-consent-height', `${height / parseFloat(getComputedStyle(doc).fontSize)}rem`);
-    doc.toggleAttribute('data-kn-consent-visible', !banner.hidden);
+    const value = `${height / parseFloat(getComputedStyle(doc).fontSize)}rem`;
+    if (value !== written) { written = value; doc.style.setProperty('--kn-consent-height', value); }
+    if (doc.hasAttribute('data-kn-consent-visible') === banner.hidden) doc.toggleAttribute('data-kn-consent-visible', !banner.hidden);
   }
+  // A resize is measured after the observers' round, not in it: a write there resizes what other observers watch.
+  const remeasure = frameScheduler(measure);
   function show(visible) { banner.hidden = !visible; measure(); }
   state.opener = (trigger = document.activeElement) => {
     if (!settings?.showModal) return;
@@ -93,9 +99,9 @@ export function setupConsent(root = document) {
     const edge = banner.getBoundingClientRect().top;
     if (bottom > edge) window.scrollBy({ top: bottom - edge + 8, behavior: 'instant' });
   });
-  const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(measure);
+  const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(remeasure);
   observer?.observe(banner);
-  on(window, 'resize', measure);
+  on(window, 'resize', remeasure);
   load();
-  return () => { abort.abort(); observer?.disconnect(); show(false); if (reopen) reopen.hidden = true; if (settings.open) settings.close(); state.opener = undefined; initialized.delete(banner); };
+  return () => { abort.abort(); observer?.disconnect(); remeasure.cancel(); show(false); if (reopen) reopen.hidden = true; if (settings.open) settings.close(); state.opener = undefined; initialized.delete(banner); };
 }

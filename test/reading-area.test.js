@@ -132,7 +132,9 @@ test('the runtime measures roles, applies placement, responds to resize and rest
 
 test('a Reading Area on a phone scrolls no one sideways, and its measure still measures', { timeout: 60000 }, async () => {
   const area = await render('ReadingArea', {}, { default: '<p>Words in the reading column.</p>', aside: '<aside class="kn-aside-block"><p>Words beside it.</p></aside>' });
-  const script = `${await readFile(new URL('../src/components/reading-area.js', import.meta.url), 'utf8')}\nsetupReadingAreas();`;
+  // One module in the page, so the scheduler it imports stands before it.
+  const source = (name) => readFile(new URL(`../src/components/${name}.js`, import.meta.url), 'utf8');
+  const script = `${await source('schedule')}\n${(await source('reading-area')).replace(/^import .*$/m, '')}\nsetupReadingAreas();`;
   const browser = await chromium.launch();
   try {
     for (const dir of ['ltr', 'rtl']) {

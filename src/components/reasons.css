@@ -1,0 +1,43 @@
+@layer kn-components {
+  /* Reasons (docs/spec/directives.md, `cards`, `markers` with a check or a cross and no pictures): the number of reasons
+     sets the columns as for cards (cards.css). The mark hangs before each heading, so the heading's lines and the text
+     under it share one edge. The mark and its gap are reckoned in the heading's own size, heading-5 as the contract writes it. */
+  .kn-reasons > .kn-reason {
+    --kn-reason-hang: calc(1.3 * var(--kn-type-heading-5-size));
+    display: flex;
+    flex-direction: column;
+    gap: var(--kn-space-component-gap);
+    min-inline-size: 0;
+    margin: 0;
+    padding-inline-start: var(--kn-reason-hang);
+  }
+  .kn-reasons > .kn-reason > * { margin-block: 0; }
+  .kn-reason-heading { text-indent: calc(-1 * var(--kn-reason-hang)); text-wrap: balance; }
+  /* In a signed card the mark hangs within the heading, so its lines share one edge too. */
+  .kn-cards[data-kn-sign] .kn-card-heading { padding-inline-start: 1.3em; text-indent: -1.3em; }
+  .kn-reason > :not(.kn-reason-heading) { color: var(--kn-text-muted); }
+
+  /* Check and cross, before each heading of reasons and of signed cards, drawn as a shape, in the colours a list's signs
+     take (markers.css): the check the accent, the colour of small marks, which the generator checks at 3:1 on every
+     Surface, and the cross the muted text, so it reads as what is left out. Forced colours, which drop a fill, draw them in
+     the text's colour. */
+  :is(.kn-reasons, .kn-cards)[data-kn-sign] :is(.kn-reason-heading, .kn-card-heading)::before {
+    content: "";
+    display: inline-block;
+    inline-size: 0.9em;
+    block-size: 0.9em;
+    margin-inline-end: 0.4em;
+    vertical-align: -0.1em;
+    background: var(--kn-accent);
+  }
+  :is(.kn-reasons, .kn-cards)[data-kn-sign="check"] :is(.kn-reason-heading, .kn-card-heading)::before {
+    clip-path: polygon(6% 54%, 20% 40%, 38% 58%, 80% 16%, 94% 30%, 38% 86%);
+  }
+  :is(.kn-reasons, .kn-cards)[data-kn-sign="cross"] :is(.kn-reason-heading, .kn-card-heading)::before {
+    clip-path: polygon(10% 24%, 24% 10%, 50% 36%, 76% 10%, 90% 24%, 64% 50%, 90% 76%, 76% 90%, 50% 64%, 24% 90%, 10% 76%, 36% 50%);
+    background: var(--kn-text-muted);
+  }
+  @media (forced-colors: active) {
+    :is(.kn-reasons, .kn-cards)[data-kn-sign] :is(.kn-reason-heading, .kn-card-heading)::before { forced-color-adjust: none; background: currentColor; }
+  }
+}

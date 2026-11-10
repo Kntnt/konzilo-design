@@ -1,0 +1,141 @@
+/* Section: a Band of up to three groups, media, head and body, as sectionParts in @kntnt/konzilo-design/directives
+   groups them (docs/spec/directives.md, section). Its layout is read from what the groups hold, by six rules, the first
+   that matches deciding; nothing in the markup names a layout.
+
+   Each rule's selector stands on the section's content, C below, `.kn-section > .kn-band-content`, and lays it out. What
+   a rule asks of a part inside C it sets as a custom property on C, which the part reads, so each long selector is written
+   once. A series is one of `.kn-cards`, `.kn-cards-nav`, `.kn-timeline`, `.kn-reasons` and `.kn-post-list` standing in the
+   body; the first series is one with no series before it, `:not(:is(…) ~ *)`. A :has() cannot hold another, so a question
+   about a part of a part names the whole path inside one :has(). */
+@layer kn-components {
+  .kn-section > .kn-band-content { display: grid; grid-template-columns: minmax(0, 1fr); row-gap: var(--kn-space-column-gap); align-items: start; }
+
+  /* The head: eyebrows, the heading and its deck in a heading group, and the actions after it. */
+  .kn-section-head {
+    --kn-reading-sticky-inset: calc(var(--kn-header-visible-height, 0rem) + var(--kn-space-component-gap));
+    display: grid;
+    justify-self: var(--kn-section-head-place, stretch);
+    justify-items: var(--kn-section-align, start);
+    gap: var(--kn-space-component-gap);
+    inline-size: var(--kn-section-measure, auto);
+    min-inline-size: 0;
+    text-align: var(--kn-section-align, start);
+    overflow-wrap: anywhere;
+    /* Always declared, so that setupSections reads the inset as the browser resolves it; it acts only where the head stays. */
+    inset-block-start: var(--kn-reading-sticky-inset);
+  }
+  .kn-section-head[data-kn-sticky="true"] { position: var(--kn-section-head-position, static); }
+  .kn-section-head > * { margin: 0; }
+  .kn-section-head > .kn-actions { justify-content: var(--kn-section-align, start); }
+  .kn-section-head > .kn-heading-group {
+    --kn-section-deck-span: 1;
+    justify-self: stretch;
+    justify-items: var(--kn-section-align, start);
+    grid-template-columns: var(--kn-section-heading-columns, minmax(0, 1fr));
+    column-gap: var(--kn-space-column-gap);
+  }
+  .kn-section-head > .kn-heading-group:has(> .kn-heading-group-eyebrow) { --kn-section-deck-span: 2; }
+  .kn-section-head > .kn-heading-group:has(> .kn-heading-group-eyebrow + .kn-heading-group-eyebrow) { --kn-section-deck-span: 3; }
+  .kn-section-head > .kn-heading-group > :not(.kn-heading-group-deck) { grid-column: 1; }
+  .kn-section-head > .kn-heading-group > .kn-heading-group-deck { grid-column: var(--kn-section-deck-column, 1); grid-row: var(--kn-section-deck-from, auto) / span var(--kn-section-deck-span); align-self: end; }
+  .kn-section-head :is(.kn-heading-group-heading, .kn-heading-group-deck) { max-inline-size: var(--kn-layout-narrow); }
+
+  /* The body: everything else, in the order written, with Body Text's typography. A part with a class of its own stands a
+     column gap from its neighbours, and running text keeps the reading measure. The gap weighs one class and stands after
+     the parts' own files, so it wins over the space they and body text give themselves in other flows, a paragraph's
+     `0 1em` and a part's default margin, which would leave a part 1em from its neighbour here and a column gap there; a
+     rule that places a part in relation to another, such as fine print after a form, weighs more and wins. A label written
+     as a part's intro stands with its part, at the component gap, as Logos and Cards that lead on hold theirs. */
+  .kn-section-body { inline-size: var(--kn-section-measure, auto); min-inline-size: 0; }
+  .kn-section-body > :where(* + [class], [class]:not(.kn-heading-group) + *) { margin-block-start: var(--kn-space-column-gap); }
+  .kn-section-body > p[data-kn-type="label"]:not([class]) { margin-block-end: 0; }
+  .kn-section-body > p[data-kn-type="label"]:not([class]) + [class] { margin-block-start: var(--kn-space-component-gap); }
+  .kn-section-body > :first-child { margin-block-start: 0; }
+  .kn-section-body > :last-child { margin-block-end: 0; }
+  /* A form, and what a choice shows, keep their text at the start edge when the section is centred: labels, fields and the
+     button read down one edge, and the form's terms after it stand on that edge too (the assistant's choice, 2026-11-10). */
+  .kn-section-body > form, .kn-section-body > form + .kn-fine-print, .kn-section-body .kn-choice-panel { text-align: start; }
+  :where(.kn-section-body) > :where(p, ul, ol, dl, blockquote, h2, h3, h4, h5, h6):where(:not([class])) { max-inline-size: var(--kn-layout-narrow); margin-inline: var(--kn-section-text-margin, 0); }
+
+  /* Media: the picture the section begins with, and the pictures after it as its badges, with it. */
+  .kn-section-media { display: grid; align-content: start; justify-items: start; gap: var(--kn-space-component-gap); min-inline-size: 0; }
+  .kn-section-picture { display: block; inline-size: 100%; block-size: auto; border-radius: var(--kn-radius-card); }
+  .kn-section-badges { display: flex; flex-wrap: wrap; align-items: center; gap: var(--kn-space-component-gap); margin: 0; padding: 0; list-style: none; }
+  .kn-section-badges > li { margin: 0; }
+  /* A badge is as tall as the recipe says and as wide as its proportions make it, shown whole: an SVG with only a viewBox has no
+     size of its own, and auto on both sides would draw it at none. */
+  .kn-section-badges img { display: block; inline-size: auto; block-size: 4rem; max-inline-size: 8rem; object-fit: contain; object-position: left center; }
+  .kn-section-badges img:dir(rtl) { object-position: right center; }
+
+  /* Rule 1, with a form in the body: the picture is what the form offers, so it is shown whole, as itself, and not cropped. */
+  .kn-section > .kn-band-content:has(> .kn-section-media):has(> .kn-section-body > form) > .kn-section-media { justify-items: center; }
+  .kn-section > .kn-band-content:has(> .kn-section-media):has(> .kn-section-body > form) .kn-section-picture { inline-size: auto; max-inline-size: min(100%, var(--kn-section-offer-size, 16rem)); max-block-size: min(36rem, 70svh); border-radius: 0; }
+
+  /* Rule 3: another form or a choice, where rules 1 and 2 have not matched. The whole section is centred, as a page's end. */
+  .kn-section > .kn-band-content:not(:has(> .kn-section-media)):has(> .kn-section-body > :is(form, .kn-choice)):is(:not(:has(> .kn-section-head + .kn-section-body > form:first-child)), :has(> .kn-section-head :is(.kn-heading-group-deck, .kn-actions))) {
+    --kn-section-head-place: center;
+    --kn-section-align: center;
+    --kn-section-measure: min(100%, var(--kn-layout-narrow));
+    --kn-section-text-margin: auto;
+    justify-items: center;
+    text-align: center;
+  }
+
+  /* Rule 6, the head centred: over reasons, over cards with neither picture nor symbol, or over exactly two cards. */
+  .kn-section > .kn-band-content:not(:has(> .kn-section-media)):not(:has(> .kn-section-body > :is(form, .kn-choice))):is(
+    :has(> .kn-section-head + .kn-section-body > .kn-reasons:not(:is(.kn-cards, .kn-cards-nav, .kn-timeline, .kn-reasons, .kn-post-list) ~ *)),
+    :has(> .kn-section-head + .kn-section-body > :is(.kn-cards, .kn-cards-nav, .kn-post-list):not(:is(.kn-cards, .kn-cards-nav, .kn-timeline, .kn-reasons, .kn-post-list) ~ *)):not(:has(> .kn-section-body > :is(.kn-cards, .kn-cards-nav, .kn-post-list):not(:is(.kn-cards, .kn-cards-nav, .kn-timeline, .kn-reasons, .kn-post-list) ~ *) :is(.kn-card-picture, .kn-card-symbol))),
+    :has(> .kn-section-head + .kn-section-body > .kn-cards:not(:is(.kn-cards, .kn-cards-nav, .kn-timeline, .kn-reasons, .kn-post-list) ~ *) > :nth-child(2):last-child),
+    :has(> .kn-section-head + .kn-section-body > :is(.kn-cards-nav, .kn-post-list):not(:is(.kn-cards, .kn-cards-nav, .kn-timeline, .kn-reasons, .kn-post-list) ~ *) > :is(.kn-cards, .kn-featured) > :nth-child(2):last-child)
+  ) {
+    --kn-section-align: center;
+    --kn-section-head-place: center;
+  }
+
+  @media (width >= 48rem) {
+    /* Rule 1: a picture first. It stands beside the head and the body, which stand in the middle of its height. */
+    .kn-section > .kn-band-content:has(> .kn-section-media) {
+      --kn-section-offer-size: 26rem;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      grid-template-rows: 1fr auto auto 1fr;
+      grid-template-areas: "media ." "media head" "media body" "media .";
+      column-gap: var(--kn-space-column-gap);
+      row-gap: 0;
+    }
+    .kn-section > .kn-band-content:has(> .kn-section-media) > .kn-section-media { grid-area: media; align-self: center; }
+    .kn-section > .kn-band-content:has(> .kn-section-media) > .kn-section-head { grid-area: head; }
+    .kn-section > .kn-band-content:has(> .kn-section-media) > .kn-section-body { grid-area: body; }
+    .kn-section > .kn-band-content:has(> .kn-section-media) > .kn-section-head + .kn-section-body { margin-block-start: var(--kn-space-column-gap); }
+
+    /* Rule 2: a heading with a form right after it, the head holding neither deck nor actions. The form stands beside the heading. */
+    .kn-section > .kn-band-content:not(:has(> .kn-section-media)):not(:has(> .kn-section-head :is(.kn-heading-group-deck, .kn-actions))):has(> .kn-section-head + .kn-section-body > form:first-child) {
+      grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+      column-gap: var(--kn-space-column-gap);
+    }
+  }
+
+  @media (width >= 60rem) {
+    /* Rule 4: a head and an accordion alone. The head stands beside it, and stays in view where setupSections finds it fits. */
+    .kn-section > .kn-band-content:not(:has(> .kn-section-media)):has(> .kn-section-head + .kn-section-body > .kn-accordion:only-child) {
+      --kn-section-head-position: sticky;
+      grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+      column-gap: var(--kn-space-column-gap);
+    }
+    /* Rule 5: a head and paragraphs only. The paragraphs stand beside the head. */
+    .kn-section > .kn-band-content:not(:has(> .kn-section-media)):has(> .kn-section-head + .kn-section-body > p):not(:has(> .kn-section-body > :not(p))) {
+      grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+      column-gap: var(--kn-space-column-gap);
+    }
+
+    /* Rule 6, the heading beside its deck: a long deck over a first series with pictures and five cards or more, which is
+       more than a row at three or four columns. The deck stands in the second column, level with the heading's last line. */
+    .kn-section > .kn-band-content:not(:has(> .kn-section-media)):not(:has(> .kn-section-body > :is(form, .kn-choice))):has(> .kn-section-head .kn-heading-group-deck[data-kn-deck="long"]):has(> .kn-section-head + .kn-section-body > :is(.kn-cards, .kn-cards-nav, .kn-post-list):not(:is(.kn-cards, .kn-cards-nav, .kn-timeline, .kn-reasons, .kn-post-list) ~ *) .kn-card-picture):is(
+      :has(> .kn-section-body > .kn-cards:not(:is(.kn-cards, .kn-cards-nav, .kn-timeline, .kn-reasons, .kn-post-list) ~ *) > :nth-child(5)),
+      :has(> .kn-section-body > :is(.kn-cards-nav, .kn-post-list):not(:is(.kn-cards, .kn-cards-nav, .kn-timeline, .kn-reasons, .kn-post-list) ~ *) > :is(.kn-cards, .kn-featured) > :nth-child(5))
+    ) {
+      --kn-section-heading-columns: minmax(0, 1fr) minmax(0, 1fr);
+      --kn-section-deck-column: 2;
+      --kn-section-deck-from: 1;
+    }
+  }
+}

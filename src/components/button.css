@@ -1,13 +1,19 @@
 @layer kn-components {
-  .kn-button {
+  /* An action (actions.css) is drawn with these recipes: the main action as the filled button, the others outlined. */
+  .kn-button, .kn-actions .kn-action {
     --kn-button-direction: 1;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 0.5em;
-    flex: none;
+    /* A label longer than its line wraps, centred, rather than leaving the window or widening its column, and a word
+       longer than the line, as at a large text size on a phone, breaks too. */
+    flex: 0 1 auto;
     justify-self: start;
-    white-space: nowrap;
+    max-inline-size: 100%;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    text-align: center;
     padding: 0.8em 1.3em;
     border: 0;
     border-radius: var(--kn-radius-control);
@@ -23,9 +29,9 @@
     box-shadow: inset 0 0 0 var(--kn-frame-width) var(--kn-frame-color);
     transition: background var(--kn-duration-feedback) var(--kn-easing-standard), color var(--kn-duration-feedback) var(--kn-easing-standard), box-shadow var(--kn-duration-feedback) var(--kn-easing-standard);
   }
-  .kn-button:is(:hover, :active) { background: var(--kn-button-background-hover); }
-  .kn-button[data-kn-variant="outline"] { background: transparent; color: var(--kn-text); box-shadow: inset 0 0 0 max(1px, var(--kn-frame-width)) var(--kn-border-strong); }
-  .kn-button[data-kn-variant="outline"]:is(:hover, :active) { box-shadow: inset 0 0 0 max(1px, var(--kn-frame-width)) var(--kn-text); }
+  .kn-button:is(:hover, :active), .kn-actions .kn-action:is(:hover, :active) { background: var(--kn-button-background-hover); }
+  .kn-button[data-kn-variant="outline"], .kn-actions .kn-action:not([data-kn-main]) { background: transparent; color: var(--kn-text); box-shadow: inset 0 0 0 max(1px, var(--kn-frame-width)) var(--kn-border-strong); }
+  .kn-button[data-kn-variant="outline"]:is(:hover, :active), .kn-actions .kn-action:not([data-kn-main]):is(:hover, :active) { box-shadow: inset 0 0 0 max(1px, var(--kn-frame-width)) var(--kn-text); }
   .kn-button[data-kn-variant="arrow"] { padding: 0; min-block-size: 1.5rem; min-inline-size: 1.5rem; background: transparent; color: var(--kn-link); box-shadow: none; }
   .kn-button-arrow { transition: transform var(--kn-duration-feedback) var(--kn-easing-standard); }
   .kn-button:dir(rtl) { --kn-button-direction: -1; }
@@ -33,6 +39,6 @@
   .kn-button[data-kn-variant="arrow"]:is(:hover, :active) .kn-button-arrow { transform: translateX(calc(0.2em * var(--kn-button-direction))) scaleX(var(--kn-button-direction)); }
   .kn-button:disabled { cursor: default; }
   @media (forced-colors: active) {
-    .kn-button:not([data-kn-variant="arrow"]) { border: 1px solid currentColor; }
+    .kn-button:not([data-kn-variant="arrow"]), .kn-actions .kn-action { border: 1px solid currentColor; }
   }
 }

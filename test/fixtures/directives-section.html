@@ -1,0 +1,281 @@
+<!-- Heroes, sections and an article's opening as docs/spec/directives.md writes them, with made-up content.
+     {{picture}}, {{portrait}}, {{badge}}, {{badgeBare}} and {{logoBare}} stand for pictures the test supplies; the bare ones have only a viewBox. -->
+<section class="kn-band kn-hero" id="hero" data-kn-surface="accent" data-kn-picture="end-bleed" data-kn-height="two-thirds">
+  <div class="kn-band-content kn-hero-content">
+    <div class="kn-hero-text">
+      <nav class="kn-breadcrumbs" aria-label="Breadcrumb" data-kn-type="small" data-kn-separator="slash" data-kn-home="word" data-kn-current="false" data-kn-narrow="trail">
+        <ol role="list">
+          <li><a href="/"><span class="kn-breadcrumbs-label">Home</span></a></li>
+          <li><span class="kn-breadcrumbs-separator" aria-hidden="true"></span><a href="/guides/"><span class="kn-breadcrumbs-label">Guides</span></a></li>
+          <li><span class="kn-breadcrumbs-separator" aria-hidden="true"></span><span aria-current="page">Planning a garden</span></li>
+        </ol>
+      </nav>
+      <img class="kn-hero-logo" src="{{logoBare}}" alt="Example Gardens">
+      <hgroup class="kn-heading-group">
+        <p class="kn-heading-group-eyebrow" data-kn-type="label">A guide</p>
+        <h1 class="kn-heading-group-heading" data-kn-type="heading-1">Planning a garden that grows with you</h1>
+        <p class="kn-heading-group-deck" data-kn-type="lead">Start small, <strong>plant what you love</strong> and let the beds widen year by year. <a href="#plans">See the plans</a>.</p>
+      </hgroup>
+      <ul class="kn-actions" role="list">
+        <li><a class="kn-action" href="#plans" data-kn-main>Get started</a></li>
+        <li><a class="kn-action" href="#questions">Read more</a></li>
+      </ul>
+      <p class="kn-fine-print" data-kn-type="small">Free for the first month, and you may stop whenever you like.</p>
+    </div>
+    <div class="kn-hero-media"><img src="{{picture}}" alt="Raised beds in the spring"></div>
+  </div>
+</section>
+
+<section class="kn-band kn-section" id="offer" data-kn-surface="tint">
+  <div class="kn-band-content">
+    <div class="kn-section-media">
+      <img class="kn-section-picture" src="{{picture}}" alt="A shed with tools">
+      <ul class="kn-section-badges" role="list"><li><img src="{{badge}}" alt="Award one"></li><li><img src="{{badgeBare}}" alt="Award two"></li></ul>
+    </div>
+    <header class="kn-section-head">
+      <hgroup class="kn-heading-group">
+        <p class="kn-heading-group-eyebrow" data-kn-type="label">Tools</p>
+        <h2 class="kn-heading-group-heading" data-kn-type="heading-2">Everything in one shed</h2>
+        <p class="kn-heading-group-deck" data-kn-type="lead">The tools, the seeds and the soil, delivered at once.</p>
+      </hgroup>
+      <ul class="kn-actions" role="list"><li><a class="kn-action" href="#plans" data-kn-main>See what is in it</a></li></ul>
+    </header>
+    <div class="kn-section-body kn-body-text">
+      <p>Each shed holds what a first season needs, and nothing it does not.</p>
+      <ul><li>Spade and fork</li><li>Seeds for twelve beds</li></ul>
+    </div>
+  </div>
+</section>
+
+<section class="kn-band kn-section" id="guide">
+  <div class="kn-band-content">
+    <div class="kn-section-media">
+      <img class="kn-section-picture" src="{{portrait}}" alt="The cover of the guide">
+    </div>
+    <header class="kn-section-head">
+      <hgroup class="kn-heading-group">
+        <h2 class="kn-heading-group-heading" data-kn-type="heading-2">Get the guide</h2>
+      </hgroup>
+    </header>
+    <div class="kn-section-body kn-body-text">
+      <p>Forty pages on soil, light and water.</p>
+      <form class="konzilo-form" id="konzilo-form-guide" method="post" action="/_konzilo/forms/guide" aria-label="Get the guide"><div class="konzilo-form-fields"><div class="konzilo-form-field konzilo-form-email"><label for="konzilo-form-guide-email">Email <span class="konzilo-form-required">(required)</span></label><input type="email" id="konzilo-form-guide-email" name="email" required="" maxlength="254" autocomplete="email"><p class="konzilo-form-problem" id="konzilo-form-guide-email-problem" hidden=""></p></div><button type="submit" class="konzilo-form-send">Send me the guide</button></div></form>
+      <p class="kn-fine-print" data-kn-type="small">We write at most once a month.</p>
+    </div>
+  </div>
+</section>
+
+<section class="kn-band kn-section" id="contact" data-kn-surface="raised">
+  <div class="kn-band-content">
+    <header class="kn-section-head">
+      <hgroup class="kn-heading-group">
+        <p class="kn-heading-group-eyebrow" data-kn-type="label">Contact</p>
+        <h2 class="kn-heading-group-heading" data-kn-type="heading-2">Ask us anything about your garden</h2>
+      </hgroup>
+    </header>
+    <div class="kn-section-body kn-body-text">
+      <form class="konzilo-form" id="konzilo-form-contact" method="post" action="/_konzilo/forms/contact" aria-label="Ask us"><div class="konzilo-form-fields"><div class="konzilo-form-field konzilo-form-text"><label for="konzilo-form-contact-name">Name <span class="konzilo-form-required">(required)</span></label><input type="text" id="konzilo-form-contact-name" name="name" required="" maxlength="200"><p class="konzilo-form-problem" id="konzilo-form-contact-name-problem" hidden=""></p></div><div class="konzilo-form-field konzilo-form-textarea"><label for="konzilo-form-contact-message">Message <span class="konzilo-form-required">(required)</span></label><textarea id="konzilo-form-contact-message" name="message" required="" maxlength="5000"></textarea><p class="konzilo-form-problem" id="konzilo-form-contact-message-problem" hidden=""></p></div><button type="submit" class="konzilo-form-send">Send</button></div></form>
+      <p class="kn-fine-print" data-kn-type="small">We answer within a day. Read how we <a href="/privacy/">handle what you send</a>.</p>
+    </div>
+  </div>
+</section>
+
+<section class="kn-band kn-section" id="end" data-kn-surface="brand">
+  <div class="kn-band-content">
+    <header class="kn-section-head">
+      <hgroup class="kn-heading-group">
+        <h2 class="kn-heading-group-heading" data-kn-type="heading-2">Ready for the first bed?</h2>
+      </hgroup>
+      <ul class="kn-actions" role="list"><li><a class="kn-action" href="#plans">Compare the plans</a></li></ul>
+    </header>
+    <div class="kn-section-body kn-body-text">
+      <p>Tell us where you live, and we will send what grows there.</p>
+      <form class="konzilo-form" id="konzilo-form-end" method="post" action="/_konzilo/forms/end" aria-label="Start"><div class="konzilo-form-fields"><div class="konzilo-form-field konzilo-form-text"><label for="konzilo-form-end-place">Where you live</label><input type="text" id="konzilo-form-end-place" name="place" maxlength="200"><p class="konzilo-form-problem" id="konzilo-form-end-place-problem" hidden=""></p></div><button type="submit" class="konzilo-form-send">Start</button></div></form>
+      <p class="kn-fine-print" data-kn-type="small">No card needed.</p>
+    </div>
+  </div>
+</section>
+
+<section class="kn-band kn-section" id="questions">
+  <div class="kn-band-content">
+    <header class="kn-section-head">
+      <hgroup class="kn-heading-group">
+        <h2 class="kn-heading-group-heading" data-kn-type="heading-2">Questions we hear</h2>
+        <p class="kn-heading-group-deck" data-kn-type="lead">And what we answer.</p>
+      </hgroup>
+      <ul class="kn-actions" role="list"><li><a class="kn-action" href="#contact" data-kn-main>Ask another</a></li></ul>
+    </header>
+    <div class="kn-section-body kn-body-text">
+      <div class="kn-accordion" data-kn-accordion-mode="single" data-kn-questions>
+        <details class="kn-accordion-item" name="accordion-1" open>
+          <summary class="kn-accordion-summary"><h3 class="kn-accordion-label" data-kn-type="heading-6">How long does a bed take?</h3><svg class="kn-icon kn-accordion-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6" /></svg></summary>
+          <div class="kn-body-text kn-accordion-content"><p>An afternoon, with two people and the soil delivered.</p><p>A second afternoon a week later, to plant once the soil has settled.</p></div>
+        </details>
+        <details class="kn-accordion-item" name="accordion-1">
+          <summary class="kn-accordion-summary"><h3 class="kn-accordion-label" data-kn-type="heading-6">What if nothing grows?</h3><svg class="kn-icon kn-accordion-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6" /></svg></summary>
+          <div class="kn-body-text kn-accordion-content"><p>Then we come and look, and send new seeds.</p></div>
+        </details>
+        <details class="kn-accordion-item" name="accordion-1">
+          <summary class="kn-accordion-summary"><h3 class="kn-accordion-label" data-kn-type="heading-6">Can I keep chickens too?</h3><svg class="kn-icon kn-accordion-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6" /></svg></summary>
+          <div class="kn-body-text kn-accordion-content"><p>Yes, and they will thank you for the beds.</p></div>
+        </details>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="kn-band kn-section" id="story" data-kn-surface="inverse">
+  <div class="kn-band-content">
+    <header class="kn-section-head">
+      <hgroup class="kn-heading-group">
+        <p class="kn-heading-group-eyebrow" data-kn-type="label">Our story</p>
+        <h2 class="kn-heading-group-heading" data-kn-type="heading-2">It began with one bed behind a kitchen</h2>
+      </hgroup>
+    </header>
+    <div class="kn-section-body kn-body-text">
+      <p>Twelve years ago we built a single raised bed behind a restaurant kitchen, to have herbs at hand. The neighbours asked for one each, and then their friends did.</p>
+      <p>Today we build a few hundred a year, and still plant the first seeds with every new gardener.</p>
+    </div>
+  </div>
+</section>
+
+<section class="kn-band kn-section" id="reasons">
+  <div class="kn-band-content">
+    <header class="kn-section-head">
+      <hgroup class="kn-heading-group">
+        <h2 class="kn-heading-group-heading" data-kn-type="heading-2">Why raised beds</h2>
+        <p class="kn-heading-group-deck" data-kn-type="lead">Three reasons we keep coming back to.</p>
+      </hgroup>
+    </header>
+    <div class="kn-section-body kn-body-text">
+      <ul class="kn-reasons" role="list" data-kn-sign="check">
+        <li class="kn-reason"><h3 class="kn-reason-heading" data-kn-type="heading-5">Warmer soil</h3><p>The soil warms earlier in the spring.</p></li>
+        <li class="kn-reason"><h3 class="kn-reason-heading" data-kn-type="heading-5">Kinder to the back</h3><p>No kneeling to weed.</p></li>
+        <li class="kn-reason"><h3 class="kn-reason-heading" data-kn-type="heading-5">Fewer snails</h3><p>They seldom climb the sides.</p></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="kn-band kn-section" id="pair" data-kn-surface="raised">
+  <div class="kn-band-content">
+    <header class="kn-section-head">
+      <hgroup class="kn-heading-group">
+        <h2 class="kn-heading-group-heading" data-kn-type="heading-2">Two ways to begin</h2>
+        <p class="kn-heading-group-deck" data-kn-type="lead">Build it yourself, or let us.</p>
+      </hgroup>
+    </header>
+    <div class="kn-section-body kn-body-text">
+      <div class="kn-card-grid kn-cards">
+        <article class="kn-card" data-kn-surface="page"><img class="kn-card-picture" src="{{picture}}" alt=""><h3 class="kn-card-heading" data-kn-type="heading-5"><a class="kn-card-link" href="#">Yourself</a></h3><p class="kn-card-text" data-kn-type="small">A kit and a film.</p></article>
+        <article class="kn-card" data-kn-surface="page"><img class="kn-card-picture" src="{{picture}}" alt=""><h3 class="kn-card-heading" data-kn-type="heading-5"><a class="kn-card-link" href="#">With us</a></h3><p class="kn-card-text" data-kn-type="small">We come and build it.</p></article>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="kn-band kn-section" id="plans">
+  <div class="kn-band-content">
+    <header class="kn-section-head">
+      <hgroup class="kn-heading-group">
+        <p class="kn-heading-group-eyebrow" data-kn-type="label">Plans</p>
+        <h2 class="kn-heading-group-heading" data-kn-type="heading-2">Beds for every yard</h2>
+        <p class="kn-heading-group-deck" data-kn-type="lead" data-kn-deck="long">From a single herb box by the door to a whole kitchen garden, each plan comes with the soil, the seeds and a visit in the first summer.</p>
+      </hgroup>
+    </header>
+    <div class="kn-section-body kn-body-text">
+      <div class="kn-card-grid kn-cards">
+        <article class="kn-card" data-kn-surface="raised"><img class="kn-card-picture" src="{{picture}}" alt=""><h3 class="kn-card-heading" data-kn-type="heading-5"><a class="kn-card-link" href="#">Herb box</a></h3><p class="kn-card-text" data-kn-type="small">By the door.</p></article>
+        <article class="kn-card" data-kn-surface="raised"><img class="kn-card-picture" src="{{picture}}" alt=""><h3 class="kn-card-heading" data-kn-type="heading-5"><a class="kn-card-link" href="#">Balcony</a></h3><p class="kn-card-text" data-kn-type="small">Two narrow beds.</p></article>
+        <article class="kn-card" data-kn-surface="raised"><img class="kn-card-picture" src="{{picture}}" alt=""><h3 class="kn-card-heading" data-kn-type="heading-5"><a class="kn-card-link" href="#">Small yard</a></h3><p class="kn-card-text" data-kn-type="small">Four beds.</p></article>
+        <article class="kn-card" data-kn-surface="raised"><img class="kn-card-picture" src="{{picture}}" alt=""><h3 class="kn-card-heading" data-kn-type="heading-5"><a class="kn-card-link" href="#">Family</a></h3><p class="kn-card-text" data-kn-type="small">Eight beds.</p></article>
+        <article class="kn-card" data-kn-surface="raised"><img class="kn-card-picture" src="{{picture}}" alt=""><h3 class="kn-card-heading" data-kn-type="heading-5"><a class="kn-card-link" href="#">Kitchen garden</a></h3><p class="kn-card-text" data-kn-type="small">Twelve beds.</p></article>
+        <article class="kn-card" data-kn-surface="raised"><img class="kn-card-picture" src="{{picture}}" alt=""><h3 class="kn-card-heading" data-kn-type="heading-5"><a class="kn-card-link" href="#">School</a></h3><p class="kn-card-text" data-kn-type="small">Beds for a class.</p></article>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="kn-band kn-section" id="news">
+  <div class="kn-band-content">
+    <header class="kn-section-head">
+      <hgroup class="kn-heading-group">
+        <h2 class="kn-heading-group-heading" data-kn-type="heading-2">From the garden</h2>
+        <p class="kn-heading-group-deck" data-kn-type="lead">What we have planted lately.</p>
+      </hgroup>
+    </header>
+    <div class="kn-section-body kn-body-text">
+      <div class="kn-card-grid kn-cards">
+        <article class="kn-card" data-kn-surface="raised"><img class="kn-card-picture" src="{{picture}}" alt=""><h3 class="kn-card-heading" data-kn-type="heading-5"><a class="kn-card-link" href="#">Garlic in October</a></h3></article>
+        <article class="kn-card" data-kn-surface="raised"><img class="kn-card-picture" src="{{picture}}" alt=""><h3 class="kn-card-heading" data-kn-type="heading-5"><a class="kn-card-link" href="#">The last tomatoes</a></h3></article>
+        <article class="kn-card" data-kn-surface="raised"><img class="kn-card-picture" src="{{picture}}" alt=""><h3 class="kn-card-heading" data-kn-type="heading-5"><a class="kn-card-link" href="#">Leaves as mulch</a></h3></article>
+      </div>
+      <ul class="kn-actions" role="list"><li><a class="kn-action" href="#" data-kn-main>All posts</a></li></ul>
+    </div>
+  </div>
+</section>
+
+<section class="kn-band kn-section" id="other" data-kn-surface="accent">
+  <div class="kn-band-content">
+    <header class="kn-section-head">
+      <hgroup class="kn-heading-group">
+        <h2 class="kn-heading-group-heading" data-kn-type="heading-2">What to plant in May</h2>
+        <p class="kn-heading-group-deck" data-kn-type="lead">When the nights stay warm.</p>
+      </hgroup>
+    </header>
+    <div class="kn-section-body kn-body-text">
+      <ul><li>Beans</li><li>Squash</li><li>Basil</li></ul>
+      <p data-kn-type="label">A note</p>
+      <p>Wait for the last frost; <a href="#">our calendar</a> says when.</p>
+      <p class="kn-fine-print" data-kn-type="small">Dates are for a mild climate.</p>
+      <p data-kn-type="label" id="other-terms-label">Words we use</p>
+      <dl class="kn-description-list" id="other-terms"><div class="kn-description-list-item"><dt data-kn-type="heading-6">A bed</dt><dd>A raised box of soil.</dd></div></dl>
+      <p data-kn-type="label" id="other-values-label">Visiting</p>
+      <dl class="kn-value-list" id="other-values"><div class="kn-value-list-item"><dt data-kn-type="small">Opening hours</dt><dd class="kn-value-list-value">9–17</dd></div></dl>
+      <ul class="kn-actions" role="list" id="other-actions"><li><a class="kn-action" href="#plans">See the plans</a></li></ul>
+      <hgroup class="kn-heading-group" id="other-group"><p class="kn-heading-group-eyebrow" data-kn-type="label">Later</p><h3 class="kn-heading-group-heading" data-kn-type="heading-4">What to plant in June</h3></hgroup>
+      <p id="other-after-group">Leeks and kale.</p>
+    </div>
+  </div>
+</section>
+
+<section class="kn-band kn-hero kn-article-opening" id="opening" data-kn-surface="raised" data-kn-picture="end" data-kn-height="half">
+  <div class="kn-band-content kn-hero-content">
+    <div class="kn-hero-text">
+      <nav class="kn-breadcrumbs" aria-label="Breadcrumb" data-kn-type="small" data-kn-separator="chevron" data-kn-home="word" data-kn-current="true" data-kn-narrow="trail">
+        <ol role="list">
+          <li><a href="/"><span class="kn-breadcrumbs-label">Home</span></a></li>
+          <li><span class="kn-breadcrumbs-separator" aria-hidden="true"></span><a href="/articles/"><span class="kn-breadcrumbs-label">Articles</span></a></li>
+          <li><span class="kn-breadcrumbs-separator" aria-hidden="true"></span><span aria-current="page">Soil first</span></li>
+        </ol>
+      </nav>
+      <hgroup class="kn-heading-group">
+        <p class="kn-heading-group-eyebrow" data-kn-type="label">Interview</p>
+        <h1 class="kn-heading-group-heading" data-kn-type="heading-1">Soil first</h1>
+        <p class="kn-heading-group-subheadline">A grower on why the bed matters more than the seed</p>
+        <p class="kn-heading-group-deck" data-kn-type="lead">Thirty years of beds have taught her to feed the soil and let the plants feed themselves.</p>
+      </hgroup>
+      <p class="kn-article-meta" data-kn-type="small">
+        <span class="kn-article-date">Published <time datetime="2026-10-10">10 October 2026</time></span>
+        <span class="kn-article-byline">By A. Writer</span>
+        <span class="kn-article-category">Growing</span>
+      </p>
+    </div>
+    <div class="kn-hero-media"><img src="{{picture}}" alt="A grower with a handful of soil"></div>
+  </div>
+</section>
+
+<section class="kn-band kn-article-body" id="article">
+  <div class="kn-band-content">
+    <div class="kn-reading-area" data-kn-side="start" data-kn-stack="before" data-kn-columns="1">
+      <div class="kn-reading-area-flow kn-body-text">
+        <p>She has grown vegetables on the same plot since before most of her neighbours were born.</p>
+        <h2 id="a-crosshead">The bed comes first</h2>
+        <p class="kn-question"><strong>What did you find?</strong></p>
+        <p>That the soil decides almost everything.</p>
+        <h3>And the seeds?</h3>
+        <p>They follow.</p>
+      </div>
+    </div>
+  </div>
+</section>

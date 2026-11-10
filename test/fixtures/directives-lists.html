@@ -1,0 +1,124 @@
+<!-- The markup of docs/spec/directives.md, `list` and task lists, as a site writes it with the directives module.
+     Logos are named, and test/directives-lists.test.js serves them. -->
+<main class="kn-page-main">
+<section class="kn-band kn-section" id="plain">
+  <div class="kn-band-content">
+    <div class="kn-section-body kn-body-text">
+      <p>A plain list has the design's bullets:</p>
+      <ul class="probe-plain">
+        <li>First, a short item</li>
+        <li>Second, an item long enough to wrap onto a second line where the column is narrow, so its words line up under the first
+          <ul><li>A sub-item</li><li>Another sub-item</li></ul>
+        </li>
+      </ul>
+      <ol><li>A plain numbered item</li><li>Another</li></ol>
+      <ul data-kn-sign="check" class="probe-check"><li>Included</li><li>Also included, with words enough to run onto a second line where the column is narrow</li></ul>
+      <ul data-kn-sign="cross" class="probe-cross"><li>Not included</li><li>Not this either</li></ul>
+      <ol data-kn-numbering="decimal" data-kn-punctuation="period" class="probe-nested">
+        <li>First
+          <ol data-kn-numbering="lower-latin" data-kn-punctuation="parenthesis"><li>a sub-item</li><li>another sub-item</li></ol>
+        </li>
+        <li>Second</li>
+      </ol>
+      <ol data-kn-numbering="decimal" class="probe-dotted">
+        <li>One
+          <ol data-kn-numbering="decimal" data-kn-dotted><li>One point one</li><li>One point two
+            <ol data-kn-numbering="decimal" data-kn-dotted><li>Three levels</li></ol>
+          </li></ol>
+        </li>
+        <li>Two
+          <ol data-kn-numbering="decimal" data-kn-dotted><li>Two point one
+            <ol data-kn-numbering="decimal" data-kn-dotted><li>Two point one point one</li></ol>
+          </li></ol>
+        </li>
+      </ol>
+      <ol data-kn-numbering="upper-latin" data-kn-punctuation="period" start="3" class="probe-mixed">
+        <li>Third letter
+          <ol data-kn-numbering="decimal" data-kn-punctuation="parenthesis" data-kn-dotted><li>Its first</li><li>Its second</li></ol>
+        </li>
+      </ol>
+      <ol data-kn-numbering="lower-roman" data-kn-punctuation="brackets" class="probe-roman"><li>Item 1</li><li>Item 2</li><li>Item 3</li><li>Item 4</li><li>Item 5</li><li>Item 6</li><li>Item 7</li><li>Item 8</li></ol>
+      <ol data-kn-numbering="upper-roman" data-kn-punctuation="period" class="probe-upper-roman"><li>Item 1</li><li>Item 2</li><li>Item 3</li><li>Item 4</li><li>Item 5</li><li>Item 6</li><li>Item 7</li><li>Item 8</li></ol>
+      <ol data-kn-numbering="lower-greek" data-kn-punctuation="parenthesis"><li>Alpha</li><li>Beta</li><li>Gamma</li></ol>
+      <ol data-kn-numbering="double-latin" data-kn-punctuation="period" class="probe-double"><li>Doubled</li><li>Doubled again</li></ol>
+      <ol data-kn-numbering="lower-latin" class="probe-latin"><li>Item 1</li><li>Item 2</li><li>Item 3</li><li>Item 4</li><li>Item 5</li><li>Item 6</li><li>Item 7</li><li>Item 8</li><li>Item 9</li><li>Item 10</li><li>Item 11</li><li>Item 12</li><li>Item 13</li><li>Item 14</li><li>Item 15</li><li>Item 16</li><li>Item 17</li><li>Item 18</li><li>Item 19</li><li>Item 20</li><li>Item 21</li><li>Item 22</li><li>Item 23</li><li>Item 24</li><li>Item 25</li><li>Item 26</li><li>Item 27</li><li>Item 28</li></ol>
+      <ul class="contains-task-list probe-tasks">
+        <li class="task-list-item"><input type="checkbox" disabled> A question to answer</li>
+        <li class="task-list-item"><input type="checkbox" checked disabled> One that is done, with words enough to run onto a second line where the column is narrow</li>
+        <li>An item that is no task</li>
+      </ul>
+    </div>
+  </div>
+</section>
+<section class="kn-band kn-section" id="kinds">
+  <div class="kn-band-content">
+    <div class="kn-section-body kn-body-text">
+      <p data-kn-type="label">Words we use</p>
+      <dl class="kn-description-list">
+        <div class="kn-description-list-item">
+          <dt data-kn-type="heading-6">A term</dt>
+          <dd>What it means.</dd>
+          <dd>What else it means, in words enough to run onto a second line where the column is narrow.</dd>
+        </div>
+        <div class="kn-description-list-item">
+          <dt data-kn-type="heading-6">A longer term of several words</dt>
+          <dd>Its one meaning.</dd>
+        </div>
+      </dl>
+      <dl class="kn-value-list">
+        <div class="kn-value-list-item">
+          <dt data-kn-type="small">Opening hours</dt>
+          <dd class="kn-value-list-value">8–17</dd>
+        </div>
+        <div class="kn-value-list-item">
+          <dt data-kn-type="small">Telephone</dt>
+          <dd class="kn-value-list-value"><a href="tel:+442079460000">+44 20 7946 0000</a></dd>
+        </div>
+        <div class="kn-value-list-item">
+          <dt data-kn-type="small">Address</dt>
+          <dd class="kn-value-list-value">12 Example Street</dd>
+        </div>
+      </dl>
+      <div class="kn-logos">
+        <p class="kn-logos-label" id="logos-1" data-kn-type="label">Trusted by</p>
+        <ul class="kn-logos-list" role="list" aria-labelledby="logos-1">
+          <li><img src="logo-wide.svg" alt="A wide name"></li>
+          <li><a href="#logo"><img src="logo-square.svg" alt="A square name"></a></li>
+          <li><img src="logo-tall.svg" alt="A tall name"></li>
+          <li><img src="logo-wide.svg" alt="Another wide name"></li>
+        </ul>
+      </div>
+      <ul class="kn-actions probe-actions" role="list">
+        <li><a class="kn-action" href="#start" data-kn-main>Get started</a></li>
+        <li><a class="kn-action" href="#more">Read more</a></li>
+        <li><a class="kn-action" href="https://www.linkedin.com/company/example" data-kn-service="linkedin"><svg class="kn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true" focusable="false"><path d="M8 11v5" /><path d="M8 8v.01" /><path d="M12 16v-5" /><path d="M16 16v-3a2 2 0 1 0 -4 0" /><path d="M3 7a4 4 0 0 1 4 -4h10a4 4 0 0 1 4 4v10a4 4 0 0 1 -4 4h-10a4 4 0 0 1 -4 -4l0 -10" /></svg><span class="kn-action-label">LinkedIn</span></a></li>
+      </ul>
+      <p>Where every action is a service:</p>
+      <ul class="kn-actions probe-icons" role="list">
+        <li><a class="kn-action" href="https://www.linkedin.com/company/example" data-kn-service="linkedin"><svg class="kn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true" focusable="false"><path d="M8 11v5" /><path d="M8 8v.01" /><path d="M12 16v-5" /><path d="M16 16v-3a2 2 0 1 0 -4 0" /><path d="M3 7a4 4 0 0 1 4 -4h10a4 4 0 0 1 4 4v10a4 4 0 0 1 -4 4h-10a4 4 0 0 1 -4 -4l0 -10" /></svg><span class="kn-action-label">LinkedIn</span></a></li>
+        <li><a class="kn-action" href="https://www.instagram.com/example" data-kn-service="instagram"><svg class="kn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true" focusable="false"><path d="M4 8a4 4 0 0 1 4 -4h8a4 4 0 0 1 4 4v8a4 4 0 0 1 -4 4h-8a4 4 0 0 1 -4 -4z" /><path d="M9 12a3 3 0 1 0 6 0a3 3 0 0 0 -6 0" /><path d="M16.5 7.5v.01" /></svg><span class="kn-action-label">Instagram</span></a></li>
+        <li><a class="kn-action" href="https://x.com/example" data-kn-service="x"><svg class="kn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true" focusable="false"><path d="M4 4l11.733 16h4.267l-11.733 -16z" /><path d="M4 20l6.768 -6.768m2.46 -2.46l6.772 -6.772" /></svg><span class="kn-action-label">X</span></a></li>
+        <li><a class="kn-action" href="https://youtu.be/example" data-kn-service="youtube"><svg class="kn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true" focusable="false"><path d="M2 8a4 4 0 0 1 4 -4h12a4 4 0 0 1 4 4v8a4 4 0 0 1 -4 4h-12a4 4 0 0 1 -4 -4v-8" /><path d="M10 9l5 3l-5 3l0 -6" /></svg><span class="kn-action-label">YouTube</span></a></li>
+      </ul>
+      <div class="kn-card-grid kn-cards">
+        <article class="kn-card">
+          <h3 class="kn-card-heading" data-kn-type="heading-5">An office</h3>
+          <p class="kn-card-text" data-kn-type="small">12 Example Street</p>
+          <ul class="probe-card-list"><li>A plain item in a card</li><li>Another</li></ul>
+        </article>
+        <article class="kn-card">
+          <h3 class="kn-card-heading" data-kn-type="heading-5">Another office</h3>
+          <p class="kn-card-text" data-kn-type="small">34 Sample Road</p>
+          <ul class="kn-actions" role="list"><li><a class="kn-action" href="#visit">Visit us</a></li></ul>
+        </article>
+      </div>
+      <ul class="kn-actions probe-more" role="list"><li><a class="kn-action" href="#all" data-kn-main>More articles</a></li></ul>
+      <aside class="kn-fact-box" id="in-short" data-kn-surface="tint">
+        <p class="kn-fact-box-label" data-kn-type="label">In short</p>
+        <h2 class="kn-fact-box-heading" data-kn-type="heading-5">The heading</h2>
+        <ul class="probe-fact-list"><li>A plain item in a fact box</li><li>Another</li></ul>
+      </aside>
+    </div>
+  </div>
+</section>
+</main>

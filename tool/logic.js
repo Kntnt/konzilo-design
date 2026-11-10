@@ -190,6 +190,10 @@ export const clampControls = (width, view, windowWidth, scale = 1) =>
     MIN_CONTROLS * scale,
     Math.min(width, windowWidth - DIVIDER - (view === 'both' ? MIN_BOTH : MIN_ALONE) * scale),
   ));
+// Side by side, the desktop end needs 20rem beside the mobile end, the gap and the margins, or its width menu and
+// figure no longer fit; with less, Both puts the mobile end above the desktop end, so both stay of use.
+const MIN_DESKTOP_END = 320;
+export const bothSideBySide = (paneWidth, scale = 1) => paneWidth >= MOBILE + (MIN_DESKTOP_END + 48) * scale;
 // The controls get a comfortable measure; the preview gets the rest, up to real size.
 export function optimalControls(view, windowWidth, desktopWidth, scale = 1) {
   const preview =

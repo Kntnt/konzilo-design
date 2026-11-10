@@ -72,7 +72,7 @@ These eight kind names and their meanings, and the two rank tints added on 2026-
 | `.kn-mode-dark` | Class alternative for explicit dark mode | plates.md §7; proposed here | Proposed here | Completes the same alternative. |
 | `--kn-in-light`, `--kn-in-dark` | The mode as two switches, for a kind that keeps one `color-scheme` in both modes, where `light-dark()` cannot follow the mode; set wherever `--kn-mode` is | generator.md, Surfaces; 2026-11-05 | The assistant's choice, for the owner's rule of 2026-11-05 | Say when a value applies; emitted CSS only, for no component to read. |
 
-No local mode attribute means inherit the selected mode; it does not mean follow the operating system. A light local mode does not turn `brand` or `inverse` light. Picture and accent values in both modes are generated and checked; this draft adds no new mode rule for them. The yellow-to-olive generator issue remains open in plates.md.
+No local mode attribute means inherit the selected mode; it does not mean follow the operating system. A light local mode does not turn `brand` or `inverse` light. Picture and accent values in both modes are generated and checked; this draft adds no new mode rule for them. A yellow brand's dark steps stay olive, by the one rule for every colour (plates.md, owner, 2026-11-05).
 
 ### Global roles: type
 
@@ -555,3 +555,41 @@ Consent adds `.kn-consent-actions`, `.kn-consent-settings-header`, `.kn-consent-
 ## Names on a Konzilo site (2026-11-05)
 
 `konzilo.css` styles the core's own `konzilo-*` classes, which the core's `docs/site-design.md` lists, in a layer of its own, `kn-konzilo`, after `kn-components`, and sets its `--konzilo-lightbox-overlay`, `--konzilo-lightbox-text` and `--konzilo-lightbox-control` on the root. It adds two properties of its own inside its rules, `--kn-form-mark`, the colour of a form outcome's edge, and `--kn-select-stroke`, the line of a select's arrow, and a Footer's `--kn-footer-separator` holds for the consent controls in its cells too. `design-props` adds `logoAddresses`, whose `{ light, dark }` is the shape of Header's and `footerBrand`'s logo, and `menuProps`, named as the other props are. The package exports `./konzilo`, `./konzilo.css`, `./body-styles.css` and `./design-props`, and no longer `./fonts.css` or `./fonts/*`, since the tarball holds no fonts (konzilo.md).
+
+## Directive names (2026-11-10)
+
+***Specified* with the HTML contract for the directive list Konzilo defines (directives.md); the assistant's choices, 2026-11-10.** They follow the class grammar above, add no generated token, Surface kind or design-file key, and use the existing context, type, space, radius, duration and shadow roles.
+
+- **Classes:** `.kn-section` with `media`, `picture`, `badges`, `head` and `body` parts, on a Band; `.kn-hero-logo`, a part of Hero; `.kn-heading-group-subheadline`, a part of Heading Group; `.kn-fine-print`; `.kn-fact-box` with `label` and `heading`; `.kn-description-list` and `.kn-value-list`, each with an `item` part, and `.kn-value-list-value`; `.kn-logos` with `label` and `list`; `.kn-actions` holding `.kn-action`, with `.kn-action-label`; `.kn-cards`, a series on a Card Grid, with `.kn-cards-nav` and `.kn-cards-label` for one that leads on; `.kn-card-symbol`, a part of Card; `.kn-timeline` with `item` and `heading`; `.kn-reasons` holding `.kn-reason`, with `.kn-reason-heading`; `.kn-post-list` and `.kn-featured`; `.kn-tabs` with `label`, `list`, `tab`, `panel`, `text` and `parts`; `.kn-choice` with `label`, `answers`, `answer` and `panel`; `.kn-article-opening`, on a Hero, `.kn-article-body`, on a Band, `.kn-article-meta` with `date`, `byline` and `category`, and `.kn-question`.
+- **Words:** `.kn-tabs-parts` holds a tab's components after its text, a word chosen over `components`, since every part of the page is one. `.kn-actions` and `.kn-action` name what the reader can do next, not a look, so a design may draw an action as a button or a link; Link Group stays for sites outside Konzilo.
+
+| Attribute | What it is |
+|---|---|
+| `data-kn-deck="long"` | On a deck: its text is longer than a line beside its heading holds, `DECK_LINE`. A fact, not a layout. |
+| `data-kn-numbering="decimal\|lower-latin\|upper-latin\|lower-roman\|upper-roman\|lower-greek\|double-latin"` | On an `<ol>` or a Timeline: the numbering of that level, named as CSS names its own counter styles where one matches. |
+| `data-kn-punctuation="period\|parenthesis\|brackets"` | With a numbering: a full stop after it, a closing parenthesis after it, or both brackets around it; absent for none. |
+| `data-kn-dotted` | With a numbering below the first level: the number of the item above stands before its own. |
+| `data-kn-sign="check\|cross"` | On a `<ul>`, Reasons or a series of cards: the mark before each item or heading. |
+| `data-kn-contact="phone\|email"` | On a link alone in a card's paragraph: its text is the number or the address. |
+| `data-kn-service="linkedin\|facebook\|instagram\|youtube\|x"` | On `.kn-action`: a link to a service the design knows, drawn as its icon. |
+| `data-kn-main` | On `.kn-action`: the main action, the one the editor set in bold. |
+| `data-kn-picture="behind"` | On `.kn-cards`: the text stands on the picture. The same attribute says where a Hero's picture stands. |
+| `data-kn-symbol="item\|heading"` | On `.kn-cards`: the pictures are symbols, by the card or by its heading. |
+| `data-kn-questions` | On `.kn-accordion`: every item's heading is a question. |
+| `data-kn-presentation="cards\|featured\|filtered"` | On `.kn-post-list`: the presentation a site declares to the core, as Content Loop's attribute names its own. |
+| `data-kn-follow` | On `.kn-toc`: a following menu, which marks the section being read with `aria-current="true"`. |
+| `data-kn-sticky="true"` | On `.kn-section-head`, written by `section.js`: the head fits the window and may stay in view. On an Aside Block it remains the requested option. |
+| `data-kn-enhanced` | On `.kn-tabs` and `.kn-choice`, written by their runtimes, as on Header and Visitor Filters. |
+
+| Export of `@kntnt/konzilo-design/directives` | What it is |
+|---|---|
+| `sectionParts`, `DECK_LINE` | A section's media, head, deck and body, and the deck's length fact. |
+| `panelParts` | A tab panel's text and parts. |
+| `markerAttributes` | One list level's attributes from `markers`. |
+| `contactOf` | `phone`, `email` or nothing, for a link and its text. |
+| `serviceOf`, `SERVICES` | A known service and its icon, by a link's host. |
+| `allQuestions` | Whether a set of headings are all questions. |
+| `surfaceOf` | The Surface of a part the design puts on a plate: `link-card`, `action-card`, `behind-card`, `fact-box`, `choice-answer` or `choice-panel`, given its ground. |
+| `iconHtml` | An Icon's markup, as Icon writes it. |
+
+The runtimes are `section.js` (`setupSections`), `tabs.js` (`setupTabs`), `choice.js` (`setupChoices`), both of which export `PREVIEW_EVENT`, `konzilo-preview-show`, the event a Konzilo live preview sends from a selected block, and `table-of-contents.js`, which adds `setupFollowingMenus` and its pure `currentStop` beside `contentsTree`. The counter styles are `kn-<numbering>`, such as `kn-lower-latin`, with the punctuation's forms beside them. The icons `instagram` and `brand-x` join `icons.js`; `brand-x` keeps `x`, the close mark, as it is.

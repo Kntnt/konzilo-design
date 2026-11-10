@@ -1,0 +1,11 @@
+/* Fine Print: `::small`, where it stands (docs/spec/directives.md, Text with a role). Its type is the small step, from
+   its data-kn-type, and its colour muted. Under a hero's actions it is their note, and after a form or a choice the terms,
+   standing with what it belongs to. */
+@layer kn-components {
+  .kn-fine-print { max-inline-size: var(--kn-layout-narrow); color: var(--kn-text-muted); }
+  .kn-fine-print a { color: inherit; text-decoration: underline; text-underline-offset: 0.18em; text-decoration-thickness: 0.06em; }
+  .kn-fine-print a:hover { color: var(--kn-text); }
+  /* A choice's answers usually hold forms, so fine print after one is their terms too (the assistant's choice, 2026-11-10). */
+  .kn-hero-text > .kn-actions + .kn-fine-print, :is(form, .kn-choice) + .kn-fine-print { margin-block-start: var(--kn-space-component-gap); }
+  .kn-choice:has(+ .kn-fine-print) { margin-block-end: 0; }
+}

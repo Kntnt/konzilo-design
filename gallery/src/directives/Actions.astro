@@ -1,0 +1,12 @@
+---
+import { serviceOf, iconHtml } from '../../../src/directives/index.js';
+// :::list{type="actions"}: each item a link; the bold one is the main action, and a link to a known service its icon.
+interface Props { items: { label: string; href: string; main?: boolean }[] }
+const { items } = Astro.props;
+---
+<ul class="kn-actions" role="list">{items.map(({ label, href, main }) => {
+  const known = serviceOf(href);
+  return <li>{known
+    ? <a class="kn-action" href={href} data-kn-main={main ? '' : undefined} data-kn-service={known.service}><Fragment set:html={iconHtml(known.icon)} /><span class="kn-action-label">{label}</span></a>
+    : <a class="kn-action" href={href} data-kn-main={main ? '' : undefined}>{label}</a>}</li>;
+})}</ul>

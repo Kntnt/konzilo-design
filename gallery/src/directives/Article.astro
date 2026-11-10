@@ -1,0 +1,81 @@
+---
+import Breadcrumbs from '../../../src/components/Breadcrumbs.astro';
+import { breadcrumbProps } from '../../../src/components/design-props.js';
+import { heroAttributes } from '../../../src/components/hero-attributes.js';
+import Card from './Card.astro';
+import Actions from './Actions.astro';
+import { landscape, portrait } from '../samples.js';
+import { surfaceOf } from '../../../src/directives/index.js';
+// An article's page, laid out by its fields: the opening, the body with its following menu and a fact box, and "Read more".
+interface Props { design: { breadcrumbs: Record<string, unknown> } }
+const { design } = Astro.props;
+const trail = breadcrumbProps(design.breadcrumbs, { name: 'Juniper Atlas' }, { home: '#directives', trail: [{ label: 'Field notes', href: '#directive-posts' }, { label: 'Soil first' }] });
+const stops = [['article-bed', 'The bed comes first'], ['article-in-short', 'In short'], ['article-seeds', 'And the seeds'], ['article-end', 'What comes next']];
+const teasers = [['Planning', 'Plan the first week'], ['Tools', 'Tools we rely on'], ['People', 'Who does what at the table']];
+---
+<section class="kn-band kn-hero kn-article-opening" id="directive-article" data-kn-surface="raised" {...heroAttributes({ side: 'end', height: 'half' })}>
+  <div class="kn-band-content kn-hero-content">
+    <div class="kn-hero-text">
+      <Breadcrumbs {...trail} label="Breadcrumbs" />
+      <hgroup class="kn-heading-group">
+        <p class="kn-heading-group-eyebrow" data-kn-type="label">49 / Article · Interview</p>
+        <h1 class="kn-heading-group-heading" data-kn-type="heading-1">Soil first</h1>
+        <p class="kn-heading-group-subheadline">A grower on why the bed matters more than the seed</p>
+        <p class="kn-heading-group-deck" data-kn-type="lead">Thirty years of beds have taught her to feed the soil and let the plants feed themselves.</p>
+      </hgroup>
+      <p class="kn-article-meta" data-kn-type="small">
+        <span class="kn-article-date">Published <time datetime="2026-10-10">10 October 2026</time></span>
+        <span class="kn-article-byline">By A. Writer</span>
+        <span class="kn-article-category">Growing</span>
+      </p>
+    </div>
+    <div class="kn-hero-media"><img src={portrait} alt="A neutral portrait of the grower"></div>
+  </div>
+</section>
+<section class="kn-band kn-article-body">
+  <div class="kn-band-content">
+    <div class="kn-reading-area" data-kn-side="start" data-kn-stack="before" data-kn-columns="1">
+      <div class="kn-reading-area-aside">
+        <aside class="kn-aside-block" data-kn-sticky="true">
+          <nav class="kn-toc" aria-labelledby="article-menu" data-kn-type="small" data-kn-follow>
+            <p class="kn-toc-label" id="article-menu" data-kn-type="heading-6">In this article</p>
+            <ol role="list">{stops.map(([id, label]) => <li><a href={`#${id}`}>{label}</a></li>)}</ol>
+          </nav>
+        </aside>
+      </div>
+      <div class="kn-reading-area-flow kn-body-text">
+        <p>She has grown vegetables on the same plot since before most of her neighbours were born. The lede says in two sentences what the article is about, with no look of its own.</p>
+        <h2 id="article-bed">The bed comes first</h2>
+        <p class="kn-question"><strong>What did you find?</strong></p>
+        <p>That the soil decides almost everything. Once the soil was right, the rest came by itself, more or less. It took a while to see it: for years we asked the same question in different words, and got the same answer each time.</p>
+        <p class="kn-question"><strong>And how do you look after it?</strong></p>
+        <p>Leaves in the autumn, compost in the spring and as little digging as we can manage. The worms do the rest, if we let them.</p>
+        <aside class="kn-fact-box" id="article-in-short" data-kn-surface={surfaceOf('fact-box', undefined)}>
+          <p class="kn-fact-box-label" data-kn-type="label">In short</p>
+          <h2 class="kn-fact-box-heading" data-kn-type="heading-5">Three things to remember</h2>
+          <p>What thirty years of beds have taught, in brief.</p>
+          <ul><li>Feed the soil, not the plant.</li><li>Cover the bed through the winter.</li><li>Dig as little as you can.</li></ul>
+        </aside>
+        <h2 id="article-seeds">And the seeds</h2>
+        <p>They follow. A good bed forgives a poor seed, and a poor bed wastes a good one. She saves her own beans and buys the rest from a neighbour who does the same.</p>
+        <h3>The ones she keeps</h3>
+        <p>Runner beans, a yellow squash and a lettuce that does not mind the shade. Each has grown in the same corner for twenty summers.</p>
+        <p>Every autumn the best pods dry on a string above the kitchen window, and every spring they go back into the same soil.</p>
+        <h2 id="article-end">What comes next</h2>
+        <p>A second plot, closer to the school, where the children can see what a bed does in a year. The following menu marks the section being read as the page scrolls.</p>
+        <p>The first boards are already cut.</p>
+      </div>
+    </div>
+  </div>
+</section>
+<section class="kn-band kn-section">
+  <div class="kn-band-content">
+    <header class="kn-section-head"><hgroup class="kn-heading-group"><h2 class="kn-heading-group-heading" data-kn-type="heading-2">Read more</h2></hgroup></header>
+    <div class="kn-section-body kn-body-text">
+      <div class="kn-card-grid kn-cards">
+        {teasers.map(([category, title]) => <Card picture={{ src: landscape, alt: `A picture for ${title.toLowerCase()}` }} eyebrow={category} heading={title} href="#directive-posts" texts={['A short teaser text that says what the field note holds.']} />)}
+      </div>
+      <Actions items={[{ label: 'More field notes', href: '#directive-posts', main: true }]} />
+    </div>
+  </div>
+</section>

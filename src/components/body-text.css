@@ -14,6 +14,10 @@
   .kn-body-text :where(p, ul, ol, blockquote, hr) { margin-block: 0 1em; }
   .kn-body-text :where(ul, ol) { padding-inline-start: 1.5em; }
   .kn-body-text li { margin-block: 0.35em; }
+  /* The design's own bullets and numbers, in a card and a fact box too: a bullet takes the accent, the colour of small
+     marks, and a number, which is text, the muted text. Markers set with the list's directive are in markers.css. */
+  :where(.kn-body-text, .kn-card, .kn-fact-box) ul > li::marker { color: var(--kn-accent); }
+  :where(.kn-body-text, .kn-card, .kn-fact-box) ol > li::marker { color: var(--kn-text-muted); font-variant-numeric: tabular-nums; }
   .kn-body-text :where(h1, h2, h3, h4, h5, h6) {
     margin-block: 1.6em 0.6em;
     text-wrap: balance;

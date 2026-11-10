@@ -95,7 +95,8 @@ const results = Array.from({ length: 12 }, (_, index) => ({
   <div class="sample-stack breadcrumb-examples">
     {['page', 'tint', 'brand'].map((surface) => (
       <div class="sample-pad" data-kn-surface={surface}>
-        <Breadcrumbs {...breadcrumbProps(resolved.breadcrumbs, project)} />
+        {/* The component's own specimen shows how a trail looks, whether or not the design shows one on its pages. */}
+        <Breadcrumbs {...breadcrumbProps({ ...resolved.breadcrumbs, show: true }, project)} />
       </div>
     ))}
   </div>

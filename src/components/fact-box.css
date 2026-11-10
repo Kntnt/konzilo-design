@@ -1,0 +1,15 @@
+@layer kn-components {
+  /* Fact Box (docs/spec/directives.md, `aside`): a box of facts in the reading column, in the flow, on the Surface
+     the site writes. Its eyebrow is a plain label, its heading small and its lists in small type. */
+  .kn-fact-box { display: flow-root; margin-block: 1.5em; padding: var(--kn-space-plate); border-radius: var(--kn-radius-card); overflow-wrap: anywhere; }
+  .kn-fact-box:not([data-kn-surface]) { padding: var(--kn-space-component-gap) 0 0; border-block-start: 1px solid var(--kn-border); border-radius: 0; }
+  .kn-fact-box > :first-child { margin-block-start: 0; }
+  .kn-fact-box > :last-child { margin-block-end: 0; }
+  .kn-fact-box-label { margin-block: 0 0.5em; color: var(--kn-text-muted); }
+  .kn-fact-box-heading { margin-block: 0 0.6em; text-wrap: balance; }
+  .kn-fact-box :is(ul, ol) {
+    font-size: var(--kn-type-small-size);
+    line-height: var(--kn-type-small-line-height);
+    letter-spacing: var(--kn-type-small-letter-spacing);
+  }
+}

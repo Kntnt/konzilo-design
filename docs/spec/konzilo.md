@@ -70,6 +70,12 @@ Its rules on the core's classes stand in a layer of their own, `kn-konzilo`, aft
 
 **The lightbox** stands inside a body's wrapper, so the rules of `.kn-body-text` and the reset reach into it. The core's `modal.css` has no layer, so it beats every rule of this library on what it names: the margins and padding of its list, items, figure and words, the colour and size of its words, and the size of its image and buttons. `konzilo.css` takes back what it does not name: a link's colour and focus ring in a caption, inline code's fill and an image's corners. A gallery's crop on the page does not reach the dialog, which stands beside the gallery and not in it.
 
+## Dark mode
+
+The generated CSS is light until an element asks for dark: `data-kn-mode="dark"` turns that element and everything in it to dark mode, and `data-kn-mode="light"` turns a part of it back (names.md, Surface kinds and local mode). Without the attribute a page is light. The operating system's light or dark preference changes nothing by itself, since no attribute means inherit the selected mode, not follow the operating system.
+
+Which modes a site uses is the site's choice, not this package's (owner, 2026-11-10): light only, dark only, or both, and with both, whether it follows the visitor's system or offers a switch. Neither the core nor this package writes the attribute, so the site does: for a dark site its layout writes `<html lang={…} data-kn-mode="dark">`, and a site that lets the mode change sets the attribute on `<html>` itself, by a script of its own that runs before the page paints. `brand` and `inverse` stay dark in both modes, and the header's and the footer's logos follow the mode they stand in. `--kn-theme-base`, which the core gives the browser's frame, stays the light page colour, since the core reads one colour.
+
 ## The footer
 
 Nothing to import. A site's layout places the core's controls in this package's Footer, whose named slots exist for this:
@@ -167,7 +173,7 @@ import { siteMenu } from '@kntnt/konzilo/astro/site-settings';
 import Page from '@kntnt/konzilo-design/components/Page.astro';
 import Header from '@kntnt/konzilo-design/components/Header.astro';
 import Footer from '@kntnt/konzilo-design/components/Footer.astro';
-import { footerFromDesign, headerProps, logoAddresses, menuProps, pageProps } from '@kntnt/konzilo-design/design-props';
+import { footerBrand, footerFromDesign, headerProps, logoAddresses, menuProps, pageProps } from '@kntnt/konzilo-design/design-props';
 import '@kntnt/konzilo-design/components.css';
 
 const { entry, title, page } = Astro.props;
@@ -175,9 +181,24 @@ const { header, footer, page: pageSettings } = design.resolved;
 const base = import.meta.env.BASE_URL;
 const logos = logoAddresses(design.project, { base });
 const menu = menuProps(await siteMenu('main', Astro.url), { current: Astro.url.pathname, base });
+const footerLinks = menuProps(await siteMenu('footer', Astro.url), { current: Astro.url.pathname, base });
 const search = { action: `${base}search/`, label: 'Search' };
-// What stands in each cell the design has on, but the two the consent controls fill. A cell given nothing stays empty.
-const content = { upper: { a1: { text: design.project.name } } };
+// Something for every one of the eight cells, here or in a slot of its name below, as the lower band's A2 and B2 have.
+// A cell the design has off leaves out what it is given here. A cell it has on counts when the footer spreads the
+// others, whether or not it holds anything, so a site with nothing for a cell turns the cell off in the design.
+// The upper band's A1 is the brand, as the header shows it. The texts and links in quotes are the site's own.
+const content = {
+  upper: {
+    a1: { content: footerBrand({ identity: header.identity, axis: header['brand-axis'], name: design.project.name, logo: logos, surface: footer.upper.surface }) },
+    b1: { links: [{ label: 'LinkedIn', href: '…' }, { label: 'Newsletter', href: `${base}newsletter/` }] },
+    a2: { text: design.project.slogan || 'What the organisation does, in a sentence or two.' },
+    b2: { links: footerLinks },
+  },
+  lower: {
+    a1: { text: '12 Example Street, 123 45 Sampleton' },
+    b1: { text: `© ${new Date().getFullYear()} ${design.project.name}` },
+  },
+};
 ---
 <html lang={publicSite(Astro.url).languageTag}>
   <head>
@@ -230,6 +251,7 @@ import design from '../../design/site.design.json';
 const [home, ...rest] = await breadcrumbs(page, Astro.url);
 const trail = rest.map(({ name, href }, at) => (at === rest.length - 1 ? { label: name } : { label: name, href }));
 ---
+<!-- A design with its trail off gives no steps, and Breadcrumbs then writes nothing. -->
 <Breadcrumbs {...breadcrumbProps(design.resolved.breadcrumbs, design.project, { trail, home: home.href, homeWord: home.name })} />
 ```
 

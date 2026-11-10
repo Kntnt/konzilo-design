@@ -14,8 +14,12 @@
   /* The column gap parts the heading group from what follows it, and what stands before the group brings its own. */
   .kn-hero-text { display: grid; min-inline-size: 0; overflow-wrap: anywhere; }
   .kn-hero-text > .kn-heading-group ~ * { margin-block-start: var(--kn-space-column-gap); }
-  .kn-hero-text :is(.kn-heading-group-heading, .kn-heading-group-deck) { max-inline-size: var(--kn-layout-narrow); }
+  .kn-hero-text :is(.kn-heading-group-heading, .kn-heading-group-subheadline, .kn-heading-group-deck) { max-inline-size: var(--kn-layout-narrow); }
   .kn-hero .kn-heading-group-heading[data-kn-type="display"] { max-inline-size: 14em; }
+  /* A picture before the text is a logo, first after the trail and above the heading group, at its own proportions. */
+  /* Its height is the recipe's and its width follows, so an SVG with only a viewBox, which has no size of its own, is drawn too. */
+  .kn-hero-logo { display: block; justify-self: start; inline-size: auto; block-size: 4rem; max-inline-size: min(100%, 16rem); object-fit: contain; object-position: left center; margin-block-end: var(--kn-space-column-gap); }
+  .kn-hero-logo:dir(rtl) { object-position: right center; }
 
   /* With no picture beside it, the text block is as wide as its words and moves across the content width. Its own lines stay start-aligned. */
   .kn-hero:not([data-kn-picture]) .kn-hero-text { inline-size: fit-content; max-inline-size: 100%; }

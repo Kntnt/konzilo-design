@@ -1,3 +1,5 @@
+import { frameScheduler } from './schedule.js';
+
 // The build-time layout pass and browser eligibility share no DOM-dependent decisions.
 export function revealEligible({ attachment, footerHeight, viewportHeight, print = false }) {
   return attachment === 'reveal' && !print && footerHeight > 0 && footerHeight <= viewportHeight;
@@ -83,7 +85,7 @@ export function setupFooters(root = document) {
     const main = page?.querySelector(':scope > .kn-page-main');
     if (!page || !main || footer.parentElement !== page) return () => {};
     const abort = new AbortController();
-    let frame, queued = false, disposed = false;
+    let disposed = false;
     const print = window.matchMedia('print');
     const rem = (n) => `${n / parseFloat(getComputedStyle(document.documentElement).fontSize)}rem`;
     function layout() {
@@ -106,10 +108,9 @@ export function setupFooters(root = document) {
       main.toggleAttribute('data-kn-auto-line', !!same && !shadow && !chosenLine);
       footer.removeAttribute('data-kn-top-line');
     }
+    const next = frameScheduler(layout);
     function schedule() {
-      if (queued || disposed) return;
-      queued = true;
-      frame = requestAnimationFrame(() => { queued = false; layout(); });
+      if (!disposed) next();
     }
     footer.addEventListener('focusin', (event) => {
       // A pointer can focus a link too. Keyboard focus is the obscuration case.
@@ -127,7 +128,7 @@ export function setupFooters(root = document) {
     document.fonts?.ready.then(schedule);
     layout();
     const dispose = () => {
-      disposed = true; abort.abort(); observer.disconnect(); mutation.disconnect(); cancelAnimationFrame(frame);
+      disposed = true; abort.abort(); observer.disconnect(); mutation.disconnect(); next.cancel();
       delete page.dataset.knFooterAttachment; page.style.removeProperty('--kn-footer-height');
       delete footer.dataset.knEffectiveAttachment;
       main.removeAttribute('data-kn-auto-shadow'); main.removeAttribute('data-kn-auto-line');

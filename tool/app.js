@@ -10,6 +10,7 @@ import {
   dragControls,
   optimalControls,
   clampControls,
+  bothSideBySide,
   sizeAt,
   snapStrength,
   shortChapter,
@@ -113,7 +114,7 @@ function renderMenu() {
     return `<button class="chapter" type="button" data-go="${pages[0]}" data-chapter="${id}" ${tip(name)}>${escapeHtml(shortChapter(name))}</button>`;
   }).join('');
   document.getElementById('views').innerHTML = [
-    ['both', 'Both', 'Mobile and desktop side by side'],
+    ['both', 'Both', 'Mobile and desktop side by side. Where the preview is too narrow for a useful desktop end beside the mobile one, as beside the controls in a 1024 px window, mobile stands above desktop.'],
     ['phone', 'Mobile', 'Only mobile, at real size'],
     ['desktop', 'Desktop', 'Only desktop, as large as the pane allows'],
   ].map(([value, name, help]) => `<button type="button" data-view="${value}" ${tip(help)}>${name}</button>`).join('');
@@ -188,6 +189,7 @@ function layout() {
   ui.controls = ui.atOptimal ? optimalControls(ui.view, width, ui.width, textScale()) : clampControls(ui.controls, ui.view, width, textScale());
   tool.style.setProperty('--controls-width', `${ui.controls}px`);
   divider.dataset.optimal = String(ui.atOptimal);
+  previewPane.toggleAttribute('data-stacked', ui.view === 'both' && !bothSideBySide(previewPane.clientWidth, textScale()));
   measure(ui);
 }
 
@@ -1255,7 +1257,7 @@ window.addEventListener('pagehide', () => {
 renderMenu();
 tipOn(divider, 'Drag to share the width. It catches at the best position. Double-click to go back to it.');
 tipOn(presentation, 'Save the design and create the browsable presentation in a ZIP archive.');
-tipOn(exportAi, 'Save the design and write it beside the design file as DESIGN.md, a file to give an AI agent that is to design pages from it.');
+tipOn(exportAi, 'Save the design and write it beside the design file as a ZIP for an AI agent that is to build a site from it: DESIGN.md with the logos, fonts and icons it names.');
 tipOn(document.getElementById('own-window'), 'Open the preview in a window of its own, to put on your other screen.');
 tipOn(document.getElementById('full-window'), 'Let the preview fill the whole window, or put it back.');
 tipOn(document.getElementById('bring-back'), 'Close the preview window and put the preview back beside the controls.');

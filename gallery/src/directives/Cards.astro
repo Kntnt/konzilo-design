@@ -1,0 +1,107 @@
+---
+import Section from './Section.astro';
+import Card from './Card.astro';
+import { landscape } from '../samples.js';
+import { symbols } from '../directive-samples.js';
+import { markerAttributes } from '../../../src/directives/index.js';
+// :::cards in each of its forms, steps and reasons, and the three presentations of ::post-list.
+const picture = (alt: string) => ({ src: landscape, alt });
+const counts = [1, 2, 3, 4, 5, 6, 7];
+const words = ['One card', 'Two cards', 'Three cards', 'Four cards', 'Five cards', 'Six cards', 'Seven cards'];
+const columnsOf = (count: number) => (count === 2 ? 2 : count < 4 ? 3 : [5, 6, 9].includes(count % 12) ? 3 : 4);
+const titles = ['Observe', 'Imagine', 'Make', 'Share', 'Repair', 'Plant', 'Gather'];
+const inline = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 12h8M12 8v8"/></svg>';
+const symbolCards = [['Square symbol', { src: symbols.square }], ['Wide symbol', { src: symbols.wide }], ['Inline symbol', { svg: inline }], ['A very large file', { src: symbols.huge }]] as const;
+const posts = [
+  ['Planning', 'Plan the first week', ['planning', 'costs']],
+  ['Costs', 'What a visit costs', ['costs']],
+  ['Tools', 'Tools we rely on', ['tools']],
+  ['People', 'Who does what at the table', ['people', 'planning']],
+  ['Planning', 'Looking after a garden', ['planning', 'tools']],
+  ['People', 'A day at the studio', ['people']],
+  ['Costs', 'Our checklist for a series', ['costs', 'planning']],
+] as const;
+const teaser = 'A short teaser text that says what the field note holds.';
+const kinds = (ground?: string) => [
+  { picture: picture('A desk by a window'), eyebrow: 'Studio notes', heading: 'A link as a whole', href: '#directive-cards', texts: ['The whole card is one link, on its own plate.'] },
+  { heading: 'The studio', texts: ['12 Orchard Lane', { href: 'tel:+12025550148', text: '+1 202 555 0148' }, { href: 'mailto:studio@example.invalid', text: 'studio@example.invalid' }, { href: 'tel:+12025550148', text: 'Call us' }], list: ['Open on weekdays', 'Parking at the back'] },
+  { heading: 'Something else?', texts: ['Tell us what you need and we will find the right person.'], actions: [{ label: 'Get in touch', href: '#directive-choice', main: true }], actionCard: true },
+].map((card) => ({ ...card, ground }));
+const steps = [
+  { markers: '1', surface: 'page', items: ['We talk', 'We plan', 'We build', 'We hand over'] },
+  { markers: 'A.', surface: 'tint', items: ['We talk', 'We plan', 'We build'] },
+  { markers: '(i)', surface: 'brand', items: ['We talk', 'We plan', 'We build', 'We hand over', 'We follow up'] },
+];
+---
+{([undefined, 'brand'] as const).map((ground) => <Section id={ground ? undefined : 'directive-cards'} surface={ground} heading={`52 / Cards · Three kinds${ground ? ' on brand' : ''}`} deck="A link as a whole on its plate, an open card with a number and an address, and an action card among cards without.">
+  <div class="kn-card-grid kn-cards">{kinds(ground).map((card) => <Card {...card} />)}</div>
+</Section>)}
+<Section surface="raised" heading="52 / Cards · Columns by count" deck="Two for two, three for one or three, and from four on three or four, whichever leaves the last row fuller.">
+  {counts.map((count) => <Fragment>
+    <p data-kn-type="label">{words[count - 1]}, {columnsOf(count)} columns</p>
+    <div class="kn-card-grid kn-cards">{titles.slice(0, count).map((title) => <Card ground="raised" heading={title} href="#directive-cards" texts={['One useful idea, ready to grow.']} />)}</div>
+  </Fragment>)}
+</Section>
+<Section heading="52 / Cards · Signed" deck={'Cards with pictures and markers="v" hang a mark in each heading.'}>
+  <div class="kn-card-grid kn-cards" {...markerAttributes('v', 1, false)}>
+    {posts.slice(0, 3).map(([category, title]) => <Card picture={picture(`A picture for ${title.toLowerCase()}`)} eyebrow={category} heading={title} href="#directive-posts" texts={[teaser]} />)}
+  </div>
+</Section>
+<Section surface="tint" heading="52 / Cards · Leading on" deck={'type="navigation": cards that lead on, under their label, and without one.'}>
+  {[true, false].map((labelled) => <nav class="kn-cards-nav" aria-labelledby={labelled ? 'directive-navigation-1' : undefined}>
+    {labelled && <div class="kn-cards-label" id="directive-navigation-1"><p data-kn-type="label">Where next</p></div>}
+    <ul class="kn-card-grid kn-cards" role="list">
+      {(labelled ? ['Workshops', 'Plans', 'About the studio', 'Visiting'] : ['Workshops', 'Plans', 'Visiting']).map((title) => <li><Card navigation ground="tint" heading={title} href="#directive-cards" texts={['Where this page leads.']} /></li>)}
+    </ul>
+  </nav>)}
+</Section>
+<Section heading="52 / Cards · Pictures behind" deck={'picture="behind": the text on the picture, and a card without one drawn as an ordinary card.'}>
+  <div class="kn-card-grid kn-cards" data-kn-picture="behind">
+    {posts.slice(0, 3).map(([category, title]) => <Card behind picture={picture(`A picture behind ${title.toLowerCase()}`)} eyebrow={category} heading={title} href="#directive-cards" texts={['The text stands on the picture.']} />)}
+    <Card behind heading="No picture here" href="#directive-cards" texts={['An ordinary card in the series.']} />
+  </div>
+</Section>
+{(['item', 'heading'] as const).map((place) => <Section surface={place === 'item' ? 'raised' : undefined} heading={`52 / Cards · Symbols by the ${place === 'item' ? 'card' : 'heading'}`} deck={`symbol="${place}": each symbol shown whole in a box the same on every card.`}>
+  <div class="kn-card-grid kn-cards" data-kn-symbol={place}>
+    {symbolCards.map(([title, mark]) => <Card ground={place === 'item' ? 'raised' : undefined} symbol={{ place, ...mark }} heading={title} texts={['The symbol keeps its proportions, however large its file.']} />)}
+  </div>
+</Section>)}
+{steps.map(({ markers, surface, items }) => <Section id={markers === '1' ? 'directive-steps' : undefined} surface={surface} heading={`53 / Steps · markers="${markers}"`} deck="Numbered as the editor writes it; the number of steps sets the columns.">
+  <ol class="kn-timeline" {...markerAttributes(markers, 1, true)}>
+    {items.map((item) => <li class="kn-timeline-item"><h3 class="kn-timeline-heading" data-kn-type="heading-5">{item}</h3><p>One short paragraph on what happens in this step.</p></li>)}
+  </ol>
+</Section>)}
+{([['x', 'inverse', ['No fee for the first visit', 'No sign-up', 'No experience needed']], ['✓', 'accent', ['Coffee on the house', 'Paper and pencils', 'A seat by the window']]] as const).map(([markers, surface, reasons]) => <Section surface={surface} heading={`53 / Reasons · markers="${markers}"`} deck="Without pictures, the mark hangs before each heading.">
+  <ul class="kn-reasons" role="list" {...markerAttributes(markers, 1, false)}>
+    {reasons.map((reason) => <li class="kn-reason"><h3 class="kn-reason-heading" data-kn-type="heading-5">{reason}</h3><p>A sentence or two on why it matters.</p></li>)}
+  </ul>
+</Section>)}
+<Section id="directive-posts" heading="54 / Post List · cards" deck="The core's teaser cards, all drawn alike.">
+  <div class="kn-post-list" data-kn-presentation="cards">
+    <div class="kn-card-grid kn-cards">{posts.slice(0, 5).map(([category, title]) => <Card picture={picture(`A picture for ${title.toLowerCase()}`)} eyebrow={category} heading={title} href="#directive-article" texts={[teaser]} />)}</div>
+  </div>
+</Section>
+<Section surface="tint" heading="54 / Post List · featured" deck="The latest large, the next two beside it, and any further posts after them.">
+  <div class="kn-post-list" data-kn-presentation="featured">
+    <div class="kn-featured">{posts.slice(0, 5).map(([category, title], index) => <Card ground="tint" type={index === 0 ? 'heading-3' : 'heading-5'} picture={picture(`A picture for ${title.toLowerCase()}`)} eyebrow={category} heading={title} href="#directive-article" texts={[teaser]} />)}</div>
+  </div>
+</Section>
+<Section heading="54 / Post List · filtered" deck="Topic pills over the cards; press one or more to show the posts with any of them.">
+  <div class="kn-post-list" data-kn-presentation="filtered">
+    <form class="kn-visitor-filters" role="search" method="get" action="" data-kn-for="directive-posts-1" data-kn-page-size="0" data-kn-count-text="Showing {count} field notes">
+      <div class="kn-visitor-filter-panel">
+        <fieldset class="kn-visitor-filter-group"><legend>Topic</legend>
+          <div class="kn-visitor-filter-toggles">
+            {['planning', 'costs', 'people', 'tools'].map((topic) => <button class="kn-pill" type="submit" name="topic" value={topic} aria-pressed="false" data-kn-filter-name="topic">{topic[0].toUpperCase() + topic.slice(1)}</button>)}
+          </div>
+        </fieldset>
+        <button class="kn-button kn-visitor-filter-submit" type="submit" data-kn-variant="outline">Show</button>
+      </div>
+      <p class="kn-visitor-filter-count" role="status" aria-live="polite" data-kn-result-count data-kn-type="small">Showing {posts.length} field notes</p>
+      <div data-kn-pagination-host></div>
+    </form>
+    <div class="kn-card-grid kn-cards" id="directive-posts-1">
+      {posts.map(([category, title, topics]) => <Card data-kn-item="" data-kn-filter={JSON.stringify({ topic: topics })} picture={picture(`A picture for ${title.toLowerCase()}`)} eyebrow={category} heading={title} href="#directive-article" texts={[teaser]} />)}
+    </div>
+  </div>
+</Section>

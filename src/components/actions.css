@@ -1,0 +1,51 @@
+/* Actions (docs/spec/directives.md, `list` with type="actions"): what the reader can do next, each item a link. Each
+   action is drawn with Button's recipes, in button.css: the main action, data-kn-main, as the filled button and the others
+   outlined. A hero, a section's head and a card give the list its place. */
+@layer kn-components {
+  /* Without a margin of its own, so that body text's spacing holds in a body and a part's own gap elsewhere. */
+  :where(.kn-actions) { margin-block: 0; }
+  .kn-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--kn-space-component-gap); margin-inline: 0; padding: 0; list-style: none; }
+  .kn-actions > li { display: flex; min-inline-size: 0; max-inline-size: 100%; margin: 0; }
+  /* Each action a target a finger can find, so a row of buttons and icons is one height. */
+  .kn-actions .kn-action { min-block-size: 2.75rem; }
+
+  /* A link to a known service is drawn as its icon, as tall as a button, its words kept for a screen reader. */
+  .kn-actions .kn-action[data-kn-service] { position: relative; min-inline-size: 2.75rem; min-block-size: 2.75rem; padding: 0.8em; }
+  .kn-actions .kn-action[data-kn-service] > .kn-icon { inline-size: 1.2em; block-size: 1.2em; }
+  .kn-actions .kn-action[data-kn-service] > .kn-action-label { position: absolute; inline-size: 0.0625rem; block-size: 0.0625rem; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  /* Where every action is one, they stand as a row of icons, without a box, each a target a finger can find. */
+  .kn-actions:not(:has(> li > .kn-action:not([data-kn-service]))) { gap: 0.25rem; }
+  .kn-actions:not(:has(> li > .kn-action:not([data-kn-service]))) .kn-action:not([data-kn-main]) { padding: 0.5rem; background: transparent; color: var(--kn-text); box-shadow: none; }
+  .kn-actions:not(:has(> li > .kn-action:not([data-kn-service]))) .kn-action:not([data-kn-main]) > .kn-icon { inline-size: 1.5em; block-size: 1.5em; }
+  .kn-actions:not(:has(> li > .kn-action:not([data-kn-service]))) .kn-action:not([data-kn-main]):is(:hover, :active) { color: var(--kn-link); box-shadow: none; }
+
+  /* A lone main action right after a series, cards that lead on among them, shows more of the series: under it, in the middle, and drawn as the way on
+     rather than as a button, in the link's colour with an arrow that moves as Button's arrow link does. */
+  :is(.kn-cards, .kn-cards-nav, .kn-timeline, .kn-reasons, .kn-post-list) + .kn-actions:has(> li:only-child > [data-kn-main]) { justify-content: center; margin-block-start: var(--kn-space-column-gap); }
+  :is(.kn-cards, .kn-cards-nav, .kn-timeline, .kn-reasons, .kn-post-list) + .kn-actions:has(> li:only-child > [data-kn-main]) .kn-action {
+    --kn-action-direction: 1;
+    min-block-size: 2.75rem;
+    padding-inline: 0;
+    background: transparent;
+    color: var(--kn-link);
+    box-shadow: none;
+    font-size: var(--kn-type-body-size);
+  }
+  :is(.kn-cards, .kn-cards-nav, .kn-timeline, .kn-reasons, .kn-post-list) + .kn-actions:has(> li:only-child > [data-kn-main]) .kn-action:dir(rtl) { --kn-action-direction: -1; }
+  :is(.kn-cards, .kn-cards-nav, .kn-timeline, .kn-reasons, .kn-post-list) + .kn-actions:has(> li:only-child > [data-kn-main]) .kn-action:is(:hover, :active) { background: transparent; text-decoration: underline; text-underline-offset: 0.18em; }
+  /* The arrow is two strokes, the corner of a box turned an eighth, so no picture is needed; it points the way of the
+     writing. */
+  :is(.kn-cards, .kn-cards-nav, .kn-timeline, .kn-reasons, .kn-post-list) + .kn-actions:has(> li:only-child > [data-kn-main]) .kn-action::after {
+    content: "";
+    flex: none;
+    inline-size: 0.45em;
+    block-size: 0.45em;
+    margin-inline: 0 0.15em;
+    border-style: solid;
+    border-color: currentColor;
+    border-width: 0.12em 0.12em 0 0;
+    transform: translateX(0) scaleX(var(--kn-action-direction)) rotate(45deg);
+    transition: transform var(--kn-duration-feedback) var(--kn-easing-standard);
+  }
+  :is(.kn-cards, .kn-cards-nav, .kn-timeline, .kn-reasons, .kn-post-list) + .kn-actions:has(> li:only-child > [data-kn-main]) .kn-action:is(:hover, :active)::after { transform: translateX(calc(0.2em * var(--kn-action-direction))) scaleX(var(--kn-action-direction)) rotate(45deg); }
+}

@@ -1,8 +1,17 @@
 @layer kn-components {
   .kn-key-figures {
     --kn-key-figures-minimum: 12rem;
+    --kn-key-figures-four: calc(4 * var(--kn-key-figures-minimum) + 3 * var(--kn-space-column-gap));
+    --kn-key-figures-two: calc(2 * var(--kn-key-figures-minimum) + var(--kn-space-column-gap));
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, max(var(--kn-key-figures-minimum), calc((100% - 3 * var(--kn-space-column-gap)) / 4))), 1fr));
+    /* Four columns, or two, or one: never three and one. Where four columns of the minimum fit, a column's minimum is a
+       quarter; else, where two fit, a half; else all. The terms times 999 are the switches. Each share is a hair under its
+       fraction, which 1fr gives back, so a browser's rounding never pushes the last column to a row of its own. */
+    grid-template-columns: repeat(auto-fit, minmax(max(
+      (100% - 3 * var(--kn-space-column-gap)) * 0.99 / 4,
+      min((100% - var(--kn-space-column-gap)) * 0.99 / 2, (var(--kn-key-figures-four) - 100%) * 999),
+      min(100%, (var(--kn-key-figures-two) - 100%) * 999)
+    ), 1fr));
     gap: var(--kn-space-column-gap);
     margin: 0;
   }

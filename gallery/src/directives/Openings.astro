@@ -1,0 +1,48 @@
+---
+import Band from '../../../src/components/Band.astro';
+import HeadingGroup from '../../../src/components/HeadingGroup.astro';
+import Breadcrumbs from '../../../src/components/Breadcrumbs.astro';
+import { breadcrumbProps } from '../../../src/components/design-props.js';
+import { heroAttributes } from '../../../src/components/hero-attributes.js';
+import Actions from './Actions.astro';
+import { landscape } from '../samples.js';
+import { studioLogo } from '../directive-samples.js';
+// The directive chapters open here, with the hero a Konzilo site writes: its trail, a logo, the heading group, actions and fine print.
+interface Props { design: { breadcrumbs: Record<string, unknown> } }
+const { design } = Astro.props;
+const project = { name: 'Juniper Atlas' };
+const trail = (steps: string[]) => breadcrumbProps(design.breadcrumbs, project, { home: '#directives', trail: steps.map((label, index) => (index < steps.length - 1 ? { label, href: '#directive-sections' } : { label })) });
+---
+<Band surface="page" id="directives">
+  <HeadingGroup heading="Konzilo directives" deck="Chapters 46 to 58 hold the HTML a Konzilo site writes for its directives, by the contract in docs/spec/directives.md. Nothing in it names a layout: the design reads each one from the content, and the controls above change it like every other component." />
+</Band>
+<section class="kn-band kn-hero" id="directive-hero" data-kn-surface="accent" {...heroAttributes({ side: 'end-bleed', height: 'two-thirds' })}>
+  <div class="kn-band-content kn-hero-content">
+    <div class="kn-hero-text">
+      <Breadcrumbs {...trail(['Workshops', 'An open table'])} label="Breadcrumbs" current={false} />
+      <img class="kn-hero-logo" src={studioLogo} alt="Juniper Atlas">
+      <hgroup class="kn-heading-group">
+        <p class="kn-heading-group-eyebrow" data-kn-type="label">46 / Hero · Logo, links and fine print</p>
+        <h1 class="kn-heading-group-heading" data-kn-type="heading-1">An open table for shared ideas</h1>
+        <p class="kn-heading-group-deck" data-kn-type="lead">Bring a question, <strong>leave with a sketch</strong> and come back when it has grown. <a href="#directive-tabs">See the plans</a> or <a href="#directive-questions">read what people ask</a>.</p>
+      </hgroup>
+      <Actions items={[{ label: 'Book a place', href: '#directive-choice', main: true }, { label: 'Read the questions', href: '#directive-questions' }]} />
+      <p class="kn-fine-print" data-kn-type="small">The first visit is free, and you may leave whenever you like. The trail above hides its last level, as the core can ask.</p>
+    </div>
+    <div class="kn-hero-media"><img src={landscape} alt="Invented green hills beneath a golden sun"></div>
+  </div>
+</section>
+<section class="kn-band kn-hero" id="directive-hero-text">
+  <div class="kn-band-content kn-hero-content">
+    <div class="kn-hero-text">
+      <Breadcrumbs {...trail(['Workshops', 'Evening walks', 'The orchard path'])} label="Breadcrumbs" />
+      <hgroup class="kn-heading-group">
+        <p class="kn-heading-group-eyebrow" data-kn-type="label">46 / Hero · No picture, on the page</p>
+        <h1 class="kn-heading-group-heading" data-kn-type="heading-1">The orchard path after dark</h1>
+        <p class="kn-heading-group-deck" data-kn-type="lead">A hero without a picture has no media, and its text takes the content width. Its trail shows every level.</p>
+      </hgroup>
+      <Actions items={[{ label: 'Join the walk', href: '#directive-sections', main: true }, { label: 'Juniper Atlas on Instagram', href: 'https://www.instagram.com/example' }]} />
+      <p class="kn-fine-print" data-kn-type="small">Walks leave at seven and take about an hour.</p>
+    </div>
+  </div>
+</section>

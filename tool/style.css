@@ -93,12 +93,19 @@ button, input, select, textarea { font: inherit; color: inherit; }
 
 /* The preview. */
 #preview-pane { display: flex; flex-direction: column; min-width: 0; min-height: 0; background: var(--well); }
-.preview-bar { flex: none; display: flex; align-items: center; gap: 0.625rem; height: 3rem; padding: 0 1rem; white-space: nowrap; overflow: hidden; }
+/* A preview too narrow for one row, as beside the controls in a 1024px window, puts its end group on a second row rather than clipping it. */
+.preview-bar { flex: none; display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.625rem; min-height: 3rem; padding: 0.5rem 1rem; white-space: nowrap; }
 .preview-end { display: flex; align-items: center; gap: 0.5rem; margin-inline-start: auto; }
 .preview-ends { flex: 1 1 0; position: relative; display: flex; justify-content: center; gap: 1rem; min-height: 0; padding: 0 1rem 1rem; }
 .end { display: grid; grid-template-rows: 2rem minmax(0, 1fr); min-width: 0; min-height: 0; container: end / inline-size; }
 .end[data-end="narrow"] { flex: 0 0 390px; }
 .end[data-end="wide"] { flex: 1 1 0; max-width: var(--desktop-width, 1440px); }
+/* Both, where the desktop end would be too narrow beside the mobile one: mobile above desktop, each as wide as it can be. */
+@media (min-width: 60.001rem) {
+  #preview-pane[data-stacked] .preview-ends { flex-direction: column; align-items: center; }
+  #preview-pane[data-stacked] .end { flex: 1 1 0; width: 100%; }
+  #preview-pane[data-stacked] .end[data-end="narrow"] { max-width: 390px; }
+}
 /* An end out of view stays laid out, so its frame keeps its real width and scroll position. */
 #preview-pane[data-view="phone"] .end[data-end="wide"], #preview-pane[data-view="desktop"] .end[data-end="narrow"] { position: absolute; left: -300vw; visibility: hidden; flex: none; width: 37.5rem; height: 25rem; }
 .end-bar { display: flex; align-items: center; gap: 0.5rem; min-width: 0; padding: 0 0.125rem; white-space: nowrap; overflow: hidden; }

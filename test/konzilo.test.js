@@ -16,7 +16,7 @@ import { shippedIn } from '../src/fonts/catalog.js';
 import { fromDesign } from '../src/konzilo/index.js';
 import { copyFonts } from '../src/konzilo/fonts.js';
 import { writeLogos } from '../src/konzilo/logos.js';
-import { breadcrumbProps, footerBrand, headerProps, heroProps, identityProps, logoAddresses, logoExtension, menuProps, nextHeadingProps, pageProps } from '../src/components/design-props.js';
+import { breadcrumbProps, footerBrand, footerFromDesign, headerProps, heroProps, identityProps, logoAddresses, logoExtension, menuProps, nextHeadingProps, pageProps } from '../src/components/design-props.js';
 import { render } from './helpers/render.js';
 import { loadDesign, saveDesign } from '../tool/server.js';
 import { newDesign } from '../tool/new-design.js';
@@ -467,7 +467,31 @@ test('design props take a site\'s own content, and a setting that is off leaves 
   const crumbs = breadcrumbProps({ ...r.breadcrumbs, home: 'name' }, project, { trail, home: '/start/' });
   assert.deepEqual(crumbs.items, [{ label: 'Example', href: '/start/' }, ...trail]);
   assert.equal(breadcrumbProps({ ...r.breadcrumbs, home: 'word' }, project, { homeWord: 'Hem' }).items[0].label, 'Hem');
+  assert.deepEqual(breadcrumbProps({ ...r.breadcrumbs, show: false }, project, { trail }).items, [], 'a design with its trail off shows none');
   assert.deepEqual(Object.keys(pageProps(r.page)), ['shadow', 'edgeLine', 'fillLight', 'fillDark']);
+});
+
+// konzilo.md's layout, copied as written, for any choice of cells: every cell that shows holds something, so no empty
+// cell counts when the footer spreads the others, and the first is the brand, as the header shows it.
+test('the footer in konzilo.md\'s layout fills every cell a design turns on, with the brand in the upper band\'s A1', async () => {
+  const doc = await readFile(join(repo, 'docs/spec/konzilo.md'), 'utf8');
+  const code = /^const content = (\{[\s\S]*?^\});$/m.exec(doc)?.[1];
+  assert.ok(code, 'the layout gives the footer its content');
+  const r = derive(defaultInputs());
+  const design = { project: { name: 'Example', slogan: '' } };
+  const content = new Function('footerBrand', 'header', 'design', 'logos', 'footer', 'base', 'footerLinks', `return (${code});`)(
+    footerBrand, r.header, design, { light: '/logos/logo.svg', dark: '/logos/logo-dark.svg' }, r.footer, '/', [{ label: 'About', href: '/about/' }]);
+  const slots = { 'lower-a2': '<p>Policies</p>', 'lower-b2': '<p>Consent buttons</p>' };
+  const cells = ['a1', 'b1', 'a2', 'b2'];
+  for (const on of [255, 0b10010001, 0b00001111, 0b11110000, 0b01100110]) {
+    const pick = (band, offset) => ({ ...r.footer[band], cells: Object.fromEntries(cells.map((cell, i) => [cell, !!(on & (1 << (offset + i)))])) });
+    const settings = { ...r.footer, upper: pick('upper', 0), lower: pick('lower', 4) };
+    const html = await render('Footer', footerFromDesign(settings, content), slots);
+    const boxes = [...html.matchAll(/data-kn-cell="(\w+)"[^>]*>\s*<div class="kn-footer-box">([\s\S]*?)<\/div>\s*<\/div>/g)];
+    assert.equal(boxes.length, [...on.toString(2)].filter((bit) => bit === '1').length, `cells ${on.toString(2)}`);
+    for (const [, cell, inner] of boxes) assert.match(inner, /<(p|ul|span)\b/, `cell ${cell} of ${on.toString(2)} holds something`);
+    if (on & 1) assert.match(boxes[0][2], /class="kn-brand"/, 'the upper band starts with the brand');
+  }
 });
 
 // The tarball itself: packed, installed with no network into a folder that knows nothing of this repository, and run there.

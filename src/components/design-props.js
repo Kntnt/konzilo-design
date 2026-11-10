@@ -115,9 +115,10 @@ export function heroProps(settings, { behind, side, alt = '' } = {}) {
 }
 
 // `trail` is what follows the first step, `{ label, href }` each and the last without `href`. The first step is the site's
-// name, or `homeWord`, or a house, and leads to `home`.
+// name, or `homeWord`, or a house, and leads to `home`. A design whose trail is off gives no steps, and Breadcrumbs
+// then writes nothing.
 export const breadcrumbProps = (settings, project, { trail = [], home = '/', homeWord = 'Home' } = {}) => ({
-  items: [{ label: settings.home === 'name' ? project.name : homeWord, href: home }, ...trail],
+  items: settings.show === false ? [] : [{ label: settings.home === 'name' ? project.name : homeWord, href: home }, ...trail],
   separator: settings.separator,
   home: settings.home === 'icon' ? 'icon' : 'word',
   current: settings.current,

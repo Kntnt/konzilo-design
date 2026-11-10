@@ -281,6 +281,8 @@ Each role is a recipe over the ramps (a ramp and step, or white or black).
   role passes over both a black and a white image, each on the nearest step of its
   own ramp; the worse ratio counts. So the picture shows as much as text on it
   allows, and the roles move lighter or darker for it rather than the scrim growing.
+  For some brand colours contrast needs as much as 0.58; the owner accepted that on
+  2026-11-10 rather than a lower ceiling.
   The CSS gives each picture kind `--kn-scrim`, the scrim as one colour at that
   opacity, for a component whose text stands on part of the picture, with two masks
   for a layer in that colour: `--kn-scrim-fade`, from clear to whole over
@@ -416,7 +418,6 @@ stack unless `typefaces.heading-1` names another, and its settings, with any set
   express an individual strength per elevation.
 - Weights, leading and tracking for the main family and the mono style still use
   generic recipes; no extra controls have been added for them.
-- A yellow primary's dark brand Surface still turns olive; no generic fix yet.
 - Further components must assign their frame, shadow and hairline behaviour.
   Reading Area breakout behaviour was resolved with its layout implementation
   on 2026-11-01 (components.md and page.md).

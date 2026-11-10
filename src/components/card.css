@@ -34,7 +34,8 @@
   .kn-card-heading { text-wrap: balance; }
   .kn-card-eyebrow, .kn-card-text, .kn-card-meta { color: var(--kn-text-muted); }
   .kn-card-meta { display: flex; flex-wrap: wrap; gap: 0.5em 1em; }
-  .kn-card-link { color: inherit; text-decoration: none; text-underline-offset: 0.18em; }
+  /* Two classes, so a card in body text keeps its own link: a part with a class of its own takes the part's look (directives.md). */
+  .kn-card .kn-card-link { color: inherit; text-decoration: none; text-underline-offset: 0.18em; }
   .kn-card-link::after { content: ""; position: absolute; inset: 0; border-radius: inherit; }
   .kn-card:has(.kn-card-link:focus-visible) { outline: 2px solid var(--kn-focus); outline-offset: 2px; }
   .kn-card-link:focus-visible { outline: none; }

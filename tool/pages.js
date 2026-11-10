@@ -437,8 +437,8 @@ function headerPage(copy) {
     ${setting('The large menu', `
       ${flags([
         ['header.numbered', 'Numbered headings', 'Each heading in the large menu begins with its number: 01 /.'],
-        ['header.menu-above', 'Row above', 'A row of content above the menu, which goes on narrow screens. The sample shows a link to an article.'],
-        ['header.menu-below', 'Row below', 'A row of content below the menu, which goes on narrow screens. The sample shows a contact link.'],
+        ['header.menu-above', 'Row above', 'A row of content above the menu, which goes where the menu falls to two columns or one, as on a tablet or a phone. The sample shows a link to an article.'],
+        ['header.menu-below', 'Row below', 'A row of content below the menu, which goes where the menu falls to two columns or one, as on a tablet or a phone. The sample shows a contact link.'],
       ])}
       ${showPanel('menu', 'Show it in the preview', 'Open the large menu in the preview, and keep it open while you change things.')}`)}
     ${setting('The search box', `<div class="fields">
@@ -566,7 +566,7 @@ function heroPage(copy) {
     ${setting('Text', `<div class="picks picks-three ui">${HERO_PLACES.map((item) => heroPick('place', item)).join('')}</div>
     <div class="picks picks-three ui">${HERO_ALIGNS.map((item) => heroPick('align', item)).join('')}</div>`)}
     ${setting('Behind the text', `<div class="fields">
-      ${choice('Colour', 'inputs.hero.surface', [['none', 'None'], ...SURFACE_CHOICES], 'The colour behind the text. With none, what lies beneath shows.')}
+      ${choice('Colour', 'inputs.hero.surface', [['none', 'None'], ...SURFACE_CHOICES, ['accent', 'Accent']], 'The colour behind the text. With none, what lies beneath shows. Accent is the fill of the filled button, which then turns to the Surface’s own button colours.')}
       ${choice('Overlay', 'inputs.hero.overlay', [['dark', 'Dark, with light text'], ['light', 'Light, with dark text']], 'What lies between the picture and the text. It is as strong as the text needs, and no more.')}
     </div>`)}
     ${setting('Heading', `<div class="picks-beside">

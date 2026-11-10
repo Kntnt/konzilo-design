@@ -108,13 +108,13 @@
   /* Hidden by clipping, not by moving it away, since content may lie above the header. */
   .kn-skip-link:not(:focus-visible) { clip-path: inset(50%); overflow: hidden; inline-size: 0.0625rem; block-size: 0.0625rem; padding: 0; white-space: nowrap; }
   .kn-page[data-kn-header-start="under"] > .kn-page-main > .kn-band:first-child { padding-block-start: calc(var(--kn-header-height) + var(--kn-space-band)); }
+  /* The rows above and below go once the columns fall to two: stacked, the row above would push the menu out of the window. */
   @media (width <= 60rem) {
     .kn-megamenu-columns { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .kn-megamenu-above { grid-template-columns: minmax(0, 1fr); }
+    .kn-megamenu-above, .kn-megamenu-below { display: none; }
   }
   @media (width <= 37.5rem) {
     .kn-megamenu-columns { grid-template-columns: minmax(0, 1fr); }
-    .kn-megamenu-above, .kn-megamenu-below { display: none; }
     .kn-header-search-overlay { padding-block-start: 0.75rem; }
   }
   @media (prefers-reduced-motion: reduce) {

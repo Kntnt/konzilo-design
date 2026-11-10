@@ -9,7 +9,7 @@
   .kn-content-card[data-kn-surface]:is(:hover, :focus-within) { box-shadow: var(--kn-shadow-box-lifted); }
   .kn-content-card:has(> .kn-content-picture:not([hidden])) { border-block-start: 0; padding-block-start: 0; }
   .kn-content-card[data-kn-surface]:has(> .kn-content-picture:not([hidden])) { border-block-start: var(--kn-frame-width) solid var(--kn-frame-color); padding-block-start: var(--kn-space-plate); }
-  .kn-content-picture { display: block; min-inline-size: 0; border-radius: var(--kn-radius-card); overflow: clip; background: var(--kn-background-alt); aspect-ratio: 3 / 2; }
+  .kn-content-picture { display: block; min-inline-size: 0; min-block-size: 0; border-radius: var(--kn-radius-card); overflow: clip; background: var(--kn-background-alt); aspect-ratio: 3 / 2; }
   .kn-content-picture img { display: block; inline-size: 100%; block-size: 100%; object-fit: cover; }
   [data-kn-image-ratio="2:1"] > .kn-content-picture { aspect-ratio: 2 / 1; }
   [data-kn-image-ratio="1:1"] > .kn-content-picture { aspect-ratio: 1; }

@@ -1,0 +1,54 @@
+/* An article's opening and the headings of its body (docs/spec/directives.md, An article). The opening is a Hero, its
+   headline in up to three parts in the Heading Group, and a meta line under it. */
+@layer kn-components {
+  /* The meta line: the published date, the byline and, where an eyebrow stands over the headline, the category. Its parts
+     are separated as Content Card separates its metadata, the mark staying with the part before it, so a wrapped line
+     never starts with one. */
+  .kn-article-meta { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.25em 0.5em; margin: 0; color: var(--kn-text-muted); }
+  .kn-article-meta > :has(+ *)::after { content: "·" / ""; margin-inline-start: 0.5em; }
+  .kn-article-meta a { color: inherit; text-underline-offset: 0.18em; }
+  .kn-article-meta a:hover { color: var(--kn-text); }
+
+  /* The body's headings carry no type: an article's steps are set by place. A crosshead is the step below a band's heading,
+     and each heading under it one more, so the reading column keeps the scale of reading. */
+  .kn-article-body .kn-body-text h2:not([data-kn-type]) {
+    font-size: var(--kn-type-heading-3-size);
+    line-height: var(--kn-type-heading-3-line-height);
+    font-weight: var(--kn-type-heading-3-weight);
+    letter-spacing: var(--kn-type-heading-3-letter-spacing);
+    font-feature-settings: var(--kn-type-heading-3-features);
+    font-stretch: var(--kn-type-heading-3-stretch, normal);
+    font-variation-settings: var(--kn-type-heading-3-variation, normal);
+  }
+  .kn-article-body .kn-body-text h3:not([data-kn-type]) {
+    font-size: var(--kn-type-heading-4-size);
+    line-height: var(--kn-type-heading-4-line-height);
+    font-weight: var(--kn-type-heading-4-weight);
+    letter-spacing: var(--kn-type-heading-4-letter-spacing);
+    font-feature-settings: var(--kn-type-heading-4-features);
+    font-stretch: var(--kn-type-heading-4-stretch, normal);
+    font-variation-settings: var(--kn-type-heading-4-variation, normal);
+  }
+  .kn-article-body .kn-body-text h4:not([data-kn-type]) {
+    font-size: var(--kn-type-heading-5-size);
+    line-height: var(--kn-type-heading-5-line-height);
+    font-weight: var(--kn-type-heading-5-weight);
+    letter-spacing: var(--kn-type-heading-5-letter-spacing);
+    font-feature-settings: var(--kn-type-heading-5-features);
+    font-stretch: var(--kn-type-heading-5-stretch, normal);
+    font-variation-settings: var(--kn-type-heading-5-variation, normal);
+  }
+  .kn-article-body .kn-body-text :is(h5, h6):not([data-kn-type]) {
+    font-size: var(--kn-type-heading-6-size);
+    line-height: var(--kn-type-heading-6-line-height);
+    font-weight: var(--kn-type-heading-6-weight);
+    letter-spacing: var(--kn-type-heading-6-letter-spacing);
+    font-feature-settings: var(--kn-type-heading-6-features);
+    font-stretch: var(--kn-type-heading-6-stretch, normal);
+    font-variation-settings: var(--kn-type-heading-6-variation, normal);
+  }
+
+  /* An interview's question: a paragraph wholly in bold, set off from the answer before it and kept with the one after. */
+  .kn-body-text .kn-question { margin-block: 1.6em 0.5em; }
+  .kn-body-text .kn-question:first-child { margin-block-start: 0; }
+}

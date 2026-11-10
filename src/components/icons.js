@@ -27,6 +27,9 @@ export const icons = {
   "linkedin": "<path d=\"M8 11v5\" />\n  <path d=\"M8 8v.01\" />\n  <path d=\"M12 16v-5\" />\n  <path d=\"M16 16v-3a2 2 0 1 0 -4 0\" />\n  <path d=\"M3 7a4 4 0 0 1 4 -4h10a4 4 0 0 1 4 4v10a4 4 0 0 1 -4 4h-10a4 4 0 0 1 -4 -4l0 -10\" />",
   "facebook": "<path d=\"M7 10v4h3v7h4v-7h3l1 -4h-4v-2a1 1 0 0 1 1 -1h3v-4h-3a5 5 0 0 0 -5 5v2h-3\" />",
   "youtube": "<path d=\"M2 8a4 4 0 0 1 4 -4h12a4 4 0 0 1 4 4v8a4 4 0 0 1 -4 4h-12a4 4 0 0 1 -4 -4v-8\" />\n  <path d=\"M10 9l5 3l-5 3l0 -6\" />",
+  "instagram": "<path d=\"M4 8a4 4 0 0 1 4 -4h8a4 4 0 0 1 4 4v8a4 4 0 0 1 -4 4h-8a4 4 0 0 1 -4 -4z\" />\n  <path d=\"M9 12a3 3 0 1 0 6 0a3 3 0 0 0 -6 0\" />\n  <path d=\"M16.5 7.5v.01\" />",
+  // Tabler's brand-x, the service's mark; "x" above stays the close mark.
+  "brand-x": "<path d=\"M4 4l11.733 16h4.267l-11.733 -16z\" />\n  <path d=\"M4 20l6.768 -6.768m2.46 -2.46l6.772 -6.772\" />",
   "spotify": "<path d=\"M3 12a9 9 0 1 0 18 0a9 9 0 1 0 -18 0\" />\n  <path d=\"M8 11.973c2.5 -1.473 5.5 -.973 7.5 .527\" />\n  <path d=\"M9 15c1.5 -1 4 -1 5 .5\" />\n  <path d=\"M7 9c2 -1 6 -2 10 .5\" />",
   "rss": "<path d=\"M4 19a1 1 0 1 0 2 0a1 1 0 1 0 -2 0\" />\n  <path d=\"M4 4a16 16 0 0 1 16 16\" />\n  <path d=\"M4 11a9 9 0 0 1 9 9\" />",
 };

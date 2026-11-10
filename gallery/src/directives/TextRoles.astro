@@ -1,0 +1,14 @@
+---
+import Section from './Section.astro';
+// ::eyebrow and ::small wherever they stand that the hero and the sections above do not already show.
+---
+<Section id="directive-text-roles" eyebrows={['48 / Eyebrow and Fine Print', 'Two eyebrows']} heading="Labels over headings, and notes under things" deck="A head may hold more than one eyebrow; each stands over the heading in its group.">
+  <hgroup class="kn-heading-group">
+    <p class="kn-heading-group-eyebrow" data-kn-type="label">From the notebook</p>
+    <h3 class="kn-heading-group-heading">An eyebrow before a heading in the body</h3>
+  </hgroup>
+  <p>Before a heading anywhere but a head, a card or a fact box, the eyebrows and the heading stand in a heading group, as in a head.</p>
+  <p data-kn-type="label">An eyebrow with no heading after it</p>
+  <p>Without a heading to stand over, an eyebrow is a plain label.</p>
+  <p class="kn-fine-print" data-kn-type="small">Fine print standing alone: small, muted text for a condition or a source, with <a href="#directive-hero">a link</a> that keeps its look.</p>
+</Section>

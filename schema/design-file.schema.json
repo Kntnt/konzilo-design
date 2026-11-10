@@ -3316,7 +3316,8 @@
             "raised",
             "tint",
             "brand",
-            "inverse"
+            "inverse",
+            "accent"
           ]
         },
         "overlay": {

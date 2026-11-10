@@ -1,0 +1,74 @@
+---
+import Section from './Section.astro';
+import Card from './Card.astro';
+import Actions from './Actions.astro';
+import CoreForm from './CoreForm.astro';
+import QuestionAccordion from './QuestionAccordion.astro';
+import { landscape, portrait } from '../samples.js';
+import { badge } from '../directive-samples.js';
+// The six layout rules of a section, each with the content that triggers it, and a section that matches none.
+const picture = (alt: string) => ({ src: landscape, alt });
+const plans = ['Herb box', 'Balcony', 'Small yard', 'Family garden', 'Kitchen garden', 'School garden'];
+const questions = [
+  { heading: 'How long does a first visit take?', html: '<p>About an hour, with time for questions at the end.</p><p>Bring a notebook if you like to write things down.</p>' },
+  { heading: 'Can I bring someone along?', html: '<p>Yes. Tell us how many you will be, so that there are chairs enough.</p>' },
+  { heading: 'Do I need any experience?', html: '<p>None at all. Every table begins with a question, not with a skill.</p>' },
+  { heading: 'What should I bring?', html: '<ul><li>A question you care about</li><li>Something to write with</li></ul>' },
+  { heading: 'What does it cost?', html: '<p>Nothing for the first visit, and a small fee for a series.</p>' },
+];
+---
+<Section id="directive-sections" surface="tint" picture={picture('A shed of tools beside the garden')} badges={[{ src: badge, alt: 'Neighbourhood prize' }, { src: badge, alt: 'Garden of the year' }]} eyebrows={['47 / Section · 1']} heading="A picture first, with its badges" deck="The tools, the seeds and the notebooks, in one place." actions={[{ label: 'See what is in it', href: '#directive-cards', main: true }]}>
+  <p>A section that begins with a picture sets it beside the head and the body, with its badges under it.</p>
+  <ul><li>Spade and fork</li><li>Seeds for twelve beds</li><li>A notebook for each bench</li></ul>
+</Section>
+<Section picture={{ src: portrait, alt: 'The cover of the field guide' }} eyebrows={['47 / Section · 1 with a form']} heading="Get the field guide">
+  <p>Forty pages on light, soil and patience. With a form in the body, the picture is what the form offers.</p>
+  <CoreForm id="guide" label="Get the field guide" send="Send me the guide" fields={[{ name: 'email', label: 'Email', type: 'email', required: true }]} />
+  <p class="kn-fine-print" data-kn-type="small">We write at most once a month.</p>
+</Section>
+<Section surface="raised" eyebrows={['47 / Section · 2']} heading="A heading with a form right after it">
+  <CoreForm id="question" label="Ask the studio" send="Send" fields={[{ name: 'name', label: 'Name', required: true }, { name: 'message', label: 'Your question', type: 'textarea', required: true }]} />
+  <p class="kn-fine-print" data-kn-type="small">We answer within a day. Read how we <a href="#directive-article">handle what you send</a>.</p>
+</Section>
+<Section surface="brand" heading="47 / Section · 3, another form, centred as a page's end" actions={[{ label: 'Compare the plans', href: '#directive-tabs' }]}>
+  <p>Tell us where you live, and we will send what grows there.</p>
+  <CoreForm id="start" label="Start a garden" send="Start" fields={[{ name: 'place', label: 'Where you live' }]} />
+  <p class="kn-fine-print" data-kn-type="small">No card needed.</p>
+</Section>
+<Section id="directive-sticky" heading="47 / Section · 4, a head beside an accordion" deck="The head stays in view as the answers scroll past." actions={[{ label: 'Ask another', href: '#directive-choice', main: true }]}>
+  <QuestionAccordion items={questions} expand="one" first="open" name="directive-accordion-1" />
+</Section>
+<Section surface="inverse" eyebrows={['47 / Section · 5']} heading="It began with one bed behind a kitchen">
+  <p>Twelve years ago we built a single raised bed behind a restaurant kitchen, to have herbs at hand. The neighbours asked for one each, and then their friends did.</p>
+  <p>Today we build a few hundred a year, and still plant the first seeds with every new gardener. A head and paragraphs only set the paragraphs beside the head.</p>
+</Section>
+<Section heading="47 / Section · 6, the head centred over reasons" deck="Three reasons we keep coming back to.">
+  <ul class="kn-reasons" role="list" data-kn-sign="check">
+    <li class="kn-reason"><h3 class="kn-reason-heading" data-kn-type="heading-5">Warmer soil</h3><p>The soil in a raised bed warms earlier in the spring.</p></li>
+    <li class="kn-reason"><h3 class="kn-reason-heading" data-kn-type="heading-5">Kinder to the back</h3><p>No kneeling to weed, and the tools stay at hand.</p></li>
+    <li class="kn-reason"><h3 class="kn-reason-heading" data-kn-type="heading-5">Fewer snails</h3><p>They seldom climb the sides.</p></li>
+  </ul>
+</Section>
+<Section surface="raised" heading="47 / Section · 6, centred over two cards" deck="Build it yourself, or let us.">
+  <div class="kn-card-grid kn-cards">
+    <Card ground="raised" picture={picture('A kit of boards and screws')} heading="Yourself" href="#directive-cards" texts={['A kit and a film that shows each step.']} />
+    <Card ground="raised" picture={picture('Two builders at a raised bed')} heading="With us" href="#directive-cards" texts={['We come and build it in an afternoon.']} />
+  </div>
+</Section>
+<Section eyebrows={['47 / Section · 6']} heading="The heading beside a long deck" deck="From a single herb box by the door to a whole kitchen garden, each plan comes with the soil, the seeds and a visit in the first summer.">
+  <div class="kn-card-grid kn-cards">
+    {plans.map((plan) => <Card picture={picture(`A ${plan.toLowerCase()} in early summer`)} heading={plan} href="#directive-tabs" texts={['Soil, seeds and a summer visit.']} />)}
+  </div>
+</Section>
+<Section surface="tint" heading="47 / Section · 6, the head above" deck="What we have planted lately.">
+  <div class="kn-card-grid kn-cards">
+    {['Garlic in October', 'The last tomatoes', 'Leaves as mulch'].map((title) => <Card ground="tint" picture={picture(`${title}, in the studio garden`)} eyebrow="Field notes" heading={title} href="#directive-posts" />)}
+  </div>
+  <Actions items={[{ label: 'All field notes', href: '#directive-posts', main: true }]} />
+</Section>
+<Section surface="accent" heading="47 / Section · Anything else, the head above" deck="When the nights stay warm.">
+  <ul><li>Beans</li><li>Squash</li><li>Basil</li></ul>
+  <p data-kn-type="label">A note</p>
+  <p>Wait for the last frost; <a href="#directive-lists">our calendar</a> says when.</p>
+  <p class="kn-fine-print" data-kn-type="small">Dates are for a mild climate.</p>
+</Section>

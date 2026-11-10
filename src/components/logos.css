@@ -1,0 +1,11 @@
+/* Logos (docs/spec/directives.md, `list` with type="logos"): a band of logos under their label, each the same height and
+   shown whole, in rows from the middle. A logo that is a link keeps its picture as it is and takes the focus ring. */
+@layer kn-components {
+  :where(.kn-logos) { margin-block: 0 1em; }
+  .kn-logos { display: grid; justify-items: center; gap: var(--kn-space-component-gap); text-align: center; }
+  .kn-logos-label { margin: 0; color: var(--kn-text-muted); }
+  .kn-logos .kn-logos-list { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: var(--kn-space-component-gap) var(--kn-space-column-gap); margin: 0; padding: 0; list-style: none; }
+  .kn-logos .kn-logos-list > li { display: flex; margin: 0; max-inline-size: 100%; }
+  .kn-logos-list :is(img, svg) { display: block; inline-size: auto; block-size: 2.5rem; max-inline-size: min(10rem, 100%); object-fit: contain; }
+  .kn-logos-list a { display: block; max-inline-size: 100%; border-radius: var(--kn-radius-control); }
+}

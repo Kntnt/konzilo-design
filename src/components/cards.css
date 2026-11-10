@@ -1,0 +1,137 @@
+@layer kn-components {
+  /* A series from the directives: cards, steps and reasons (docs/spec/directives.md, `cards`). The number of its items
+     sets its columns: two for two, three for one or three, and from four on three or four, whichever leaves the last row
+     fuller, four where both do alike (owner, 2026-11-10). A window too narrow for four does the same with three and two,
+     so four cards fall to two and two, never three and one, and a window too narrow for three takes two, then one.
+     Only the items that show are counted, so a filtered series keeps the rule.
+
+     Each width is a track a hair under its share, which 1fr gives back, so no browser's rounding pushes the last item to
+     a row of its own. The terms times 999 are the switches: each is far below the others while its columns fit, and
+     far above them once they do not. The tracks fill the row whether or not there are items for them, so a lone card
+     keeps its column. */
+  :is(.kn-card-grid.kn-cards, .kn-timeline, .kn-reasons) {
+    --kn-series-minimum: 15rem;
+    --kn-series-gap: var(--kn-space-column-gap);
+    --kn-series-four: calc((100% - 3 * var(--kn-series-gap)) * 0.99 / 4);
+    --kn-series-three: calc((100% - 2 * var(--kn-series-gap)) * 0.99 / 3);
+    --kn-series-two: calc((100% - var(--kn-series-gap)) * 0.99 / 2);
+    --kn-series-wide: var(--kn-series-four);
+    --kn-series-middle: var(--kn-series-three);
+    display: grid;
+    gap: var(--kn-series-gap);
+    grid-template-columns: repeat(auto-fill, minmax(max(
+      var(--kn-series-wide),
+      min(var(--kn-series-middle), (4 * var(--kn-series-minimum) + 3 * var(--kn-series-gap) - 100%) * 999),
+      min(var(--kn-series-two), (3 * var(--kn-series-minimum) + 2 * var(--kn-series-gap) - 100%) * 999),
+      min(100%, (2 * var(--kn-series-minimum) + var(--kn-series-gap) - 100%) * 999)
+    ), 1fr));
+    align-items: stretch;
+    padding: 0;
+    list-style: none;
+  }
+  /* 4, 10, 16 …: four in a row, and where four do not fit, two, which leave no lone item where three would. */
+  :is(.kn-card-grid.kn-cards, .kn-timeline, .kn-reasons):has(> :nth-child(6n+4 of :not([hidden])):nth-last-child(1 of :not([hidden]))) {
+    --kn-series-middle: var(--kn-series-two);
+  }
+  /* 1, 3, and 5, 6 or 9 more than a multiple of 12: three. */
+  :is(.kn-card-grid.kn-cards, .kn-timeline, .kn-reasons):has(
+    > :nth-child(1 of :not([hidden])):nth-last-child(1 of :not([hidden])),
+    > :nth-child(3 of :not([hidden])):nth-last-child(1 of :not([hidden])),
+    > :nth-child(12n+5 of :not([hidden])):nth-last-child(1 of :not([hidden])),
+    > :nth-child(12n+6 of :not([hidden])):nth-last-child(1 of :not([hidden])),
+    > :nth-child(12n+9 of :not([hidden])):nth-last-child(1 of :not([hidden]))
+  ) {
+    --kn-series-wide: var(--kn-series-three);
+    --kn-series-middle: var(--kn-series-three);
+  }
+  /* Two: two. */
+  :is(.kn-card-grid.kn-cards, .kn-timeline, .kn-reasons):has(> :nth-child(2 of :not([hidden])):nth-last-child(1 of :not([hidden]))) {
+    --kn-series-wide: var(--kn-series-two);
+    --kn-series-middle: var(--kn-series-two);
+  }
+  :is(.kn-card-grid.kn-cards, .kn-timeline, .kn-reasons) > [hidden] { display: none; }
+  :is(.kn-card-grid.kn-cards, .kn-timeline, .kn-reasons) > li { min-inline-size: 0; margin: 0; }
+  /* A series of navigation is a list, and each card fills its item. */
+  .kn-card-grid.kn-cards > li { display: grid; }
+  /* Cards in an accordion make the section denser. */
+  .kn-accordion :is(.kn-card-grid.kn-cards, .kn-timeline, .kn-reasons) { --kn-series-gap: var(--kn-space-component-gap); }
+
+  /* In a flow of body text a series stands a column gap from what comes before and after it, as a section's body spaces
+     its parts, whether it is a list, which body text gives a paragraph's space, or not. */
+  .kn-body-text > :is(.kn-cards, .kn-cards-nav, .kn-timeline, .kn-reasons, .kn-post-list) { margin-block: var(--kn-space-column-gap); }
+  .kn-body-text > :is(.kn-cards, .kn-cards-nav, .kn-timeline, .kn-reasons, .kn-post-list):first-child { margin-block-start: 0; }
+  .kn-body-text > :is(.kn-cards, .kn-cards-nav, .kn-timeline, .kn-reasons, .kn-post-list):last-child { margin-block-end: 0; }
+
+  /* A card's body: its paragraphs, lists and actions. A list stands in the card's small type, and actions at the card's
+     end, so that cards in a row end alike. */
+  .kn-cards .kn-card > :is(ul, ol, dl) {
+    color: var(--kn-text-muted);
+    font-size: var(--kn-type-small-size);
+    line-height: var(--kn-type-small-line-height);
+    letter-spacing: var(--kn-type-small-letter-spacing);
+  }
+  .kn-cards .kn-card > .kn-actions { margin-block-start: auto; }
+
+  /* A number or an address, alone in its paragraph: the reader looks for it, so it reads as the card's key fact and
+     breaks only where it is longer than its line. "Call us" stays an ordinary link. */
+  a[data-kn-contact] {
+    display: inline-block;
+    max-inline-size: 100%;
+    color: var(--kn-link);
+    font-family: var(--kn-typeface-heading);
+    font-size: var(--kn-type-heading-6-size);
+    line-height: var(--kn-type-heading-6-line-height);
+    font-weight: var(--kn-type-heading-6-weight);
+    letter-spacing: var(--kn-type-heading-6-letter-spacing);
+    text-decoration: underline;
+    text-decoration-thickness: 0.06em;
+    text-underline-offset: 0.18em;
+  }
+  a[data-kn-contact]:hover { text-decoration-thickness: 0.12em; }
+  a[data-kn-contact="phone"] { font-variant-numeric: tabular-nums; }
+  a[data-kn-contact="email"] { overflow-wrap: anywhere; }
+
+  /* Cards that lead on, under their label. */
+  .kn-cards-nav { display: grid; gap: var(--kn-space-component-gap); }
+  .kn-cards-nav > * { margin-block: 0; }
+  .kn-cards-label > * { margin-block: 0; color: var(--kn-text-muted); }
+
+  /* A symbol is shown whole, with its proportions, in a box the same on every card for its place: by the card, a box
+     twice as wide as high at the size of Card's icon, the symbol at its start; in the heading, a square of the
+     heading's own size before its words. An inline SVG follows the text's colour, here the accent's. */
+  .kn-card-symbol { display: block; color: var(--kn-accent); }
+  .kn-card-symbol > :is(img, svg) { display: block; inline-size: 100%; block-size: 100%; max-inline-size: none; object-fit: contain; object-position: left center; }
+  .kn-card-symbol > :is(img, svg):dir(rtl) { object-position: right center; }
+  .kn-cards[data-kn-symbol="item"] .kn-card > .kn-card-symbol {
+    inline-size: calc(2 * 1.25 * var(--kn-type-heading-2-size));
+    block-size: calc(1.25 * var(--kn-type-heading-2-size));
+    max-inline-size: 100%;
+  }
+  .kn-cards[data-kn-symbol="heading"] .kn-card-heading > .kn-card-symbol {
+    display: inline-block;
+    inline-size: 1.25em;
+    block-size: 1.25em;
+    margin-inline-end: 0.4em;
+    vertical-align: -0.25em;
+  }
+
+  /* The text on the picture: the picture fills the card, and over it lies the picture Surface's scrim, whose strength the
+     generator checked for every role on any picture, black or white. A card without a picture is an ordinary card. */
+  .kn-cards[data-kn-picture="behind"] .kn-card:has(> .kn-card-picture) {
+    isolation: isolate;
+    justify-content: flex-end;
+    min-block-size: 20rem;
+    overflow: clip;
+  }
+  .kn-cards[data-kn-picture="behind"] .kn-card > .kn-card-picture,
+  .kn-cards[data-kn-picture="behind"] .kn-card:has(> .kn-card-picture)::before {
+    position: absolute;
+    inset: 0;
+    inline-size: 100%;
+    block-size: 100%;
+    margin: 0;
+    border-radius: max(0rem, calc(var(--kn-radius-card) - var(--kn-frame-width)));
+  }
+  .kn-cards[data-kn-picture="behind"] .kn-card > .kn-card-picture { z-index: -2; aspect-ratio: auto; object-fit: cover; }
+  .kn-cards[data-kn-picture="behind"] .kn-card:has(> .kn-card-picture)::before { content: ""; z-index: -1; background: var(--kn-scrim, transparent); }
+}

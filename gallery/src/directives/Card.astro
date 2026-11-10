@@ -1,0 +1,39 @@
+---
+import Actions from './Actions.astro';
+import { contactOf, iconHtml, surfaceOf } from '../../../src/directives/index.js';
+// One item of :::cards or a teaser of ::post-list. Its Surface is the one surfaceOf gives for what it is: a card with a
+// picture in a series with pictures behind, a link as a whole, or an action card among cards without actions.
+// A paragraph that is one link to a number or an address carries the contactOf fact.
+type Text = string | { href: string; text: string };
+interface Props {
+  heading: string;
+  ground?: string;
+  href?: string;
+  type?: string;
+  picture?: { src: string; alt: string };
+  eyebrow?: string;
+  texts?: Text[];
+  list?: string[];
+  actions?: { label: string; href: string; main?: boolean }[];
+  actionCard?: boolean;
+  behind?: boolean;
+  symbol?: { place: 'item' | 'heading'; src?: string; svg?: string };
+  navigation?: boolean;
+  [attribute: string]: unknown;
+}
+const { heading, ground, href, type = 'heading-5', picture, eyebrow, texts = [], list, actions, actionCard = false, behind = false, symbol, navigation = false, ...attributes } = Astro.props;
+const whole = href !== undefined && !texts.some((text) => typeof text !== 'string') && !actions;
+const surface = behind && picture ? surfaceOf('behind-card', ground) : whole ? surfaceOf('link-card', ground) : actionCard ? surfaceOf('action-card', ground) : undefined;
+---
+<article {...attributes} class="kn-card" data-kn-variant={navigation ? 'link' : undefined} data-kn-surface={surface ?? undefined}>
+  {picture && <img class="kn-card-picture" src={picture.src} alt={picture.alt}>}
+  {symbol?.place === 'item' && <span class="kn-card-symbol">{symbol.svg ? <Fragment set:html={symbol.svg} /> : <img src={symbol.src} alt="">}</span>}
+  {eyebrow && <p class="kn-card-eyebrow" data-kn-type="label">{eyebrow}</p>}
+  <h3 class="kn-card-heading" data-kn-type={type}>{symbol?.place === 'heading' && <span class="kn-card-symbol">{symbol.svg ? <Fragment set:html={symbol.svg} /> : <img src={symbol.src} alt="">}</span>}{href === undefined ? heading : <a class={whole ? 'kn-card-link' : undefined} href={href}>{heading}</a>}</h3>
+  {texts.map((text) => typeof text === 'string'
+    ? <p class="kn-card-text" data-kn-type="small">{text}</p>
+    : <p class="kn-card-text" data-kn-type="small"><a href={text.href} data-kn-contact={contactOf(text.href, text.text) ?? undefined}>{text.text}</a></p>)}
+  {list && <ul>{list.map((item) => <li>{item}</li>)}</ul>}
+  {actions && <Actions items={actions} />}
+  {navigation && <Fragment set:html={iconHtml('arrow-right', 'kn-card-arrow')} />}
+</article>

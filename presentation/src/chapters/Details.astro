@@ -3,6 +3,7 @@ import { shippedIn } from '../../../src/fonts/catalog.js';
 import { readFile } from 'node:fs/promises';
 import { resolved as r, t, num, date } from '../data.js';
 import { typeOrder, faceName, families, range, px } from '../words.js';
+import { shownRole } from '../../../src/design-md/surfaces.js';
 const shipped = shippedIn(r.typefaces);
 const licences = await Promise.all(shipped.map(({ licence }) => readFile(`src/fonts/${licence}`, 'utf8')));
 ---
@@ -12,7 +13,7 @@ const licences = await Promise.all(shipped.map(({ licence }) => readFile(`src/fo
     {Object.entries(modes).map(([mode, context]) => <div>
       <h3 data-kn-type="heading-4">{t(`details.${mode}`)}</h3>
       <div class="table-scroll"><table><thead><tr>{['pair', 'ratio', 'target'].map((key) => <th>{t(`details.${key}`)}</th>)}</tr></thead><tbody>
-        {Object.entries(context.pairs).map(([pair, value]) => <tr><th>{pair}</th><td>{num(value.ratio)}:1</td><td>{value.target ? `${num(value.target)}:1` : t('details.decorative')}</td></tr>)}
+        {Object.entries(context.pairs).filter(([pair]) => shownRole(kind, pair)).map(([pair, value]) => <tr><th>{pair}</th><td>{num(value.ratio)}:1</td><td>{value.target ? `${num(value.target)}:1` : t('details.decorative')}</td></tr>)}
       </tbody></table></div>
     </div>)}
   </section>)}

@@ -42,6 +42,8 @@ import {
   optimalControls,
   clampControls,
   dragControls,
+  bothSideBySide,
+  DIVIDER,
   sizeAt,
   followShare,
   previewScale,
@@ -266,17 +268,26 @@ test('a design is written as DESIGN.md: exact tokens, in the format\'s order, an
   assert.ok(body.includes(MARKER));
 });
 
-test('DESIGN.md goes beside the design file, and one it did not write is never replaced', () =>
+test('the export for AI goes beside the design file as a ZIP, or as DESIGN.md alone, and never replaces what it did not write', () =>
   scratch(async (dir) => {
     const path = join(dir, 'name.design.json');
     await saveDesign(path, await newDesign());
-    assert.equal(await writeDesignMd(path), join(dir, 'DESIGN.md'));
-    assert.match(await readFile(join(dir, 'DESIGN.md'), 'utf8'), /^---\nversion: "alpha"/);
+    const zip = join(dir, 'name-design-md.zip');
+    assert.equal(await writeDesignMd(path), zip);
+    const archive = await readFile(zip);
+    assert.equal(archive.readUInt32LE(0), 0x04034b50);
+    assert.ok(archive.includes(MARKER), 'its mark is in the archive\'s comment');
     await writeDesignMd(path);
-    await writeFile(join(dir, 'DESIGN.md'), '# My own notes\n');
+    await writeFile(zip, 'not ours');
     await assert.rejects(writeDesignMd(path), /not written by/);
+    assert.equal(await readFile(zip, 'utf8'), 'not ours');
+    assert.equal(await writeDesignMd(path, join(dir, 'DESIGN.md')), join(dir, 'DESIGN.md'));
+    assert.match(await readFile(join(dir, 'DESIGN.md'), 'utf8'), /^---\nversion: "alpha"/);
+    await writeFile(join(dir, 'DESIGN.md'), '# My own notes\n');
+    await assert.rejects(writeDesignMd(path, join(dir, 'DESIGN.md')), /not written by/);
     assert.equal(await readFile(join(dir, 'DESIGN.md'), 'utf8'), '# My own notes\n');
-    assert.equal(await writeDesignMd(path, join(dir, 'other.md')), join(dir, 'other.md'));
+    await assert.rejects(writeDesignMd(path, join(dir, 'design.txt')), /Name a \.zip file/);
+    assert.equal(await writeDesignMd(path, join(dir, 'other.zip')), join(dir, 'other.zip'));
   }));
 
 test('presentation names stay beside the input', () => {
@@ -294,6 +305,15 @@ test('the divider has one optimal position per preview mode and catches there', 
   assert.equal(clampControls(100, 'both', 1512), 490);
   assert.equal(clampControls(5000, 'both', 1512), 863);
   assert.equal(clampControls(5000, 'phone', 1512), 1072);
+});
+
+test('Both stands the ends side by side only while the desktop end gets 20rem, and otherwise one above the other', () => {
+  // A 1024 px window leaves the preview 525 px beside the narrowest controls: a desktop end of 87 px.
+  assert.equal(bothSideBySide(1024 - DIVIDER - clampControls(540, 'both', 1024)), false);
+  assert.equal(bothSideBySide(1512 - DIVIDER - optimalControls('both', 1512, 1440)), true);
+  assert.equal(bothSideBySide(758), true);
+  assert.equal(bothSideBySide(757), false);
+  assert.equal(bothSideBySide(758, 1.5), false, 'the end and its margins are in rem, and grow with the text');
 });
 
 test('at a larger text size the controls and the preview\'s margins need more room, and the frames\' window widths stay real', () => {

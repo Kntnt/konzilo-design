@@ -9,7 +9,7 @@
   .kn-consent-settings::backdrop { background: var(--kn-background); opacity: 0.6; }
   .kn-consent-settings-header { display: flex; align-items: center; justify-content: space-between; gap: 1em; }
   .kn-consent-settings-header > :first-child { margin: 0; }
-  .kn-consent-close { inline-size: 2.75rem; block-size: 2.75rem; padding: 0; }
+  .kn-consent-close { flex: none; inline-size: 2.75rem; block-size: 2.75rem; padding: 0; }
   .kn-consent-settings-form { display: grid; gap: 0.75em; }
   .kn-consent-category { background: var(--kn-background-alt); border: 1px solid var(--kn-border); border-radius: var(--kn-radius-control); }
   .kn-consent-category > summary { display: flex; align-items: center; gap: 1em; padding: 0.9em; cursor: pointer; list-style: none; }
@@ -24,6 +24,8 @@
   /* Accept and reject stay in view while the visitor reads a long category. */
   .kn-consent-settings-actions { position: sticky; inset-block-end: -1.5em; justify-content: space-between; margin-block: 0.75em -1.5em; padding-block: 0.75em 1.5em; background: var(--kn-background); }
   .kn-consent-reopen { position: fixed; inset-block-end: 1rem; inset-inline-start: 1rem; z-index: 6; inline-size: 2.75rem; block-size: 2.75rem; padding: 0; border-radius: 50%; border: 1px solid var(--kn-border); box-shadow: var(--kn-shadow-panel); }
+  /* While the reopen button shows, the page's end leaves room under its content for the button and a gap above it. */
+  :root:has(.kn-consent-reopen:not([hidden])) .kn-page > .kn-footer > .kn-footer-band:last-child { --kn-footer-end-room: calc(2.75rem + 2 * 1rem); }
   @media (width <= 40rem) {
     .kn-consent { inset-block-end: 0; inset-inline: 0; inline-size: 100%; max-block-size: 90dvh; border-end-start-radius: 0; border-end-end-radius: 0; }
     :root[data-kn-consent-visible] { scroll-padding-block-end: var(--kn-consent-height); }

@@ -16,7 +16,9 @@
   /* The browser draws these parts itself. They stay light on every Surface, as the owner decided. Only the parts: colour-scheme
      on a whole field would turn its background, text and border, which are light-dark() roles, to the light ones. */
   .kn-field-option input, .kn-field-control[type="number"]::-webkit-inner-spin-button { color-scheme: light; }
-  .kn-field-option input { accent-color: var(--kn-accent); inline-size: 1.1em; block-size: 1.1em; flex: none; }
+  /* In rem: em followed the input's own font, which each browser sets apart (WebKit 11px). This is the size Firefox and
+     Chromium gave it, in which the forms were approved. */
+  .kn-field-option input { accent-color: var(--kn-accent); inline-size: 0.9167rem; block-size: 0.9167rem; flex: none; }
   /* The browser's own dimming gives way to the colours above, so a disabled field says it in checked roles of the Surface. */
   .kn-field-control:disabled { background: var(--kn-background-alt); border-color: var(--kn-border); color: var(--kn-text-muted); cursor: default; }
   .kn-field-option:has(input:disabled) { color: var(--kn-text-muted); cursor: default; }

@@ -34,12 +34,14 @@ function keepImages(from, into) {
     const same = showing.findIndex((old) => old.getAttribute('src') === image.getAttribute('src') && old.dataset.knLogo === image.dataset.knLogo);
     if (same < 0) continue;
     const [old] = showing.splice(same, 1);
-    for (const { name, value } of image.attributes) old.setAttribute(name, value);
+    // Only what differs: a source set again, even to the same address, is loaded and decoded again.
+    for (const { name, value } of image.attributes) if (old.getAttribute(name) !== value) old.setAttribute(name, value);
     image.replaceWith(old);
   }
 }
+// Built in this document: an image moved in from the template's own document is loaded again, and Firefox shows it blink.
 function buildHeader(settings, project) {
-  const header = document.querySelector(`template[data-kn-live-header="${settings.arrangement}"]`).content.firstElementChild.cloneNode(true);
+  const header = document.importNode(document.querySelector(`template[data-kn-live-header="${settings.arrangement}"]`).content.firstElementChild, true);
   const drop = (selector) => header.querySelectorAll(selector).forEach((node) => node.remove());
   const sticky = settings.attachment === 'sticky';
   header.dataset.knAttachment = settings.attachment;
@@ -132,12 +134,17 @@ export function setupLiveFrame() {
   function apply({ header, footer, page: settings }, project) {
     const headerKey = JSON.stringify([header, project.name, project.logo, project['logo-dark'], project.slogan]);
     if (headerKey !== shown.header) {
+      // The header stays the same element, as the footer does: its runtime lets go, it takes the new attributes and
+      // content, with the logos already showing moved over, and its runtime measures it again, all before a paint.
       const old = page.querySelector(':scope > .kn-header');
       const next = buildHeader(header, project);
-      old?.dispatchEvent(new Event('kn:dispose'));
-      if (old) keepImages(old, next);
-      old?.remove();
-      page.prepend(next);
+      if (old) {
+        old.dispatchEvent(new Event('kn:dispose'));
+        keepImages(old, next);
+        for (const { name } of [...old.attributes]) if (!next.hasAttribute(name)) old.removeAttribute(name);
+        for (const { name, value } of next.attributes) old.setAttribute(name, value);
+        old.replaceChildren(...next.childNodes);
+      } else page.prepend(next);
       setupHeaders(page);
       showPanel();
       // An open search box takes the focus, and the control being used should keep it.

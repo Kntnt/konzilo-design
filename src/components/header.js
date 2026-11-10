@@ -1,3 +1,5 @@
+import { frameScheduler } from './schedule.js';
+
 export const GIVING_WAY_ORDER = ['slogan', 'name', 'links', 'word', 'language', 'cta', 'search'];
 const ARRANGEMENTS = {
   A: [['identity'], ['search', 'language', 'links', 'menu', 'cta']],
@@ -57,7 +59,7 @@ export function setupHeaders(root = document) {
     const on = (target, name, callback, options = {}) => target.addEventListener(name, callback, { ...options, signal: abort.signal });
     const rem = (n) => `${n / parseFloat(getComputedStyle(doc).fontSize)}rem`;
     const keyboard = () => !!header.querySelector(':focus-visible');
-    let activePanel = '', returnTo, lockedStyle, frame, queued = false, disposed = false;
+    let activePanel = '', returnTo, lockedStyle, disposed = false;
     let state = { away: false, anchor: window.scrollY };
     let clear = window.scrollY < 24;
     let hidden = false;
@@ -162,10 +164,9 @@ export function setupHeaders(root = document) {
       header.style.setProperty('--kn-header-panel-top', rem(top));
       paint();
     }
+    const next = frameScheduler(fit);
     function schedule() {
-      if (queued || disposed) return;
-      queued = true;
-      frame = requestAnimationFrame(() => { queued = false; fit(); });
+      if (!disposed) next();
     }
     function lock(needed) {
       if (needed && lockedStyle === undefined) {
@@ -239,7 +240,7 @@ export function setupHeaders(root = document) {
     document.fonts?.ready.then(schedule);
     fit();
     const dispose = () => {
-      disposed = true; close(false); abort.abort(); observer.disconnect(); mutation.disconnect(); clearTimeout(slideTimer); cancelAnimationFrame(frame);
+      disposed = true; close(false); abort.abort(); observer.disconnect(); mutation.disconnect(); clearTimeout(slideTimer); next.cancel();
       header.removeAttribute('data-kn-enhanced'); header.removeAttribute('data-kn-away'); header.removeAttribute('data-kn-transparent');
       header.dataset.knSurface = header.dataset.knOpaqueSurface;
       if (page) { delete page.dataset.knHeaderStart; page.style.removeProperty('--kn-header-height'); }

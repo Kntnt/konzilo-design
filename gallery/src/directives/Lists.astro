@@ -1,0 +1,80 @@
+---
+import Section from './Section.astro';
+import Card from './Card.astro';
+import Actions from './Actions.astro';
+import { markerAttributes as level } from '../../../src/directives/index.js';
+import { logos } from '../directive-samples.js';
+// :::list without a type, in every form of markers, task lists, and the types description, values, logos and actions.
+const items = (count: number, word = 'Item') => Array.from({ length: count }, (_, index) => `${word} ${index + 1}`);
+const flat = [
+  { markers: '(i)', items: items(8) },
+  { markers: 'I.', items: ['Prepare', 'Plant', 'Tend', 'Harvest'] },
+  { markers: 'α)', items: ['Alpha', 'Beta', 'Gamma'] },
+  { markers: 'aa.', items: ['Doubled', 'Doubled again', 'And a third'] },
+];
+const services = [
+  { label: 'LinkedIn', href: 'https://www.linkedin.com/company/example' },
+  { label: 'Facebook', href: 'https://www.facebook.com/example' },
+  { label: 'Instagram', href: 'https://www.instagram.com/example' },
+  { label: 'YouTube', href: 'https://youtu.be/example' },
+  { label: 'X', href: 'https://x.com/example' },
+];
+const mixed = [{ label: 'Book a place', href: '#directive-choice', main: true }, { label: 'Read more', href: '#directive-article' }, services[0]];
+---
+<Section id="directive-lists" heading="50 / List · Bullets, signs and numbers" deck="The design's bullets, or the markers the editor writes, level by level.">
+  <p>A plain list has the design's bullets and numbers:</p>
+  <ul><li>Look closely at the everyday</li><li>Make a small version that people can try, with words enough to run onto a second line where the column is narrow<ul><li>Keep the useful parts</li><li>Ask what could be clearer</li></ul></li></ul>
+  <ol><li>Choose one question</li><li>Sketch an answer</li></ol>
+  <p>With <code>markers="v"</code> and <code>markers="x"</code>:</p>
+  <ul {...level('v', 1, false)}><li>Coffee and paper</li><li>A seat at the table, with words enough to run onto a second line where the column is narrow</li></ul>
+  <ul {...level('x', 1, false)}><li>No sign-up needed</li><li>No fee for the first visit</li></ul>
+  <p>With <code>markers="1./a)"</code>:</p>
+  <ol {...level('1./a)', 1, true)}><li>Prepare the bed<ol {...level('1./a)', 2, true)}><li>clear the weeds</li><li>loosen the soil</li></ol></li><li>Plant the seeds</li></ol>
+  <p>With <code>markers="1/1.1"</code>, a third level taking the second's form:</p>
+  <ol {...level('1/1.1', 1, true)}>
+    <li>Soil<ol {...level('1/1.1', 2, true)}><li>Compost</li><li>Leaves<ol {...level('1/1.1', 3, true)}><li>Oak and beech</li></ol></li></ol></li>
+    <li>Water<ol {...level('1/1.1', 2, true)}><li>Rain barrels</li></ol></li>
+  </ol>
+  <p>With <code>markers="A./A.1)"</code>, starting at the third letter:</p>
+  <ol {...level('A./A.1)', 1, true)} start="3"><li>The third bed<ol {...level('A./A.1)', 2, true)}><li>Its first row</li><li>Its second row</li></ol></li></ol>
+  {flat.map(({ markers, items: entries }) => <Fragment><p>With <code>markers="{markers}"</code>:</p><ol {...level(markers, 1, true)}>{entries.map((entry) => <li>{entry}</li>)}</ol></Fragment>)}
+  <p>With <code>markers="a"</code> from the 24th item, doubling after the last letter:</p>
+  <ol {...level('a', 1, true)} start="24">{items(5, 'Bed').map((entry) => <li>{entry}</li>)}</ol>
+  <p>A task list, as the core's reader writes it:</p>
+  <ul class="contains-task-list"><li class="task-list-item"><input type="checkbox" disabled> A question to answer</li><li class="task-list-item"><input type="checkbox" checked disabled> One that is done, with words enough to run onto a second line where the column is narrow</li><li>An item that is no task</li></ul>
+</Section>
+<Section surface="tint" heading="50 / List · Terms and values" deck="A description list and a value list, each under its label.">
+  <p data-kn-type="label">Words we use</p>
+  <dl class="kn-description-list">
+    <div class="kn-description-list-item"><dt data-kn-type="heading-6">Open table</dt><dd>An afternoon where anyone may bring a question.</dd><dd>Also the room it happens in, by the garden door, with words enough to run onto a second line where the column is narrow.</dd></div>
+    <div class="kn-description-list-item"><dt data-kn-type="heading-6">A series of several sessions</dt><dd>Four afternoons on one question.</dd></div>
+  </dl>
+  <p data-kn-type="label">Visiting the studio</p>
+  <dl class="kn-value-list">
+    <div class="kn-value-list-item"><dt data-kn-type="small">Opening hours</dt><dd class="kn-value-list-value">9–17</dd></div>
+    <div class="kn-value-list-item"><dt data-kn-type="small">Telephone</dt><dd class="kn-value-list-value"><a href="tel:+12025550148">+1 202 555 0148</a></dd></div>
+    <div class="kn-value-list-item"><dt data-kn-type="small">Address</dt><dd class="kn-value-list-value">12 Orchard Lane</dd></div>
+  </dl>
+</Section>
+<Section id="directive-logos">
+  <div class="kn-logos">
+    <p class="kn-logos-label" id="directive-logos-1" data-kn-type="label">51 / Logos · Trusted by</p>
+    <ul class="kn-logos-list" role="list" aria-labelledby="directive-logos-1">
+      <li><img src={logos.wide} alt="Orchard Hall"></li>
+      <li><a href="#directive-logos"><img src={logos.square} alt="North Bench"></a></li>
+      <li><img src={logos.tall} alt="Ridge"></li>
+      <li><img src={logos.press} alt="River Press"></li>
+    </ul>
+  </div>
+</Section>
+{(['page', 'brand'] as const).map((surface) => <Section id={surface === 'page' ? 'directive-actions' : undefined} surface={surface} heading={`51 / Actions · On ${surface}`} deck="The main action is filled and the others outlined; a known service is its icon.">
+  <p>A main action, another, and a service:</p>
+  <Actions items={mixed} />
+  <p>Where every action is a service:</p>
+  <Actions items={services} />
+  <p>A lone main action after a series shows more of it:</p>
+  <div class="kn-card-grid kn-cards">
+    {['Garlic in October', 'The last tomatoes', 'Leaves as mulch'].map((title) => <Card ground={surface === 'page' ? undefined : surface} heading={title} href="#directive-posts" texts={['A field note from the studio garden.']} />)}
+  </div>
+  <Actions items={[{ label: 'All field notes', href: '#directive-posts', main: true }]} />
+</Section>)}

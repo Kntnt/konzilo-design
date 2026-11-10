@@ -1,0 +1,91 @@
+---
+import Section from './Section.astro';
+import CoreForm from './CoreForm.astro';
+import QuestionAccordion from './QuestionAccordion.astro';
+import { surfaceOf } from '../../../src/directives/index.js';
+import { landscape } from '../samples.js';
+// :::accordion of questions and of topics, :::tabs, :::choice and :::toc, each with its runtime's behaviour.
+const questions = [
+  { heading: 'How long does a first visit take?', html: '<p>About an hour, with time for questions at the end.</p><ul><li>Coffee is on the house.</li><li>The door opens at nine.</li></ul>' },
+  { heading: 'Can I bring someone along, such as a colleague who has never been here before?', html: '<p>Yes. Tell us how many you will be, so that there are chairs enough.</p>' },
+  { heading: 'What does it cost?', html: '<p>Nothing for the first visit.</p>' },
+];
+const topics = [
+  { heading: 'Opening hours', html: '<p>Weekdays from nine to five.</p>' },
+  { heading: 'Finding us', html: '<p>Two minutes from the station, by the green door.</p>' },
+];
+const tabs = ['Small', 'Large', 'For a whole organisation of many people'];
+const ground = 'tint';
+const stops = [['directive-toc-first', 'Before you start'], ['directive-toc-second', 'Looking for what others wrote'], ['directive-toc-third', 'What is left is your guide, which has a long name']];
+---
+<Section id="directive-questions" surface="tint" heading="55 / Accordion · Questions and topics" deck="Headings that are all questions are drawn as questions and answers; other accordions keep their look.">
+  <QuestionAccordion items={questions} expand="one" first="open" name="directive-accordion-2" />
+  <p>An accordion of topics, which are not questions, many open at once:</p>
+  <QuestionAccordion items={topics} />
+</Section>
+<Section id="directive-tabs" surface="raised" heading="56 / Tabs">
+  <div class="kn-tabs">
+    <div class="kn-tabs-label" id="directive-tabs-1"><p data-kn-type="label">Our plans</p></div>
+    <div class="kn-tabs-list" role="tablist" aria-labelledby="directive-tabs-1">
+      {tabs.map((tab, index) => <button class="kn-tabs-tab" type="button" role="tab" id={`directive-tabs-1-tab-${index + 1}`} aria-controls={`directive-tabs-1-panel-${index + 1}`} aria-selected={String(index === 0)} tabindex={index === 0 ? undefined : '-1'}>{tab}</button>)}
+    </div>
+    <div class="kn-tabs-panel" role="tabpanel" id="directive-tabs-1-panel-1" aria-labelledby="directive-tabs-1-tab-1" tabindex="0">
+      <div class="kn-tabs-text">
+        <hgroup class="kn-heading-group">
+          <p class="kn-heading-group-eyebrow" data-kn-type="label">For a few people</p>
+          <h3 class="kn-heading-group-heading">The small plan</h3>
+        </hgroup>
+        <p>The small plan suits a team of a few people who meet now and then and want their notes in one place.</p>
+        <img src={landscape} alt="Invented hills seen from the studio">
+      </div>
+      <div class="kn-tabs-parts">
+        <QuestionAccordion items={[{ heading: 'Notes', html: '<p>As many as you like.</p>' }, { heading: 'Calendar', html: '<p>One for the team.</p>' }]} level={4} />
+      </div>
+    </div>
+    <div class="kn-tabs-panel" role="tabpanel" id="directive-tabs-1-panel-2" aria-labelledby="directive-tabs-1-tab-2" tabindex="0">
+      <p>The large plan adds rooms for every group, and <a href="#directive-tabs">a link</a> back up. Its panel holds text only, so it stands in order in one column.</p>
+      <h3 id="directive-large-details">More about it</h3>
+      <p>It keeps a year of history.</p>
+    </div>
+    <div class="kn-tabs-panel" role="tabpanel" id="directive-tabs-1-panel-3" aria-labelledby="directive-tabs-1-tab-3" tabindex="0">
+      <p>Write to us, and we will make a plan for you.</p>
+    </div>
+  </div>
+</Section>
+<Section id="directive-choice" surface={ground}>
+  <div class="kn-choice">
+    <div class="kn-choice-label" id="directive-choice-1"><p>57 / Choice · Have you visited the studio before?</p></div>
+    <div class="kn-choice-answers" role="group" aria-labelledby="directive-choice-1">
+      {['Yes', 'No, not yet'].map((answer, index) => <button class="kn-choice-answer" type="button" aria-expanded="false" aria-controls={`directive-choice-1-answer-${index + 1}`} data-kn-surface={surfaceOf('choice-answer', ground)}>{answer}</button>)}
+    </div>
+    <div class="kn-choice-panel" id="directive-choice-1-answer-1" data-kn-surface={surfaceOf('choice-panel', ground)}>
+      <h3>Welcome back</h3>
+      <p>Give us the address you used, and we will send a link to your notes.</p>
+      <CoreForm id="sign-in" label="Sign in" send="Send me a link" fields={[{ name: 'email', label: 'Email', type: 'email', required: true }]} />
+    </div>
+    <div class="kn-choice-panel" id="directive-choice-1-answer-2"><CoreForm id="join" label="Join" send="Join" fields={[{ name: 'name', label: 'Name', required: true }, { name: 'email', label: 'Email', type: 'email', required: true }]} /></div>
+  </div>
+</Section>
+<Section id="directive-toc" heading="58 / Table of Contents · toc" deck="A following menu beside the items, marking the one being read.">
+  <div class="kn-reading-area" data-kn-side="start" data-kn-stack="before" data-kn-columns="1">
+    <div class="kn-reading-area-aside">
+      <aside class="kn-aside-block" data-kn-sticky="true">
+        <nav class="kn-toc" aria-labelledby="directive-toc-1" data-kn-type="small" data-kn-follow>
+          <p class="kn-toc-label" id="directive-toc-1" data-kn-type="heading-6">In depth</p>
+          <ol role="list">{stops.map(([id, label]) => <li><a href={`#${id}`}>{label}</a></li>)}</ol>
+        </nav>
+      </aside>
+    </div>
+    <div class="kn-reading-area-flow">
+      <h3 id="directive-toc-first">Before you start</h3>
+      <p>Every guide begins somewhere. This one begins with the things you need before you start, which are fewer than you would think: a place to sit, an hour and a question you want answered.</p>
+      <p>Write the question down. It will change as you go, and that is the point.</p>
+      <h3 id="directive-toc-second">Looking for what others wrote</h3>
+      <p>Now look for what others have written. Keep a list of where you found each thing, since you will want to go back.</p>
+      <p>When the list is long enough, stop. A list never ends by itself.</p>
+      <h3 id="directive-toc-third">What is left is your guide, which has a long name</h3>
+      <p>Read the list again and cross out what does not answer your question. What is left is your guide.</p>
+      <p>That is all there is to it.</p>
+    </div>
+  </div>
+</Section>

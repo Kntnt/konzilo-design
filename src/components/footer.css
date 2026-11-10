@@ -15,7 +15,9 @@
     grid-template-columns: [full-start] var(--kn-footer-side) [a-start] calc((var(--kn-footer-inner) - var(--kn-space-column-gap)) / 3) [a-end] var(--kn-space-column-gap) [b-start] minmax(0, 1fr) [bc-start] auto [b-end] var(--kn-footer-side) [full-end];
     grid-template-rows: auto;
     row-gap: var(--kn-footer-row-gap);
-    padding-block: var(--kn-footer-edge-start) var(--kn-footer-edge-end);
+    /* The end takes more where something floats over it, such as the consent's reopen button. */
+    --kn-footer-padding-end: max(var(--kn-footer-edge-end), var(--kn-footer-end-room, 0rem));
+    padding-block: var(--kn-footer-edge-start) var(--kn-footer-padding-end);
   }
   .kn-footer-band[data-kn-rows="2"] { grid-template-rows: auto auto; }
   .kn-footer-band[data-kn-band="lower"] { --kn-footer-edge-start: 1.25rem; --kn-footer-edge-end: 1.25rem; --kn-footer-row-gap: 0.5rem; font-size: var(--kn-type-label-size); }
@@ -68,7 +70,7 @@
   .kn-footer[data-kn-rules="full"] .kn-footer-rule[data-kn-only="a"] { grid-column: full-start / a-end; }
   .kn-footer[data-kn-rules="full"] .kn-footer-rule[data-kn-only="b"] { grid-column: b-start / full-end; }
   .kn-footer[data-kn-rules="full"] .kn-footer-vertical-rule:not([data-kn-row="2"]) { margin-block-start: calc(-1 * var(--kn-footer-edge-start)); }
-  .kn-footer[data-kn-rules="full"] .kn-footer-vertical-rule:not([data-kn-row="1"]) { margin-block-end: calc(-1 * var(--kn-footer-edge-end)); }
+  .kn-footer[data-kn-rules="full"] .kn-footer-vertical-rule:not([data-kn-row="1"]) { margin-block-end: calc(-1 * var(--kn-footer-padding-end)); }
 
   /* On a narrow screen one column, with the cells in document order and every box at the start edge. */
   @container (inline-size <= 37.5rem) {

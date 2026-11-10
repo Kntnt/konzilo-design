@@ -18,6 +18,10 @@ before(async () => {
   html = await readFile(new URL('../gallery/dist/index.html', import.meta.url), 'utf8');
 });
 
+// The directive chapters follow the library's own examples and write what a Konzilo site writes, so the checks of the
+// library's components stop where they begin, and a test of their own covers them.
+const beforeDirectives = (text) => text.slice(0, text.indexOf('id="directives"'));
+
 function controls() {
   const inputs = JSON.parse(html.match(/<script[^>]+id="g-initial-inputs"[^>]*>([\s\S]*?)<\/script>/)[1]);
   const listeners = {};
@@ -76,7 +80,7 @@ test('the real Page and Bands frame all examples, including the seven new compon
   assert.match(html, /class="kn-page"[^>]*data-kn-surface="page"/);
   const main = html.match(/<main\b[^>]*>([\s\S]*?)<\/main>/)[1];
   assert.doesNotMatch(main, /<section\b(?![^>]*class="[^"]*kn-band)/);
-  const heroes = main.match(/<section\b[^>]*class="kn-band kn-hero"[^>]*>/g);
+  const heroes = beforeDirectives(main).match(/<section\b[^>]*class="kn-band kn-hero"[^>]*>/g);
   assert.equal(heroes.length, 5);
   assert.ok(heroes.some((tag) => tag.includes('data-kn-picture="end"')));
   assert.ok(heroes.some((tag) => tag.includes('data-kn-picture="start-bleed"')));
@@ -94,7 +98,7 @@ test('the real Page and Bands frame all examples, including the seven new compon
 });
 
 test('Reading Areas keep their inline notes and Aside Blocks in the requested reading order', () => {
-  const areas = [...html.matchAll(/<div\b[^>]*class="kn-reading-area"([^>]*)>([\s\S]*?)(?=<\/section>)/g)];
+  const areas = [...beforeDirectives(html).matchAll(/<div\b[^>]*class="kn-reading-area"([^>]*)>([\s\S]*?)(?=<\/section>)/g)];
   assert.equal(areas.length, 8);
   for (const [, attrs] of areas) assert.match(attrs, /data-kn-columns="1"/);
   const [, endAttrs, end] = areas[0];
@@ -169,7 +173,7 @@ test('every design control is described by a tooltip', () => {
 
 test('rendered cards have one stretched heading link or separate person contacts, and semantic headings', () => {
   let linked = 0, people = 0;
-  for (const [, attrs, content] of html.matchAll(/<article\b([^>]*)>([\s\S]*?)<\/article>/g)) {
+  for (const [, attrs, content] of beforeDirectives(html).matchAll(/<article\b([^>]*)>([\s\S]*?)<\/article>/g)) {
     if (attrs.includes('kn-content-')) continue;
     const anchors = [...content.matchAll(/<a\b([^>]*)>/g)];
     assert.match(content, /<h3\b[^>]*data-kn-type="heading-5"/);
@@ -447,4 +451,80 @@ test('all gallery controls have tooltips, Accordion and Callout comparisons cove
   for (const ground of ['page', 'brand']) for (const variant of ['info', 'success', 'warning', 'error']) for (const style of ['filled', 'outlined']) assert.ok(one(one(tree, `#callouts-${ground}`), `.kn-callout[data-kn-variant="${variant}"][data-kn-style="${style}"]`));
   assert.equal(one(tree, '[data-kn-consent-reopen="gallery-consent"]'), undefined);
   assert.ok(one(parse(labDocument()), '[data-kn-consent-reopen="lab-consent"]'));
+});
+
+test('the directive chapters show every directive and variant as the contract writes it, with their runtimes', () => {
+  const tree = parse(html);
+  // A path of selectors, each matched inside the last, since the selector engine handles short selectors only.
+  const has = (node, ...path) => path.length === 0 || all(node, path[0]).some((match) => has(match, ...path.slice(1)));
+  const elements = (node) => node?.children.filter((child) => child.type === 1) ?? [];
+  const body = (section) => one(section, '.kn-section-body');
+  const sections = all(tree, 'section.kn-section');
+  const some = (label, test) => assert.ok(sections.some(test), label);
+  // The hero's additions, and a trail that hides its last level.
+  const hero = one(tree, '#directive-hero');
+  assert.equal(hero.attributes['data-kn-surface'], 'accent');
+  for (const part of ['.kn-breadcrumbs[data-kn-current="false"]', '.kn-hero-logo', '.kn-heading-group-deck a', '.kn-actions', '.kn-fine-print', '.kn-hero-media img']) assert.ok(one(hero, part), part);
+  assert.equal(one(one(tree, '#directive-hero-text'), '.kn-hero-media'), undefined);
+  // Each of the six rules, with the content that triggers it.
+  some('rule 1', (section) => has(section, '.kn-section-media', '.kn-section-badges img'));
+  some('rule 1 with a form', (section) => one(section, '.kn-section-media') && one(section, '.kn-section-body > form'));
+  some('rule 2', (section) => one(section, '.kn-section-head') && !one(section, '.kn-heading-group-deck') && !one(section, '.kn-section-head > .kn-actions') && elements(body(section))[0]?.name === 'form');
+  some('rule 3, on brand', (section) => section.attributes['data-kn-surface'] === 'brand' && one(section, '.kn-section-body > form'));
+  some('rule 4', (section) => { const kids = elements(body(section)); return one(section, '.kn-section-head > .kn-actions') && kids.length === 1 && kids[0].attributes.class === 'kn-accordion'; });
+  some('rule 5', (section) => { const kids = elements(body(section)); return one(section, '.kn-section-head') && kids.length > 1 && kids.every((node) => node.name === 'p'); });
+  some('rule 6, reasons', (section) => one(section, '.kn-section-body > .kn-reasons'));
+  some('rule 6, two cards', (section) => elements(body(section)).length === 1 && elements(one(body(section), '.kn-cards')).length === 2);
+  some('rule 6, beside a long deck', (section) => one(section, '.kn-heading-group-deck[data-kn-deck="long"]') && all(section, '.kn-card-picture').length >= 5);
+  some('more of the series', (section) => { const kids = elements(body(section)); return kids.some((node, i) => node.attributes.class?.includes('kn-cards') && kids[i + 1]?.attributes.class === 'kn-actions' && elements(kids[i + 1]).length === 1 && one(kids[i + 1], '[data-kn-main]')); });
+  some('a section on accent', (section) => section.attributes['data-kn-surface'] === 'accent');
+  some('a section on brand', (section) => section.attributes['data-kn-surface'] === 'brand');
+  // Text with a role, the article, and every list.
+  const roles = body(one(tree, '#directive-text-roles'));
+  assert.ok(has(roles, 'hgroup', '.kn-heading-group-eyebrow'));
+  assert.ok(elements(roles).some((node) => node.name === 'p' && node.attributes['data-kn-type'] === 'label'));
+  assert.ok(one(tree, '.kn-article-opening .kn-heading-group-subheadline'));
+  assert.ok(one(tree, '.kn-article-meta .kn-article-byline'));
+  const article = one(tree, '.kn-article-body');
+  for (const part of ['.kn-toc[data-kn-follow]', '.kn-question', '.kn-fact-box[data-kn-surface]']) assert.ok(one(article, part), part);
+  for (const link of all(tree, '.kn-toc[data-kn-follow] a')) assert.ok(one(tree, link.attributes.href), link.attributes.href);
+  assert.ok(all(article, '.kn-toc a').some((link) => one(tree, link.attributes.href).attributes.class === 'kn-fact-box'), 'a fact box is a stop');
+  const lists = one(tree, '#directive-lists');
+  for (const numbering of ['decimal', 'lower-latin', 'upper-latin', 'lower-roman', 'upper-roman', 'lower-greek', 'double-latin']) assert.ok(one(lists, `ol[data-kn-numbering="${numbering}"]`), numbering);
+  for (const punctuation of ['period', 'parenthesis', 'brackets']) assert.ok(one(lists, `ol[data-kn-punctuation="${punctuation}"]`), punctuation);
+  assert.ok(has(lists, 'ol[data-kn-dotted]', 'ol[data-kn-dotted]'));
+  for (const part of ['ol[start="3"]', 'ul[data-kn-sign="check"]', 'ul[data-kn-sign="cross"]', '.contains-task-list', 'input[checked]']) assert.ok(one(lists, part), part);
+  assert.ok(one(tree, '.kn-description-list dd'));
+  assert.ok(has(tree, '.kn-value-list-value', 'a[href^="tel:"]'));
+  assert.ok(has(tree, '.kn-logos-list', 'a img'));
+  assert.deepEqual([...new Set(all(one(tree, '#directive-actions'), '[data-kn-service]').map((node) => node.attributes['data-kn-service']))].sort(), ['facebook', 'instagram', 'linkedin', 'x', 'youtube']);
+  assert.ok(all(tree, '.kn-actions').every((list) => all(list, '[data-kn-main]').length <= 1));
+  // Cards in every form, steps, reasons and the three post lists.
+  for (const count of [1, 2, 3, 4, 5, 6, 7]) assert.ok(all(tree, '.kn-cards').some((grid) => elements(grid).length === count), `${count} cards`);
+  for (const path of [['a[data-kn-contact="phone"]'], ['a[data-kn-contact="email"]'], ['.kn-cards[data-kn-sign="check"]'], ['.kn-card[data-kn-variant="link"]', '.kn-card-arrow'], ['.kn-cards[data-kn-picture="behind"]', '.kn-card[data-kn-surface="picture-dark"]'], ['.kn-cards[data-kn-symbol="item"]', '.kn-card > .kn-card-symbol'], ['.kn-cards[data-kn-symbol="heading"]', '.kn-card-heading > .kn-card-symbol'], ['.kn-card[data-kn-surface="tint"]', '.kn-actions']]) assert.ok(has(tree, ...path), path.join(' '));
+  assert.ok(all(tree, '.kn-cards-nav').some((nav) => nav.attributes['aria-labelledby'] && one(nav, '.kn-cards-label')));
+  assert.ok(all(tree, '.kn-cards-nav').some((nav) => !nav.attributes['aria-labelledby'] && !one(nav, '.kn-cards-label')));
+  assert.ok(all(one(tree, '#directive-cards'), 'a[href^="tel:"]').some((link) => !link.attributes['data-kn-contact']), 'Call us stays an ordinary link');
+  for (const part of ['.kn-timeline[data-kn-numbering="decimal"]', '.kn-timeline[data-kn-numbering="upper-latin"][data-kn-punctuation="period"]', '.kn-timeline[data-kn-numbering="lower-roman"][data-kn-punctuation="brackets"]', '.kn-reasons[data-kn-sign="cross"]']) assert.ok(one(tree, part), part);
+  for (const presentation of ['cards', 'featured', 'filtered']) assert.ok(has(tree, `.kn-post-list[data-kn-presentation="${presentation}"]`, '.kn-card-link'), presentation);
+  const filtered = one(tree, '.kn-post-list[data-kn-presentation="filtered"]');
+  assert.ok(all(one(filtered, `#${one(filtered, 'form.kn-visitor-filters').attributes['data-kn-for']}`), '[data-kn-item][data-kn-filter]').length > 4);
+  // Panels: questions, tabs, choice and toc.
+  const questions = one(tree, '#directive-questions');
+  assert.ok(all(questions, '.kn-accordion').some((accordion) => 'data-kn-questions' in accordion.attributes && one(accordion, 'details[name][open]')));
+  assert.ok(all(questions, '.kn-accordion').some((accordion) => !('data-kn-questions' in accordion.attributes) && accordion.attributes['data-kn-accordion-mode'] === 'multiple'));
+  const tabs = one(tree, '#directive-tabs .kn-tabs');
+  for (const tab of all(tabs, '[role="tab"]')) assert.equal(one(tabs, `#${tab.attributes['aria-controls']}`).attributes['aria-labelledby'], tab.attributes.id);
+  assert.ok(one(tabs, '.kn-tabs-text + .kn-tabs-parts'));
+  assert.ok(all(tree, '.kn-tabs-panel, .kn-choice-panel').every((panel) => !('hidden' in panel.attributes)), 'the runtimes hide the panels');
+  const choice = one(tree, '#directive-choice');
+  assert.ok(all(choice, '.kn-choice-answer').every((answer) => answer.attributes['aria-expanded'] === 'false' && answer.attributes['data-kn-surface']));
+  assert.ok(all(choice, '.kn-choice-panel').some((panel) => panel.attributes['data-kn-surface'] && one(panel, 'form.konzilo-form')));
+  assert.ok(all(choice, '.kn-choice-panel').some((panel) => !panel.attributes['data-kn-surface']));
+  assert.ok(has(tree, '#directive-toc', '.kn-aside-block[data-kn-sticky="true"]', '.kn-toc[data-kn-follow]'));
+  // No inline style in what a site writes, and the runtimes reach the page.
+  const written = html.slice(html.indexOf('id="directive-hero"'));
+  assert.doesNotMatch(written.slice(0, written.indexOf('<footer')), /\sstyle="/);
+  const bundle = [...html.matchAll(/<script\b[^>]*type="module"[^>]*>([\s\S]*?)<\/script>/gi)].map(([, js]) => js).join('\n');
+  for (const selector of ['.kn-tabs', '.kn-choice', '.kn-toc[data-kn-follow]', '.kn-section-head:has(']) assert.ok(bundle.includes(selector), selector);
 });

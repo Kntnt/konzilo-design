@@ -1,0 +1,48 @@
+@layer kn-components {
+  /* Steps (docs/spec/directives.md, `cards`, `markers` with a numbering): the number of steps sets the columns as for
+     cards (cards.css). Each step opens with its number as written, on the plate of a filled button, so it holds on every
+     Surface, and a line from it to the step's end, which leads the eye on to the next. */
+  .kn-timeline { counter-reset: kn-timeline; }
+  .kn-timeline > .kn-timeline-item {
+    counter-increment: kn-timeline;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-content: start;
+    column-gap: 0.75em;
+    row-gap: var(--kn-space-component-gap);
+    margin: 0;
+  }
+  .kn-timeline > .kn-timeline-item > * { grid-column: 1 / -1; margin-block: 0; }
+  .kn-timeline-heading { text-wrap: balance; }
+  .kn-timeline-item > :not(.kn-timeline-heading) { color: var(--kn-text-muted); }
+  .kn-timeline-item::before {
+    content: var(--kn-list-before) counter(kn-timeline, var(--kn-list-style)) var(--kn-list-after);
+    grid-area: 1 / 1;
+    display: grid;
+    place-items: center;
+    justify-self: start;
+    min-inline-size: 2.4em;
+    min-block-size: 2.4em;
+    padding-inline: 0.6em;
+    border: 1px solid transparent;
+    border-radius: var(--kn-radius-control);
+    background: var(--kn-button-background);
+    color: var(--kn-button-text);
+    font-family: var(--kn-typeface-heading);
+    font-size: var(--kn-type-heading-6-size);
+    font-weight: var(--kn-type-heading-6-weight);
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+    white-space: nowrap;
+  }
+  .kn-timeline-item::after {
+    content: "";
+    grid-area: 1 / 2;
+    align-self: center;
+    border-block-start: 1px solid var(--kn-border-strong);
+  }
+  /* The numbering, as markerAttributes names it: the counter style and the punctuation round it are the ones markers.css
+     gives every [data-kn-numbering], bare, so a timeline reads them rather than naming them again. A timeline without
+     its own numbering counts 1, 2, 3, whatever list it stands in. */
+  :where(.kn-timeline) { --kn-list-style: kn-decimal; --kn-list-before: ""; --kn-list-after: ""; }
+}

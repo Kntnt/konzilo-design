@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# Writes a design file as DESIGN.md, the open format for describing a design system to an AI agent.
-# Usage: design-md <design-file> [-o out.md]
+# Writes a design file for AI agents: by default <name>-design-md.zip beside it, holding DESIGN.md (the open format for
+# describing a design system to an agent) with the logos, fonts and icons it names; with -o out.md, DESIGN.md alone.
+# Usage: design-md <design-file> [-o out.zip|out.md]
 set -euo pipefail
 source "$(dirname "$(realpath "${BASH_SOURCE[0]}")")/lib/design-file.sh"
 

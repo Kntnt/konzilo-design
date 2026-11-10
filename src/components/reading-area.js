@@ -1,3 +1,5 @@
+import { frameScheduler } from './schedule.js';
+
 // All placement numbers use one coordinate system, supplied by the caller.
 // These functions have no DOM dependency and also serve non-browser consumers.
 export function readingColumns({ width, narrow, gap, asideMin, side = 'end' }) {
@@ -37,9 +39,7 @@ export function setupReadingAreas(root = document) {
   if (!areas.length) return () => {};
   const rootSize = () => parseFloat(getComputedStyle(document.documentElement).fontSize);
   const rem = (value) => `${value / rootSize()}rem`;
-  let queued = false;
   let active = true;
-  let frame;
   const controllers = areas.map((area) => {
     const flow = area.querySelector(':scope > .kn-reading-area-flow');
     const notes = [...flow.querySelectorAll('.kn-sidenote')];
@@ -86,13 +86,9 @@ export function setupReadingAreas(root = document) {
     }
     return { area, flow, notes, blocks, breakouts, measure, layout };
   });
+  const next = frameScheduler(() => controllers.forEach(({ layout }) => layout()));
   function schedule() {
-    if (!active || queued) return;
-    queued = true;
-    frame = requestAnimationFrame(() => {
-      queued = false;
-      controllers.forEach(({ layout }) => layout());
-    });
+    if (active) next();
   }
   const observer = new ResizeObserver(schedule);
   for (const { area, flow, notes, blocks, breakouts, measure } of controllers) {
@@ -107,7 +103,7 @@ export function setupReadingAreas(root = document) {
     observer.disconnect();
     window.removeEventListener('resize', schedule);
     window.removeEventListener('kn:headerchange', schedule);
-    cancelAnimationFrame(frame);
+    next.cancel();
     for (const { area, notes, blocks, breakouts, measure } of controllers) {
       area.dataset.knColumns = '1';
       area.style.removeProperty('--kn-reading-min-block-size');

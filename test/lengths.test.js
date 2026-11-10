@@ -37,6 +37,7 @@ const PLACES = [
   ['tool/style.css', '[data-page="corners"] .sample-cards { padding-block-end: 6px }', 'twice the thickest frame, which is in pixels'],
   ['tool/style.css', '.end[data-end="narrow"] { flex: 390px }', WINDOW],
   ['tool/style.css', '.end[data-end="wide"] { max-width: 1440px }', WINDOW],
+  ['tool/style.css', '#preview-pane[data-stacked] .end[data-end="narrow"] { max-width: 390px }', WINDOW],
   ['tool/style.css', '#preview-narrow { width: 390px }', WINDOW],
   ['tool/preview.js', 'frame.style.width =', WINDOW],
   ['tool/preview.js', "querySelector('.frame-host').style.width", WINDOW],
