@@ -75,6 +75,25 @@ test('the cells keep their own column and come in stacking order, A before B, wh
   assert.equal(placement(place('a2 b1 b2', 'row')), 'a2:A1:2 b1:B2:1 b2:B1:2');
 });
 
+// The owner, 2026-11-11: on a phone the upper band stacks column by column and the lower band row by row, A1 A2 B1 B2
+// and then A3 B3 A4 B4 in his notation. Cells are written in that order, so it holds whatever the cells cover.
+const lowerPlace = (names, fill = 'column') => layoutFooter({ lower: { cells: cells(names) }, fill }).bands[0];
+test('the lower band\'s cells come row by row, the upper band\'s column by column, each in the place the grid gives it', () => {
+  assert.equal(placement(lowerPlace('a1 b1 a2 b2')), 'a1:A1:1 b1:B1:1 a2:A1:2 b2:B1:2');
+  assert.equal(placement(place('a1 b1 a2 b2')), 'a1:A1:1 a2:A1:2 b1:B1:1 b2:B1:2');
+  // Every combination keeps the places the upper band gives the same cells; only the order differs.
+  for (const [names] of TABLE) for (const fill of ['column', 'row']) {
+    const lower = lowerPlace(names, fill);
+    const upper = place(names, fill);
+    if (!names) { assert.equal(lower, undefined); continue; }
+    assert.deepEqual(lower.cells.map((cell) => cell.name), ['a1', 'b1', 'a2', 'b2'].filter((cell) => names.split(' ').includes(cell)), `[${names}] ${fill}`);
+    assert.deepEqual([...lower.cells].sort((one, other) => one.name.localeCompare(other.name)).map(({ name, column, columns, row }) => [name, column, columns, row]), [...upper.cells].sort((one, other) => one.name.localeCompare(other.name)).map(({ name, column, columns, row }) => [name, column, columns, row]), `[${names}] ${fill}: the same places`);
+    assert.deepEqual([lower.rows, lower.horizontal, lower.vertical], [upper.rows, upper.horizontal, upper.vertical]);
+  }
+  assert.equal(placement(lowerPlace('a1 a2 b2')), 'a1:A1:1 a2:A1:2 b2:B1:all');
+  assert.equal(placement(lowerPlace('b1 a2', 'row')), 'b1:B2:1 a2:A2:2');
+});
+
 test('the bands default to the dark brand colour and nearly black, and a cell carries its content', () => {
   const { bands } = layoutFooter({ upper: { cells: { a1: { text: 'Words' } } }, lower: { cells: { b2: { links: [{ label: 'L', href: '#l' }] } } } });
   assert.deepEqual(bands.map((band) => band.surface), ['brand', 'inverse']);

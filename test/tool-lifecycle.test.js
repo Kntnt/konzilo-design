@@ -2,13 +2,14 @@
 // design that follow each other, and saves that never overwrite a change they did not see.
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { execFile } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
 import { existsSync } from 'node:fs';
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { chmod, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import http from 'node:http';
 import { createServer } from 'node:net';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { delimiter, join } from 'node:path';
 import { chromium, firefox, webkit } from 'playwright-core';
 import { resolve } from '../src/generator/index.js';
 import { backupPath } from '../src/cli/backup.js';
@@ -304,6 +305,34 @@ test('design-tool starts a tool per file, shows a file already open, restarts on
     assert.match(await readFile(join(runtime, `${ports[0]}.log`), 'utf8'), /no window for 3 seconds/);
   } finally {
     await stop(options).catch(() => {});
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+// The launcher has nothing else to wait for once its tool runs, so the browser's answer must keep it alive,
+// though not for longer than it takes a browser to be asked.
+test('a process with nothing else to wait for still hears whether the browser could be asked', { skip: process.platform === 'win32', timeout: 30000 }, async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'kn-open-'));
+  try {
+    const bin = join(directory, 'bin');
+    await mkdir(bin);
+    for (const name of ['open', 'xdg-open']) {
+      await writeFile(join(bin, name), '#!/bin/sh\nsleep "$TAKES"\nexit 0\n');
+      await chmod(join(bin, name), 0o755);
+    }
+    const ask = (takes, within) =>
+      new Promise((done) => {
+        const script = `import { openBrowser } from ${JSON.stringify(new URL('../tool/browser.js', import.meta.url).href)}; console.log(await openBrowser('http://127.0.0.1:1', { within: ${within} }));`;
+        const env = { ...process.env, TAKES: String(takes), PATH: `${bin}${delimiter}${process.env.PATH}` };
+        const start = Date.now();
+        execFile(process.execPath, ['--input-type=module', '-e', script], { env }, (error, stdout, stderr) => done({ code: error?.code ?? 0, stdout, stderr, seconds: (Date.now() - start) / 1000 }));
+      });
+    const { seconds, ...answered } = await ask(0.5, 5000);
+    assert.deepEqual(answered, { code: 0, stdout: 'true\n', stderr: '' });
+    const slow = await ask(3, 200);
+    assert.equal(slow.stdout, 'true\n');
+    assert.ok(slow.seconds < 2, `a browser slow to answer held the process for ${slow.seconds} seconds`);
+  } finally {
     await rm(directory, { recursive: true, force: true });
   }
 });

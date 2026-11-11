@@ -29,6 +29,7 @@ import { withKeptLogos } from './logic.js';
 import { componentsCss } from '../src/css/components.js';
 import { PICTURE_SLOTS } from '../presentation/src/samples.js';
 import { OWN_PICTURES_PATH, ownPictureUrls, readOwnPicture, removeOwnPicture, saveOwnPicture } from '../presentation/own-pictures.mjs';
+import { copyFor } from '../presentation/copy-override.mjs';
 
 export async function loadDesign(path) {
   try {
@@ -85,18 +86,9 @@ export async function saveDesign(path, model, { beforeWrite } = {}) {
   }
   return file;
 }
-// The words the document uses: the presentation's copy and the design's own override.
-export async function loadCopy(path) {
-  const copy = JSON.parse(await readFile(join(repo, 'presentation/copy.json'), 'utf8'));
-  try {
-    const custom = JSON.parse(await readFile(`${path.replace(/\.[^/.]+$/, '')}.copy.json`, 'utf8'));
-    for (const [key, value] of Object.entries(custom))
-      if (Object.hasOwn(copy, key) && typeof value === 'string') copy[key] = value;
-  } catch (error) {
-    if (error.code !== 'ENOENT') throw error;
-  }
-  return copy;
-}
+// The words the document uses: the presentation's copy and the design's own override, read as the presentation
+// reads them, so a copy file the presentation would refuse stops the tool at its start, with the same message.
+export const loadCopy = (path) => copyFor(path);
 // What a window's save builds on: the design file's text as the window last saw it, as a hash. A save made
 // on another text is refused, whoever changed the file since: another window, a restore, a script or git.
 export const revisionOf = (text) => (text === null ? 'none' : createHash('sha256').update(text).digest('hex').slice(0, 20));
@@ -146,9 +138,10 @@ export async function startTool({ designFile, port = 4174, open = true, idle, on
   let known = await revisionOnDisk(path);
   // One backup a run: what the file held when this run first changed it. A file this run made has nothing to keep.
   let backedUp = created || inherited;
+  // Before the preview's build, so a copy file to fix says so at once.
+  const copy = await loadCopy(path);
   const previewDir = await previewFolder();
   const { preview, catalogue } = await buildPresentation({ output: previewDir });
-  const copy = await loadCopy(path);
   const components = await componentsCss();
   const token = randomBytes(24).toString('hex');
   const started = new Date().toISOString();

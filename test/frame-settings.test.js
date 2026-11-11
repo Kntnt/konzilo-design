@@ -58,7 +58,7 @@ test('the sample shows exactly the owner\'s list, and each cell can be turned of
   assert.deepEqual(lower.cells.b2.links.map((link) => [link.label, link.consentOpen]), [['Change privacy settings', true], ['Revoke consents', true]]);
   const off = footerProps({ ...footer, lower: { ...footer.lower, cells: { ...footer.lower.cells, a1: false } } }, { name: 'A' });
   assert.equal(off.lower.cells.a1, false);
-  assert.deepEqual(layoutFooter(off).bands[1].cells.map((cell) => cell.name), ['a2', 'b1', 'b2']);
+  assert.deepEqual(layoutFooter(off).bands[1].cells.map((cell) => cell.name), ['b1', 'a2', 'b2'], 'the lower band row by row');
 });
 
 test('every combination of cells lays out in every colour, with lines or without', () => {
@@ -103,6 +103,31 @@ test('the header props follow the settings', () => {
   assert.deepEqual(pageProps({ shadow: true, 'edge-line': false, 'fill-light': '#fff' }), { shadow: true, edgeLine: false, fillLight: '#fff', fillDark: undefined });
 });
 
+test('the search box\'s close button and what its empty field shows reach the header, and a design without them keeps today\'s look', async () => {
+  const header = settings().header;
+  const project = { name: 'Name' };
+  assert.deepEqual([header['search-close'], header['search-placeholder']], [true, 'word'], 'the defaults');
+  const props = (more) => headerProps({ ...header, ...more }, project).search;
+  assert.deepEqual([props({}).close, props({}).placeholder, props({}).word], [true, 'word', 'Search'], 'the sample gives its own word');
+  assert.equal(props({ 'search-close': false }).close, false);
+  assert.equal(props({ 'search-placeholder': 'icon' }).placeholder, 'icon');
+  assert.equal(props({ 'search-placeholder': 'none' }).placeholder, 'none');
+  // A design file written before these settings has none of them in its resolved header: the box keeps its close
+  // button and the word, as before.
+  const older = { ...header };
+  delete older['search-close'];
+  delete older['search-placeholder'];
+  assert.deepEqual([props(older).close, props(older).placeholder], [true, 'word']);
+  assert.deepEqual([derive(inputs()).header['search-close'], derive(inputs()).header['search-placeholder']], [true, 'word'], 'and resolves with them');
+  assert.throws(() => validateInputs(inputs({ header: { 'search-placeholder': 'text' } })));
+  assert.throws(() => validateInputs(inputs({ header: { 'search-close': 'no' } })));
+  const said = (more) => designMd({ inputs: settings(), project: { name: 'Name' }, resolved: derive(inputs({ header: more })) }, 'name.design.json');
+  assert.match(said({}), /with its close button; its empty field shows the site's word for Search as its placeholder\./);
+  assert.match(said({ 'search-close': false, 'search-placeholder': 'icon' }), /with no close button, so Esc or a click beside the box closes it; its empty field shows a magnifier where the words begin, which goes as the visitor types\./);
+  assert.match(said({ 'search-placeholder': 'none' }), /its empty field shows nothing\./);
+  assert.match(said({}), /The whole window, the header and the footer included, is covered/);
+});
+
 test('a footer on a dark colour uses the dark logo, and the name stands in for a missing one', () => {
   const project = { name: 'A & B', logo: 'data:light', 'logo-dark': 'data:dark' };
   const logo = (surface, of = project) => footerContent({ upper: { surface } }, of).upper.a1.content;
@@ -121,6 +146,7 @@ test('the export tells an agent what frame this design has', async () => {
   assert.match(text, /revealed under the page/);
   assert.match(text, /an upper band on the brand Surface, with cells A1, B1, A2, B2 and a thin lower band on the inverse Surface/);
   assert.match(text, /gives way to the cell above or below it/);
+  assert.match(text, /the upper band column by column \(A1, A2, B1, B2\) and the lower band row by row \(A1, B1, A2, B2\)/, 'how the footer stacks on a phone');
   const lowerAlone = derive(inputs({ footer: { fill: 'row', upper: { cells: { a1: false, b1: false, a2: false, b2: false } }, lower: { cells: { b1: false } } } }));
   const fewer = designMd({ inputs: settings(), project: { name: 'Name' }, resolved: lowerAlone }, 'name.design.json');
   assert.match(fewer, /\*\*Footer:\*\* a thin lower band on the inverse Surface, with cells A1, A2, B2\. It sits at the end of the page/);

@@ -2,7 +2,8 @@ import test from 'node:test';
 import { derive } from '../src/generator/index.js';
 import { shippedIn } from '../src/fonts/catalog.js';
 import assert from 'node:assert/strict';
-import { readFile, writeFile, mkdir, rm, readdir } from 'node:fs/promises';
+import { readFile, writeFile, mkdir, mkdtemp, rm, readdir } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
 import { resolve as pathResolve, join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { inflateRawSync } from 'node:zlib';
@@ -15,7 +16,8 @@ import { footerHtml } from '../src/components/footer-html.js';
 import { footerProps } from '../presentation/src/frame.js';
 import { createPresentation } from '../tool/presentation.js';
 import { pageList, componentPages, ids } from '../presentation/src/catalog.js';
-import { startTool } from '../tool/server.js';
+import { startTool, loadCopy } from '../tool/server.js';
+import { copyFor } from '../presentation/copy-override.mjs';
 import { validateDesignFile, resolve } from '../src/generator/index.js';
 const exec = promisify(execFile);
 const root = pathResolve('node_modules/.cache/presentation-tests');
@@ -358,7 +360,8 @@ test('copy overrides reject unknown keys and fall back to English', { timeout: 3
     const design = join(directory, 'example.design.json');
     await writeFile(design, await readFile('examples/example.design.json'));
     const override = join(directory, 'example.design.copy.json');
-    await writeFile(override, JSON.stringify({ lang: 'en-GB', 'document.filename': 'design-guide', 'header.title': 'Navigation' }));
+    // A key an earlier version had, as a file written for it still holds, does no harm.
+    await writeFile(override, JSON.stringify({ lang: 'en-GB', 'document.filename': 'design-guide', 'header.title': 'Navigation', 'breadcrumbs.first-band': 'Words for a page that has gone' }));
     const output = join(directory, 'example.zip');
     await createPresentation(design, output);
     const { filename, html } = extractZip(await readFile(output));
@@ -366,10 +369,71 @@ test('copy overrides reject unknown keys and fall back to English', { timeout: 3
     assert.match(html, /lang="en-GB"/);
     assert.match(html, />Navigation</);
     assert.match(html, />The colour scale</);
+    assert.doesNotMatch(html, /Words for a page that has gone/);
+    // One that never was is refused, in a message that names the file and the key and holds no build log.
     await writeFile(override, JSON.stringify({ unknown: 'Not allowed' }));
-    await assert.rejects(createPresentation(design, output), /Unknown copy key/);
+    await assert.rejects(createPresentation(design, output), { message: `Unknown copy key "unknown" in ${override}` });
   } finally {
     await rm(pathResolve('node_modules/.cache/presentation-copy-tests'), { recursive: true, force: true });
+  }
+});
+
+test('a key that has left copy.json is retired and ignored in a copy file, and one that never was is refused', async () => {
+  const retired = JSON.parse(await readFile('presentation/retired-copy-keys.json', 'utf8'));
+  assert.deepEqual(retired, [...new Set(retired)].sort(), 'sorted, each key once');
+  assert.deepEqual(retired.filter((key) => Object.hasOwn(copy, key)), [], 'no key is both in copy.json and retired');
+  const directory = await mkdtemp(join(tmpdir(), 'kn-copy-'));
+  try {
+    const design = join(directory, 'words.design.json');
+    const words = join(directory, 'words.design.copy.json');
+    const write = (value) => writeFile(words, typeof value === 'string' ? value : JSON.stringify(value));
+    // The presentation's build and the tool read the file alike.
+    for (const read of [copyFor, loadCopy]) {
+      await rm(words, { force: true });
+      assert.deepEqual(await read(design), copy, 'without a file, the English');
+      await write({ 'breadcrumbs.first-band': 'Old words', 'specimen.headers': 'Old words', 'header.title': 'Navigation' });
+      const read1 = await read(design);
+      assert.equal(read1['header.title'], 'Navigation');
+      assert.equal(Object.hasOwn(read1, 'breadcrumbs.first-band') || Object.hasOwn(read1, 'specimen.headers'), false, 'retired keys are ignored');
+      await write({ 'header.titel': 'Navigation' });
+      await assert.rejects(read(design), { message: `Unknown copy key "header.titel" in ${words}` });
+      await write({ 'header.title': 3 });
+      await assert.rejects(read(design), { message: `Copy key "header.title" in ${words} must be a string` });
+      await write(['header.title']);
+      await assert.rejects(read(design), { message: `The copy file ${words} must hold one object of copy keys` });
+      await write('{ "header.title": ');
+      await assert.rejects(read(design), (error) => error.message.startsWith(`The copy file ${words} is not valid JSON: `));
+    }
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test('the tool refuses a copy file the presentation would refuse, at its start and when it makes one, by file and key', { timeout: 120000 }, async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'kn-copy-tool-'));
+  const design = join(directory, 'words.design.json');
+  const words = join(directory, 'words.design.copy.json');
+  let tool;
+  try {
+    await writeFile(words, JSON.stringify({ 'header.titel': 'Navigation' }));
+    await assert.rejects(startTool({ designFile: design, port: 0, open: false }), { message: `Unknown copy key "header.titel" in ${words}` });
+    await writeFile(words, JSON.stringify({ 'breadcrumbs.first-band': 'Old words', 'colour-scale.title': 'Colours' }));
+    tool = await startTool({ designFile: design, port: 0, open: false });
+    const state = await fetch(`${tool.url}/api/state`).then((answer) => answer.json());
+    assert.equal(state.copy['colour-scale.title'], 'Colours');
+    assert.equal(Object.hasOwn(state.copy, 'breadcrumbs.first-band'), false);
+    // A file changed while the tool runs: Create presentation says what to fix in one line, without the build's log.
+    await writeFile(words, JSON.stringify({ 'header.titel': 'Navigation' }));
+    const answer = await fetch(`${tool.url}/api/presentation`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Konzilo-Token': state.token, 'X-Konzilo-Base': state.revision },
+      body: JSON.stringify({ inputs: state.inputs, project: state.project }),
+    });
+    assert.equal(answer.status, 400);
+    assert.deepEqual(await answer.json(), { error: `Unknown copy key "header.titel" in ${words}` });
+  } finally {
+    await tool?.close();
+    await rm(directory, { recursive: true, force: true });
   }
 });
 
@@ -518,6 +582,10 @@ test('tool saves presentation prose, keeps controls still and serves the exporte
     await page.locator('[data-path="inputs.footer.attachment"]').selectOption('reveal');
     await preview.waitForFunction(() => document.querySelector('.kn-footer').dataset.knAttachment === 'reveal');
     await page.locator('[data-path="inputs.footer.attachment"]').selectOption('flow');
+    // Where the page meets the footer is set beside the attachment, though the design file keeps it with the page.
+    assert.deepEqual(await footerPage.locator('[data-flag^="inputs.page."]').evaluateAll((flags) => flags.map((node) => node.dataset.flag)), ['inputs.page.shadow', 'inputs.page.edge-line']);
+    await flag('page.shadow').click();
+    await preview.waitForFunction(() => document.querySelector('.kn-page-main').dataset.knShadow === 'true');
     // A band without a cell is gone, and without any cell so is the footer, until one comes back.
     for (const name of ['a1', 'b1', 'a2', 'b2']) await cell('lower', name).click();
     await preview.waitForFunction(() => document.querySelectorAll('.kn-footer-band').length === 1);
@@ -529,12 +597,12 @@ test('tool saves presentation prose, keeps controls still and serves the exporte
     for (const name of ['a1', 'b1', 'a2', 'b2']) { await cell('upper', name).click(); await cell('lower', name).click(); }
     await preview.waitForFunction(() => document.querySelectorAll('.kn-footer-cell').length === 8);
 
-    // The page's widths and the line and shadow where it meets the footer.
+    // The page's widths and its surface; how it meets the footer is on the Footer page.
     await openPage('Frame', 'Page');
+    assert.equal(await page.locator('[data-page="page"] [data-flag^="inputs.page."]').count(), 0);
     await page.locator('[data-path="inputs.layout.wide"]').fill('1000');
     await preview.waitForFunction(() => getComputedStyle(document.documentElement).getPropertyValue('--kn-layout-wide').trim() === '62.5rem');
-    await flag('page.shadow').click();
-    await preview.waitForFunction(() => document.querySelector('.kn-page-main').dataset.knShadow === 'true');
+    assert.equal(await preview.evaluate(() => document.querySelector('.kn-page-main').dataset.knShadow), 'true', 'the shadow set on the Footer page holds');
     await page.locator('[data-path="inputs.page.fill-light"]').fill('linear-gradient(#ffffff');
     await page.locator('[data-path="inputs.page.fill-light"]').fill('linear-gradient(#ffffff, #eeeeee)');
     await preview.waitForFunction(() => document.querySelector('.kn-page').style.getPropertyValue('--kn-page-fill-light').includes('gradient'));
@@ -615,10 +683,11 @@ test('tool saves presentation prose, keeps controls still and serves the exporte
     await page.locator('[data-add-colour]').click();
     await thirdCard.waitFor({ state: 'visible' });
     assert.equal(await page.locator('[data-colour-block="tertiary"]').isVisible(), true);
+    // Its Surface stands on the same page as the colours.
+    assert.equal(await page.locator('[data-surface-case="tint-tertiary"]').isVisible(), true);
     await page.locator('[data-remove-colour="tertiary"]').click();
     await thirdCard.waitFor({ state: 'hidden' });
     assert.equal(await page.locator('[data-colour-block="tertiary"]').isVisible(), false);
-    await openPage('Colour', 'The colours together');
     assert.equal(await page.locator('[data-surface-case="tint-tertiary"]').isVisible(), false);
 
     // The arrow points where the shadow falls.

@@ -7,6 +7,7 @@ import { layoutFooter } from '../../src/components/footer.js';
 import '../../src/components/footer-fit.js';
 import { footerHtml } from '../../src/components/footer-html.js';
 import { footerProps, identityProps } from './frame.js';
+import { search } from './samples.js';
 
 function identity(header, settings, project) {
   const wanted = identityProps(settings, project);
@@ -66,6 +67,16 @@ function buildHeader(settings, project) {
     box.querySelector(':scope > :is(h1, h2, h3, h4, h5, h6)').hidden = !settings['search-heading'];
     if (!settings['search-links']) box.querySelector('.kn-header-search-links')?.remove();
     if (!settings['search-blur']) header.querySelector('[data-kn-panel="search"]').dataset.knBlur = 'false';
+    if (settings['search-close'] === false) box.querySelector('.kn-header-search-close')?.remove();
+  }
+  // The template's fields show the magnifier: a design that shows the word, or nothing, has that instead.
+  const shows = settings['search-placeholder'] ?? 'word';
+  for (const field of header.querySelectorAll('.kn-search-field')) {
+    field.dataset.knPlaceholder = shows;
+    const input = field.querySelector('input');
+    if (shows === 'word') input.placeholder = search.word ?? search.label;
+    else if (shows === 'none') input.removeAttribute('placeholder');
+    if (shows !== 'icon') field.querySelector('.kn-icon')?.remove();
   }
   // Without a button of its own, a header still has one for when items give way, unless nothing could.
   const mode = settings['menu-button'];
@@ -120,16 +131,17 @@ export function setupLiveFrame() {
   const main = page.querySelector('.kn-page-main');
   let shown = {};
   let panel = null;
-  // The panels are a native dialog or popover: the one asked for opens as a click on its control opens it, and any
-  // other closes as the browser closes it.
+  // The panels the tool holds open, the megamenu and the search box, are modal dialogs: the one asked for opens as its
+  // button would open it, but by the dialog itself, so it opens whether its button is in the bar or has given way, and
+  // in a browser without invoker commands too. Any other closes as the browser closes it.
   const showPanel = () => {
     for (const node of page.querySelectorAll(':scope > .kn-header [data-kn-panel]')) {
       if (node.dataset.knPanel === panel || !node.matches('[open], :popover-open')) continue;
       if (node.matches('dialog')) node.close();
       else node.hidePopover();
     }
-    const trigger = panel && page.querySelector(`:scope > .kn-header [data-kn-trigger="${panel}"]`);
-    if (trigger && !document.getElementById(trigger.getAttribute('aria-controls'))?.matches('[open], :popover-open')) trigger.click();
+    const wanted = panel && page.querySelector(`:scope > .kn-header dialog[data-kn-panel="${panel}"]`);
+    if (wanted && !wanted.open) wanted.showModal();
   };
   function apply({ header, footer, page: settings }, project) {
     const headerKey = JSON.stringify([header, project.name, project.logo, project['logo-dark'], project.slogan]);

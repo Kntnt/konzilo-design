@@ -130,7 +130,7 @@ const SCANNED = { '.css': scanCss, '.astro': scanMarkup, '.html': scanMarkup, '.
 function filesIn(directory) {
   return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
     const path = join(directory, entry.name);
-    if (entry.isDirectory()) return entry.name.startsWith('.') || ['node_modules', 'dist', 'docs'].includes(entry.name) ? [] : filesIn(path);
+    if (entry.isDirectory()) return entry.name.startsWith('.') || ['node_modules', 'dist', 'release-assets', 'docs'].includes(entry.name) ? [] : filesIn(path);
     return SCANNED[extname(entry.name)] ? [relative(repo, path)] : [];
   });
 }

@@ -9,7 +9,7 @@ import { TOOL_PAGES } from '/presentation/src/looks.js';
 
 export const CHAPTERS = [
   ['start', ['start']],
-  ['colour', ['colour-scale', 'colour-together']],
+  ['colour', ['colour-scale']],
   ['typography', ['main-typeface', 'type-scale']],
   ['space', ['space', 'corners', 'shadow']],
   ['frame', ['header', 'footer', 'page', 'breadcrumbs']],
@@ -19,6 +19,8 @@ export const CHAPTERS = [
 const SHORT_NAMES = { opening: 'Opening', buttons: 'Buttons', media: 'Media', finding: 'Finding', forms: 'Forms', page: 'Page' };
 export const pageName = (id, copy) => SHORT_NAMES[id] || copy[`${id}.title`];
 export const PAGES = CHAPTERS.flatMap(([, pages]) => pages);
+// A page that has gone, and the page that took what it showed, so a window that remembers it opens there.
+export const MOVED_PAGES = { 'colour-together': 'colour-scale' };
 // Each row of the type scale has a height of its own, in rem, and keeps it: tall enough for the size the style
 // reaches at a scale the tool does not warn about, and a larger sample is clipped rather than push the rows below.
 export const STEP_ROWS = [
@@ -154,35 +156,47 @@ function colourBlock(key, name, job, removable) {
     </div>
   </section>`;
 }
-function colourScale(copy) {
-  return `${head('colour-scale', copy)}
-    <div class="colours">
-      ${colourBlock('primary', 'Primary', 'The main colour: links, buttons and strong Surfaces.', false)}
-      ${colourBlock('secondary', 'Secondary', 'Accents, focus and a tint of its own.', true)}
-      ${colourBlock('tertiary', 'Tertiary', 'One more tint, to group content.', true)}
-      <section class="colour">
-        <div class="colour-name"><h2 class="setting-title ui">Grey</h2><p class="colour-job ui">Text, hairlines and neutral Surfaces.</p></div>
-        <div class="colour-body">
-          <div class="colour-controls ui">${slider('Temperature', 'inputs.gray-temperature', -100, 100, 'Makes neutral colours cooler or warmer, without changing the brand colours.', { colour: 'T' })}</div>
-          <div class="ramp figures" data-ramp="gray"></div>
-        </div>
-      </section>
-    </div>
-    <div class="colour-actions ui"><button class="link-button" type="button" data-add-colour ${tip('Adds another brand colour with a tint of its own. It shows in the preview at once.')}>Add a colour</button></div>
-    ${why('colour', 'Why these colours', copy)}${next('colour-scale', copy)}`;
-}
-function colourTogether(copy) {
-  const tile = (surface, name) => `<div class="surface-case" data-surface-case="${surface}">
+// Text, links and buttons on every Surface, with their contrast, on the page where the colours are set, so a
+// change shows at once (the owner, 2026-11-11): below the colours, or beside them where the document is wide.
+// The report keeps them on a page of their own.
+const SURFACE_CASES = [['page', 'Page'], ['raised', 'Raised'], ['tint', 'Tint'], ['tint-secondary', 'Second tint'], ['tint-tertiary', 'Third tint'], ['brand', 'Brand'], ['inverse', 'Inverse'], ['accent', 'Accent']];
+function surfaceCases(copy) {
+  // Each figure has a fixed width, so a ratio with another number of digits never wraps the line differently.
+  const ratio = (role, word) => `<span>${word} <span data-ratio="${role}"></span></span>`;
+  const tile = ([surface, name]) => `<div class="surface-case" data-surface-case="${surface}">
     <div class="surface-tile" data-kn-surface="${surface}">
-      <h2>${escapeHtml(copy['surface.sample'])}</h2><p>${escapeHtml(copy['surface.text'])}</p>
+      <h3>${escapeHtml(copy['surface.sample'])}</h3><p>${escapeHtml(copy['surface.text'])}</p>
       <a href="#${surface}" tabindex="-1">${escapeHtml(copy['surface.link'])}</a>
       <span><span class="kn-button">${escapeHtml(copy['surface.button'])}</span></span>
     </div>
-    <p class="surface-fine figures" data-surface-fine="${surface}" data-name="${escapeHtml(name)}"></p>
+    <p class="surface-fine figures" data-surface-fine="${surface}"><b>${escapeHtml(name)}</b>${ratio('text', 'text')}${ratio('text-muted', 'muted')}${ratio('link', 'link')}</p>
   </div>`;
-  return `${head('colour-together', copy)}<div class="surfaces">
-    ${[['page', 'Page'], ['raised', 'Raised'], ['tint', 'Tint'], ['tint-secondary', 'Second tint'], ['tint-tertiary', 'Third tint'], ['brand', 'Brand'], ['inverse', 'Inverse'], ['accent', 'Accent']].map(([surface, name]) => tile(surface, name)).join('')}
-  </div>${next('colour-together', copy)}`;
+  return `<section class="colour-together">
+      <div><h2 class="setting-title ui">${escapeHtml(copy['colour-together.title'])}</h2><p class="colour-job ui">${escapeHtml(copy['colour-together.lead'])}</p></div>
+      <div class="surfaces">${SURFACE_CASES.map(tile).join('')}</div>
+    </section>`;
+}
+function colourScale(copy) {
+  return `${head('colour-scale', copy)}
+    <div class="colour-sets">
+      <div class="colour-work">
+        <div class="colours">
+          ${colourBlock('primary', 'Primary', 'The main colour: links, buttons and strong Surfaces.', false)}
+          ${colourBlock('secondary', 'Secondary', 'Accents, focus and a tint of its own.', true)}
+          ${colourBlock('tertiary', 'Tertiary', 'One more tint, to group content.', true)}
+          <section class="colour">
+            <div class="colour-name"><h2 class="setting-title ui">Grey</h2><p class="colour-job ui">Text, hairlines and neutral Surfaces.</p></div>
+            <div class="colour-body">
+              <div class="colour-controls ui">${slider('Temperature', 'inputs.gray-temperature', -100, 100, 'Makes neutral colours cooler or warmer, without changing the brand colours.', { colour: 'T' })}</div>
+              <div class="ramp figures" data-ramp="gray"></div>
+            </div>
+          </section>
+        </div>
+        <div class="colour-actions ui"><button class="link-button" type="button" data-add-colour ${tip('Adds another brand colour with a tint of its own. It shows in the preview at once.')}>Add a colour</button></div>
+      </div>
+      ${surfaceCases(copy)}
+    </div>
+    ${why('colour', 'Why these colours', copy)}${next('colour-scale', copy)}`;
 }
 
 const option = (value, name) => `<option value="${escapeHtml(value)}">${escapeHtml(name)}</option>`;
@@ -443,11 +457,13 @@ function headerPage(copy) {
       ${showPanel('menu', 'Show it in the preview', 'Open the large menu in the preview, and keep it open while you change things.')}`)}
     ${setting('The search box', `<div class="fields">
         ${choice('Colour', 'inputs.header.search-surface', SURFACE_CHOICES, 'The colour of the box. Text, field and button follow it, with their contrast checked.')}
+        ${choice('In the field', 'inputs.header.search-placeholder', [['none', 'Nothing'], ['word', 'The word Search'], ['icon', 'A magnifier']], 'What the empty field shows. The word is the site\'s own, such as Sök on a Swedish site. The word and the magnifier both go as soon as the visitor types.')}
       </div>
       ${flags([
-        ['header.search-blur', 'Blurred page', 'The page behind the box is blurred. Off, it only fades.'],
+        ['header.search-blur', 'Blurred page', 'Everything behind the box is blurred, the header and the footer too. Off, it only fades.'],
         ['header.search-heading', 'Heading', 'The word Search at the top of the box.'],
         ['header.search-links', 'Starting links', 'A few links under the field, for those who do not know what to search for.'],
+        ['header.search-close', 'Close button', 'A cross in the corner of the box. Esc closes the box whether it is there or not, and so does a click outside the box.'],
       ])}
       ${showPanel('search', 'Show it in the preview', 'Open the search box in the preview, and keep it open while you change things.')}`)}
     ${why('frame', 'Why this frame', copy)}${next('header', copy)}`;
@@ -474,8 +490,12 @@ function footerPage(copy) {
         ${choice('An empty cell gives way to', 'inputs.footer.fill', [['column', 'The cell above or below'], ['row', 'The cell beside it']], 'Which neighbour takes the room where a cell could fill either way. An empty row or column always goes, and the content stays at its own edge, at the top.')}
       </div>`)}
     ${setting('Attachment', `<div class="fields">
-        ${choice('The footer sits', 'inputs.footer.attachment', [['flow', 'At the end of the page'], ['reveal', 'At the edge of the screen']], 'At the end of the page, it scrolls in from below. At the edge of the screen, it lies still under the page, which slides off it. That holds only while the whole footer fits in the window.')}
+        ${choice('The footer is fixed to', 'inputs.footer.attachment', [['flow', 'The end of the page'], ['reveal', 'The bottom of the window']], 'Fixed to the end of the page, the footer is the page\'s last part and scrolls in with it. Fixed to the bottom of the window, it lies still there under the page, which slides off it as you reach the end. That holds only while the whole footer fits in the window; a taller one stays at the end of the page.')}
       </div>`)}
+    ${setting('Where the page meets the footer', flags([
+      ['page.shadow', 'Shadow on the footer', 'The page casts a shadow on the footer, wherever the footer is fixed. It follows the shadow settings, so at strength zero there is none.'],
+      ['page.edge-line', 'Line at the edge', 'A line at the bottom edge of the page, where it meets the footer.'],
+    ]))}
     ${setting('Lines', `
       ${flags([
         ['footer.horizontal-rules', 'Between rows', 'A line between rows of one colour. Never between two colours or through a merged cell.'],
@@ -492,10 +512,6 @@ function pagePage(copy) {
         ${slider('Content width', 'inputs.layout.wide', 800, 1800, 'The widest content can be. Header, footer and bands all align to it.', { step: 20 })}
         ${slider('Reading width', 'inputs.layout.narrow', 480, 960, 'The column long text stands in. It keeps lines easy to read and leaves room beside them.', { step: 10 })}
       </div>`)}
-    ${setting('Where the page meets the footer', flags([
-      ['page.shadow', 'Shadow on the footer', 'The page casts a shadow on the footer. It follows the shadow settings, so at strength zero there is none.'],
-      ['page.edge-line', 'Line at the edge', 'A line at the bottom edge of the page.'],
-    ]))}
     ${setting('The page\'s surface', `<div class="fields">
         ${textField('Light mode', 'inputs.page.fill-light', 'A colour or gradient, as in CSS: #f8f8f6, or linear-gradient(#fff, #eee). Empty, it is the page colour.')}
         ${textField('Dark mode', 'inputs.page.fill-dark', 'A colour or gradient for dark mode, set on its own. Empty, it is the page colour.')}
@@ -598,7 +614,7 @@ const componentPage = (id) => (copy) => {
 };
 
 export function documentMarkup(copy) {
-  const builders = { start, 'colour-scale': colourScale, 'colour-together': colourTogether, 'main-typeface': mainTypeface, 'type-scale': typeScale, space, corners, shadow, header: headerPage, footer: footerPage, page: pagePage, breadcrumbs: breadcrumbsPage };
+  const builders = { start, 'colour-scale': colourScale, 'main-typeface': mainTypeface, 'type-scale': typeScale, space, corners, shadow, header: headerPage, footer: footerPage, page: pagePage, breadcrumbs: breadcrumbsPage };
   for (const id of CHAPTERS.at(-1)[1]) builders[id] = id === 'opening' ? heroPage : componentPage(id);
   return PAGES.map((id) => `<article class="page" data-page="${id}" hidden>${builders[id](copy)}</article>`).join('');
 }

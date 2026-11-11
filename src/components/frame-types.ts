@@ -10,7 +10,10 @@ export interface Identity {
   brandAxis?: 'row' | 'column'; sloganPlace?: 'beside' | 'below';
 }
 export interface MenuButton { word?: string; icon?: 'chevron-down' | 'menu' | false; label?: string }
-export interface Search { action: string; label?: string; links?: FrameLink[]; surface?: Surface; blur?: boolean; heading?: boolean }
+// `label` names the field; `placeholder` says what the empty field shows: `word`, the default, is `word`, the site's own
+// word such as "Search" or "Sök", or the label where it gives none; `icon` is a magnifier that goes as the visitor types.
+// Without the close button (`close: false`), Esc or a click beside the box closes it.
+export interface Search { action: string; label?: string; word?: string; placeholder?: 'none' | 'word' | 'icon'; links?: FrameLink[]; surface?: Surface; blur?: boolean; heading?: boolean; close?: boolean }
 export interface Cta { label: string; href?: string; dialog?: string }
 export type FooterCellName = 'a1' | 'b1' | 'a2' | 'b2';
 export interface FooterCellData { heading?: string; level?: Level; text?: string; links?: FrameLink[]; content?: string }

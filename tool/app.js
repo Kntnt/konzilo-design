@@ -29,7 +29,7 @@ import {
   DIVIDER,
 } from './logic.js';
 import { capture, thaw, createHistory, historyAction, isSlider, isTextField, TYPING_PAUSE } from './history.js';
-import { CHAPTERS, PAGES, ROLES, STEP_ROWS, axesMarkup, documentMarkup, pageName, tip, tipOnce, takeTips, escapeHtml } from './pages.js';
+import { CHAPTERS, PAGES, MOVED_PAGES, ROLES, STEP_ROWS, axesMarkup, documentMarkup, pageName, tip, tipOnce, takeTips, escapeHtml } from './pages.js';
 import { setupPreview, paint, measure, followPage, showPanelInPreview } from './preview.js';
 import { setupTooltips } from '/gallery/src/tooltips.js';
 import { pictures, flatPictures, PICTURE_SLOTS } from '/presentation/src/samples.js';
@@ -79,7 +79,7 @@ const saved = (() => {
   }
 })();
 const ui = {
-  page: PAGES.includes(saved.page) ? saved.page : 'start',
+  page: PAGES.includes(saved.page) ? saved.page : MOVED_PAGES[saved.page] ?? 'start',
   role: ROLES.some(([role]) => role === saved.role) ? saved.role : 'main',
   mode: saved.mode === 'dark' ? 'dark' : 'light',
   pictures: saved.pictures === 'off' ? 'off' : 'on',
@@ -173,10 +173,12 @@ function goTo(page) {
   share();
 }
 // Which panel of the header stays open in the preview while its settings change.
+// The preview's own window holds it open too, so it goes there with the rest of the window's state.
 function setPanel(panel) {
   ui.panel = panel;
   showPanelInPreview(panel);
   for (const button of form.querySelectorAll('[data-show-panel]')) button.setAttribute('aria-pressed', String(button.dataset.showPanel === panel));
+  share();
 }
 function writeChrome() {
   document.documentElement.dataset.knMode = ui.mode;
@@ -411,8 +413,7 @@ function writeResolved(resolved) {
     box.hidden = !resolved.surfaces[surface];
     if (box.hidden) continue;
     const pairs = resolved['contrast-check'].matrix[surface][ui.mode].pairs;
-    const fine = box.querySelector('[data-surface-fine]');
-    fine.textContent = `${fine.dataset.name} · text ${pairs.text.ratio.toFixed(1)} · muted ${pairs['text-muted'].ratio.toFixed(1)} · link ${pairs.link.ratio.toFixed(1)}`;
+    for (const figure of box.querySelectorAll('[data-ratio]')) figure.textContent = pairs[figure.dataset.ratio].ratio.toFixed(1);
   }
   const absolute = absoluteSteps(model.inputs.type.steps);
   for (const [key] of STEP_ROWS) {
@@ -1254,6 +1255,7 @@ document.getElementById('bring-back').addEventListener('click', () => {
   backToPane();
 });
 let previewFollowed = null;
+let previewPanel = null;
 channel.addEventListener('message', ({ data: message }) => {
   if (inPreviewWindow) {
     if (message.type === 'state') {
@@ -1266,6 +1268,10 @@ channel.addEventListener('message', ({ data: message }) => {
       if (page !== previewFollowed) {
         followPage(page, previewFollowed !== null);
         previewFollowed = page;
+      }
+      if (ui.panel !== previewPanel) {
+        previewPanel = ui.panel;
+        showPanelInPreview(ui.panel);
       }
       document.title = `Preview · ${model.project.name || 'Konzilo'}`;
     } else if (message.type === 'main-gone') {

@@ -58,6 +58,8 @@ export const menu = [
 export const search = {
   action: '#search',
   label: 'Search resources',
+  // The word an empty field shows, where the design shows one.
+  word: 'Search',
   links: [
     { label: 'Services', href: '#services' },
     { label: 'Contact', href: '#contact' },

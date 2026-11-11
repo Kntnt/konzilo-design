@@ -6,6 +6,11 @@
   .kn-search-main > .kn-search-row { flex: 1 1 16rem; }
   .kn-search-row { display: flex; gap: 0.625rem; }
   .kn-search-row input { flex: 1; min-inline-size: 0; inline-size: 100%; padding: 0.625rem 0.75rem; border: 1px solid var(--kn-border-strong); border-radius: var(--kn-radius-control); background: var(--kn-background); color: var(--kn-text); font: inherit; }
+  /* The field and what its empty state shows. It is on the page Surface, as the field is, without painting it: a
+     magnifier stands where the words would begin, and goes as the visitor types, as a placeholder does. */
+  .kn-search-field { position: relative; display: flex; flex: 1; min-inline-size: 0; background: none; }
+  .kn-search-field > .kn-icon { position: absolute; inset-inline-start: 0.8125rem; inset-block-start: 50%; translate: 0 -50%; pointer-events: none; color: var(--kn-text-muted); }
+  .kn-search-field > input:not(:placeholder-shown) + .kn-icon { display: none; }
   .kn-search-links { display: flex; flex-wrap: wrap; gap: 0.375rem 1.125rem; margin: 0; padding: 0; list-style: none; font-size: var(--kn-type-small-size); }
   .kn-search-links a, .kn-header .kn-search-links a { color: var(--kn-link); text-decoration: underline; text-underline-offset: 0.22em; }
   @media (width <= 37.5rem) { .kn-search-box { gap: 0.75rem; padding: 1.25rem; } }

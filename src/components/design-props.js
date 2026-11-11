@@ -68,7 +68,8 @@ export function menuProps(entries = [], { current, base = '/', linkMenu } = {}) 
 }
 
 // `menu`, `languages`, `search` and `cta` are the site's, in the shapes Header takes, `home` where its brand leads,
-// `logos` where its logos are served and `menuWord` what its menu button says.
+// `logos` where its logos are served and `menuWord` what its menu button says. The word in an empty search field,
+// where the design shows one, is the site's too: `search.word`, such as 'Sök', or else its `label`.
 export function headerProps(settings, project, { menu = [], languages = [], search, cta, home, logos, menuWord = 'Menu' } = {}) {
   const sticky = settings.attachment === 'sticky';
   const button = { word: { word: menuWord }, icon: { word: '', icon: 'menu' }, off: false }[settings['menu-button']];
@@ -84,7 +85,7 @@ export function headerProps(settings, project, { menu = [], languages = [], sear
     menuButton: button,
     languages: settings.language ? languages : [],
     search: settings.search && search
-      ? { ...search, links: settings['search-links'] ? search.links : undefined, surface: settings['search-surface'], blur: settings['search-blur'], heading: settings['search-heading'] }
+      ? { ...search, links: settings['search-links'] ? search.links : undefined, surface: settings['search-surface'], blur: settings['search-blur'], heading: settings['search-heading'], close: settings['search-close'] !== false, placeholder: settings['search-placeholder'] ?? 'word' }
       : undefined,
     cta: settings.cta ? cta : undefined,
     numbered: settings.numbered,

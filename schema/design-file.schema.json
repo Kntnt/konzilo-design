@@ -566,6 +566,17 @@
         },
         "search-links": {
           "type": "boolean"
+        },
+        "search-close": {
+          "type": "boolean"
+        },
+        "search-placeholder": {
+          "type": "string",
+          "enum": [
+            "none",
+            "word",
+            "icon"
+          ]
         }
       },
       "required": [],

@@ -2,6 +2,7 @@ import { readFile, writeFile, mkdir, mkdtemp, rm } from 'node:fs/promises';
 import { resolve, dirname, basename, extname, join } from 'node:path';
 import { buildPresentation, repo } from './build.js';
 import { zipFile } from './archive.js';
+import { readCopyOverride } from '../presentation/copy-override.mjs';
 
 export const defaultPresentationPath = (designFile, date = new Date().toISOString().slice(0, 10)) => join(
   dirname(resolve(designFile)),
@@ -16,6 +17,8 @@ export function slug(value) {
 export async function createPresentation(designFile, output, options = {}) {
   const date = options.date || new Date().toISOString().slice(0, 10);
   const path = resolve(output || defaultPresentationPath(designFile, date));
+  // A copy file the build would refuse is named here, with its key, rather than in the build's whole log.
+  await readCopyOverride(resolve(designFile));
   const cache = join(repo, 'node_modules/.cache/konzilo-presentation');
   await mkdir(cache, { recursive: true });
   const directory = await mkdtemp(join(cache, 'build-'));

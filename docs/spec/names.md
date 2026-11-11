@@ -303,13 +303,13 @@ The reusable repository stores no actual presentation identity or project-specif
 | `inputs.header.brand-axis` | How logo and name stand: `row` (default) or `column` | header.md, point 13 | *Decided* 2026-11-05 | Keeps the axis words of flex layout, as the attribute does. |
 | `inputs.header.slogan-place` | Where the slogan stands: `beside` (default) or `below` | header.md, point 13 | *Decided* 2026-11-05, replacing `brand-align`, `identity-axis` and `identity-align` | `place` is the word `inputs.hero.place` already uses for where something stands; the owner's own words for the two values. |
 | `inputs.footer` | The footer's settings: attachment, how empty cells fill, its two bands and its lines | footer.md | *Built* 2026-11-05, replacing the models of 2026-11-03 | Named for the component they go to. |
-| `inputs.footer.attachment` | `flow` (default) or `reveal` | footer.md, Attachment | *Decided* 2026-10-31 | The spec's own two words; the tool says "At the end of the page" and "At the edge of the screen". |
+| `inputs.footer.attachment` | `flow` (default) or `reveal` | footer.md, Attachment | *Decided* 2026-10-31 | The spec's own two words; since 2026-11-11 the tool says "The footer is fixed to" "The end of the page" or "The bottom of the window", replacing "At the end of the page" and "At the edge of the screen" (footer.md, Attachment). |
 | `inputs.footer.fill` | How a cell fills where it could go either way: `column` (default) or `row` | footer.md | *Decided* 2026-11-05 | Names what the cell does, along the axis it does it. |
 | `inputs.footer.upper`, `inputs.footer.lower` | The two bands, each with `surface` and `cells` | footer.md | *Decided* 2026-11-05 | The owner's own words for them. |
 | `inputs.footer.upper.surface`, `inputs.footer.lower.surface` | The band's Surface: `page`, `raised`, `tint`, `brand` (the upper's default) or `inverse` (the lower's default) | footer.md | *Decided* 2026-11-05 | Keeps the Surface word and its kinds. |
 | `inputs.footer.upper.cells`, `inputs.footer.lower.cells` | The cells `a1`, `b1`, `a2` and `b2`, each on or off, all on by default | footer.md | *Decided* 2026-11-05 | The owner's spreadsheet notation, in lower case as keys are. |
 | `inputs.footer.horizontal-rules`, `inputs.footer.vertical-rule`, `inputs.footer.rule-extent` | Lines between rows and between columns, and where they end: `content` (default) or `full` | footer.md | *Built* 2026-11-03 | Unchanged by the decision of 2026-11-05. |
-| `inputs.page` | The page's shadow on the footer, its edge line and its fill in each mode | page.md | *Built* 2026-11-03 | Named for the component they go to. |
+| `inputs.page` | The page's shadow on the footer, its edge line and its fill in each mode | page.md | *Built* 2026-11-03 | Named for the component they go to. The tool sets the shadow and the edge line on its Footer page, beside the attachment, since 2026-11-11. |
 | `inputs.breadcrumbs` | Whether a trail shows, its mark, first step, end, and form on a phone | components.md | *Built* 2026-11-03 | Named for the component they go to. |
 | `inputs.hero` | The design's default Hero; a page may depart from it | components.md, Band compositions | *Built* 2026-11-05 | Named for the component it goes to. |
 | `inputs.hero.picture` | Where the picture stands: `none`, `behind` (default), `start`, `end`, `start-bleed` or `end-bleed` | components.md, Band compositions | *Decided* 2026-11-05 | The values are logical, so right-to-left works; the tool says Left and Right. |
@@ -483,7 +483,8 @@ The class grammar and selectors are shared by Astro and the plain HTML export.
 | `data-kn-trigger`, `data-kn-panel` | Matching `menu`, `language` or `search` control and panel names, on the visible row's controls only. The browser keeps whether a panel is open. |
 | `data-kn-automatic`, `data-kn-icon` | Automatic menu-button visibility and its `chevron-down`, `menu` or `none` icon choice. |
 | `data-kn-moved="search|language|cta"` | Functional items at the megamenu’s top. |
-| `data-kn-close` | The search box's close control. |
+| `data-kn-close` | The search box's close control, where the design has one. |
+| `data-kn-placeholder="none|word|icon"` on `.kn-search-field` | What a header's empty search field shows: nothing, the site's word, or a magnifier that goes as the visitor types (2026-11-11). `.kn-search-field` wraps the field and that magnifier, on the page Surface without painting it. |
 | `data-kn-polyfill="scroll-timeline|scroll-state"` | On a header's inline loader: which polyfill it loads where the browser lacks the feature. An offline build puts the polyfill itself in its place. |
 | `data-kn-scrolled="block-end|block-start"` | On the root, where the browser has no scroll-state queries: the direction of the last relative scroll, which `scroll-state-polyfill.js` writes and the parallel rules read. |
 | `data-kn-attachment="flow|reveal"` | Footer attachment. |

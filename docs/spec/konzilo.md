@@ -87,7 +87,7 @@ Nothing to import. A site's layout places the core's controls in this package's 
 </Footer>
 ```
 
-A slot's content takes its cell's alignment, at the start in column A and the end in column B, and all at the start on a narrow screen, and `konzilo.css` makes it look like the cell's links: the same size and colour, the same separators, and buttons that read as links. A cell filled by a slot must be on in the design and have no content of its own in `content`. A cell that is off stays empty, whatever its slot holds.
+A slot's content takes its cell's alignment, at the start in column A and the end in column B, and all at the start on a narrow screen, where the upper band stacks column by column and the lower band row by row, so `lower-a2` and `lower-b2` follow each other there (footer.md), and `konzilo.css` makes it look like the cell's links: the same size and colour, the same separators, and buttons that read as links. A cell filled by a slot must be on in the design and have no content of its own in `content`. A cell that is off stays empty, whatever its slot holds.
 
 ## The header and the footer in the browser
 
@@ -194,7 +194,8 @@ const base = import.meta.env.BASE_URL;
 const logos = logoAddresses(design.project, { base });
 const menu = menuProps(await siteMenu('main', Astro.url), { current: Astro.url.pathname, base });
 const footerLinks = menuProps(await siteMenu('footer', Astro.url), { current: Astro.url.pathname, base });
-const search = { action: `${base}search/`, label: 'Search' };
+// The field's name and the word its empty field shows where the design shows one, both the site's own words.
+const search = { action: `${base}search/`, label: 'Search the site', word: 'Search' };
 // Something for every one of the eight cells, here or in a slot of its name below, as the lower band's A2 and B2 have.
 // A cell the design has off leaves out what it is given here. A cell it has on counts when the footer spreads the
 // others, whether or not it holds anything, so a site with nothing for a cell turns the cell off in the design.

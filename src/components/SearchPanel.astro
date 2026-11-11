@@ -1,21 +1,29 @@
 ---
 import type { Search, Level } from './frame-types';
 import Button from './Button.astro';
+import Icon from './Icon.astro';
 interface Props { search: Search; id?: string; inline?: boolean; level?: Level }
 const { search, id, inline = false, level = 2 } = Astro.props;
 const Heading = `h${level}` as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
 const label = search.label ?? 'Search the site';
+// What the empty field shows: the site's word, its label unless it gives one; nothing; or a magnifier, which goes as the
+// visitor types, as a placeholder does. The magnifier's field has a placeholder of one space, so that the CSS can tell
+// an empty field from a filled one (:placeholder-shown).
+const shows = search.placeholder ?? 'word';
+const placeholder = shows === 'word' ? search.word ?? label : shows === 'icon' ? ' ' : undefined;
+const field = { 'data-kn-surface': 'page', type: 'search', name: 'q', placeholder, 'aria-label': label };
 // The search box is a modal dialog the magnifier opens with no script. A click beside the box lands on a button
-// behind it that closes it, as a click on the bar does by the dialog's own light dismiss.
+// behind it that closes it, as a click on the bar does by the dialog's own light dismiss, so the box closes without its
+// close button too, as it does by Esc.
 ---
 {inline ? <form class="kn-header-moved-search kn-header-search-row kn-search-row" role="search" action={search.action} method="get" data-kn-moved="search">
-  <input data-kn-surface="page" type="search" name="q" placeholder={label} aria-label={label} /><Button type="submit">Search</Button>
+  <span class="kn-search-field" data-kn-surface="page" data-kn-placeholder={shows}><input {...field} />{shows === 'icon' && <Icon name="search" />}</span><Button type="submit">Search</Button>
 </form> : <dialog id={id} class="kn-header-panel kn-header-search-overlay" data-kn-panel="search" data-kn-surface="page" data-kn-blur={search.blur === false ? 'false' : undefined} aria-labelledby={`${id}-heading`} closedby="any">
   <button class="kn-header-search-dismiss" type="button" tabindex="-1" aria-hidden="true" commandfor={id} command="close"></button>
   <div class="kn-header-search-box kn-search-box" data-kn-surface={search.surface ?? 'inverse'}>
-    <Button class="kn-header-control kn-header-icon-button kn-header-search-close" variant="outline" icon="x" aria-label="Close search" data-kn-close commandfor={id} command="close" />
+    {search.close !== false && <Button class="kn-header-control kn-header-icon-button kn-header-search-close" variant="outline" icon="x" aria-label="Close search" data-kn-close commandfor={id} command="close" />}
     <Heading id={`${id}-heading`} data-kn-type="heading-5" hidden={search.heading === false}>Search</Heading>
-    <form class="kn-header-search-row kn-search-row" role="search" action={search.action} method="get"><input data-kn-surface="page" type="search" name="q" placeholder={label} aria-label={label} autofocus /><Button type="submit">Search</Button></form>
+    <form class="kn-header-search-row kn-search-row" role="search" action={search.action} method="get"><span class="kn-search-field" data-kn-surface="page" data-kn-placeholder={shows}><input {...field} autofocus />{shows === 'icon' && <Icon name="search" />}</span><Button type="submit">Search</Button></form>
     {search.links?.length && <ul class="kn-header-search-links kn-search-links">{search.links.map((link) => <li><a href={link.href}>{link.label}</a></li>)}</ul>}
   </div>
 </dialog>}

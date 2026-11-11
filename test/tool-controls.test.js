@@ -243,6 +243,51 @@ test('every chapter\'s page runs heading, controls, explanation and next, and th
   await page.context().close();
 });
 
+test('the Surfaces stand where the colours are set, follow Light and Dark, and a colour moves nothing there', { timeout: 60000 }, async () => {
+  assert.deepEqual(CHAPTERS.find(([chapter]) => chapter === 'colour')[1], ['colour-scale']);
+  // A window that remembers the page the Surfaces had opens where they are now.
+  const page = await opened({ stored: { page: 'colour-together' } });
+  const shown = page.locator('#form > [data-page]:not([hidden])');
+  assert.equal(await shown.getAttribute('data-page'), 'colour-scale');
+  assert.equal(await page.locator('.page-link').count(), 1, 'the chapter has one page');
+  const order = await shown.locator('.colour-sets > *').evaluateAll((nodes) => nodes.map((node) => node.className));
+  assert.deepEqual(order, ['colour-work', 'colour-together'], 'the colours, then what they make');
+  const figures = () => page.locator('[data-surface-fine="page"] [data-ratio]').allTextContents();
+  const light = await figures();
+  assert.ok(light.every((figure) => /^\d+\.\d$/.test(figure)), light.join(' '));
+  const background = () => page.locator('[data-surface-case="page"] .surface-tile').evaluate((node) => getComputedStyle(node).backgroundColor);
+  const lightBackground = await background();
+  await page.locator('[data-mode="dark"]').first().click();
+  assert.notDeepEqual(await figures(), light, 'the ratios of the mode shown');
+  assert.notEqual(await background(), lightBackground);
+  await page.locator('[data-mode="light"]').first().click();
+  assert.deepEqual(await figures(), light);
+
+  // The ratios change with the colour, and nothing on the page moves for it, the explanation and the way on included.
+  const hex = page.locator('[data-hex="primary"]');
+  const good = await hex.inputValue();
+  const temperature = page.locator('[data-path="inputs.gray-temperature"]');
+  const warmth = await temperature.inputValue();
+  const set = (slider, value) => slider.evaluate((node, to) => {
+    node.value = to in node ? node[to] : to;
+    node.dispatchEvent(new Event('input', { bubbles: true }));
+  }, value);
+  const start = await controlsNow(page);
+  for (const path of ['lch.primary.H', 'lch.primary.L', 'inputs.gray-temperature']) {
+    for (const end of ['min', 'max']) {
+      await set(page.locator(`[data-path="${path}"]`), end);
+      assertStill(start, await controlsNow(page), `${path} at its ${end}`);
+    }
+  }
+  assert.notDeepEqual(await figures(), light);
+  await set(temperature, warmth);
+  await hex.fill(good);
+  await settled(page);
+  assert.deepEqual(await figures(), light);
+  assert.deepEqual(page.errors, []);
+  await page.context().close();
+});
+
 test('the menu has one height on every page at any pane width, and a page\'s heading always stands in the same place', { timeout: 180000 }, async () => {
   const widths = [[1040, 490], [1440, 540], [1900, 700], [1900, 1000]];
   for (const [window, pane] of widths) {
@@ -520,6 +565,82 @@ test('the identity has its four controls, none disabled, nothing on the left mov
   await page.locator('[data-path="project.name"]').fill(name);
   await settled(page);
   assert.deepEqual(page.errors, []);
+  await page.context().close();
+});
+
+test('the large menu and the search box stay open in the preview while they are set, in this window and in the preview\'s own window', { timeout: 120000 }, async () => {
+  const page = await opened();
+  await turnTo(page, 'frame', 'header');
+  const endsOf = async (window) => Promise.all(['#preview', '#preview-narrow'].map(async (selector) => (await window.locator(selector).elementHandle()).contentFrame()));
+  const inEnds = (ends, check, arg) => Promise.all(ends.map((end) => end.waitForFunction(check, arg)));
+  const open = (kind) => document.querySelector(`dialog[data-kn-panel="${kind}"]`)?.open && document.querySelectorAll('.kn-header-panel:is([open], :popover-open)').length === 1;
+  const flag = (name) => page.locator(`[data-flag="inputs.header.${name}"]`);
+  const placeholder = page.locator('[data-path="inputs.header.search-placeholder"]');
+  const ends = await endsOf(page);
+  await page.locator('[data-show-panel="search"]').click();
+  await inEnds(ends, open, 'search');
+  assert.equal(await page.locator('[data-show-panel="search"]').getAttribute('aria-pressed'), 'true');
+  // What the empty field shows, held open while it changes, in the box and in the menu alike.
+  const field = (wanted) => {
+    const fields = [...document.querySelectorAll('.kn-search-field')];
+    return document.querySelector('dialog[data-kn-panel="search"]').open && fields.length === 2 && fields.every((node) => node.querySelector('input').getAttribute('placeholder') === wanted.placeholder && !!node.querySelector('.kn-icon') === wanted.icon);
+  };
+  assert.equal(await placeholder.inputValue(), 'word');
+  await inEnds(ends, field, { placeholder: 'Search', icon: false });
+  await placeholder.selectOption('icon');
+  await inEnds(ends, field, { placeholder: ' ', icon: true });
+  await placeholder.selectOption('none');
+  await inEnds(ends, field, { placeholder: null, icon: false });
+  await placeholder.selectOption('word');
+  await inEnds(ends, field, { placeholder: 'Search', icon: false });
+  // The close button goes and comes back; without the heading it keeps its room above the field.
+  assert.equal(await flag('search-close').getAttribute('aria-pressed'), 'true');
+  await flag('search-close').click();
+  await inEnds(ends, () => document.querySelector('dialog[data-kn-panel="search"]').open && !document.querySelector('.kn-header-search-close'));
+  await flag('search-heading').click();
+  await flag('search-close').click();
+  await inEnds(ends, () => {
+    const close = document.querySelector('dialog[data-kn-panel="search"][open] .kn-header-search-close')?.getBoundingClientRect();
+    const heading = document.querySelector('.kn-header-search-box > :is(h1, h2, h3, h4, h5, h6)');
+    return close && heading.hidden && document.querySelector('.kn-header-search-box input').getBoundingClientRect().top - close.bottom >= 8;
+  });
+  await flag('search-heading').click();
+  await page.locator('[data-show-panel="menu"]').click();
+  await inEnds(ends, open, 'menu');
+  assert.equal(await page.locator('[data-show-panel="search"]').getAttribute('aria-pressed'), 'false');
+
+  // In the preview's own window the menu is still held open, and a button here opens the box there and keeps it.
+  const [own] = await Promise.all([page.context().waitForEvent('page'), page.locator('#own-window').click()]);
+  await own.waitForFunction(() => [...document.querySelectorAll('iframe')].every((frame) => frame.contentDocument?.querySelector('.kn-page > .kn-header')));
+  const far = await endsOf(own);
+  await inEnds(far, open, 'menu');
+  await page.locator('[data-show-panel="search"]').click();
+  await inEnds(far, open, 'search');
+  await flag('search-links').click();
+  await inEnds(far, () => document.querySelector('dialog[data-kn-panel="search"]').open && !document.querySelector('.kn-header-search-links'));
+  await flag('search-links').click();
+  await inEnds(far, () => document.querySelector('dialog[data-kn-panel="search"]').open && !!document.querySelector('.kn-header-search-links'));
+  await page.locator('[data-show-panel="search"]').click();
+  await inEnds(far, () => !document.querySelector('.kn-header-panel:is([open], :popover-open)'));
+  await page.locator('#bring-back').click();
+  await page.locator('#preview-pane').waitFor({ state: 'visible' });
+  await settled(page);
+  assert.deepEqual(page.errors, []);
+  await page.context().close();
+});
+
+test('the footer is said to be fixed to the end of the page or the bottom of the window, with how the page meets it beside that', { timeout: 60000 }, async () => {
+  const page = await opened();
+  await turnTo(page, 'frame', 'footer');
+  const attachment = page.locator('[data-path="inputs.footer.attachment"]');
+  assert.equal((await attachment.evaluate((select) => select.closest('label').firstChild.textContent)).trim(), 'The footer is fixed to');
+  assert.deepEqual(await attachment.locator('option').evaluateAll((options) => options.map((option) => [option.value, option.textContent])), [['flow', 'The end of the page'], ['reveal', 'The bottom of the window']]);
+  assert.match(await page.locator(`#${await attachment.getAttribute('data-g-tooltip')}`).textContent(), /Fixed to the end of the page.*Fixed to the bottom of the window/);
+  // The next setting after the attachment, on the Footer page alone.
+  const titles = await page.locator('[data-page="footer"] .setting-title').allTextContents();
+  assert.equal(titles[titles.indexOf('Attachment') + 1], 'Where the page meets the footer');
+  assert.equal(await page.locator('[data-page="footer"] [data-flag="inputs.page.shadow"], [data-page="footer"] [data-flag="inputs.page.edge-line"]').count(), 2);
+  assert.equal(await page.locator('[data-page="page"] [data-flag^="inputs.page."]').count(), 0);
   await page.context().close();
 });
 

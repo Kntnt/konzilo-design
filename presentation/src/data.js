@@ -14,7 +14,7 @@ import {
 } from '../../src/generator/index.js';
 import { withDefaults } from '../../src/generator/defaults.js';
 import { ownPictureUrls } from '../own-pictures.mjs';
-import english from '../copy.json';
+import { copyFor } from '../copy-override.mjs';
 export const designPath = process.env.KN_DESIGN_FILE;
 const source = withFormat(designPath
   ? JSON.parse(await readFile(designPath, 'utf8'))
@@ -53,26 +53,8 @@ for (const key of ['logo', 'logo-dark'])
     project[key] =
       `data:${mime};base64,${(await readFile(p)).toString('base64')}`;
   }
-export let copy = { ...english };
-if (designPath) {
-  const override = designPath.replace(/\.[^/.]+$/, '') + '.copy.json';
-  try {
-    const custom = JSON.parse(await readFile(override, 'utf8'));
-    if (!custom || Array.isArray(custom) || typeof custom !== 'object')
-      throw new Error('Copy override must be an object');
-    for (const [key, value] of Object.entries(custom)) {
-      // Words for what the document no longer shows do no harm in an older file.
-      if (['specimen.headers', 'specimen.footer-simple'].includes(key) || key.startsWith('specimen.hero-')) continue;
-      if (!Object.hasOwn(english, key))
-        throw new Error(`Unknown copy key: ${key}`);
-      if (typeof value !== 'string')
-        throw new Error(`Copy key ${key} must be a string`);
-    }
-    copy = { ...copy, ...custom };
-  } catch (e) {
-    if (e.code !== 'ENOENT') throw e;
-  }
-}
+// The design's own words over the English; a key that has left copy.json is ignored, and one that never was stops the build.
+export const copy = await copyFor(designPath);
 export const t = (key, values = {}) => {
   if (!Object.hasOwn(copy, key)) throw new Error(`Missing copy key: ${key}`);
   return copy[key].replace(

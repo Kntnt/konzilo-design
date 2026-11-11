@@ -1,8 +1,12 @@
 // What the footer decides at build time: its cells, their spans and hairlines. Its attachment is CSS (footer.css),
 // and how it meets the page is the Page's CSS (page.css), so no script runs for it.
 
-// A band's four cells, in the order they stack on a narrow screen: A before B.
+// A band's four cells, column by column.
 export const FOOTER_CELLS = ['a1', 'a2', 'b1', 'b2'];
+// The order each band's cells are written in, which is the order they stack in on a narrow screen: the upper band
+// column by column, A before B, and the lower band row by row (the owner, 2026-11-11). The wide grid places every cell
+// by its own column and row, so the order changes nothing there.
+export const FOOTER_STACKING = { upper: ['a1', 'a2', 'b1', 'b2'], lower: ['a1', 'b1', 'a2', 'b2'] };
 
 // What the filled cells of one band cover. An empty column or row always gives way to the other, and where
 // a cell could fill either way, `fill` says which. Whatever a cell covers, its content box stays where it was.
@@ -21,7 +25,8 @@ export function footerSpans(cells, fill = 'column') {
 }
 
 function layoutBand(name, band, { fill, horizontalRules, verticalRule }) {
-  const spans = footerSpans(band?.cells ?? {}, fill);
+  const order = FOOTER_STACKING[name];
+  const spans = footerSpans(band?.cells ?? {}, fill).sort((one, other) => order.indexOf(one.cell) - order.indexOf(other.cell));
   // A row with nothing of its own has no height, so where every cell is tall the band has one row.
   const rows = spans.every(({ tall }) => tall) ? 1 : 2;
   const cells = spans.map(({ cell, wide, tall }) => ({

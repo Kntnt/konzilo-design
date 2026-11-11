@@ -7,9 +7,12 @@ import { existsSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { chromium, firefox, webkit } from 'playwright-core';
 import { render } from './helpers/render.js';
+import { decodePng } from './helpers/ink.js';
 import { derive, defaultInputs } from '../src/generator/index.js';
 import { coreCss } from '../src/css/index.js';
 import { componentsCss } from '../src/css/components.js';
+import { FOOTER_CELLS, layoutFooter } from '../src/components/footer.js';
+import { footerHtml } from '../src/components/footer-html.js';
 
 const ENGINES = Object.entries({ firefox, webkit, chromium }).filter(([, type]) => existsSync(type.executablePath()));
 const ORIGIN = 'http://kn.test';
@@ -36,6 +39,9 @@ async function pages() {
     // An inline logo, whose width is known as it is parsed; an image's is known only once it has loaded.
     '/painted.html': (await page({ identity: { ...identity, logo: { svg: '<svg viewBox="0 0 36 36" width="36" height="36"><circle cx="18" cy="18" r="16" fill="currentColor"/></svg>' } } })).replace('</head>', `<script>window.steps=[];(function look(){var h=document.querySelector('.kn-header');steps.push(h?(h.dataset.knStep||'narrow'):'no header');if(steps.length<120)requestAnimationFrame(look)})();</script></head>`),
     '/long-name.html': await page({ identity: { label: 'A rather long made-up company name', href: '#home', name: 'A rather long made-up company name' } }),
+    // The search box's settings: no heading with a magnifier in the field; no heading, no close button and no blur.
+    '/search-bare.html': await page({ attachment: 'sticky', start: 'under', search: { action: '#search', heading: false, placeholder: 'icon' } }),
+    '/search-plain.html': await page({ attachment: 'sticky', start: 'under', search: { action: '#search', heading: false, close: false, blur: false, placeholder: 'none' } }),
   };
 }
 
@@ -174,6 +180,111 @@ test('the panels open, close and give focus back by pointer and keyboard, under 
   }
 });
 
+test('an open megamenu makes a header over the page\'s start opaque, and it is clear again once the menu closes, in every engine', { timeout: 240000 }, async () => {
+  const files = await pages();
+  const seen = {};
+  for (const [name, type] of ENGINES) {
+    const { browser, tab } = await open(type, files);
+    try {
+      await tab.goto(`${ORIGIN}/under.html`);
+      await tab.waitForTimeout(300);
+      const top = await look(tab);
+      await tab.click('.kn-header-row [data-kn-trigger="menu"]');
+      await tab.waitForTimeout(400);
+      const opened = await look(tab);
+      await tab.keyboard.press('Escape');
+      await tab.waitForTimeout(100);
+      const closed = await look(tab);
+      assert.equal(top.clear, true, `${name}: clear at the top`);
+      assert.equal(opened.clear, false, `${name}: opaque while the megamenu is open`);
+      assert.notEqual(opened.text, top.text, `${name}: in its own colours, not the first band's`);
+      assert.deepEqual(closed, top, `${name}: clear again once it closes`);
+      seen[name] = { top, opened, closed };
+    } finally { await browser.close(); }
+  }
+  const [first, ...rest] = Object.values(seen);
+  for (const other of rest) assert.deepEqual(other, first, 'every engine looks the same');
+});
+
+test('the search box fades and blurs the whole window behind it, the header bar included, and closes by Esc and by a click outside it with its close button or without, in every engine', { timeout: 240000 }, async () => {
+  const files = await pages();
+  const trigger = '.kn-header-row [data-kn-trigger="search"]';
+  const isOpen = (tab) => tab.evaluate(() => document.querySelector('.kn-header-search-overlay').open);
+  for (const [name, type] of ENGINES) {
+    const { browser, tab } = await open(type, files);
+    try {
+      // The backdrop that blurs and the layer that fades lie over the whole window: what is under the bar's middle is
+      // the dialog, not the bar. The fading layer is the page's background, fixed to the window, which a click passes.
+      const behind = () => tab.evaluate(() => {
+        const dialog = document.querySelector('.kn-header-search-overlay');
+        const backdrop = getComputedStyle(dialog, '::backdrop');
+        const fade = getComputedStyle(dialog, '::before');
+        const bar = document.querySelector('.kn-header-bar').getBoundingClientRect();
+        return {
+          blur: [backdrop.position, backdrop.top, backdrop.width === `${innerWidth}px`, backdrop.backdropFilter],
+          fade: [fade.position, fade.top, fade.left, fade.opacity, fade.pointerEvents],
+          colour: fade.backgroundColor === getComputedStyle(document.documentElement).backgroundColor && fade.backgroundColor.match(/\d+/g).slice(0, 3).map(Number),
+          overBar: document.elementFromPoint(bar.left + bar.width / 2, bar.top + bar.height / 2) === dialog,
+        };
+      });
+      // A point of the bar with nothing on it, over the first band, as the screen shows it.
+      const pixel = async () => [...decodePng(await tab.screenshot({ clip: { x: 500, y: 32, width: 1, height: 1 } })).pixels.subarray(0, 3)];
+      await tab.goto(`${ORIGIN}/under.html`);
+      await tab.waitForTimeout(300);
+      const band = await pixel();
+      await tab.click(trigger);
+      await tab.waitForTimeout(400);
+      const seen = await behind();
+      assert.deepEqual(seen.blur, ['fixed', '0px', true, 'blur(12px)'], `${name}: the whole window blurred`);
+      assert.deepEqual(seen.fade, ['fixed', '0px', '0px', '0.62', 'none'], `${name}: the whole window faded`);
+      assert.ok(seen.colour, `${name}: in the page's colour`);
+      assert.equal(seen.overBar, true, `${name}: the bar under it`);
+      const faded = await pixel();
+      faded.forEach((value, i) => assert.ok(Math.abs(value - (0.62 * seen.colour[i] + 0.38 * band[i])) <= 4, `${name}: the bar faded to ${faded}, from ${band} towards ${seen.colour}`));
+      await tab.mouse.click(300, 30);
+      assert.equal(await isOpen(tab), false, `${name}: a click on the bar closes it`);
+
+      // No heading: the close button keeps its room above the field, and the field shows a magnifier until typed in.
+      await tab.goto(`${ORIGIN}/search-bare.html`);
+      await tab.click(trigger);
+      await tab.waitForTimeout(400);
+      const field = () => tab.evaluate(() => {
+        const box = document.querySelector('.kn-header-search-overlay');
+        const input = box.querySelector('input[name="q"]');
+        const icon = box.querySelector('.kn-search-field > .kn-icon');
+        const close = box.querySelector('.kn-header-search-close')?.getBoundingClientRect();
+        const middle = (rect) => rect.top + rect.height / 2;
+        return { room: close ? input.getBoundingClientRect().top - close.bottom : null, word: input.getAttribute('placeholder'), icon: icon && getComputedStyle(icon).display !== 'none', centred: icon ? Math.abs(middle(icon.getBoundingClientRect()) - middle(input.getBoundingClientRect())) < 1 : null };
+      });
+      const empty = await field();
+      assert.ok(empty.room >= 8, `${name}: the field begins ${empty.room}px under the close button`);
+      assert.deepEqual([empty.word, empty.icon, empty.centred], [' ', true, true], `${name}: a magnifier in the empty field`);
+      await tab.keyboard.type('walks');
+      assert.equal((await field()).icon, false, `${name}: the magnifier goes as the visitor types`);
+      await tab.keyboard.press('Escape');
+
+      // No close button, no blur: Esc closes it and gives focus back to the magnifier, and so does a click beside it.
+      await tab.goto(`${ORIGIN}/search-plain.html`);
+      await tab.focus(trigger);
+      await tab.keyboard.press('Enter');
+      await tab.waitForTimeout(400);
+      assert.equal(await tab.evaluate(() => !document.querySelector('.kn-header-search-close') && document.activeElement.name), 'q', `${name}: no close button, and focus in the field`);
+      assert.deepEqual(await behind().then(({ blur, fade, overBar }) => [blur[3], fade[3], overBar]), ['none', '0.62', true], `${name}: only faded, the bar too`);
+      assert.equal(await tab.evaluate(() => document.querySelector('.kn-header-search-overlay input[name="q"]').hasAttribute('placeholder')), false, `${name}: nothing in the field`);
+      await tab.keyboard.press('Escape');
+      assert.deepEqual([await isOpen(tab), await tab.evaluate(() => document.activeElement.dataset.knTrigger)], [false, 'search'], `${name}: Esc closes it, focus on the magnifier`);
+      await tab.keyboard.press('Enter');
+      await tab.waitForTimeout(400);
+      await tab.mouse.click(100, 600);
+      assert.deepEqual([await isOpen(tab), await tab.evaluate(() => document.activeElement.dataset.knTrigger)], [false, 'search'], `${name}: a click beside the box closes it, focus on the magnifier`);
+      await tab.keyboard.press('Enter');
+      await tab.waitForTimeout(400);
+      await tab.mouse.click(300, 30);
+      assert.equal(await isOpen(tab), false, `${name}: and a click on the bar`);
+    } finally { await browser.close(); }
+  }
+});
+
 test('a footer at the edge of the screen lies under the page while it fits in the window, and is in the flow when it does not or without script', { timeout: 300000 }, async () => {
   const files = await pages();
   for (const [name, type] of ENGINES) {
@@ -215,6 +326,68 @@ test('a footer at the edge of the screen lies under the page while it fits in th
       } finally { await browser.close(); }
     }
   }
+});
+
+test('on a phone the upper band stacks column by column and the lower band row by row, in document order, and the wide footer lies as before, in every engine', { timeout: 240000 }, async () => {
+  // Every combination of cells under both fills, each written twice: as the footer writes it now, and with its cells
+  // in the old order, column by column. Wide, the two must lie alike to the pixel; narrow, the lower band stacks row by
+  // row (the owner, 2026-11-11).
+  const words = { a1: '12 Example Street, 123 45 Sampleton', b1: 'Registration no. 000000-0000. Registered office: Sampleton, a little longer.', a2: 'Cookie policy and privacy policy', b2: 'Change privacy settings, revoke consents' };
+  const combos = [];
+  for (let bits = 1; bits < 16; bits++) for (const fill of ['column', 'row']) combos.push({ names: FOOTER_CELLS.filter((_, i) => bits & (1 << i)), fill });
+  const footers = combos.map(({ names, fill }, i) => {
+    const band = (upper) => ({ surface: upper ? 'brand' : 'inverse', cells: Object.fromEntries(names.map((name) => [name, { text: `${upper ? 'Upper' : 'Lower'} ${name}: ${words[name]}` }])) });
+    const props = { upper: band(true), lower: band(false), fill, horizontalRules: true, verticalRule: true };
+    const now = layoutFooter(props);
+    const before = structuredClone(now);
+    for (const each of before.bands) each.cells.sort((one, other) => FOOTER_CELLS.indexOf(one.name) - FOOTER_CELLS.indexOf(other.name));
+    return `<section data-combo="${i}"><div data-written="now">${footerHtml(now)}</div><div data-written="before">${footerHtml(before)}</div></section>`;
+  });
+  const css = coreCss(derive(defaultInputs())) + await componentsCss();
+  const files = { '/stacking.html': `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Stacking</title><style>${css}</style></head><body>${footers.join('')}</body></html>` };
+  const read = (tab) => tab.evaluate(() => [...document.querySelectorAll('section[data-combo]')].map((section) => Object.fromEntries(['now', 'before'].map((written) => {
+    const footer = section.querySelector(`[data-written="${written}"] .kn-footer`);
+    const top = footer.getBoundingClientRect().top;
+    return [written, [...footer.querySelectorAll('.kn-footer-band')].map((band) => ({
+      band: band.dataset.knBand,
+      written: [...band.querySelectorAll('.kn-footer-cell')].map((cell) => cell.dataset.knCell),
+      seen: [...band.querySelectorAll('.kn-footer-cell')].sort((one, other) => one.getBoundingClientRect().top - other.getBoundingClientRect().top).map((cell) => cell.dataset.knCell),
+      boxes: Object.fromEntries([...band.querySelectorAll('.kn-footer-cell, .kn-footer-rule, .kn-footer-vertical-rule')].map((node, j) => {
+        const box = node.getBoundingClientRect();
+        return [node.dataset.knCell ?? `line-${j}`, [box.left, box.top - top, box.width, box.height].map((value) => Math.round(value * 100) / 100)];
+      })),
+    }))];
+  }))));
+  const seen = {};
+  for (const [name, type] of ENGINES) {
+    const { browser, tab } = await open(type, files);
+    try {
+      await tab.goto(`${ORIGIN}/stacking.html`);
+      for (const width of [1280, 820]) {
+        await tab.setViewportSize({ width, height: 800 });
+        await tab.waitForTimeout(100);
+        (await read(tab)).forEach(({ now, before }, i) => {
+          const what = `${name} at ${width}px, [${combos[i].names.join(' ')}] ${combos[i].fill}`;
+          assert.deepEqual(now.map((band) => Object.entries(band.boxes).filter(([key]) => !key.startsWith('line')).sort()), before.map((band) => Object.entries(band.boxes).filter(([key]) => !key.startsWith('line')).sort()), `${what}: each cell where it was`);
+          assert.deepEqual(now.map((band) => Object.entries(band.boxes).filter(([key]) => key.startsWith('line')).map(([, box]) => box).sort()), before.map((band) => Object.entries(band.boxes).filter(([key]) => key.startsWith('line')).map(([, box]) => box).sort()), `${what}: each line where it was`);
+        });
+      }
+      await tab.setViewportSize({ width: 390, height: 800 });
+      await tab.waitForTimeout(100);
+      (await read(tab)).forEach(({ now }, i) => {
+        const { names, fill } = combos[i];
+        const what = `${name} at 390px, [${names.join(' ')}] ${fill}`;
+        const [upper, lower] = now;
+        assert.deepEqual(upper.seen, ['a1', 'a2', 'b1', 'b2'].filter((cell) => names.includes(cell)), `${what}: the upper band column by column`);
+        assert.deepEqual(lower.seen, ['a1', 'b1', 'a2', 'b2'].filter((cell) => names.includes(cell)), `${what}: the lower band row by row`);
+        for (const band of now) assert.deepEqual(band.written, band.seen, `${what}: written as it stacks`);
+      });
+      seen[name] = await read(tab);
+    } finally { await browser.close(); }
+  }
+  const orders = (all) => all.map(({ now }) => now.map((band) => band.seen));
+  const [first, ...rest] = Object.values(seen);
+  for (const other of rest) assert.deepEqual(orders(other), orders(first), 'every engine stacks alike');
 });
 
 test('the bar gives way in order as the window narrows, never overflows, and comes back as it widens, in every engine', { timeout: 240000 }, async () => {

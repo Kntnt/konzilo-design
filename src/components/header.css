@@ -94,21 +94,23 @@
 
   /* ---------- Two appearances ----------
      Over the page's start the header is clear: transparent, with the first band's Surface roles, which the generated
-     core gives it while its page sets --kn-header-clear. */
+     core gives it while its page sets --kn-header-clear. An open megamenu makes it opaque, as scrolling past T does
+     (the owner, 2026-11-11). */
   .kn-page { --kn-header-clear: 0; }
   @container style(--kn-header-past: 0) {
-    .kn-page:has(> .kn-header[data-kn-attachment="sticky"][data-kn-start="under"]) { --kn-header-clear: 1; }
+    .kn-page:has(> .kn-header[data-kn-attachment="sticky"][data-kn-start="under"]):not(:has(> .kn-header .kn-megamenu:modal)) { --kn-header-clear: 1; }
   }
   @container style(--kn-header-clear: 1) {
     .kn-header > .kn-header-bar { background: transparent; }
   }
   /* Over the page's start the header takes the first band's colours only once that band has been parsed, after the
      header's script has laid the header out; so its colours change with a transition only once the page has
-     scrolled, and none plays as the page loads. */
+     scrolled, and none plays as the page loads. The megamenu opening at the top is the exception: the bar takes its
+     colours as the panel comes in, and gives them back at once as the panel goes. */
   @container not style(--kn-header-scrolled: 1) {
-    .kn-header[data-kn-start="under"] > .kn-header-bar,
-    .kn-header[data-kn-start="under"] .kn-header-slogan,
-    .kn-header[data-kn-start="under"] > .kn-header-bar .kn-button { transition: none; }
+    .kn-header[data-kn-start="under"]:not(:has(.kn-megamenu:modal)) > .kn-header-bar,
+    .kn-header[data-kn-start="under"]:not(:has(.kn-megamenu:modal)) .kn-header-slogan,
+    .kn-header[data-kn-start="under"]:not(:has(.kn-megamenu:modal)) > .kn-header-bar .kn-button { transition: none; }
   }
   .kn-header .kn-brand-logo [data-kn-logo="dark"] { display: none; }
   @container style(--kn-polarity: dark) {
@@ -302,15 +304,27 @@
   .kn-header .kn-header-search-overlay:modal {
     position: absolute; inset: auto; inset-block-start: anchor(--kn-header-bar bottom); inset-inline: 0;
     inline-size: 100%; block-size: calc(100dvh - var(--kn-header-height)); max-inline-size: none; max-block-size: none; margin: 0;
-    padding: 1.5rem var(--kn-layout-side-margin); background: transparent; backdrop-filter: blur(0.75rem); overflow-y: auto;
+    padding: 1.5rem var(--kn-layout-side-margin); background: transparent; overflow-y: auto;
   }
-  .kn-header-search-overlay[data-kn-blur="false"] { backdrop-filter: none; }
-  .kn-header-search-overlay::before { content: ""; position: absolute; inset: 0; background: var(--kn-background); opacity: 0.62; z-index: -1; }
-  /* A click beside the box closes it. */
+  /* Everything behind the box fades, and is blurred where the design says so, the header bar and the footer with the
+     rest (the owner, 2026-11-11): the dialog's backdrop blurs the whole window, and a layer fixed to the window, which
+     a click passes through, fades it. Both come in with a fade while the box slides down, since a dialog that moved
+     would hold the fixed layer within itself. */
+  .kn-header-search-overlay::backdrop { backdrop-filter: blur(0.75rem); }
+  .kn-header-search-overlay[data-kn-blur="false"]::backdrop { backdrop-filter: none; }
+  .kn-header-search-overlay::before { content: ""; position: fixed; inset: 0; background: var(--kn-background); opacity: 0.62; z-index: -1; pointer-events: none; }
+  .kn-header-search-overlay[open], .kn-header-search-overlay[open]::backdrop { animation: kn-header-fade-in var(--kn-duration-feedback) var(--kn-easing-standard); }
+  .kn-header-search-overlay[open] > .kn-header-search-box { animation: kn-header-slide-in var(--kn-duration-feedback) var(--kn-easing-standard); }
+  @keyframes kn-header-fade-in { from { opacity: 0; } }
+  @keyframes kn-header-slide-in { from { translate: 0 -0.625rem; } }
+  /* A click beside the box closes it, and one on the bar by the dialog's light dismiss, with the close button or
+     without it. */
   .kn-header-search-dismiss { position: absolute; inset: 0; inline-size: 100%; block-size: 100%; margin: 0; padding: 0; border: 0; opacity: 0; background: none; cursor: default; }
   .kn-header-search-box { position: relative; }
   .kn-header-search-box > :is(h1, h2, h3, h4, h5, h6) { margin: 0; padding-inline-end: 2.75rem; }
   .kn-header .kn-header-search-close { position: absolute; inset-block-start: 0.75rem; inset-inline-end: 0.75rem; inline-size: 2.25rem; block-size: 2.25rem; }
+  /* Without its heading the box keeps room above the field for the close button, 0.75rem under it. */
+  .kn-header-search-box:has(> .kn-header-search-close):not(:has(> :is(h1, h2, h3, h4, h5, h6):not([hidden]))) { padding-block-start: 3.75rem; }
   .kn-skip-link { position: absolute; inset-block-start: 0.5rem; inset-inline-start: var(--kn-layout-side-margin); z-index: 5; padding: 0.5rem 0.75rem; border-radius: var(--kn-radius-control); background: var(--kn-background); color: var(--kn-text); }
   /* Hidden by clipping, not by moving it away, since content may lie above the header. */
   .kn-skip-link:not(:focus-visible) { clip-path: inset(50%); overflow: hidden; inline-size: 0.0625rem; block-size: 0.0625rem; padding: 0; white-space: nowrap; }
@@ -324,7 +338,7 @@
     .kn-header .kn-header-search-overlay:modal { padding-block-start: 0.75rem; }
   }
   @media (prefers-reduced-motion: reduce) {
-    .kn-header, .kn-header * { transition: none; animation: none; }
+    .kn-header, .kn-header *, .kn-header-search-overlay::backdrop { transition: none; animation: none; }
   }
   @media print {
     :root:has(.kn-page > .kn-header[data-kn-attachment="sticky"]) { scroll-padding-block-start: 0; }

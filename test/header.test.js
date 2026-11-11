@@ -75,6 +75,28 @@ test('the panels open with no script: dialogs by the invoker command, the langua
   assert.match(cta, /<button[^>]*commandfor="contact"[^>]*command="show-modal"[^>]*class="[^"]*kn-header-cta/);
 });
 
+test('the search box writes its close button and what its empty field shows as the site asks, and closes without the button too', async () => {
+  const fields = (tree) => all(tree, '.kn-search-field').map((field) => ({ placeholder: one(field, 'input').attributes.placeholder, icon: !!one(field, 'svg.kn-icon'), shows: field.attributes['data-kn-placeholder'], surface: field.attributes['data-kn-surface'] }));
+  // By default, as before: the close button, and the label as the word in the empty field, in the box and in the menu.
+  const plain = parse(await render('Header', { ...everything, search: { action: '/search/', label: 'Search the site' } }));
+  assert.ok(one(plain, '.kn-header-search-overlay [data-kn-close]'));
+  assert.deepEqual(fields(plain), Array(2).fill({ placeholder: 'Search the site', icon: false, shows: 'word', surface: 'page' }));
+  // The site's own word, which the label still names.
+  const word = parse(await render('Header', { ...everything, search: { action: '/search/', label: 'Sök på webbplatsen', word: 'Sök' } }));
+  assert.deepEqual(fields(word).map(({ placeholder }) => placeholder), ['Sök', 'Sök']);
+  assert.equal(one(word, '.kn-header-search-overlay input').attributes['aria-label'], 'Sök på webbplatsen');
+  // A magnifier, with a placeholder of one space for the CSS to tell an empty field by; or nothing.
+  const icon = parse(await render('Header', { ...everything, search: { action: '/search/', placeholder: 'icon' } }));
+  assert.deepEqual(fields(icon), Array(2).fill({ placeholder: ' ', icon: true, shows: 'icon', surface: 'page' }));
+  assert.equal(one(icon, '.kn-search-field svg').attributes['aria-hidden'], 'true');
+  const none = parse(await render('Header', { ...everything, search: { action: '/search/', placeholder: 'none', close: false } }));
+  assert.deepEqual(fields(none).map(({ placeholder, icon: shown }) => [placeholder, shown]), [[undefined, false], [undefined, false]]);
+  // Without the close button, Esc closes the dialog as before, and a click beside the box lands on the dismissing button.
+  assert.equal(one(none, '[data-kn-close]'), undefined);
+  assert.equal(one(none, '.kn-header-search-dismiss').attributes.command, 'close');
+  assert.equal(one(none, '.kn-header-search-overlay').attributes.closedby, 'any');
+});
+
 test('only a sticky header loads a polyfill, and only one that slides away loads the scroll-state one', async () => {
   const scripts = async (props) => all(parse(await render('Header', { ...everything, ...props })), 'script').map((script) => script.attributes['data-kn-polyfill']);
   const polyfills = async (props) => (await scripts(props)).filter(Boolean);

@@ -21,6 +21,7 @@ const defaults = {
     'link-menu': true, 'menu-button': 'word', language: false, search: true, cta: true,
     numbered: false, 'menu-above': false, 'menu-below': false,
     'search-surface': 'inverse', 'search-blur': true, 'search-heading': true, 'search-links': true,
+    'search-close': true, 'search-placeholder': 'word',
   },
   footer: {
     attachment: 'flow', fill: 'column',

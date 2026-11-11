@@ -1820,7 +1820,9 @@
       "search-surface": "inverse",
       "search-blur": true,
       "search-heading": true,
-      "search-links": true
+      "search-links": true,
+      "search-close": true,
+      "search-placeholder": "word"
     },
     "footer": {
       "attachment": "flow",

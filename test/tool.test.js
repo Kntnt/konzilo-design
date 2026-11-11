@@ -74,7 +74,7 @@ test('the default design\'s resolved JSON and core CSS change only on purpose', 
   const hash = (value) => createHash('sha256').update(value).digest('hex');
   assert.equal(
     hash(JSON.stringify(r)),
-    '9736ee14c5caccfd193f3fd50d6d84475e9836832c771b3e5aa7cd2430669dcd',
+    '5d8323316d5e6ce4319e3945e9b7e484e57733c56776be7f191652324a53634a',
   );
   assert.equal(
     hash(coreCss(r)),

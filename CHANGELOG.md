@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] – 2026-11-11
+
+### Added
+
+- The search box can go without its close button. Esc and a click outside the box still close it.
+- The empty search field can show nothing, the site's own word for Search, or a magnifier that goes as the visitor types.
+
+### Changed
+
+- On a phone the footer's lower band stacks row by row (address, registration, policy links, consent links), while the upper band still stacks column by column.
+- The tool's Colour chapter is one page: text, links and buttons on every Surface, with their contrast, stand with the colours, below them or beside them in a wide window.
+- The tool's Footer page says whether the footer is fixed to the end of the page or the bottom of the window, and now also holds the page's shadow on the footer and the line at its edge.
+- The tool reads a copy file as the presentation does, so a key that never existed stops it at its start, naming the file and the key.
+
+### Fixed
+
+- `design-tool` no longer ends with "Detected unsettled top-level await" when it opens a browser: it waits for the browser's answer and says where the tool runs.
+- Create presentation no longer fails on a copy file written for an earlier version: keys the document no longer uses are ignored, and a key it refuses is named with its file, without the build's whole log.
+- An open large menu makes a header that starts transparent opaque, as it is after scrolling.
+- The blurred or faded page behind the search box covers the whole window, the header bar and the footer included.
+- Without its heading, the search box keeps room above the field for its close button, which overlapped the Search button.
+- "Show it in the preview" opens the large menu or the search box in the preview, also in the preview's own window, and keeps it open while settings change.
+
 ## [0.1.0] – 2026-11-11
 
 ### Added
