@@ -7,7 +7,7 @@ import { emitCss } from '../src/css/index.js';
 import { componentsCss } from '../src/css/components.js';
 import { backUp } from '../src/cli/backup.js';
 
-const usage = 'Usage: konzilo-design resolve <file> | css <file> [-o out.css] | check <file> | components-css [-o out.css] | fonts <file> [-o folder] | logos <file> [-o folder] | tool <file> [--port N] [--no-open] | presentation <file> [-o out.zip] | design-md <file> [-o out.zip|out.md]';
+const usage = 'Usage: konzilo-design resolve <file> | css <file> [-o out.css] | check <file> | components-css [-o out.css] | fonts <file> [-o folder] | logos <file> [-o folder] | tool <file> [--port N] [--no-open] | tool --status | tool --stop [<file>] | presentation <file> [-o out.zip] | design-md <file> [-o out.zip|out.md]';
 
 // The package a site installs leaves the tool and the presentation out: they run from the design system's repository.
 async function fromRepository(path, command) {
@@ -20,23 +20,39 @@ try {
   const [command, path, ...args] = process.argv.slice(2);
   if (command === 'tool') {
     const values = [path, ...args].filter(v => v !== undefined);
-    let designFile; let port = 4174; let open = true;
+    let designFile; let port; let open = true; let action = 'open';
     while (values.length) {
       const value = values.shift();
       if (value === '--no-open') open = false;
-      else if (value === '--port') {
+      else if (value === '--status' || value === '--stop') {
+        if (action !== 'open') throw new Error(usage);
+        action = value.slice(2);
+      } else if (value === '--port') {
         const number = values.shift();
-        if (!/^\d+$/.test(number || '') || Number(number) > 65535) throw new Error('Port must be an integer from 0 to 65535.');
+        if (!/^\d+$/.test(number || '') || Number(number) < 1 || Number(number) > 65535) throw new Error('Port must be an integer from 1 to 65535.');
         port = Number(number);
       } else if (value.startsWith('-') || designFile) throw new Error(usage);
       else designFile = value;
     }
-    if (!designFile) throw new Error(usage);
-    const { startTool } = await fromRepository('../tool/server.js', 'tool');
-    const tool = await startTool({ designFile, port, open });
-    process.stdout.write(`Konzilo design tool: ${tool.url}\n${tool.created ? 'New design file' : 'Design file'}: ${tool.path}\n`);
-    const stop = async () => { await tool.close(); };
-    process.once('SIGINT', stop); process.once('SIGTERM', stop);
+    if (action === 'open' ? !designFile : port !== undefined || !open || (action === 'status' && designFile)) throw new Error(usage);
+    const launcher = await fromRepository('../tool/launch.js', 'tool');
+    if (action === 'status') {
+      const running = await launcher.tools();
+      const windows = (count) => `${count} window${count === 1 ? '' : 's'}`;
+      process.stdout.write(running.length ? running.map((tool) => `${tool.url}  ${windows(tool.windows)}  ${tool.path}\n  since ${tool.started}, log ${tool.log}\n`).join('') : 'No design tool is running.\n');
+    } else if (action === 'stop') {
+      const stopped = await launcher.stop({ designFile });
+      if (stopped.length) process.stdout.write(stopped.map((file) => `Stopped: ${file}\n`).join(''));
+      else {
+        process.stdout.write(designFile ? `No design tool has ${await launcher.canonical(designFile)} open.\n` : 'No design tool is running.\n');
+        if (designFile) process.exitCode = 1;
+      }
+    } else {
+      const tool = await launcher.launch({ designFile, port, open });
+      const how = tool.joined ? 'The tool already had it open.' : tool.replaced ? 'The tool was started again, since its code has changed.' : `It stops ${launcher.IDLE / 1000} seconds after its last window closes, or with --stop.`;
+      process.stdout.write(`Konzilo design tool: ${tool.url}\n${tool.created ? 'New design file' : 'Design file'}: ${tool.path}\n${how}\n`);
+      if (!tool.opened) process.stderr.write(`No browser could be opened. Open ${tool.url} yourself.\n`);
+    }
   } else if (command === 'presentation') {
     if (!path || !(args.length === 0 || (args.length === 2 && args[0] === '-o'))) throw new Error(usage);
     const { createPresentation } = await fromRepository('../tool/presentation.js', 'presentation');

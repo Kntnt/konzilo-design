@@ -60,6 +60,12 @@ export function createHistory(state, { limit = LIMIT } = {}) {
     },
     undo: () => move(past, future),
     redo: () => move(future, past),
+    // Starts again from `state`, as when the design was taken from the file another window changed.
+    reset(state) {
+      past.length = 0;
+      future.length = 0;
+      present = state;
+    },
   };
 }
 

@@ -76,7 +76,7 @@ Resolve writes a complete result into the same file, preserving its inputs and
 presentation identity, and its format, or this version's where it has none. CSS goes to stdout unless an output path is supplied. Check
 validates the format, the file, the fingerprint and the Surface contrast check. Fonts copies the typefaces the design uses, and logos writes its logos as files, for a Konzilo site's repository (docs/spec/konzilo.md). Errors go to stderr with a nonzero exit status.
 
-`tool <file> [--port N] [--no-open]` starts the local editor on 127.0.0.1, on the named file or a new design created there.
+`tool <file> [--port N] [--no-open]` opens the local editor on 127.0.0.1, on the named file or a new design created there, and returns at once; the editor stops by itself when its last window has been closed for 30 seconds. `tool --status` and `tool --stop [<file>]` list and stop the editors running (`tool/README.md`).
 A missing file starts with Mona Sans and is created on first save. `presentation <file>
 [-o out.zip]` generates a ZIP holding one self-contained, browsable HTML presentation.
 The default output is `<stem>-presentation-<YYYY-MM-DD>.zip` beside the input.

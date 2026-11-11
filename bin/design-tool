@@ -1,9 +1,13 @@
 #!/usr/bin/env bash
-# Opens a design file in the design tool, and creates the file as a new, blank design if it does not exist.
-# Every change is saved to the file; the first change of a run first copies it to <name>.bak.json. Ctrl-C stops it.
-# Usage: design-tool <design-file> [--port N] [--no-open]
+# Opens a design file in the design tool, and creates the file as a new design if it does not exist. The command returns
+# at once; the tool runs on its own and stops 30 seconds after its last window closes. A file already open is shown again.
+# Every change is saved to the file; the first change of a run first copies it to <name>.bak.json.
+# Usage: design-tool <design-file> [--port N] [--no-open] | --status | --stop [<design-file>]
 set -euo pipefail
 source "$(dirname "$(realpath "${BASH_SOURCE[0]}")")/../src/cli/design-file.sh"
 
+if [[ "${1:-}" == --status || "${1:-}" == --stop ]]; then
+  exec node "$konzilo" tool "$@"
+fi
 need_file "$@"
 exec node "$konzilo" tool "$@"

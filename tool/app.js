@@ -35,7 +35,19 @@ import { setupTooltips } from '/gallery/src/tooltips.js';
 import { pictures, flatPictures, PICTURE_SLOTS } from '/presentation/src/samples.js';
 import { lookDefaults } from '/presentation/src/looks.js';
 
-const inPreviewWindow = new URLSearchParams(location.search).get('window') === 'preview';
+const params = new URLSearchParams(location.search);
+const inPreviewWindow = params.get('window') === 'preview';
+// Which window this is, kept over a reload. Its saves and its live line carry it, and its own preview window
+// finds it by it, since a second window on the same design is on the same address.
+const windowId = (() => {
+  try {
+    const id = sessionStorage.getItem('konzilo-tool-window') || crypto.randomUUID();
+    sessionStorage.setItem('konzilo-tool-window', id);
+    return id;
+  } catch {
+    return crypto.randomUUID();
+  }
+})();
 const tool = document.getElementById('tool');
 const form = document.getElementById('form');
 const doc = document.getElementById('document');
@@ -55,6 +67,8 @@ if (inPreviewWindow) {
 
 const data = await fetch('/api/state').then((response) => response.json());
 const copy = data.copy;
+// The design file as this window last read or wrote it, which each save says it builds on.
+let revision = data.revision;
 let model = { inputs: data.inputs, project: data.project };
 const STORE = 'konzilo-tool-ui';
 const saved = (() => {
@@ -430,7 +444,8 @@ function setStatus(state, text) {
   statusBox.dataset.state = state;
   statusText.textContent = text;
 }
-function showNotice(text, link) {
+// A link opens what the message is about, and each action is a button with its words, its tooltip and what it does.
+function showNotice(text, link, actions = []) {
   delete notice.dataset.kind;
   // The menu is as tall as its lines need, and the notice stands just under it.
   notice.style.top = `${document.querySelector('.menu').offsetHeight / rootSize() + 0.5}rem`;
@@ -445,6 +460,18 @@ function showNotice(text, link) {
     anchor.rel = 'noopener';
     anchor.textContent = 'Open';
     notice.append(anchor);
+  }
+  for (const [words, help, act] of actions) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'notice-action';
+    button.textContent = words;
+    tipOn(button, help);
+    button.addEventListener('click', () => {
+      notice.hidden = true;
+      act();
+    });
+    notice.append(button);
   }
   const close = document.createElement('button');
   close.type = 'button';
@@ -504,32 +531,44 @@ let saveTimer = null;
 let unsent = false;
 let saving = Promise.resolve();
 let savedLogos = logosOf(data.project);
+// A request the tool never got, since it is not running. What it carried is still to be sent.
+const offline = () => Object.assign(new Error('The design tool is not running.'), { offline: true });
 async function request(endpoint, method, type, body, options) {
   const send = () => fetch(endpoint, {
     method,
-    headers: { 'Content-Type': type, 'X-Konzilo-Token': data.token },
+    headers: { 'Content-Type': type, 'X-Konzilo-Token': data.token, 'X-Konzilo-Base': revision, 'X-Konzilo-Window': windowId },
     body,
     ...options,
-  });
+  }).catch(() => { throw offline(); });
   let response = await send();
   // A restarted tool has a new session. With the same file open the work here goes on; with another, saving would overwrite that design.
   if (response.status === 403) {
-    const state = await fetch('/api/state').then((answer) => answer.json());
-    if (state.path !== data.path) throw new Error('The tool now has another design open, so this window can no longer save. Reload the page.');
+    const state = await fetch('/api/state').then((answer) => answer.json()).catch(() => { throw offline(); });
+    if (state.path !== data.path) throw new Error('The tool now has another design open, so this window can no longer save. Close it, and open this design again with design-tool.');
     data.token = state.token;
     response = await send();
   }
+  if (response.status === 503) throw offline();
   const answer = await response.json();
+  // Someone else changed the file since this window read it: another window, a restore, a script.
+  if (response.status === 409 && answer.conflict) throw Object.assign(new Error(answer.error), { conflict: answer.conflict });
   if (!response.ok) throw new Error(answer.error);
+  if (answer.revision) revision = answer.revision;
   return answer;
 }
 // The logos as they were sent, which the server holds once it has answered.
 async function post(endpoint) {
   unsent = false;
   const logos = logosOf(model.project);
-  const answer = await request(endpoint, 'POST', 'application/json', JSON.stringify(model));
-  savedLogos = logos;
-  return answer;
+  try {
+    const answer = await request(endpoint, 'POST', 'application/json', JSON.stringify(model));
+    savedLogos = logos;
+    return answer;
+  } catch (error) {
+    // Still to be saved, when the tool is back or the clash is settled.
+    if (error.offline || error.conflict) unsent = true;
+    throw error;
+  }
 }
 // A camera's photo is made a JPEG of a sensible size here, so the folder holds what a presentation carries.
 async function pictureFile(file) {
@@ -558,9 +597,15 @@ function saveAnswered(answer) {
   if (!unsent && valid) setStatus('saved', 'Saved');
   tipStatus(answer.path);
 }
+// What a refusal says: a clash asks which design to keep, a tool not running says how to start it, and the rest say why.
+function explain(error) {
+  if (error.conflict) showConflict(error.conflict);
+  else if (error.offline) whyLost();
+  else showNotice(error.message);
+}
 function saveRefused(error) {
   setStatus('error', 'Not saved');
-  showNotice(error.message);
+  explain(error);
 }
 function scheduleSave() {
   clearTimeout(saveTimer);
@@ -1146,7 +1191,7 @@ exportAi.addEventListener('click', async () => {
     setStatus('saved', 'Saved');
     showNotice(`Exported for AI agents: ${answer.path}`);
   } catch (error) {
-    showNotice(error.message);
+    explain(error);
   }
 });
 presentation.addEventListener('click', async () => {
@@ -1161,7 +1206,7 @@ presentation.addEventListener('click', async () => {
     setStatus('saved', 'Saved');
     showNotice(`Presentation ready: ${answer.path}`, '/api/presentation-file');
   } catch (error) {
-    showNotice(error.message);
+    explain(error);
   } finally {
     generating = false;
     presentation.disabled = !valid;
@@ -1169,7 +1214,7 @@ presentation.addEventListener('click', async () => {
 });
 
 /* ---- A second window, on another screen if there is one. ---- */
-const channel = new BroadcastChannel('konzilo-tool');
+const channel = new BroadcastChannel(`konzilo-tool-${inPreviewWindow ? params.get('main') : windowId}`);
 let previewWindow = null;
 let watcher = null;
 const share = () => {
@@ -1191,7 +1236,7 @@ function backToPane() {
   followPage(ui.page, false);
 }
 function openOwnWindow() {
-  const opened = window.open('/?window=preview', 'konzilo-preview', 'popup,width=1500,height=950');
+  const opened = window.open(`/?window=preview&main=${windowId}`, `konzilo-preview-${windowId}`, 'popup,width=1500,height=950');
   if (!opened) return showNotice('The browser blocked the window. Allow pop-ups for this address and try again.');
   previewWindow = opened;
   ui.where = 'window';
@@ -1232,7 +1277,7 @@ channel.addEventListener('message', ({ data: message }) => {
   }
   if (message.type === 'hello') {
     if (ui.where !== 'window') {
-      previewWindow = window.open('', 'konzilo-preview');
+      previewWindow = window.open('', `konzilo-preview-${windowId}`);
       ui.where = 'window';
       writeChrome();
       layout();
@@ -1251,6 +1296,117 @@ channel.addEventListener('message', ({ data: message }) => {
 window.addEventListener('pagehide', () => {
   flushSave();
   if (!inPreviewWindow && ui.where === 'window') channel.postMessage({ type: 'main-gone' });
+});
+
+/* ---- The live line: the tool's news, and how it knows that this window is open. ---- */
+// The open line, if there is one, and the attempt under way; there is only ever one of either.
+let line = null;
+let attempt = null;
+let retry = null;
+let tries = 0;
+let restarting = false;
+const quoted = (path) => (/^[\w@%+=:,./-]+$/.test(path) ? path : `'${path.replaceAll("'", "'\\''")}'`);
+// Another window saved, or the file changed while the tool was away: this window takes the design as the file
+// has it. Its own steps were made on a design that is no longer there, so its history starts again here.
+function adopt(state, words) {
+  // A file that cannot be read now, such as one half written by another program, is not taken.
+  if (!state?.inputs) {
+    showNotice(`The design file could not be read. ${state?.error ?? ''}`);
+    return;
+  }
+  clearTimeout(saveTimer);
+  saveTimer = null;
+  unsent = false;
+  closeStep();
+  model = { inputs: state.inputs, project: state.project };
+  revision = state.revision;
+  data.token = state.token;
+  savedLogos = logosOf(state.project);
+  restoreColours(undefined);
+  for (const input of form.querySelectorAll('[data-logo]')) input.value = '';
+  ui.touched = null;
+  writeForm();
+  designHistory.reset(capture(model));
+  writeHistoryButtons();
+  setUi({ own: state.pictures });
+  if (valid) setStatus('saved', 'Saved');
+  if (words) showNotice(words);
+}
+const readState = () => fetch('/api/state').then((answer) => answer.json());
+// A change being made here is not taken over: its save meets the other change, and asks.
+const busyHere = () => unsent || saveTimer || openStep || pointerHeld || keyHeld;
+async function follow(words) {
+  if (busyHere()) return;
+  const state = await readState().catch(() => null);
+  if (!state?.inputs || state.path !== data.path || state.revision === revision || busyHere()) return;
+  adopt(state, words);
+}
+function showConflict(fileRevision) {
+  showNotice('The design file has changed in another window or outside the tool since this window read it, so this change was not saved.', null, [
+    ['Use the file', 'Show the design as the file has it now, and drop the change not saved here.', async () => adopt(await readState())],
+    ['Keep this window\'s', 'Save the design as this window shows it, over the change made elsewhere.', () => {
+      revision = fileRevision;
+      scheduleSave();
+    }],
+  ]);
+  notice.dataset.kind = 'conflict';
+}
+// Why the line is down: the tool has stopped, or this address now has another design open.
+async function whyLost() {
+  const answer = await fetch('/api/hello').then((response) => (response.ok ? response.json() : null), () => null);
+  if (line || restarting) return;
+  setStatus('error', 'Not saved');
+  if (answer?.app === 'konzilo-design-tool' && answer.path !== data.path)
+    showNotice('The tool on this address now has another design open, so this window can no longer save. Close it, and open this design again with design-tool.');
+  else showNotice(`The design tool has stopped, so changes here are not saved. Start it again with: design-tool ${quoted(data.path)}`);
+  notice.dataset.kind = 'lost';
+}
+// Back on the line, after the tool was away: the same file goes on, and what was not saved is saved now.
+async function back() {
+  const state = await readState().catch(() => null);
+  if (!state?.inputs || state.path !== data.path) return;
+  data.token = state.token;
+  if (notice.dataset.kind === 'lost') {
+    notice.hidden = true;
+    delete notice.dataset.kind;
+  }
+  if (state.revision !== revision && !busyHere()) adopt(state, 'The design file changed while the tool was away. This window shows it as it is now, and Undo starts again from here.');
+  else if (unsent) scheduleSave();
+  else if (valid) setStatus('saved', 'Saved');
+}
+function connect() {
+  clearTimeout(retry);
+  if (line || attempt) return;
+  const socket = new WebSocket(`ws://${location.host}/api/live?window=${encodeURIComponent(windowId)}&path=${encodeURIComponent(data.path)}`);
+  attempt = socket;
+  socket.addEventListener('open', () => {
+    attempt = null;
+    line = socket;
+    const wasAway = tries > 0;
+    tries = 0;
+    restarting = false;
+    if (wasAway) back();
+  });
+  socket.addEventListener('message', ({ data: text }) => {
+    const news = JSON.parse(text);
+    if (news.type === 'saved' && news.by !== windowId && news.revision !== revision) follow('Changed in another window. This window shows the design as saved there, and Undo starts again from here.');
+    else if (news.type === 'changed' && news.revision !== revision) follow('The design file was changed outside the tool. This window shows it as it is now, and Undo starts again from here.');
+    else if (news.type === 'pictures' && news.by !== windowId) readState().then((state) => setUi({ own: state.pictures }), () => {});
+    else if (news.type === 'restarting') restarting = true;
+  });
+  socket.addEventListener('close', () => {
+    if (line === socket) line = null;
+    if (attempt === socket) attempt = null;
+    tries += 1;
+    // A tool started again with changed code is back within seconds; until it is, nothing needs saying.
+    if (restarting && tries > 60) restarting = false;
+    if (!restarting && (tries === 2 || (tries > 2 && notice.dataset.kind !== 'lost'))) whyLost();
+    retry = setTimeout(connect, restarting || tries < 2 ? 300 : tries < 30 ? 2000 : 5000);
+  });
+}
+// A page brought back from the browser's history has lost its line, and takes it up again at once.
+window.addEventListener('pageshow', (event) => {
+  if (event.persisted && !inPreviewWindow) connect();
 });
 
 /* ---- Start. ---- */
@@ -1293,6 +1449,9 @@ new ResizeObserver(layout).observe(tool);
 if (!inPreviewWindow) new ResizeObserver(placeScaleLine).observe(form.querySelector('[data-scale-line]'));
 sync();
 if (inPreviewWindow) channel.postMessage({ type: 'hello' });
-else channel.postMessage({ type: 'who' });
+else {
+  channel.postMessage({ type: 'who' });
+  connect();
+}
 await document.fonts.ready;
 layout();

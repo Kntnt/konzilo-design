@@ -2,13 +2,17 @@ import http from 'node:http';
 import { access, readFile, readdir, writeFile, rename, mkdir, mkdtemp, rm, unlink } from 'node:fs/promises';
 import {
   resolve as pathResolve,
+  basename,
   dirname,
   extname,
   join,
   isAbsolute,
 } from 'node:path';
-import { spawn } from 'node:child_process';
-import { randomBytes } from 'node:crypto';
+import { createHash, randomBytes } from 'node:crypto';
+import { watch } from 'node:fs';
+import { userInfo } from 'node:os';
+import { openBrowser } from './browser.js';
+import { acceptLive, refuse } from './live.js';
 import { buildPresentation, repo } from './build.js';
 import { newDesign, backUp } from './new-design.js';
 import { writeDesignMd } from './design-md.js';
@@ -93,18 +97,23 @@ export async function loadCopy(path) {
   }
   return copy;
 }
-function openBrowser(url) {
-  const command =
-    process.platform === 'darwin'
-      ? 'open'
-      : process.platform === 'win32'
-        ? 'cmd'
-        : 'xdg-open';
-  const args = process.platform === 'win32' ? ['/c', 'start', '', url] : [url];
-  const child = spawn(command, args, { stdio: 'ignore' });
-  child.on('error', () => {});
-  child.unref();
+// What a window's save builds on: the design file's text as the window last saw it, as a hash. A save made
+// on another text is refused, whoever changed the file since: another window, a restore, a script or git.
+export const revisionOf = (text) => (text === null ? 'none' : createHash('sha256').update(text).digest('hex').slice(0, 20));
+export async function revisionOnDisk(path) {
+  const text = await readFile(path, 'utf8').catch((error) => {
+    if (error.code === 'ENOENT') return null;
+    throw error;
+  });
+  return revisionOf(text);
 }
+const userName = () => {
+  try {
+    return userInfo().username;
+  } catch {
+    return String(process.getuid?.() ?? '');
+  }
+};
 // A folder per run, so a second tool or a test run cannot pull the preview from under this one.
 // Runs stopped from outside leave theirs behind, and the next start sweeps them.
 async function previewFolder() {
@@ -125,17 +134,24 @@ async function previewFolder() {
   return mkdtemp(join(cache, `konzilo-tool-${process.pid}-`));
 }
 
-export async function startTool({ designFile, port = 4174, open = true }) {
+// Serves one design file. Called by itself it runs until `close()`; `tool/serve.js`, which `design-tool` starts,
+// also gives it `idle`, the milliseconds without a window before `onIdle` is called, and `stopKey`, which lets
+// `POST /api/stop` stop it from the command line. `backedUp` says that this run's backup is already made,
+// by the server this one replaces, and `code` is what that command took the code's state to be.
+export async function startTool({ designFile, port = 4174, open = true, idle, onIdle, stopKey, onStop, backedUp: inherited = false, code = '' }) {
   const path = pathResolve(designFile);
   const created = !(await access(path).then(() => true, () => false));
   let model = await loadDesign(path);
+  // The file's text that `model` holds. When the file has changed outside the tool, the state is read anew from it.
+  let known = await revisionOnDisk(path);
   // One backup a run: what the file held when this run first changed it. A file this run made has nothing to keep.
-  let backedUp = created;
+  let backedUp = created || inherited;
   const previewDir = await previewFolder();
   const { preview, catalogue } = await buildPresentation({ output: previewDir });
   const copy = await loadCopy(path);
   const components = await componentsCss();
   const token = randomBytes(24).toString('hex');
+  const started = new Date().toISOString();
   let lastPresentation;
   let busy = false;
   // Writes take their turn in the order they came, and the state waits for them: a window reloaded
@@ -146,6 +162,28 @@ export async function startTool({ designFile, port = 4174, open = true }) {
     writes = turn.catch(() => {});
     return turn;
   };
+  // The last file this server wrote, and which window it was for: that window may send its next save before
+  // the answer to the last has reached it, and that one builds on its own change.
+  let written = { revision: null, window: null };
+  // The windows open now, by their live lines; with none for `idle`, the server is not needed.
+  const windows = new Set();
+  const broadcast = (message) => {
+    for (const window of windows) window.send(message);
+  };
+  let stopping = false;
+  let idleTimer = null;
+  const waitForWindows = () => {
+    clearTimeout(idleTimer);
+    if (idle !== undefined && !windows.size && !stopping) idleTimer = setTimeout(() => onIdle?.(), idle);
+  };
+  // What a request that changes something is doing, so stopping can let it finish.
+  const tasks = new Set();
+  const drain = async () => {
+    stopping = true;
+    clearTimeout(idleTimer);
+    while (tasks.size) await Promise.allSettled([...tasks]);
+    await writes;
+  };
   const mime = {
     '.html': 'text/html; charset=utf-8',
     '.js': 'text/javascript; charset=utf-8',
@@ -154,7 +192,7 @@ export async function startTool({ designFile, port = 4174, open = true }) {
     '.woff2': 'font/woff2',
     '.webp': 'image/webp',
   };
-  const server = http.createServer(async (req, res) => {
+  const handle = async (req, res) => {
     const json = (status, value) => {
       res.writeHead(status, {
         'Content-Type': 'application/json',
@@ -175,9 +213,35 @@ export async function startTool({ designFile, port = 4174, open = true }) {
       const url = new URL(req.url, `http://${host}`);
       res.setHeader('X-Content-Type-Options', 'nosniff');
       res.setHeader('Cache-Control', 'no-store');
+      if (req.method === 'GET' && url.pathname === '/api/hello') {
+        // How `design-tool` finds the tool that has a file open. It holds nothing a window needs to save.
+        json(200, { app: 'konzilo-design-tool', path, pid: process.pid, user: userName(), code, started, windows: windows.size });
+        return;
+      }
+      if (req.method === 'POST' && url.pathname === '/api/stop') {
+        if (!stopKey || req.headers['x-konzilo-stop'] !== stopKey) {
+          json(403, { error: 'Only the design-tool command stops the tool.' });
+          return;
+        }
+        await drain();
+        broadcast({ type: url.searchParams.get('restart') === '1' ? 'restarting' : 'stopped' });
+        // The answer first, so the command learns about the backup before the server goes.
+        res.once('finish', () => onStop?.());
+        json(200, { backedUp });
+        return;
+      }
+      if (req.method !== 'GET' && stopping) {
+        json(503, { error: 'The tool is stopping.' });
+        return;
+      }
       if (req.method === 'GET' && url.pathname === '/api/state') {
         await writes;
-        json(200, { ...(await embedLogos(model, path)), token, copy, path, pictures: await ownPictureUrls(path) });
+        const revision = await revisionOnDisk(path);
+        if (revision !== known) {
+          model = await loadDesign(path);
+          known = revision;
+        }
+        json(200, { ...(await embedLogos(model, path)), token, copy, path, revision, pictures: await ownPictureUrls(path) });
         return;
       }
       if (req.method === 'GET' && url.pathname === '/tool/components.css') {
@@ -239,6 +303,7 @@ export async function startTool({ designFile, port = 4174, open = true }) {
           }
           await saveOwnPicture(path, slot, Buffer.concat(parts));
         }
+        broadcast({ type: 'pictures', by: req.headers['x-konzilo-window'] });
         json(200, { pictures: await ownPictureUrls(path) });
         return;
       }
@@ -257,13 +322,17 @@ export async function startTool({ designFile, port = 4174, open = true }) {
           json(409, { error: 'A presentation is already being created.' });
           return;
         }
-        await inTurn(async () => {
+        const window = req.headers['x-konzilo-window'] || null;
+        const base = req.headers['x-konzilo-base'];
+        const saved = await inTurn(async () => {
           let body = '';
           for await (const chunk of req) {
             body += chunk;
             if (body.length > 15 * 1024 * 1024)
               throw new Error('Design file exceeds 15 MB.');
           }
+          const now = await revisionOnDisk(path);
+          if (base !== now && !(window && written.revision === now && written.window === window)) return { conflict: now };
           const incoming = withKeptLogos(JSON.parse(body), model.project);
           await saveDesign(path, incoming, {
             beforeWrite: async () => {
@@ -272,20 +341,32 @@ export async function startTool({ designFile, port = 4174, open = true }) {
             },
           });
           model = { inputs: incoming.inputs, project: incoming.project };
+          const revision = await revisionOnDisk(path);
+          known = revision;
+          if (revision !== now) {
+            written = { revision, window };
+            broadcast({ type: 'saved', revision, by: window });
+          }
+          return { revision };
         });
+        if (saved.conflict) {
+          json(409, { error: 'The design file has changed since this window last read it.', conflict: saved.conflict });
+          return;
+        }
+        const { revision } = saved;
         if (url.pathname === '/api/save') {
-          json(200, { path });
+          json(200, { path, revision });
           return;
         }
         if (url.pathname === '/api/design-md') {
-          json(200, { path: await writeDesignMd(path) });
+          json(200, { path: await writeDesignMd(path), revision });
           return;
         }
         busy = true;
         try {
           const { html, ...report } = await createPresentation(path, undefined, { includeHtml: true });
           lastPresentation = html;
-          json(200, report);
+          json(200, { ...report, revision });
         } finally {
           busy = false;
         }
@@ -312,33 +393,88 @@ export async function startTool({ designFile, port = 4174, open = true }) {
       if (!res.headersSent) json(400, { error: error.message });
       else res.end();
     }
+  };
+  const server = http.createServer((req, res) => {
+    const task = handle(req, res);
+    // Stopping waits for what changes something, but not for the request that stops.
+    if (req.method !== 'GET' && !req.url.startsWith('/api/stop')) {
+      tasks.add(task);
+      task.finally(() => tasks.delete(task));
+    }
+  });
+  server.on('upgrade', (req, socket, head) => {
+    // The request handler's checks do not reach an upgrade, so they are made again here.
+    const host = `127.0.0.1:${server.address().port}`;
+    if (req.headers.host !== host || (req.headers.origin && req.headers.origin !== `http://${host}`)) return refuse(socket, 403);
+    const url = new URL(req.url, `http://${host}`);
+    if (url.pathname !== '/api/live') return refuse(socket, 404);
+    // A window left open for another design, now that this one has its port, is not one of this server's.
+    if (url.searchParams.get('path') !== path) return refuse(socket, 409);
+    if (stopping) return refuse(socket, 503);
+    const window = acceptLive(req, socket, head);
+    if (!window) return undefined;
+    windows.add(window);
+    clearTimeout(idleTimer);
+    window.onClose(() => {
+      windows.delete(window);
+      waitForWindows();
+    });
+    return undefined;
   });
   await new Promise((done, fail) => {
     server.once('error', (error) =>
       fail(
         error.code === 'EADDRINUSE'
-          ? new Error(`Port ${port} is in use, probably by another copy of the tool. Stop that one, or choose another port with --port.`)
+          ? Object.assign(new Error(`Port ${port} is in use, by another program or by the tool with another design open. Choose another port with --port.`), { code: 'EADDRINUSE' })
           : error,
       ),
     );
     server.listen(port, '127.0.0.1', done);
   });
-  if (created)
+  if (created) {
     await saveDesign(path, model).catch((error) => {
       server.close();
       throw error;
     });
+    known = await revisionOnDisk(path);
+  }
+  // A change from outside the tool, such as a restore or git, reaches the windows as another window's does.
+  // It is looked at in the writes' turn, so the tool's own write is known before its folder event is.
+  let announced = null;
+  let lookTimer = null;
+  const watcher = watch(dirname(path), (event, name) => {
+    if (name && name !== basename(path)) return;
+    clearTimeout(lookTimer);
+    lookTimer = setTimeout(() => inTurn(async () => {
+      const now = await revisionOnDisk(path);
+      if (now === known || now === announced) return;
+      announced = now;
+      broadcast({ type: 'changed', revision: now });
+    }).catch(() => {}), 150);
+  });
+  watcher.on('error', () => {});
   const url = `http://127.0.0.1:${server.address().port}`;
   if (open) openBrowser(url);
+  waitForWindows();
   return {
     server,
     url,
     path,
     created,
+    get windows() {
+      return windows.size;
+    },
+    // Lets what is under way finish, says goodbye to the windows, and frees the port and the preview folder.
     close: async () => {
-      await new Promise((done, fail) =>
+      watcher.close();
+      clearTimeout(lookTimer);
+      await drain();
+      await Promise.all([...windows].map((window) => window.close()));
+      const closed = new Promise((done, fail) =>
         server.close((error) => (error ? fail(error) : done())),
       );
+      server.closeAllConnections();
+      await closed;
       await rm(previewDir, { recursive: true, force: true });
     },
   };

@@ -72,16 +72,24 @@ bin/design-tool ~/designs/acme.design.json
 3. Click **Create presentation** to send the client a ZIP, or **Export for AI** to give an agent
    the design.
 
-Stop the tool with Ctrl-C.
+The command returns at once. The tool stops by itself 30 seconds after its last window closes, and
+running the command again on a file already open shows it in another window.
 
 ## The design tool
 
 ```sh
 bin/design-tool <design-file> [--port N] [--no-open]
+bin/design-tool --status
+bin/design-tool --stop [<design-file>]
 ```
 
-- The tool runs on `http://127.0.0.1:4174` by default, and only on your own machine. `--port`
-  picks another port. `--no-open` starts it without opening a browser.
+- The tool runs only on your own machine, one per design file, on `http://127.0.0.1:4174` or the
+  next free port. `--port` picks another port. `--no-open` starts it without opening a browser.
+- **Running and stopping.** The command returns at once, and the tool stops by itself 30 seconds
+  after its last window closes. `--status` lists the tools running, and `--stop` stops them, or the
+  one with the file open. A window whose tool has stopped says so, and goes on when it is back.
+- **Two windows on one design** follow each other's changes. A change made while the file changed
+  elsewhere is never saved over it: the window asks which to keep.
 - **Saving.** Changes are saved automatically. There is no Save button. Before the first change in
   a session, the file is copied to `name.design.bak.json`. `bin/design-restore <design-file>` puts
   that copy back after asking.
@@ -161,7 +169,7 @@ content directives.
 
 | Command | What it does |
 |---|---|
-| `design-tool <file> [--port N] [--no-open]` | Starts the tool on the design file, creating it if needed |
+| `design-tool <file> [--port N] [--no-open]` | Opens the design file in the tool, creating it if needed; `--status` and `--stop` list and stop the tools running |
 | `design-presentation <file> [-o out.zip]` | Makes the client presentation |
 | `design-md <file> [-o out.zip\|out.md]` | Makes the AI export |
 | `design-check <file>` | Checks the file: format, that the values match the inputs, and contrast |

@@ -41,7 +41,7 @@ test('CLI resolves, checks and exports; stale inputs fail both consumers', async
 });
 
 test('CLI reports incorrect arguments without modifying the design file', () => {
-  for (const args of [[], ['tool'], ['tool', '--no-open'], ['unknown', 'example.json'], ['check', 'example.json', '-o', 'out.css'], ['css', 'example.json', '-o'], ['components-css', '-o'], ['components-css', 'out.css'], ['components-css', '-o', 'out.css', 'extra'], ['fonts'], ['fonts', 'example.json', '-o'], ['fonts', 'example.json', 'out'], ['logos'], ['logos', 'example.json', '-o'], ['logos', 'example.json', 'out']]) {
+  for (const args of [[], ['tool'], ['tool', '--no-open'], ['tool', '--status', 'example.json'], ['tool', '--stop', '--port', '4174'], ['tool', '--status', '--stop'], ['tool', '--stop', 'a.json', 'b.json'], ['unknown', 'example.json'], ['check', 'example.json', '-o', 'out.css'], ['css', 'example.json', '-o'], ['components-css', '-o'], ['components-css', 'out.css'], ['components-css', '-o', 'out.css', 'extra'], ['fonts'], ['fonts', 'example.json', '-o'], ['fonts', 'example.json', 'out'], ['logos'], ['logos', 'example.json', '-o'], ['logos', 'example.json', 'out']]) {
     const run = spawnSync(process.execPath, [cli, ...args], { encoding: 'utf8' });
     assert.equal(run.status, 1);
     assert.match(run.stderr, /Usage:/);

@@ -5,9 +5,9 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-No version has been tagged or released yet. Everything since the project began on 2026-11-01 is below.
-
 ## [Unreleased]
+
+## [0.1.0] – 2026-11-11
 
 ### Added
 
@@ -17,6 +17,7 @@ No version has been tagged or released yet. Everything since the project began o
 - A tint for each brand colour, and status Surfaces for information, success, warning and error.
 - One design file, `name.design.json`, that holds the inputs, the client's details and every computed value, with a JSON schema and a format number. A file whose values no longer match its inputs is refused.
 - The design tool, `bin/design-tool <design-file>`: the controls beside a live preview at phone and desktop width, in one window or two, saving every change at once, with undo and redo and a backup before the first change.
+- The design tool runs like an application: the command returns at once, a file already open is shown again, each design file has a tool of its own that stops by itself 30 seconds after its last window closes, and `--status` and `--stop` list and stop them. Windows on one design follow each other, and a save never overwrites a change it did not see.
 - A choice of 47 typefaces, shipped with their licences. Each role, from body text to labels and code, sets its own typeface and axes. A new design is all Mona Sans.
 - Shadows set by four sliders and chosen per target, and a frame of its own.
 - The page, the header and the footer as parts of the design: the header's arrangement, attachment and menus; the footer's two bands of cells, at the end of the page or at the edge of the screen; the page's widths, fill and shadow.

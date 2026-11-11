@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Puts a design file back as it was before the tool's latest run changed it, from its <name>.bak.json, after asking.
-# Stop the tool first, or it will save its own copy over the restored file.
+# The tool may stay open: a window's next save meets the restored file and asks whether to use it or keep the window's own.
 # Usage: design-restore <design-file>
 set -euo pipefail
 source "$(dirname "$(realpath "${BASH_SOURCE[0]}")")/../src/cli/design-file.sh"
