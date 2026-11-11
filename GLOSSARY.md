@@ -22,7 +22,7 @@ The names in code, the custom properties, classes, attributes and design-file ke
 
 **Inputs**: The design file's `inputs`: what the tool's controls set, and the only part a person changes, through the tool. Brand colours, grey temperature, typefaces, type scale, shadows, frame, corners, density, and the frame of every page. _Avoid_: settings, options.
 
-**Project**: The design file's `project`: the client's name, logos, slogan, contact, the presentation's version and the motivations written for it. It never enters the Fingerprint. _Avoid_: identity, metadata.
+**Project**: The design file's `project`: the client's name, logos, slogan, contact, own menu and footer words, the presentation's version and the motivations written for it. It never enters the Fingerprint. _Avoid_: identity, metadata.
 
 **Resolved**: The design file's `resolved`: every value the generator derived from the inputs, with the generator's version, the Fingerprint and the contrast check's result. A consumer reads it and needs no generator. _Avoid_: computed values, output.
 
@@ -60,9 +60,9 @@ The names in code, the custom properties, classes, attributes and design-file ke
 
 **Gallery**: Every component on one page, `gallery/dist/index.html`, built by `npm run gallery`. _Avoid_: storybook.
 
-**Sample page**: The one real page the tool's preview and the presentation show, with sample content and photos, where a component may occur several times. _Avoid_: demo page.
+**Sample page**: The one real page the tool's preview and the presentation show, with sample content and photos, or the client's own menu, footer words and photos where the design has them, where a component may occur several times. _Avoid_: demo page.
 
-**Way of looking**: A choice of how the design is shown, not what it is: the preview's width, the Mode, pictures or none, a component's variation. It is not saved in the design file or in the history. _Avoid_: setting, for these.
+**Way of looking**: A choice of how the design is shown, not what it is: the preview's width, the Mode, pictures or none. It is not saved in the design file or in the history, and it stays in the preview's own bar, never in the control panel. A component's variants are no way of looking either: the preview shows them all. _Avoid_: setting, for these.
 
 **History**: The tool's undo and redo, in steps of one gesture each, over what is saved in Inputs and Project. It lives in the window and is gone when it closes. _Avoid_: backup.
 
@@ -70,7 +70,7 @@ The names in code, the custom properties, classes, attributes and design-file ke
 
 **Brand colour**: One of one to three colours a design starts from, ranked primary, secondary and tertiary. Each gives its exact value, the seed, to a Ramp. _Avoid_: theme colour, which is a name the core reads.
 
-**Ramp**: A colour's scale of steps from 100 to 950, generated in OKLCH. A given step has the same lightness in every colour, since each step's contrast against white is fixed. A design always has a grey ramp beside its brand colours. _Avoid_: palette, shades.
+**Ramp**: A colour's scale of steps from 100 to 975, generated in OKLCH. A given step has the same lightness in every colour, since each step's contrast against white is fixed. Each mode reads ten of them: light mode 100 to 950 without 850, dark mode 100 to 800 with 850 and 975. A design always has a grey ramp beside its brand colours. _Avoid_: palette, shades.
 
 **Token**: A value computed from the inputs: a ramp's step, a type or space step, a radius, a shadow. Components never read tokens; they read Roles. _Avoid_: variable.
 

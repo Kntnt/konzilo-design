@@ -18,7 +18,9 @@ test('component CSS uses only logical properties, role reads and permitted drawi
   const withRoles = { ...defaultInputs(), typefaces: { main: 'Mona Sans', monospace: 'Mona Sans Mono' } };
   const axes = { axes: { wdth: 100, opsz: 20 } };
   withRoles.type = { ...withRoles.type, roles: { main: axes, heading: axes, 'heading-1': axes, display: axes, label: axes, monospace: axes } };
-  const emitted = new Set([defaultInputs(), withRoles].flatMap((inputs) => [...coreCss(derive(inputs)).matchAll(/(--kn-[\w-]+)\s*:/g)].map(([, name]) => name)));
+  // The quiet edge adds --kn-frame-ring, a filled button's ring, which the core emits only with it.
+  const quiet = { ...defaultInputs(), frame: { width: 1, color: 'border' } };
+  const emitted = new Set([defaultInputs(), withRoles, quiet].flatMap((inputs) => [...coreCss(derive(inputs)).matchAll(/(--kn-[\w-]+)\s*:/g)].map(([, name]) => name)));
   // Band sets the picture in its markup, for the Surface and a component to read.
   const shared = new Set(['--kn-picture-image', ...css.flatMap((source) => [...source.matchAll(/(--kn-[\w-]+)\s*:/g)].map(([, name]) => name))]);
   for (const [i, source] of css.entries()) {

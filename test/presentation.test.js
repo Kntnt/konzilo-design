@@ -19,6 +19,7 @@ import { pageList, componentPages, ids } from '../presentation/src/catalog.js';
 import { startTool, loadCopy } from '../tool/server.js';
 import { copyFor } from '../presentation/copy-override.mjs';
 import { validateDesignFile, resolve } from '../src/generator/index.js';
+import { pageWidths, readingBoxes, SKETCH_WINDOWS } from '../presentation/src/page-sketch.js';
 const exec = promisify(execFile);
 const root = pathResolve('node_modules/.cache/presentation-tests');
 const copy = JSON.parse(await readFile('presentation/copy.json', 'utf8'));
@@ -51,6 +52,59 @@ async function readyFrame(page, id) {
   const child = await (await frame.elementHandle()).contentFrame();
   await child.evaluate(() => document.fonts.ready);
   return child;
+}
+
+// The Page page draws the design's widths to scale, and its short page stands where the drawing says: the content
+// width's edges on the header's and every band's content, and Narrow and the Aside where the sketch reckons them.
+async function checkPageSketch(page, inputs) {
+  await navigate(page, 'page');
+  const resolved = derive(inputs);
+  const px = (value) => `${new Intl.NumberFormat('en', { maximumFractionDigits: 0 }).format(value)} px`;
+  const sketch = page.locator('#page .page-sketch');
+  for (const [kind, width] of SKETCH_WINDOWS) {
+    const w = pageWidths(resolved, width);
+    const drawing = sketch.locator(`[data-sketch="${kind}"]`);
+    const figure = (name) => drawing.locator(`[data-figure="${name}"]`).first().textContent();
+    assert.equal(await figure('window'), px(width));
+    assert.equal(await figure('content'), `Content width · ${px(w.content)}`);
+    assert.equal(await figure('margin'), `Side margin · ${px(w.margin)}`);
+    assert.equal(await figure('narrow'), `Reading width · ${px(w.narrow)}`);
+    assert.equal(await figure('aside'), `Aside · ${px(w.aside)}`);
+    const shares = await drawing.evaluate((node) => {
+      const frame = node.querySelector('.page-sketch-window').getBoundingClientRect();
+      return [...node.querySelectorAll('.page-sketch-guide')].map((guide) => (guide.getBoundingClientRect().left - frame.left - 1) / (frame.width - 2));
+    });
+    for (const [index, share] of shares.entries()) assert.ok(Math.abs(share - (w.inset + index * w.content) / width) < 0.005, `${kind}: a content edge at ${share}`);
+  }
+  const { twoFrom } = pageWidths(resolved, 1440);
+  assert.equal(await sketch.locator('[data-figure="columns"]').textContent(), twoFrom ? `Text and Aside side by side from a window of ${px(twoFrom)}` : '');
+  assert.match(await sketch.locator('figcaption').textContent(), new RegExp(`${px(resolved.layout.wide)} at most`));
+  const example = await readyFrame(page, 'page-layout');
+  const real = await example.evaluate(() => {
+    const edges = (node) => { const box = node.getBoundingClientRect(); return [box.left, box.width]; };
+    return {
+      width: innerWidth,
+      guides: [...document.querySelectorAll('.page-layout-guides > i')].map((node) => node.getBoundingClientRect().left),
+      content: [...document.querySelectorAll('.kn-header-inner, .kn-band-content')].map(edges),
+      areas: [...document.querySelectorAll('.kn-reading-area')].map((area) => [area.dataset.knSide, edges(area.querySelector('.kn-reading-area-flow')), area.querySelector('.kn-reading-area-aside') && edges(area.querySelector('.kn-reading-area-aside'))]),
+    };
+  });
+  const w = pageWidths(resolved, real.width);
+  const near = (a, b, what) => assert.ok(Math.abs(a - b) <= 1, `${what}: ${a} is not ${b}`);
+  for (const [left, size] of real.content) {
+    near(left, real.guides[0], 'a content edge on the start guide');
+    near(left + size, real.guides[1], 'a content edge on the end guide');
+    near(left, w.inset, 'the content where the sketch reckons it');
+  }
+  for (const [side, flow, aside] of real.areas) {
+    const boxes = readingBoxes(w, side);
+    near(flow[0], boxes.narrow[0], `${side}: Narrow's start`);
+    near(flow[1], boxes.narrow[1], `${side}: Narrow's width`);
+    if (aside) {
+      near(aside[0], boxes.aside[0], `${side}: the Aside's start`);
+      near(aside[1], boxes.aside[1], `${side}: the Aside's width`);
+    }
+  }
 }
 
 test('catalogue covers the specification and has the requested order', async () => {
@@ -93,7 +147,7 @@ test('copy has no unused keys and all values are strings', async () => {
     ...[100, 200, 300, 400, 500, 600, 700, 800, 900].map((name) => `weight.${name}`),
     ...[1.067, 1.125, 1.2, 1.25, 1.333, 1.414, 1.5, 1.6, 1.618, 1.667, 1.778, 1.875, 2].map((name) => `scale.${name}`),
     ...['default', 'hover', 'focus', 'active', 'disabled'].map((name) => `state.${name}`),
-    ...['box', 'box-lifted', 'header', 'header-panel', 'panel', 'page'].flatMap((name) => [`shadow.${name}`, `shadow.${name}.job`]),
+    ...['box', 'box-lifted', 'header', 'panel', 'page'].flatMap((name) => [`shadow.${name}`, `shadow.${name}.job`]),
     ...['radius', 'shadow', 'layout', 'light', 'dark', 'pair', 'ratio', 'target'].map((name) => `details.${name}`),
   ]);
   for (const [key, value] of Object.entries(copy)) {
@@ -125,6 +179,8 @@ test('offline ZIP reader works from file URLs for normal, primary-only and stres
         model.inputs['brand-colors'].secondary = '#7a3e9d';
         model.inputs.shadow.strength = 50;
       }
+      // Other widths than the example's, which the Page page's sketch must follow.
+      if (fixture === 'primary-only') model.inputs.layout = { wide: 1040, narrow: 640 };
       model.project.introduction = 'A short introduction.\n\nA second paragraph with <literal> text.';
       model.project.contact = { name: 'Design owner', email: 'review@example.invalid' };
       model.project.explanations = Object.fromEntries(['colour', 'typefaces', 'type-scale', 'space-shape', 'shadow', 'components'].map((key) => [key, 'A choice made for clear information.\n\nA second reason.']));
@@ -166,9 +222,6 @@ test('offline ZIP reader works from file URLs for normal, primary-only and stres
         await page.setViewportSize({ width, height: 1000 });
         for (const entry of pageList()) {
           await navigate(page, entry.id);
-          if (width === 1440) {
-            for (const summary of await page.locator('.is-current .variants > summary').all()) await summary.click();
-          }
           const overflow = await page.evaluate(() => document.documentElement.scrollWidth - innerWidth);
           assert.ok(overflow <= 1, `${fixture} ${entry.id} ${width}: overflow ${overflow}`);
           assert.equal(await page.locator('.document-page:visible').count(), 1);
@@ -224,9 +277,11 @@ test('offline ZIP reader works from file URLs for normal, primary-only and stres
       if (fixture !== 'stress') assert.ok(beforeSize > afterSize);
       await page.keyboard.press('ArrowRight');
       assert.equal(await page.locator('.is-current').getAttribute('id'), 'type-scale');
+      // Each shadow in a scene of its own: shadow-scenes.test.js looks into them.
       await navigate(page, 'shadow');
-      const shadows = await page.locator('.shadow-object').evaluateAll((elements) => elements.map((element) => getComputedStyle(element).boxShadow));
-      assert.ok(shadows.every((value) => model.inputs.shadow.strength ? value !== 'none' : value === 'none'));
+      const card = await readyFrame(page, 'shadow-box');
+      const cardShadow = await card.locator('.kn-card').first().evaluate((node) => getComputedStyle(node).boxShadow);
+      assert.ok(model.inputs.shadow.strength ? cardShadow !== 'none' : cardShadow === 'none');
       await navigate(page, 'header');
       const header = await readyFrame(page, 'header-a-menu');
       await header.locator('[data-kn-trigger="menu"]').click();
@@ -237,6 +292,12 @@ test('offline ZIP reader works from file URLs for normal, primary-only and stres
       assert.equal(await header.locator('[data-kn-panel="search"]').isVisible(), true);
       const toolbar = page.locator('#header .page-toolbar');
       const toolbarBefore = await toolbar.boundingBox();
+      // The reader's switches are the document's, not samples: each named, on the sidebar's Surface, and the chosen one
+      // in plain text colour, never in the design's button colour.
+      assert.equal(await toolbar.getAttribute('data-kn-surface'), 'raised');
+      assert.equal(await toolbar.locator('.toolbar-label').count(), await toolbar.locator('.segmented').count());
+      const chosen = await toolbar.locator('[aria-pressed="true"]').first().evaluate((node) => getComputedStyle(node).backgroundColor);
+      assert.equal(chosen, await toolbar.evaluate((node) => getComputedStyle(node).color));
       await toolbar.locator('[data-value="768"]').click();
       assert.equal(await header.evaluate(() => innerWidth), 768);
       await toolbar.locator('[data-value="390"]').click();
@@ -249,7 +310,9 @@ test('offline ZIP reader works from file URLs for normal, primary-only and stres
         await header.evaluate(() => document.fonts.load('16px "Mona Sans"'));
         const loaded = await header.evaluate(() => [...document.fonts].some((face) => face.family === 'Mona Sans' && face.status === 'loaded'));
         assert.equal(loaded, true);
+        await checkScreens(page);
       }
+      await checkPageSketch(page, model.inputs);
       await navigate(page, 'forms');
       const consent = await readyFrame(page, 'consent-banner');
       await consent.getByRole('button', { name: 'Open privacy choices' }).click();
@@ -291,6 +354,65 @@ test('offline ZIP reader works from file URLs for normal, primary-only and stres
     await rm(pathResolve('node_modules/.cache/presentation-tests'), { recursive: true, force: true });
   }
 });
+
+// At Tablet and Phone a specimen shows the screen and no more: a bordered window as wide as the width, plus its border,
+// and as tall as the frame, with no box of the stage's own around it. At every width a frame shows its whole content,
+// without scrolling inside, except the whole-page example's own 560 px viewport; header and consent keep their room.
+async function checkScreens(page) {
+  const shown = (id) => `#${id} .page-content > .specimen`;
+  for (const id of ['footer', 'page', 'forms', 'header']) {
+    await navigate(page, id);
+    await page.waitForFunction((selector) => [...document.querySelectorAll(`${selector} iframe`)].every((frame) => {
+      const child = frame.contentDocument;
+      return child?.readyState === 'complete' && child.body?.childElementCount && [...child.images].every((image) => image.complete);
+    }), shown(id));
+    for (const width of ['768', '390', 'wide']) {
+      await page.locator(`#${id} [data-frame-width] [data-value="${width}"]`).click();
+      // The frames fit their content once the reader's observers have run; a frame that never does fails below.
+      await page.waitForFunction((selector) => [...document.querySelectorAll(`${selector} iframe`)].every((frame) => {
+        const fixed = frame.closest('.specimen-stage').hasAttribute('data-fixed');
+        return fixed || frame.contentDocument.documentElement.scrollHeight <= frame.contentWindow.innerHeight;
+      }), shown(id), { timeout: 5000 }).catch(() => {});
+      const shapes = await page.locator(shown(id)).evaluateAll((specimens) => specimens.map((specimen) => {
+        const stage = specimen.querySelector('.specimen-stage');
+        const screen = stage.querySelector('.specimen-screen');
+        const frame = screen.querySelector('iframe');
+        const style = getComputedStyle(screen);
+        const [outer, inner] = [screen, frame].map((node) => node.getBoundingClientRect());
+        return {
+          id: specimen.dataset.specimen,
+          fixed: stage.hasAttribute('data-fixed'),
+          screen: [outer.width, outer.height],
+          frame: [inner.width, inner.height],
+          inner: [frame.contentWindow.innerWidth, frame.contentWindow.innerHeight],
+          content: frame.contentDocument.documentElement.scrollHeight,
+          border: [parseFloat(style.borderLeftWidth) + parseFloat(style.borderRightWidth), parseFloat(style.borderTopWidth) + parseFloat(style.borderBottomWidth)],
+          column: specimen.closest('.page-content').getBoundingClientRect().width,
+          stage: [getComputedStyle(stage).borderTopWidth, getComputedStyle(stage).backgroundColor],
+        };
+      }));
+      for (const shape of shapes) {
+        const message = `${id} ${width}: ${JSON.stringify(shape)}`;
+        assert.ok(shape.border[0] > 0 && shape.border[1] > 0, `the screen is bordered, ${message}`);
+        if (width === 'wide') assert.ok(Math.abs(shape.screen[0] - shape.column) < 0.5, `Wide fills the column, ${message}`);
+        else {
+          assert.equal(shape.inner[0], Number(width), `the real width, ${message}`);
+          assert.equal(shape.screen[0], Number(width) + shape.border[0], `the screen is as wide as the width, ${message}`);
+        }
+        assert.ok(Math.abs(shape.screen[0] - shape.frame[0] - shape.border[0]) < 0.5, `the screen hugs the frame's width, ${message}`);
+        assert.ok(Math.abs(shape.screen[1] - shape.frame[1] - shape.border[1]) < 0.5, `the screen hugs the frame's height, ${message}`);
+        assert.deepEqual(shape.stage, ['0px', 'rgba(0, 0, 0, 0)'], `no box around the screen, ${message}`);
+        if (shape.fixed) {
+          assert.equal(shape.inner[1], 560, `the whole-page example keeps its own viewport, ${message}`);
+          assert.ok(shape.content > shape.inner[1], `and scrolls inside it, ${message}`);
+        } else {
+          assert.ok(shape.content <= shape.inner[1], `the frame shows its whole content, ${message}`);
+        }
+        if (['header-a-menu', 'consent-banner'].includes(shape.id)) assert.ok(shape.inner[1] >= 560, `room for the overlays, ${message}`);
+      }
+    }
+  }
+}
 
 async function checkComments(page, url) {
   await navigate(page, 'header');
@@ -516,23 +638,20 @@ test('tool saves presentation prose, keeps controls still and serves the exporte
     await preview.waitForFunction(() => document.querySelector('.kn-header-slogan')?.textContent === 'Calm and clear');
     assert.equal(await page.locator('[data-path="project.slogan"]').evaluate((node) => node === document.activeElement), true);
 
-    // The search box can be held open while it is set, and the control keeps the focus.
-    const showSearch = page.locator('[data-show-panel="search"]');
-    await showSearch.click();
-    await preview.waitForFunction(() => document.querySelector('[data-kn-panel="search"]').open);
-    await page.waitForFunction(() => document.activeElement?.dataset.showPanel === 'search');
+    // The search box and the large menu stand open in frames of their own while they are set, and the control keeps the focus.
+    const searchFrame = await (await page.locator('#view-wide [data-panel-frame="search"]').elementHandle()).contentFrame();
+    const menuFrame = await (await page.locator('#view-wide [data-panel-frame="menu"]').elementHandle()).contentFrame();
+    await searchFrame.waitForFunction(() => document.querySelector('[data-kn-panel="search"]')?.matches(':modal'));
     await page.locator('[data-path="inputs.header.search-surface"]').selectOption('tint');
-    await preview.waitForFunction(() => document.querySelector('.kn-header-search-box').dataset.knSurface === 'tint' && document.querySelector('[data-kn-panel="search"]').open);
+    await searchFrame.waitForFunction(() => document.querySelector('.kn-header-search-box').dataset.knSurface === 'tint' && document.querySelector('[data-kn-panel="search"]').open);
     await flag('header.search-blur').click();
-    await preview.waitForFunction(() => document.querySelector('[data-kn-panel="search"]').dataset.knBlur === 'false');
+    await searchFrame.waitForFunction(() => document.querySelector('[data-kn-panel="search"]').dataset.knBlur === 'false');
     await flag('header.search-links').click();
-    await preview.waitForFunction(() => !document.querySelector('.kn-header-search-links'));
-    await showSearch.click();
-    await preview.waitForFunction(() => !document.querySelector('[data-kn-panel="search"]').open);
-    await page.locator('[data-show-panel="menu"]').click();
+    await searchFrame.waitForFunction(() => !document.querySelector('.kn-header-search-links'));
+    await page.waitForFunction(() => document.activeElement?.dataset.flag === 'inputs.header.search-links');
+    assert.equal(await preview.evaluate(() => document.querySelectorAll('.kn-header-panel:is([open], :popover-open)').length), 0, 'the page itself holds nothing open');
     await flag('header.numbered').click();
-    await preview.waitForFunction(() => document.querySelector('[data-kn-panel="menu"]').open && document.querySelector('.kn-megamenu-number'));
-    await page.locator('[data-show-panel="menu"]').click();
+    await menuFrame.waitForFunction(() => document.querySelector('[data-kn-panel="menu"]').open && document.querySelector('.kn-megamenu-number'));
 
     // The footer's cells turn on and off where they stand, in the same footer, and no control is off.
     await openPage('Frame', 'Footer');
@@ -627,6 +746,11 @@ test('tool saves presentation prose, keeps controls still and serves the exporte
     await page.locator('[data-path="inputs.breadcrumbs.narrow"]').selectOption('parent');
     await mobile.waitForFunction(() => [...document.querySelectorAll('.kn-breadcrumbs li')].filter((item) => getComputedStyle(item).display !== 'none').length === 1);
     assert.ok(await preview.evaluate(() => [...document.querySelectorAll('.kn-breadcrumbs li')].filter((item) => getComputedStyle(item).display !== 'none').length > 1), 'a wide window keeps the whole trail');
+    // As much as fits, from the end: one line on a phone, every step still there, and the whole trail on a wide window.
+    await page.locator('[data-path="inputs.breadcrumbs.narrow"]').selectOption('fit');
+    await mobile.waitForFunction(() => { const list = document.querySelector('.kn-breadcrumbs[data-kn-narrow="fit"] > ol'); return list && getComputedStyle(list).flexDirection === 'row-reverse' && [...list.children].every((item) => getComputedStyle(item).display !== 'none'); });
+    assert.equal(await preview.evaluate(() => getComputedStyle(document.querySelector('.kn-breadcrumbs > ol')).flexDirection), 'row', 'a wide window keeps the whole trail');
+    await page.locator('[data-path="inputs.breadcrumbs.narrow"]').selectOption('trail');
     await flag('breadcrumbs.show').click();
     await preview.waitForFunction(() => !document.querySelector('.kn-breadcrumbs'));
     assert.equal(await page.locator('[data-path="inputs.breadcrumbs.home"]').isDisabled(), true);
@@ -635,13 +759,12 @@ test('tool saves presentation prose, keeps controls still and serves the exporte
 
     // Every component has its page, and the preview shows the real ones, in the design as it is.
     await openPage('Components', 'Cards');
-    await preview.waitForFunction(() => location.pathname === '/catalogue.html' && document.querySelector('[data-component="card"]') && scrollY > 0);
-    await mobile.waitForFunction(() => location.pathname === '/catalogue.html');
+    await preview.waitForFunction(() => location.pathname === '/catalogue/cards.html' && document.querySelector('[data-component="card"]'));
+    await mobile.waitForFunction(() => location.pathname === '/catalogue/cards.html');
     for (const name of ['Opening', 'Sections', 'Text', 'Buttons', 'Cards', 'Media', 'Finding', 'Forms'])
       assert.equal(await page.locator('.page-link', { hasText: name }).count(), 1, name);
     await preview.waitForFunction((core) => document.getElementById('kn-live-core').textContent === core, await page.locator('#kn-live-core').textContent());
-    await page.locator('[data-look-key="grid-columns"][data-look-value="4"]').click();
-    await preview.waitForFunction(() => document.querySelector('[data-look="grid-columns:4"]').getClientRects().length && !document.querySelector('[data-look="grid-columns:2"]').getClientRects().length);
+    assert.equal(await preview.locator('[data-component="card-grid"] .kn-card-grid').count(), 3, 'a Card Grid of two, three and four columns');
     await page.locator('[data-page="cards"] .next').click();
     await page.waitForFunction(() => document.querySelector('.page-link[aria-current="true"]').textContent === 'Media');
     await openPage('Frame', 'Header');

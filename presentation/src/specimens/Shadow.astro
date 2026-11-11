@@ -1,0 +1,75 @@
+---
+import Page from '../../../src/components/Page.astro';
+import Header from '../../../src/components/Header.astro';
+import Footer from '../../../src/components/Footer.astro';
+import Band from '../../../src/components/Band.astro';
+import BodyText from '../../../src/components/BodyText.astro';
+import Card from '../../../src/components/Card.astro';
+import CardGrid from '../../../src/components/CardGrid.astro';
+import { sample } from '../samples.js';
+import { context } from './context.js';
+import { t, ownPictures } from '../data.js';
+import { headerProps, footerProps, pageProps } from '../frame.js';
+const { id, project, resolved } = Astro.props;
+const { list } = context(project, resolved, ownPictures);
+// The Shadow page: each shadow where a site has it, in a small window onto a page of the real components. A short menu,
+// the first three of the menu shown with two links to a column and no descriptions, keeps the open panel low enough to
+// show the page under it, and the header's link menu shows the same three.
+const full = headerProps(resolved.header, project);
+const short = full.menu.slice(0, 3).map(({ linkMenu, ...item }) => ({ ...item, ...(item.children && { children: item.children.slice(0, 2).map(({ description, ...child }) => child) }) }));
+const header = { ...full, menu: short };
+const SURFACES = ['raised', 'tint', 'brand'];
+---
+
+{['shadow-header', 'shadow-panel'].includes(id) && (
+  <div class="shadow-scene" data-shadow-scene={id.slice('shadow-'.length)}>
+    <Page {...pageProps(resolved.page)}>
+      <Header slot="header" {...header} />
+      <Band>
+        <BodyText>
+          <h2 data-kn-type="heading-3">{sample.heading}</h2>
+          <p>{sample.paragraph}</p>
+          <p>{sample.paragraph}</p>
+          <p>{sample.paragraph}</p>
+        </BodyText>
+      </Band>
+    </Page>
+  </div>
+)}
+{id === 'shadow-page' && (
+  <div class="shadow-scene" data-shadow-scene="page">
+    <Page {...pageProps(resolved.page)}>
+      <Band>
+        <BodyText>
+          <p>{sample.paragraph}</p>
+          <p>{sample.paragraph}</p>
+        </BodyText>
+      </Band>
+      <Footer slot="footer" {...footerProps(resolved.footer, project, resolved.header)} />
+    </Page>
+  </div>
+)}
+{id === 'shadow-box' && (
+  <Band>
+    <CardGrid columns={3}>
+      {SURFACES.map((surface, index) => (
+        <div class="shadow-cell">
+          <p class="shadow-caption" data-kn-type="label">{t(`surface.${surface}`)}</p>
+          <Card heading={list[index].title} text={list[index].text} href="#services" surface={surface} />
+        </div>
+      ))}
+    </CardGrid>
+  </Band>
+)}
+{id === 'shadow-box-lifted' && (
+  <Band>
+    <CardGrid columns={2} class="shadow-pair">
+      {['default', 'hover'].map((state) => (
+        <div class="shadow-cell">
+          <p class="shadow-caption" data-kn-type="label">{t(`state.${state}`)}</p>
+          <Card heading={list[0].title} text={list[0].text} href="#services" surface="raised" class={state === 'hover' ? 'is-hover' : undefined} />
+        </div>
+      ))}
+    </CardGrid>
+  </Band>
+)}

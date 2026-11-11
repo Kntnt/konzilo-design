@@ -62,22 +62,29 @@ p {
 .nav-chapter {
   margin-top: 0.625rem;
 }
+/* Chapters lead and pages follow: a chapter stands in the text colour at the margin, and its pages stand indented
+   under it on a thin guide, muted until one is chosen, so the label's small size never makes a chapter read as the
+   lesser of the two. */
 a.nav-chapter-link {
-  display: block;
-  padding-block: 0.1875rem;
-  color: var(--kn-text-muted);
-  text-decoration: none;
-}
-a.nav-chapter-link[aria-current], .nav-chapter.is-active a.nav-chapter-link {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.1875rem 0.625rem;
+  margin-inline: -0.625rem;
   color: var(--kn-text);
+  text-decoration: none;
+  border-radius: var(--kn-radius-control);
 }
 .nav-pages {
-  margin-top: 0.25rem;
+  margin-block: 0.25rem 0.5rem;
+  margin-inline-start: 0.25rem;
+  padding-inline-start: 0.75rem;
+  border-inline-start: 1px solid var(--kn-border);
 }
 .js .nav-chapter:not(.is-active) .nav-pages {
   display: none;
 }
-.nav-pages a, a.nav-comments {
+.nav-pages a {
   display: flex;
   justify-content: space-between;
   gap: 0.5rem;
@@ -88,17 +95,16 @@ a.nav-chapter-link[aria-current], .nav-chapter.is-active a.nav-chapter-link {
   font-size: var(--kn-type-small-size);
   border-radius: var(--kn-radius-control);
 }
-.nav-pages a[aria-current], .nav-comments[aria-current] {
-  background: var(--kn-background-alt);
+.nav-pages a:not([aria-current]) {
+  color: var(--kn-text-muted);
+}
+.nav-pages a[aria-current] {
   font-weight: 600;
+}
+/* The page shown, whether a page under a chapter or a chapter that is a page of its own. */
+.nav-pages a[aria-current], a.nav-chapter-link[aria-current] {
+  background: var(--kn-background-alt);
   box-shadow: inset 3px 0 var(--kn-accent);
-}
-a.nav-comments {
-  margin-block: 0.375rem;
-  padding-block: 0.5rem;
-}
-#sidebar .nav-comments {
-  flex: none;
 }
 #main {
   margin-left: 16.25rem;
@@ -207,7 +213,7 @@ a.nav-comments {
 }
 .ramp-cells {
   display: grid;
-  grid-template-columns: repeat(10, minmax(0, 1fr));
+  grid-template-columns: repeat(12, minmax(0, 1fr));
   border-radius: var(--kn-radius-control);
   overflow: hidden;
 }
@@ -239,7 +245,9 @@ a.nav-comments {
 input[type='checkbox'], input[type='range'] {
   accent-color: var(--kn-accent);
 }
-details {
+/* Nothing in the document is folded away but the reference values on the details page (owner, 2026-11-11): those are
+   disclosures, and a section of explanation elsewhere stands open under the same line. */
+details, .reference {
   border-block-start: 1px solid var(--kn-border);
   margin-block: 1.75rem;
   padding-top: 1.25rem;
@@ -247,7 +255,7 @@ details {
 summary {
   font-weight: 600;
 }
-summary + * {
+summary + *, .reference > h2 + * {
   margin-top: 1.5rem;
 }
 .tuning-pair {
@@ -295,36 +303,32 @@ summary + * {
   border-radius: var(--kn-radius-card);
   border: var(--kn-frame-width) solid var(--kn-frame-color);
 }
-.shadow-object {
-  padding: var(--kn-space-plate);
-  border: 1px solid var(--kn-border);
-  border-radius: var(--kn-radius-card);
-  min-height: 11.25rem;
-  display: flex;
-  align-items: center;
-}
-.shadow-object h2 {
-  margin: 0;
-}
 .specimen {
   margin-block: 2.25rem;
   min-width: 0;
 }
+/* A specimen's stage is its place on the page, and the screen on it is the frame's window, bordered: the whole column at
+   Wide, and at a narrower width only that window, under its name, with the document around it. The frame fits its
+   content at every width (reader.js), and what follows moves with it. */
 .specimen-stage {
   width: 100%;
+}
+.specimen-screen {
   overflow: auto;
   background: var(--kn-background);
   border: 1px solid var(--kn-border);
 }
-.specimen-stage[data-fixed] {
-  height: 35rem;
+.specimen[data-narrow],
+.specimen[data-narrow] .specimen-screen {
+  width: fit-content;
+  max-width: 100%;
+  margin-inline: auto;
 }
-.specimen-stage iframe {
+.specimen-screen iframe {
   display: block;
   border: 0;
   width: 100%;
   height: 35rem;
-  margin-inline: auto;
 }
 .table-scroll {
   max-width: 100%;
@@ -398,7 +402,7 @@ pre {
 }
 @media (width < 68.75rem) {
   .ramp-cells {
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-columns: repeat(6, minmax(0, 1fr));
   }
 }
 @media (width < 56.25rem) {
@@ -453,11 +457,18 @@ pre {
 .page-toolbar {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.75rem;
+  align-items: center;
+  gap: 0.75rem 1.5rem;
   margin-bottom: 0.5rem;
-  padding-block: 0.75rem;
-  border-bottom: 1px solid var(--kn-border);
-  background: var(--kn-background);
+  padding: 0.625rem 0.875rem;
+}
+.toolbar-setting {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.625rem;
+}
+.toolbar-label {
+  color: var(--kn-text-muted);
 }
 @media (width >= 56.25rem) {
   .page-toolbar {
@@ -474,6 +485,7 @@ html:not(.js) .page-toolbar {
   border: 1px solid var(--kn-border-strong);
   border-radius: var(--kn-radius-control);
   overflow: hidden;
+  background: var(--kn-background);
   font-size: var(--kn-type-small-size);
 }
 .segmented button {
@@ -486,8 +498,8 @@ html:not(.js) .page-toolbar {
   border-inline-start: 1px solid var(--kn-border-strong);
 }
 .segmented button[aria-pressed='true'] {
-  background: var(--kn-button-background);
-  color: var(--kn-button-text);
+  background: var(--kn-text);
+  color: var(--kn-background);
 }
 .segmented button:focus-visible {
   outline-offset: -3px;
@@ -502,6 +514,11 @@ html:not(.js) .page-toolbar {
 }
 .specimen-name {
   font-weight: 600;
+}
+.specimen-note {
+  max-width: var(--kn-layout-narrow);
+  margin-block: 0.625rem 0;
+  color: var(--kn-text-muted);
 }
 .specimen-comment {
   border: 0;
@@ -624,12 +641,6 @@ html:not(.js) .page-toolbar {
 }
 .shape-object h2, .shape-object p {
   margin: 0;
-}
-.shadow-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(16.25rem, 1fr));
-  gap: 4rem;
-  padding: 2rem 1.25rem;
 }
 @media (width < 56.25rem) {
   .comment-toggle {

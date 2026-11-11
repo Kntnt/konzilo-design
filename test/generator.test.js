@@ -110,8 +110,11 @@ test('sRGB / OKLCH round trips, gamut fitting and WCAG endpoints', () => {
 
 test('ramps solve contrast with byte-quantisation tolerance and retain exactly one seed anchor', () => {
   const solved = ramp('#168b83', { anchor: false });
-  assert.equal(solved.length, 10);
-  for (const [i, value] of solved.entries()) assert.ok(Math.abs(value['on-page'] - TARGETS[i]) < 0.12);
+  // Ten steps for each mode, eight of them shared: dark mode's own 850 and 975 beside light mode's 900 and 950.
+  assert.deepEqual(solved.map(({ step }) => step), [100, 200, 300, 400, 500, 600, 700, 800, 850, 900, 950, 975]);
+  // Rounding to bytes moves a step by up to a code unit, which costs more contrast the darker the step: as much as about
+  // 1.2 per cent at steps 800 and 850, 0.16 at 850's 13.5.
+  for (const [i, value] of solved.entries()) assert.ok(Math.abs(value['on-page'] / TARGETS[i] - 1) < 0.015, `step ${value.step}`);
   const anchored = ramp('#168b83');
   assert.equal(anchored.filter((s) => s.anchor).length, 1);
   assert.equal(anchored.find((s) => s.anchor).hex, '#168b83');
@@ -179,5 +182,9 @@ test('checked-in neutral example is current, schema-valid and fully reproducible
   const example = JSON.parse(await readFile(new URL('../examples/example.design.json', import.meta.url), 'utf8'));
   validateDesignFile(example);
   assert.equal(await checkFingerprint(example), true);
-  assert.deepEqual(await resolve(example.inputs), example.resolved);
+  // The generator's version is the package's, which every release raises, so the example need not follow it.
+  const { 'generator-version': version, ...resolved } = await resolve(example.inputs);
+  const { 'generator-version': written, ...stored } = example.resolved;
+  assert.deepEqual(resolved, stored);
+  assert.match(written, /^\d+\.\d+\.\d+$/);
 });

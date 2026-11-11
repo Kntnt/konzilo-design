@@ -107,9 +107,12 @@ export async function inlineBuild(directory, resolved, designFile) {
     if (!body) throw new Error(`Specimen has no body: ${entry}`);
     specimens[entry] = { body, scripts: source.scripts, styles: source.styles };
   }
-  // Every component on one page is for the tool; the report shows them one at a time.
-  const catalogue = specimens.catalogue;
-  delete specimens.catalogue;
+  // A document of its own for each component page is for the tool; the report shows its specimens one at a time.
+  const catalogues = {};
+  for (const entry of Object.keys(specimens).filter((name) => name.startsWith('catalogue-'))) {
+    catalogues[entry.slice('catalogue-'.length)] = specimens[entry];
+    delete specimens[entry];
+  }
   const main = await extract(await readFile(join(root, 'index.html'), 'utf8'));
   // The report keeps one copy of each picture, and a specimen takes it when it opens.
   const pictures = {};
@@ -120,7 +123,7 @@ export async function inlineBuild(directory, resolved, designFile) {
   html = html.replace('</body>', () => `<script id="kn-specimen-data" type="application/json">${safeJson(data)}</script>${main.scripts.map((index) => `<script>${scripts[index]}</script>`).join('')}</body>`);
   const standalone = ({ body, styles: own, scripts: run }) => `<!doctype html><html lang="en"><head><meta charset="utf-8"><style>${shared}\n${own.map((index) => styles[index]).join('\n')}</style><style id="kn-live-core"></style></head>${body}${run.map((index) => `<script>${scripts[index]}</script>`).join('')}</html>`;
   const previewHtml = standalone(specimens.preview);
-  const catalogueHtml = standalone(catalogue);
+  const catalogueHtml = Object.fromEntries(Object.entries(catalogues).map(([page, specimen]) => [page, standalone(specimen)]));
   await writeFile(join(root, 'index.html'), html);
-  return { html, preview: previewHtml, catalogue: catalogueHtml };
+  return { html, preview: previewHtml, catalogues: catalogueHtml };
 }

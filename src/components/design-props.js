@@ -69,7 +69,9 @@ export function menuProps(entries = [], { current, base = '/', linkMenu } = {}) 
 
 // `menu`, `languages`, `search` and `cta` are the site's, in the shapes Header takes, `home` where its brand leads,
 // `logos` where its logos are served and `menuWord` what its menu button says. The word in an empty search field,
-// where the design shows one, is the site's too: `search.word`, such as 'Sök', or else its `label`.
+// where the design shows one, is the site's too: `search.word`, such as 'Sök', or else its `label`. So are the rows above
+// and below the large menu, which a site gives in Header's menu-above and menu-below slots: they show where the design
+// has them on.
 export function headerProps(settings, project, { menu = [], languages = [], search, cta, home, logos, menuWord = 'Menu' } = {}) {
   const sticky = settings.attachment === 'sticky';
   const button = { word: { word: menuWord }, icon: { word: '', icon: 'menu' }, off: false }[settings['menu-button']];
@@ -89,6 +91,8 @@ export function headerProps(settings, project, { menu = [], languages = [], sear
       : undefined,
     cta: settings.cta ? cta : undefined,
     numbered: settings.numbered,
+    menuAbove: settings['menu-above'] === true,
+    menuBelow: settings['menu-below'] === true,
   };
 }
 

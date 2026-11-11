@@ -2,10 +2,10 @@
 // once and stays in the page, so changing a value never rebuilds what is being dragged.
 import { SYSTEM_SANS, SYSTEM_MONOSPACE } from '/src/generator/defaults.js';
 import { TYPEFACES, CATEGORIES } from '/src/fonts/catalog.js';
-import { scales, LINE, COMMON_WIDTHS, lineShare } from './logic.js';
+import { scales, LINE, COMMON_WIDTHS, lineShare, menuText, ownText } from './logic.js';
+import { menu as sampleMenu, footer as sampleFooter } from '/presentation/src/samples.js';
 import { COMPONENT_GROUPS } from '/src/design-md/components.js';
-import { componentPages } from '/presentation/src/catalog.js';
-import { TOOL_PAGES } from '/presentation/src/looks.js';
+import { CATALOGUE, sectionName } from '/presentation/src/catalogue.js';
 
 export const CHAPTERS = [
   ['start', ['start']],
@@ -35,6 +35,9 @@ export const STEP_ROWS = [
   ['small', 'Small', 2.25],
   ['label', 'Label', 2.25],
 ];
+// The table also shows body text, the base every step is reckoned from, between the lead above it and small text
+// below. Its size comes from the two sliders, so its row has no steppers.
+export const SCALE_ROWS = STEP_ROWS.flatMap((row) => (row[0] === 'lead' ? [row, ['body', 'Body', 2.5]] : [row]));
 export const escapeHtml = (value) =>
   String(value ?? '').replace(
     /[&<>"']/g,
@@ -58,6 +61,8 @@ const SHADOW_COLOURS = [
   ['gray', 'Grey'],
   ['black', 'Black'],
 ];
+// The frame can also take each plate's own border colour, the quiet edge (owner, 2026-11-11).
+const FRAME_COLOURS = [SHADOW_COLOURS[0], ['border', 'Quiet edge'], ...SHADOW_COLOURS.slice(1)];
 
 function slider(label, path, min, max, help, { step = 1, low = '', high = '', colour = '' } = {}) {
   const ends = low || high
@@ -107,6 +112,40 @@ const PICTURE_TILES = [
   ['person-3', 'Person 3', 'A person’s card.'],
   ['person-4', 'Person 4', 'A person’s card.'],
 ];
+// The client's own menu and footer, which the preview and the presentation show in place of the samples. Each field
+// takes words, which the design file keeps as what they come to (logic.js), and its grey text is what shows while it is
+// empty: the sample, which also shows how to write it.
+const sampleTree = (items) => items.map(({ label, description, children }) => ({ label, ...(description && { description }), ...(children && { items: sampleTree(children) }) }));
+const MENU_HELP = 'The client’s menu, one item a line. A line set in under another, by spaces or a tab, is its child: the top level is the link menu and the large menu’s headings, and the next level the links under each. A dash with a space on each side begins an item’s short description, as in Compact series - For where space is short. Bullets and numbers count as setting in, so an outline or a site map pasted from a document or a site keeps its levels. Left empty, the sample menu shows, as in grey here.';
+const OWN_CELLS = {
+  upper: {
+    b1: ['Social media', 'networks', 'One network a line: LinkedIn, Facebook, Instagram, YouTube, X, Spotify, Email or RSS, each shown as its icon. An address from the client’s site, such as linkedin.com/company/…, finds its icon too, and any other name shows as a word.'],
+    a2: ['Statement', 'text', 'A short text presenting the brand, such as a position statement. Each line stands as a line of its own.'],
+    b2: ['Links', 'links', 'Links for navigation, one a line, as they read: a selection from the menu, all of it, or links that do not fit there. Left empty, the menu’s top level shows, the client’s once there is one, as in grey here.'],
+  },
+  lower: {
+    a1: ['Address', 'text', 'The address. Each line stands as a line of its own.'],
+    b1: ['Registration', 'text', 'The registration number and registered office. Each line stands as a line of its own.'],
+    a2: ['Policies', 'links', 'Links to policies, one a line, such as the cookie policy and the privacy policy.'],
+    b2: ['Consent', 'links', 'Links to change the privacy settings and to revoke consents, one a line. In the presentation each opens the cookie settings.'],
+  },
+};
+// The cells as the Footer page's miniature has them, A1 and B1 above A2 and B2. The upper band's A1 is the brand, which
+// the identity gives, so it has nothing to write.
+function ownCell(band, bandName, cell) {
+  if (!OWN_CELLS[band][cell]) return `<div class="own-cell ui"><span class="own-head"><span><b>${cell.toUpperCase()}</b> Brand</span></span>
+    <p class="own-note">As the header shows it, from the logos and the client name above and the Header page’s Identity.</p></div>`;
+  const [name, kind, help] = OWN_CELLS[band][cell];
+  const path = `footer.${band}.${cell}`;
+  const empty = path === 'footer.upper.b2' ? '' : ' Left empty, the sample shows, as in grey here.';
+  return `<label class="own-cell ui"><span class="own-head"><span><b>${cell.toUpperCase()}</b> ${escapeHtml(name)}</span><span class="own-state" data-own-state="${path}"></span></span>
+    <textarea class="own-field" data-own="${path}" data-own-kind="${kind}" aria-label="${escapeHtml(`${bandName}, ${cell.toUpperCase()}: ${name}`)}" placeholder="${escapeHtml(ownText(kind, sampleFooter[band][cell]))}" ${tip(`${help}${empty}`)}></textarea></label>`;
+}
+const ownContent = () => `<section class="setting"><h2 class="why-head ui"><b>Menu</b><span data-own-state="menu"></span></h2>
+      <textarea class="own-field own-menu" data-own="menu" data-own-kind="menu" aria-label="Menu" placeholder="${escapeHtml(menuText(sampleTree(sampleMenu)))}" ${tip(MENU_HELP)}></textarea></section>
+    <section class="setting"><h2 class="why-head ui"><b>Footer</b><span>The client’s words, cell by cell, as on the Footer page</span></h2>
+      ${FOOTER_BANDS.map(([band, bandName]) => `<div class="own-band"><h3 class="own-band-name ui">${bandName}</h3>
+        <div class="own-cells">${['a1', 'b1', 'a2', 'b2'].map((cell) => ownCell(band, bandName, cell)).join('')}</div></div>`).join('')}</section>`;
 function start(copy) {
   const tile = (key, label, background) => `<div class="logo-tile" ${background}>
     <input type="file" hidden data-logo="${key}" accept="image/svg+xml,image/png" aria-label="${escapeHtml(label)}">
@@ -134,6 +173,7 @@ function start(copy) {
       </button>
       <button class="logo-remove ui" type="button" data-remove-picture="${slot}" hidden ${tip('Remove this photo. The sample takes its place, and Undo does not bring it back.')}>Remove</button>
     </div>`).join('')}</div></section>
+    ${ownContent()}
     <div class="why"><span class="why-head ui"><b>Introduction</b><span>The client reads this first</span></span>
       <textarea data-path="project.introduction" aria-label="Introduction" placeholder="${escapeHtml(copy['start.how'])}" ${tip('Optional introduction on the first page of the presentation. Blank lines make paragraphs.')}></textarea></div>
     <div class="why"><span class="why-head ui"><b>Design brief</b><span>For the designers and AI agents, not the client</span></span>
@@ -332,13 +372,15 @@ function scaleLine() {
   </div>`;
 }
 function typeScale(copy) {
-  const rows = STEP_ROWS.map(([key, name, height]) => `<div class="step" style="height: ${height}rem">
+  const rows = SCALE_ROWS.map(([key, name, height]) => `<div class="step" style="height: ${height}rem">
     <span class="step-name ui">${name}</span>
-    <span class="stepper ui">
+    ${key === 'body' ? `<span class="stepper ui">
+      <output class="figures step-base" data-step-value="body" ${tip('Body text is the base of the scale, step 0. Its size is set with the two sliders above, and every other style is a number of steps from it.')}>0</output>
+    </span>` : `<span class="stepper ui">
       <button type="button" data-step="${key}" data-delta="-1" aria-label="${name} one step smaller" ${tip('One step smaller. Other styles keep their size, and neighbours cannot cross.')}>−</button>
       <output class="figures" data-step-value="${key}"></output>
       <button type="button" data-step="${key}" data-delta="1" aria-label="${name} one step larger" ${tip('One step larger. Other styles keep their size, and neighbours cannot cross.')}>+</button>
-    </span>
+    </span>`}
     <span class="step-sample" data-kn-type="${key}" data-step-sample="${key}">${escapeHtml(copy['type.sample'])}</span>
     <output class="figures step-size" data-size="${key}"></output>
   </div>`).join('');
@@ -367,7 +409,7 @@ function corners(copy) {
     <div class="fields">
       ${slider('Corners', 'inputs.corner-profile', 0, 100, 'One setting for every corner, from square through discreet to clearly rounded. Controls first, then cards.', { low: 'Square', high: 'Clearly rounded' })}
       ${slider('Frame', 'inputs.frame.width', 0, 3, 'A solid line around buttons and cards, apart from the shadow. Hairlines in tables and fields stay as they are.', { low: 'None', high: '3 px' })}
-      ${choice('Frame colour', 'inputs.frame.color', SHADOW_COLOURS, 'The colour of the frame.')}
+      ${choice('Frame colour', 'inputs.frame.color', FRAME_COLOURS, 'The colour of the frame. Text draws it at full strength. Quiet edge gives each card its own border colour, a quiet line that follows the band it stands on and light or dark mode, and a filled button a ring in its own hover colour.')}
     </div>
     <div class="sample-cards">
       <div class="sample-panel"><span><span class="kn-button">${escapeHtml(copy['shape.button'])}</span></span>
@@ -406,7 +448,6 @@ function shadow(copy) {
 /* ---- The frame: what surrounds every page, and is chosen once. ---- */
 const setting = (title, body) => `<section class="setting"><h2 class="setting-title ui">${escapeHtml(title)}</h2>${body}</section>`;
 const flags = (items) => `<div class="chips ui">${items.map(([path, name, help]) => `<button class="chip" type="button" data-flag="inputs.${path}" ${tip(help)}>${escapeHtml(name)}</button>`).join('')}</div>`;
-const showPanel = (panel, name, help) => `<button class="plain show-panel ui" type="button" data-show-panel="${panel}" ${tip(help)}>${escapeHtml(name)}</button>`;
 const SURFACE_CHOICES = [['page', 'Page colour'], ['raised', 'Raised'], ['tint', 'Tint'], ['brand', 'Brand colour'], ['inverse', 'Dark']];
 const AXIS_CHOICES = [['row', 'Side by side'], ['column', 'Stacked']];
 
@@ -451,10 +492,9 @@ function headerPage(copy) {
     ${setting('The large menu', `
       ${flags([
         ['header.numbered', 'Numbered headings', 'Each heading in the large menu begins with its number: 01 /.'],
-        ['header.menu-above', 'Row above', 'A row of content above the menu, which goes where the menu falls to two columns or one, as on a tablet or a phone. The sample shows a link to an article.'],
-        ['header.menu-below', 'Row below', 'A row of content below the menu, which goes where the menu falls to two columns or one, as on a tablet or a phone. The sample shows a contact link.'],
-      ])}
-      ${showPanel('menu', 'Show it in the preview', 'Open the large menu in the preview, and keep it open while you change things.')}`)}
+        ['header.menu-above', 'Row above', 'A row of content above the menu, which the site fills, such as a link to an article. It goes where the menu falls to two columns or one, as on a tablet or a phone.'],
+        ['header.menu-below', 'Row below', 'A row of content below the menu, which the site fills, such as a contact link. It goes where the menu falls to two columns or one, as on a tablet or a phone.'],
+      ])}`)}
     ${setting('The search box', `<div class="fields">
         ${choice('Colour', 'inputs.header.search-surface', SURFACE_CHOICES, 'The colour of the box. Text, field and button follow it, with their contrast checked.')}
         ${choice('In the field', 'inputs.header.search-placeholder', [['none', 'Nothing'], ['word', 'The word Search'], ['icon', 'A magnifier']], 'What the empty field shows. The word is the site\'s own, such as Sök on a Swedish site. The word and the magnifier both go as soon as the visitor types.')}
@@ -464,8 +504,8 @@ function headerPage(copy) {
         ['header.search-heading', 'Heading', 'The word Search at the top of the box.'],
         ['header.search-links', 'Starting links', 'A few links under the field, for those who do not know what to search for.'],
         ['header.search-close', 'Close button', 'A cross in the corner of the box. Esc closes the box whether it is there or not, and so does a click outside the box.'],
-      ])}
-      ${showPanel('search', 'Show it in the preview', 'Open the search box in the preview, and keep it open while you change things.')}`)}
+      ])}`)}
+    <p class="component-note ui">The preview shows the page, and under it the large menu and the search box open, each in a frame of its own.</p>
     ${why('frame', 'Why this frame', copy)}${next('header', copy)}`;
 }
 
@@ -516,6 +556,7 @@ function pagePage(copy) {
         ${textField('Light mode', 'inputs.page.fill-light', 'A colour or gradient, as in CSS: #f8f8f6, or linear-gradient(#fff, #eee). Empty, it is the page colour.')}
         ${textField('Dark mode', 'inputs.page.fill-dark', 'A colour or gradient for dark mode, set on its own. Empty, it is the page colour.')}
       </div>`)}
+    <div class="page-sketch ui" data-page-sketch></div>
     ${next('page', copy)}`;
 }
 
@@ -526,7 +567,7 @@ function breadcrumbsPage(copy) {
     ${setting('How it looks', `<div class="picks picks-two ui">${SEPARATORS.map(([id, mark]) => `<button class="pick" type="button" data-pick="inputs.breadcrumbs.separator" data-value="${id}" ${tip('The mark between the steps.')}><span class="pick-trail">Services <b>${mark}</b> Planning</span></button>`).join('')}</div>
       <div class="fields">
         ${choice('First step', 'inputs.breadcrumbs.home', [['word', 'The word Home'], ['name', 'The site\'s name'], ['icon', 'A house']], 'How the trail begins. With a house, the word stays for those who hear the page.')}
-        ${choice('On a phone', 'inputs.breadcrumbs.narrow', [['trail', 'The whole trail, on several lines'], ['parent', 'Only the way up one level']], 'A long trail takes room from the heading on a narrow screen. Only the way up shows as ← Planning.')}
+        ${choice('On a phone', 'inputs.breadcrumbs.narrow', [['trail', 'The whole trail, on several lines'], ['parent', 'Only the way up one level'], ['fit', 'As much as fits, from the end']], 'A long trail takes room from the heading on a narrow screen. Only the way up shows as ← Planning. As much as fits keeps one line: the steps nearest the page, and … at the start where earlier steps are hidden, as … / Services / Planning.')}
       </div>
       ${flags([['breadcrumbs.current', 'Current page', 'The trail ends with the page itself, as plain text. Off, it ends with the page above.']])}`)}
     <p class="component-note ui">${escapeHtml(copy['breadcrumbs.place'])} Where the H1 is, you choose under Opening a page.</p>
@@ -577,6 +618,7 @@ const heroChoice = (label, name, choices) => `<div class="picks-labelled ui" rol
   </div>`;
 function heroPage(copy) {
   return `${head('opening', copy)}
+    <p class="component-note ui">These settings are the opening every page gets, unless the page itself chooses otherwise.</p>
     ${setting('Size', `<div class="picks picks-four ui">${HERO_SIZES.map((item) => heroPick('height', item)).join('')}</div>`)}
     ${setting('Picture', `<div class="picks picks-six ui">${HERO_PICTURES.map((item) => heroPick('picture', item)).join('')}</div>`)}
     ${setting('Text', `<div class="picks picks-three ui">${HERO_PLACES.map((item) => heroPick('place', item)).join('')}</div>
@@ -590,28 +632,22 @@ function heroPage(copy) {
       ${heroChoice('The hero\'s heading looks like', 'type', HERO_LOOKS)}
     </div>`)}
     <p class="component-note ui">The preview shows one screen, 16:10 on a desktop and upright on a tablet and a phone. The heading under the hero is real, and the grey bars stand for what follows it.</p>
-    ${setting('On this page', `<dl class="component-list"><div><dt class="ui">Hero</dt><dd>${escapeHtml(DESCRIPTIONS.get('Hero') ?? '')}</dd></div></dl>`)}
+    ${setting('On this page', sectionList('opening'))}
     ${why('components', 'About the components', copy)}${next('opening', copy)}`;
 }
 
 /* ---- The components: they take everything from the pages before, and show in the preview. ---- */
+// The panel holds only what the design file saves. A component's variants are chosen per use by whoever builds a page,
+// so the preview shows them all, and the page lists the preview's sections, named as the preview names them.
 const DESCRIPTIONS = new Map(COMPONENT_GROUPS.flatMap(([, items]) => items));
 DESCRIPTIONS.set('Pagination', 'Moves through a long list, page by page.');
-const LOOK_COLUMNS = { 2: 'picks-two', 3: 'picks-three', 4: 'picks-four', 5: 'picks-five' };
-// A look's row: one short word a variation. It changes what the preview shows, not the design.
-const lookRow = (component, [key, label, choices]) => `<div class="look ui" role="group" aria-label="${escapeHtml(`${component}: ${label}`)}">
-    <span class="look-name">${escapeHtml(label)}</span>
-    <div class="picks ${LOOK_COLUMNS[choices.length]}">${choices.map(([value, word, help]) => `<button class="pick" type="button" data-look-key="${key}" data-look-value="${value}" ${tip(help)}><span class="pick-word">${escapeHtml(word)}</span></button>`).join('')}</div>
-  </div>`;
-const componentPage = (id) => (copy) => {
-  const [, names] = componentPages.find(([page]) => page === id);
-  // The report opens the states below its Buttons; here they are among the choices.
-  return `${head(id, copy, id === 'buttons' ? { text: copy['buttons.tool-lead'] } : {})}
-    ${TOOL_PAGES[id].filter(({ looks }) => looks).map(({ name, title = name, looks }) => setting(title, looks.map((look) => lookRow(title, look)).join(''))).join('')}
-    <p class="component-note ui">These are the real components, at their real widths. They take their colours, typefaces, space, corners and shadows from the pages before. The choices above are ways of looking, made per use by whoever builds a page, so they stay out of the design and its history.</p>
-    ${setting('On this page', `<dl class="component-list">${names.map((name) => `<div><dt class="ui">${escapeHtml(name)}</dt><dd>${escapeHtml(DESCRIPTIONS.get(name) ?? '')}</dd></div>`).join('')}</dl>`)}
+DESCRIPTIONS.set('Link', 'A link in running text, with a look of its own for the pointer over it and the keyboard on it.');
+DESCRIPTIONS.set('Field', 'One field of a form, with its label, help and error, in each state it has a look for.');
+const sectionList = (page) => `<dl class="component-list">${CATALOGUE[page].map((section) => `<div><dt class="ui">${escapeHtml(sectionName(section))}</dt><dd>${section.components.map((name) => escapeHtml(DESCRIPTIONS.get(name) ?? '')).join(' ')}</dd></div>`).join('')}</dl>`;
+const componentPage = (id) => (copy) => `${head(id, copy, id === 'buttons' ? { text: copy['buttons.tool-lead'] } : {})}
+    <p class="component-note ui">The preview shows the real components, each with its variants side by side and named. A site chooses among the variants each time it uses a component, so none of them is set here.</p>
+    ${setting('On this page', sectionList(id))}
     ${next(id, copy)}`;
-};
 
 export function documentMarkup(copy) {
   const builders = { start, 'colour-scale': colourScale, 'main-typeface': mainTypeface, 'type-scale': typeScale, space, corners, shadow, header: headerPage, footer: footerPage, page: pagePage, breadcrumbs: breadcrumbsPage };

@@ -72,13 +72,16 @@ const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 test('the default design\'s resolved JSON and core CSS change only on purpose', () => {
   const r = derive(defaultInputs());
   const hash = (value) => createHash('sha256').update(value).digest('hex');
+  // The generator's version is the package's, which every release raises, so it is left out of the comparison.
+  // Changed on purpose 2026-11-11: dark mode's own steps 850 and 975, for a blacker page and lighter plates, while light
+  // mode stays as it was (plates.md).
   assert.equal(
-    hash(JSON.stringify(r)),
-    '5d8323316d5e6ce4319e3945e9b7e484e57733c56776be7f191652324a53634a',
+    hash(JSON.stringify({ ...r, 'generator-version': '' })),
+    '516faee850004b9cc28eea5a583f91d09dc637a0f58e2ccc0689f376035ce030',
   );
   assert.equal(
     hash(coreCss(r)),
-    '98fc3647b30eef0781171fe7a93030297d809ce23a63f570951099fe2dc80412',
+    '37f62e7089be3d11be49e0c6a89765446d5ea786c5068ec7c45d5a91b190b203',
   );
 });
 

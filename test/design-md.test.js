@@ -174,6 +174,13 @@ test('DESIGN.md says whether the design has a frame, and its width and colour wh
     assert.match(framed.front, new RegExp(`^  ${kind}-frame: "${surface.light['frame-color']}"$`, 'm'));
     assert.match(framed.front, new RegExp(`^  dark-${kind}-frame: "${surface.dark['frame-color']}"$`, 'm'));
   }
+  // The quiet edge is each plate's own border, and a filled button's ring its hover fill.
+  const quiet = exported({ ...DESIGNS[0], frame: { width: 1, color: 'border' } });
+  assert.match(quiet.body, /\*\*Frame:\*\* a quiet 1 px solid line, in each plate's own `border` colour[^\n]*A filled button[^\n]*`button-background-hover`[^\n]*as an inset ring/);
+  for (const [kind, surface] of Object.entries(quiet.resolved.surfaces)) {
+    assert.match(quiet.front, new RegExp(`^  ${kind}-frame: "${surface.light.roles.border}"$`, 'm'));
+    assert.match(quiet.front, new RegExp(`^  dark-${kind}-frame: "${surface.dark.roles.border}"$`, 'm'));
+  }
 });
 
 test('DESIGN.md gives the status colours of every Surface, and says the component tokens are the page Surface\'s case', () => {

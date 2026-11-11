@@ -1,0 +1,54 @@
+---
+// A short real page with its alignment made visible: the header, a band for each of the Reading Area's placements and
+// the footer, with the content width's edges dashed through all of them, Narrow outlined and the Aside dashed, as the
+// sketch above it draws them (page-sketch.css). The guides are the document's, drawn with the design's own widths.
+import Page from '../../../src/components/Page.astro';
+import Header from '../../../src/components/Header.astro';
+import Footer from '../../../src/components/Footer.astro';
+import Band from '../../../src/components/Band.astro';
+import BodyText from '../../../src/components/BodyText.astro';
+import ReadingArea from '../../../src/components/ReadingArea.astro';
+import AsideBlock from '../../../src/components/AsideBlock.astro';
+import TableOfContents from '../../../src/components/TableOfContents.astro';
+import { sample, headings } from '../samples.js';
+import { headerProps, footerProps, pageProps } from '../frame.js';
+import './page-layout.css';
+const { project, resolved } = Astro.props;
+---
+<div class="page-layout">
+  <Page {...pageProps(resolved.page)}>
+    <Header slot="header" {...headerProps(resolved.header, project)} />
+    <Band>
+      <ReadingArea side="end">
+        <AsideBlock slot="aside" surface="tint">
+          <TableOfContents headings={headings} />
+        </AsideBlock>
+        <BodyText>
+          <h2 id="planning" data-kn-type="heading-3">Plan the work</h2>
+          <p>{sample.paragraph}</p>
+        </BodyText>
+      </ReadingArea>
+    </Band>
+    <Band surface="tint">
+      <ReadingArea side="start">
+        <AsideBlock slot="aside" surface="raised" heading="Talk to us">
+          <p data-kn-type="small">A short conversation is often the quickest way to a plan.</p>
+        </AsideBlock>
+        <BodyText>
+          <h2 id="review" data-kn-type="heading-3">Review the options</h2>
+          <p>{sample.paragraph}</p>
+        </BodyText>
+      </ReadingArea>
+    </Band>
+    <Band>
+      <ReadingArea side="none">
+        <BodyText>
+          <h2 id="delivery" data-kn-type="heading-3">Agree on delivery</h2>
+          <p>A clear plan keeps responsibilities visible, so everyone knows what comes next and who takes it forward.</p>
+        </BodyText>
+      </ReadingArea>
+    </Band>
+    <Footer slot="footer" {...footerProps(resolved.footer, project, resolved.header)} />
+  </Page>
+  <div class="page-layout-guides" aria-hidden="true"><i data-guide="start"></i><i data-guide="end"></i></div>
+</div>

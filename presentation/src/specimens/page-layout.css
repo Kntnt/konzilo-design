@@ -1,0 +1,27 @@
+/* The report's guides over the short page (PageLayout.astro), in the sketch's hairlines: the content width's edges
+   dashed from the header to the footer, Narrow outlined and the Aside dashed. They take the design's own widths, so
+   they stand where the components do at every window, and they catch no pointer. */
+.page-layout {
+  position: relative;
+}
+.page-layout-guides {
+  position: absolute;
+  z-index: 10;
+  inset: 0;
+  pointer-events: none;
+}
+.page-layout-guides > i {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: calc((100% - var(--kn-layout-content-area)) / 2);
+  border-inline-start: 1px dashed var(--kn-text-muted);
+}
+.page-layout-guides > [data-guide="end"] {
+  inset-inline-start: calc((100% + var(--kn-layout-content-area)) / 2);
+}
+.page-layout .kn-reading-area-flow {
+  outline: 1px solid var(--kn-border-strong);
+}
+.page-layout .kn-reading-area-aside {
+  outline: 1px dashed var(--kn-border-strong);
+}

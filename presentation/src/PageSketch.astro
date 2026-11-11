@@ -1,0 +1,21 @@
+---
+// The page's layout drawn to scale from this design, at a wide window and a phone's, with what the drawing cannot say.
+import { pageSketch } from './page-sketch.js';
+import { resolved, t, num } from './data.js';
+import { range } from './words.js';
+import './page-sketch.css';
+const { layout } = resolved;
+const whole = (value) => num(value, 0);
+const px = (value) => t('value.px', { value: whole(value) });
+const note = t('page.sketch-note', {
+  wide: px(layout.wide),
+  margin: range(layout['side-margin']),
+  narrow: px(layout.narrow),
+  gap: range(resolved.space.roles['column-gap']),
+  min: px(layout['aside-min']),
+});
+---
+<figure class="page-sketch" data-page-sketch>
+  <Fragment set:html={pageSketch(resolved, { t, num: whole })} />
+  <figcaption data-kn-type="small">{note}</figcaption>
+</figure>

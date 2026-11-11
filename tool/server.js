@@ -141,7 +141,7 @@ export async function startTool({ designFile, port = 4174, open = true, idle, on
   // Before the preview's build, so a copy file to fix says so at once.
   const copy = await loadCopy(path);
   const previewDir = await previewFolder();
-  const { preview, catalogue } = await buildPresentation({ output: previewDir });
+  const { preview, catalogues } = await buildPresentation({ output: previewDir });
   const components = await componentsCss();
   const token = randomBytes(24).toString('hex');
   const started = new Date().toISOString();
@@ -247,9 +247,11 @@ export async function startTool({ designFile, port = 4174, open = true, idle, on
         res.end(preview);
         return;
       }
-      if (req.method === 'GET' && url.pathname === '/catalogue.html') {
+      // Each component page of the tool has a preview of its own.
+      const catalogue = req.method === 'GET' && /^\/catalogue\/([a-z]+)\.html$/.exec(url.pathname)?.[1];
+      if (catalogue && Object.hasOwn(catalogues, catalogue)) {
         res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-        res.end(catalogue);
+        res.end(catalogues[catalogue]);
         return;
       }
       if (req.method === 'GET' && url.pathname === '/api/presentation-file') {
@@ -371,7 +373,7 @@ export async function startTool({ designFile, port = 4174, open = true, idle, on
       }
       const pathname = url.pathname === '/' ? '/tool/index.html' : url.pathname;
       const allowed =
-        /^\/(?:presentation\/pictures\/[a-z0-9-]+\.webp|tool\/(?:index\.html|style\.css|app\.js|logic\.js|history\.js|pages\.js|preview\.js)|src\/(?:generator|css)\/[a-z-]+\.js|src\/design-md\/components\.js|presentation\/src\/(?:catalog|looks)\.js|src\/fonts\/(?:fonts\.css|catalog\.js|[A-Za-z0-9-]+\.woff2)|schema\/design-file\.schema\.json|package\.json|gallery\/src\/tooltips\.js|presentation\/src\/samples\.js)$/;
+        /^\/(?:presentation\/pictures\/[a-z0-9-]+\.webp|tool\/(?:index\.html|style\.css|app\.js|logic\.js|history\.js|pages\.js|preview\.js)|src\/(?:generator|css)\/[a-z-]+\.js|src\/design-md\/components\.js|presentation\/src\/(?:catalog|catalogue|page-sketch)\.js|presentation\/src\/page-sketch\.css|src\/fonts\/(?:fonts\.css|catalog\.js|[A-Za-z0-9-]+\.woff2)|schema\/design-file\.schema\.json|package\.json|gallery\/src\/tooltips\.js|presentation\/src\/samples\.js)$/;
       if (!allowed.test(pathname)) {
         json(404, { error: 'Not found.' });
         return;

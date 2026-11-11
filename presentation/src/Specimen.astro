@@ -1,14 +1,18 @@
 ---
 import { t } from './data.js';
-const { id } = Astro.props;
+// A specimen is named by its own copy key, unless its page names it, and a caption under it says what it shows.
+const { id, name = t(`specimen.${id}`), caption } = Astro.props;
 ---
 <section class="specimen" data-specimen={id}>
   <div class="specimen-heading">
-    <span class="specimen-name">{t(`specimen.${id}`)}</span>
+    <span class="specimen-name">{name}</span>
     <button class="specimen-comment" type="button" data-specimen-comment={id}>{t('comment')}</button>
   </div>
   <div class="specimen-stage" data-fixed={id === 'preview' || undefined}>
-    <iframe title={t(`specimen.${id}`)} data-specimen-frame={id} />
-    <noscript><p>{t('specimen.no-script')}</p></noscript>
+    <div class="specimen-screen">
+      <iframe title={name} data-specimen-frame={id} />
+      <noscript><p>{t('specimen.no-script')}</p></noscript>
+    </div>
   </div>
+  {caption && <p class="specimen-note" data-kn-type="small">{caption}</p>}
 </section>

@@ -47,7 +47,7 @@ test('recipes preserve rank use; each further brand colour adds its own tint and
   assert.deepEqual(Object.keys((await resolve(defaultInputs())).surfaces), [...KINDS, ...STATUS_KINDS]);
   for (const [kind, rank] of [['tint', 'primary'], ['tint-secondary', 'secondary'], ['tint-tertiary', 'tertiary']]) {
     assert.equal(three.surfaces[kind].light.recipes.background, `${rank}-100`);
-    assert.equal(three.surfaces[kind].dark.recipes.background, `${rank}-900`);
+    assert.equal(three.surfaces[kind].dark.recipes.background, `${rank}-850`);
     assert.equal(three.surfaces[kind].light.recipes.border, `${rank}-200`);
     assert.match(three.surfaces[kind].light.recipes.link, /^primary-/);
     assert.match(three.surfaces[kind].light.recipes.focus, /^secondary-/);
@@ -148,7 +148,30 @@ test('Surface shadows follow polarity and frames take ink before the dark except
     const css = await emitCss(file);
     assert.ok(!css.includes('undefined'));
     if (shadowColor === 'default') assert.match(css, /light-dark\(rgb\([^)]*\), rgb\(0 0 0 \/ 0\.054\)\)/);
+    // Only the quiet edge gives a filled button a ring of its own.
+    assert.doesNotMatch(css, /--kn-frame-ring/);
   }
+});
+
+test('the quiet edge frames each plate in its own border role, in both modes, and a filled button in its hover fill', async () => {
+  for (const brand of [{ primary: '#168b83' }, { primary: '#ffd400', secondary: '#7a3e9d', tertiary: '#168b83' }]) {
+    const inputs = { ...defaultInputs(), 'brand-colors': brand, frame: { width: 1, color: 'border' }, shadow: { ...defaultInputs().shadow, color: 'secondary' in brand ? 'secondary' : 'black' } };
+    const file = await design(inputs);
+    validateDesignFile(file);
+    for (const [kind, modes] of Object.entries(file.resolved.surfaces)) for (const mode of MODES) {
+      // It follows neither the shadow's colour nor the text, but the Surface and the mode.
+      assert.equal(modes[mode]['frame-color'], modes[mode].roles.border, `${kind}/${mode}`);
+    }
+    assert.equal(file.resolved.frame.color, file.resolved.surfaces.page.light.roles.border);
+    const css = await emitCss(file);
+    const rules = css.match(/^(?::root,\n)?\[data-kn-surface="[a-z-]+"\] \{[^}]*\}/gm);
+    assert.equal(rules.length, Object.keys(file.resolved.surfaces).length);
+    for (const rule of rules) assert.match(rule, /--kn-frame-color: [^;]+;\n  --kn-frame-ring: var\(--kn-button-background-hover\);/);
+    // A clear header over a first band takes that band's ring too.
+    assert.equal(css.match(/--kn-frame-ring/g).length, 2 * rules.length);
+  }
+  // The shadow has no border role to take.
+  assert.throws(() => derive({ 'brand-colors': { primary: '#168b83' }, shadow: { color: 'border' } }), /inputs\.shadow\.color: invalid format/);
 });
 
 test('CSS mode selection inherits independently of fixed polarity, and Surface contexts are complete', async () => {
@@ -184,7 +207,7 @@ test('the tint steps of brand ramps have a chroma ceiling; steps 300 and 800 and
   assert.ok(hexToOklch(loud.primary[300]).C > TINT_CEILING[200]);
   // A loud blue's dark tint is calm, while the brand Surface on step 800 keeps its colour.
   const blue = ramps({ primary: '#1d4ed8' }, 0);
-  assert.ok(hexToOklch(blue.primary[900]).C <= TINT_CEILING[900] + 0.002);
+  assert.ok(hexToOklch(blue.primary[850]).C <= TINT_CEILING[850] + 0.002);
   assert.ok(hexToOklch(blue.primary[800]).C > 0.15);
   // A muted seed's light steps lie under the ceiling and do not change.
   const calm = ramps({ primary: '#3a4f7a' }, 0);

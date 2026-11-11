@@ -26,13 +26,16 @@
     cursor: pointer;
     background: var(--kn-button-background);
     color: var(--kn-button-text);
-    box-shadow: inset 0 0 0 var(--kn-frame-width) var(--kn-frame-color);
+    box-shadow: inset 0 0 0 var(--kn-frame-width) var(--kn-frame-ring, var(--kn-frame-color));
     transition: background var(--kn-duration-feedback) var(--kn-easing-standard), color var(--kn-duration-feedback) var(--kn-easing-standard), box-shadow var(--kn-duration-feedback) var(--kn-easing-standard);
   }
   .kn-button:is(:hover, :active), .kn-actions .kn-action:is(:hover, :active) { background: var(--kn-button-background-hover); }
   .kn-button[data-kn-variant="outline"], .kn-actions .kn-action:not([data-kn-main]) { background: transparent; color: var(--kn-text); box-shadow: inset 0 0 0 max(1px, var(--kn-frame-width)) var(--kn-border-strong); }
   .kn-button[data-kn-variant="outline"]:is(:hover, :active), .kn-actions .kn-action:not([data-kn-main]):is(:hover, :active) { box-shadow: inset 0 0 0 max(1px, var(--kn-frame-width)) var(--kn-text); }
-  .kn-button[data-kn-variant="arrow"] { padding: 0; min-block-size: 1.5rem; min-inline-size: 1.5rem; background: transparent; color: var(--kn-link); box-shadow: none; }
+  /* The arrow is drawn without a box, so its word stands at the edge of its column. Room at each end, given back by
+     the margin, keeps the focus ring off the word and the arrow, also when the arrow steps forward on a press,
+     and moves nothing. */
+  .kn-button[data-kn-variant="arrow"] { padding: 0 0.375rem; margin-inline: -0.375rem; min-block-size: 1.5rem; min-inline-size: 1.5rem; background: transparent; color: var(--kn-link); box-shadow: none; }
   .kn-button-arrow { transition: transform var(--kn-duration-feedback) var(--kn-easing-standard); }
   .kn-button:dir(rtl) { --kn-button-direction: -1; }
   .kn-button:dir(rtl) .kn-button-arrow { transform: scaleX(-1); }

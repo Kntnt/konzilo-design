@@ -3,7 +3,7 @@ import type { HTMLAttributes } from 'astro/types';
 import Icon from './Icon.astro';
 interface Props extends HTMLAttributes<'nav'> {
   items: { label: string; href?: string }[]; label?: string;
-  separator?: 'slash' | 'chevron' | 'arrow' | 'dot'; home?: 'word' | 'icon'; current?: boolean; narrow?: 'trail' | 'parent';
+  separator?: 'slash' | 'chevron' | 'arrow' | 'dot'; home?: 'word' | 'icon'; current?: boolean; narrow?: 'trail' | 'parent' | 'fit';
 }
 const { items, label = 'Breadcrumb', separator = 'slash', home = 'word', current = true, narrow = 'trail', class: className, ...attributes } = Astro.props;
 // The page's own level stays in the markup when it is hidden, since the narrow form counts from it, so only the steps shown

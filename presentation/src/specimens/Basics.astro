@@ -7,11 +7,54 @@ import Icon from '../../../src/components/Icon.astro';
 import Quotation from '../../../src/components/Quotation.astro';
 import { sample } from '../samples.js';
 import { t } from '../data.js';
-const { id } = Astro.props;
+const { id, catalogue } = Astro.props;
 const buttonStates = ['default', 'hover', 'focus', 'active'];
 // A link in running text has a hover and a focus of its own, and nothing for being pressed.
 const linkStates = ['default', 'hover', 'focus'];
+// The design tool's catalogue names each variant it shows: a row a kind or a Surface, and a column a state.
+const KINDS = [['filled', 'Filled'], ['outline', 'Outline'], ['arrow', 'Arrow']];
+const ON = { page: 'On the page colour', tint: 'On the tint', brand: 'On the brand colour', inverse: 'On a dark background' };
 ---
+
+{id === 'buttons' && catalogue && (
+  <div class="sample-stack">
+    {['page', 'brand'].map((surface) => (
+      <div data-kn-surface={surface} class="catalogue-block">
+        <p class="catalogue-caption">{ON[surface]}</p>
+        <div class="catalogue-grid" style={`--catalogue-columns:${buttonStates.length}`}>
+          {KINDS.map(([kind, name]) => (
+            <div class="catalogue-row">
+              <p class="catalogue-caption catalogue-row-name">{name}</p>
+              {buttonStates.map((state) => (
+                <div class="catalogue-cell">
+                  <p class="catalogue-caption">{t(`state.${state}`)}</p>
+                  <Button variant={kind} class={`is-${state}`}>Continue</Button>
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+      </div>
+    ))}
+  </div>
+)}
+{id === 'links' && catalogue && (
+  <div class="catalogue-grid" style={`--catalogue-columns:${linkStates.length}`}>
+    {['page', 'tint', 'brand', 'inverse'].map((surface) => (
+      <div class="catalogue-row" data-kn-surface={surface}>
+        <p class="catalogue-caption catalogue-row-name">{ON[surface]}</p>
+        {linkStates.map((state) => (
+          <div class="catalogue-cell">
+            <p class="catalogue-caption">{t(`state.${state}`)}</p>
+            <BodyText>
+              <a href="#guide" class={`is-${state}`}>{sample.link}</a>
+            </BodyText>
+          </div>
+        ))}
+      </div>
+    ))}
+  </div>
+)}
 
 {id === 'body-text' && (
   <div class="sample-pair reading-pair">
@@ -36,24 +79,22 @@ const linkStates = ['default', 'hover', 'focus'];
     </BodyText>
   </div>
 )}
-{id === 'buttons' && (
+{id === 'buttons' && !catalogue && (
   <div class="sample-stack button-matrix">
     {['page', 'brand'].map((surface) => (
       <div
         data-kn-surface={surface}
         class="sample-state-row"
         style="--state-columns:4"
-        data-look={`button-colour:${surface}`}
       >
         {buttonStates.map((state) => (
-          <div data-look={`button-state:${state}`}>
-            <p data-kn-type="label" data-report-only>{t(`state.${state}`)}</p>
+          <div>
+            <p data-kn-type="label">{t(`state.${state}`)}</p>
             <LinkGroup direction="stack">
               {['filled', 'outline', 'arrow'].map((variant) => (
                 <Button
                   variant={variant}
                   class={`is-${state}`}
-                  data-look={`button-kind:${variant}`}
                 >
                   Continue
                 </Button>
@@ -65,18 +106,17 @@ const linkStates = ['default', 'hover', 'focus'];
     ))}
   </div>
 )}
-{id === 'links' && (
+{id === 'links' && !catalogue && (
   <div class="sample-stack">
     {['page', 'tint', 'brand', 'inverse'].map((surface) => (
       <div
         data-kn-surface={surface}
         class="sample-state-row"
         style="--state-columns:3"
-        data-look={`link-colour:${surface}`}
       >
         {linkStates.map((state) => (
-          <div data-look={`link-state:${state}`}>
-            <p data-kn-type="label" data-report-only>{t(`state.${state}`)}</p>
+          <div>
+            <p data-kn-type="label">{t(`state.${state}`)}</p>
             <BodyText>
               <a href="#guide" class={`is-${state}`}>
                 {sample.link}
@@ -112,7 +152,7 @@ const linkStates = ['default', 'hover', 'focus'];
   </div>
 )}
 
-{id === 'button-default' && <div class="sample-stack">{['page', 'brand'].map((surface) => <div class="sample-pad" data-kn-surface={surface} data-look={`group-colour:${surface}`}><LinkGroup>{['filled', 'outline', 'arrow'].map((variant) => <Button variant={variant}>Continue</Button>)}</LinkGroup><p data-report-only><a href="#guide">Read the guide</a></p></div>)}</div>}
+{id === 'button-default' && <div class="sample-stack">{['page', 'brand'].map((surface) => <div class="sample-pad" data-kn-surface={surface}>{catalogue && <p class="catalogue-caption">Link Group · {ON[surface]}</p>}<LinkGroup>{['filled', 'outline', 'arrow'].map((variant) => <Button variant={variant}>Continue</Button>)}</LinkGroup>{!catalogue && <p><a href="#guide">Read the guide</a></p>}</div>)}</div>}
 {id === 'article' && <article class="article-specimen">
   <HeadingGroup eyebrow="Planning" heading="Information you can act on" deck="A clear plan gives everyone a useful next step." />
   <BodyText><p>{sample.paragraph}</p><ul><li>Understand the goal.</li><li>Agree on responsibilities.</li><li>Review the next step.</li></ul><h2 data-kn-type="heading-3">Keep the plan useful</h2><p>{sample.paragraph}</p></BodyText>

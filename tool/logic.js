@@ -1,5 +1,6 @@
 import { sizeAt, windowShare } from '../src/generator/type.js';
 import { REFERENCE } from '../src/generator/shadow.js';
+import { SOCIAL_NETWORKS } from '../presentation/src/samples.js';
 
 export { sizeAt, windowShare };
 
@@ -230,3 +231,97 @@ export const shortChapter = (name) => {
   const word = name.split(/\s+(?:and|och|&)\s+/).at(-1);
   return word[0].toUpperCase() + word.slice(1);
 };
+
+/* ---- A client's own menu and footer, as the Start page takes them in words and the design file keeps them. ---- */
+// What stands before a line's words: spaces and tabs, a bullet, a number, or the lines of a drawn tree, as an outline
+// or a site map pasted from a document, a site or a terminal has them. All of it counts as indentation, so a bulleted
+// line under a plain one is its child, as it reads.
+const LEAD = /^(?:\s+|[│├└┬┼╰╭┊┆┃┣┗|`]+|[-─━]{2,}|[-*+•◦▪▫‣⁃–—·●○■□►▸o](?=\s)|\d+(?:\.\d+)*[.)](?=\s)|\d+(?:\.\d+)+(?=\s)|[a-z]\)(?=\s))+/iu;
+const TAB = 4;
+const lines = (text) => String(text ?? '').split(/\r\n?|\n/);
+const hasWords = (words) => /[\p{L}\p{N}]/u.test(words);
+function splitLine(line) {
+  const lead = LEAD.exec(line)?.[0] ?? '';
+  const indent = [...lead].reduce((column, character) => (character === '\t' ? column + TAB - (column % TAB) : column + 1), 0);
+  return { indent, words: line.slice(lead.length).replace(/\s+/g, ' ').trim() };
+}
+// One item a line, a line set in further than the one above it is its child, and a dash with a space on either side
+// begins an item's short description. A line set in less goes back up to the line it lines up with, or between.
+export function parseMenu(text) {
+  const root = {};
+  const open = [{ indent: -1, item: root }];
+  for (const line of lines(text)) {
+    const { indent, words } = splitLine(line);
+    if (!hasWords(words)) continue;
+    const dash = /\s[-–—]\s/.exec(words);
+    const item = { label: dash ? words.slice(0, dash.index) : words };
+    if (dash && hasWords(words.slice(dash.index + 3))) item.description = words.slice(dash.index + 3);
+    while (open.at(-1).indent >= indent) open.pop();
+    (open.at(-1).item.items ??= []).push(item);
+    open.push({ indent, item });
+  }
+  return root.items ?? [];
+}
+export const menuText = (items = [], depth = 0) => items.map((item) => [
+  `${'  '.repeat(depth)}${item.label}${item.description ? ` - ${item.description}` : ''}`,
+  ...(item.items?.length ? [menuText(item.items, depth + 1)] : []),
+].join('\n')).join('\n');
+// One link a line, as it reads. Bullets go, and a row of links pasted as one line, parted by bullets or bars, parts.
+export const parseList = (text) => lines(text).flatMap((line) => splitLine(line).words.split(/\s[•·|]\s/)).map((words) => words.trim()).filter(hasWords);
+export const listText = (items = []) => items.join('\n');
+// Text keeps its lines, each as a line of its own, with its spaces made single and its empty lines gone.
+export const parseText = (text) => lines(text).map((line) => line.replace(/\s+/g, ' ').trim()).filter(Boolean).join('\n');
+// A network by any of its names, in any case, or by an address that is its; any other words stay as they are.
+const bare = (words) => words.toLowerCase().replace(/[^\p{L}\p{N}]/gu, '');
+export function networkOf(words) {
+  const named = SOCIAL_NETWORKS.find(({ name, also = [] }) => [name, ...also].some((other) => bare(other) === bare(words)));
+  if (named) return named.name;
+  const host = /^(?:[a-z]+:\/\/)?(?:www\.|m\.)?([^\s/?#:@]+\.[a-z]{2,})(?:[/?#:]|$)/i.exec(words)?.[1].toLowerCase();
+  const hosted = host && SOCIAL_NETWORKS.find(({ hosts = [] }) => hosts.some((own) => host === own || host.endsWith(`.${own}`)));
+  if (hosted) return hosted.name;
+  if (/^mailto:|^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(words)) return 'Email';
+  if (/^(?:[a-z]+:\/\/)?\S+(?:\/feed|\/rss|\.rss|\.atom)\/?$/i.test(words)) return 'RSS';
+  return words;
+}
+export const parseNetworks = (text) => [...new Set(parseList(text).map(networkOf))];
+// The footer's cells a design can fill with its own words, in the order of the Footer page's miniature, with the kind
+// of words each takes. The upper band's A1 is the brand, which the identity already gives.
+export const OWN_FOOTER_CELLS = [
+  ['upper', 'b1', 'networks'],
+  ['upper', 'a2', 'text'],
+  ['upper', 'b2', 'links'],
+  ['lower', 'a1', 'text'],
+  ['lower', 'b1', 'text'],
+  ['lower', 'a2', 'links'],
+  ['lower', 'b2', 'links'],
+];
+const READ = { menu: parseMenu, networks: parseNetworks, links: parseList, text: parseText };
+const WRITE = { menu: menuText, networks: listText, links: listText, text: (value) => value ?? '' };
+// What a field's words come to in the design file, and the words that stand for what the file holds.
+export const parseOwn = (kind, text) => READ[kind](text);
+export const ownText = (kind, value) => WRITE[kind](value);
+export const ownValue = (project, path) => path.split('.').reduce((object, key) => object?.[key], project);
+// Puts a design's own words in its `project`, at a path such as `menu` or `footer.lower.a1`. What is empty goes, and so
+// does a group it leaves empty, so a design without any keeps none, as a file from before there were any.
+export function setOwn(project, path, value) {
+  const keys = path.split('.');
+  const last = keys.pop();
+  const empty = value === undefined || value === '' || (Array.isArray(value) && !value.length);
+  const chain = [project];
+  for (const key of keys) {
+    const here = chain.at(-1);
+    if (typeof here[key] !== 'object' || here[key] === null) {
+      if (empty) return;
+      here[key] = {};
+    }
+    chain.push(here[key]);
+  }
+  if (!empty) {
+    chain.at(-1)[last] = value;
+    return;
+  }
+  delete chain.at(-1)[last];
+  for (let index = keys.length - 1; index >= 0 && !Object.keys(chain[index + 1]).length; index--) delete chain[index][keys[index]];
+}
+// An outline taken from a pasted list, its items with their depth, in the words the menu's field takes.
+export const outlineText = (entries) => entries.map(({ depth, words }) => `${'  '.repeat(depth)}${words}`).join('\n');

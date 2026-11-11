@@ -7,6 +7,49 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] – 2026-11-11
+
+### Added
+
+- A third choice for the breadcrumb trail on a phone, "As much as fits, from the end": the trail keeps to one line and its end, hides whole steps from the start behind an ellipsis, as in "… / Services / Planning", and shows whole while a keyboard focus is in it. It works by CSS alone, alike in Firefox, Safari and Chrome, and DESIGN.md gives the recipe for each of the three choices.
+- The presentation's Page page opens with a drawing of the page's layout, to scale from the design, at a wide window and a phone's: the side margin, the content width that the header, footer and bands align to, a band running edge to edge, and the text with the Aside on the right, on the left, or centred without one. A short real page follows, with the content width's edges, the reading column and the Aside drawn as guides.
+- The tool's Page view draws the same layout and follows Content width and Reading width as they are dragged.
+- The tool's Start page takes the client's own menu, as an indented outline, and the words for each footer cell. The preview and the presentation show them in place of the samples, cell by cell. The design file keeps them in `project.menu` and `project.footer`, outside the design, so they change nothing a site gets.
+- An outline or site map pasted into the menu keeps its levels, from plain text with bullets, numbers or tree lines, or from a document's or a site's lists.
+- A frame colour, Quiet edge: each plate's frame is its own border colour, following its Surface and the mode, and a filled button rings in its hover colour. It gives cards and other plates a calm edge in both modes; existing designs are unchanged.
+
+### Changed
+
+- Dark mode has a blacker page and lighter plates: cards, tints and status bands now stand about 1.45 from the dark page instead of 1.16. Each colour gains two steps for dark mode alone, 850 and 975, so light mode is exactly as before. Open a design in the tool, or run `konzilo-design resolve`, to take the new values.
+- The tool's control panel holds only what the design file saves. Component variants, which a site chooses each time it uses a component, are no longer chosen there.
+- Each component page in the tool has a preview of its own, showing every variant at once with a caption naming it.
+- The tool's Header page shows the large menu and the search box open, each in a frame of its own, following every setting.
+- Accordion and Quotation are separate sections and specimens, and the accordion sample has three questions.
+- Opening a page says that its settings are the opening every page gets, unless the page itself chooses otherwise.
+- The tool's type scale shows body text too, as the base between the lead and small text.
+- The tool's Start page shows the large menu open under the page in its preview, where the client's menu is entered.
+- In the presentation, the reader's switches for width, pictures and light or dark mode look like the document's own: on the sidebar's grey, each named, the chosen one in black and white, so they can no longer be taken for samples of the design.
+- The presentation shows a narrow width as the screen itself: at Tablet and Phone the bordered window hugs the frame at that width, with only the document around it, and every frame still shows its whole content.
+- The presentation's Shadow page shows each shadow where a site casts it, in small scenes of the real components: the header over content scrolled under it, the menu open under the bar, the end of a page over its footer, cards on three Surfaces, and a card at rest and under the pointer. A shadow the design has switched off casts nothing there, and the caption says so.
+- The presentation shows every variant, every state and every colour combination at once, after the main example. Only the reference values on the Details page stay folded.
+- The presentation's comments are its last chapter, in the sidebar's list after Details, with the number written so far.
+- The presentation's sidebar shows its hierarchy: chapters in the text colour at the margin, their pages indented under them on a thin line and muted until chosen.
+
+### Removed
+
+- The "Show it in the preview" buttons on the tool's Header page, now that the preview always shows the large menu and the search box open.
+- "Header over a panel" on the presentation's Shadow page, since on a site the open menu covers that shadow.
+
+### Fixed
+
+- The large menu's "Row above" and "Row below" now reach a site: the Header shows those rows only where the design has them on.
+- The component lists in the tool's panel use the same names as the preview's sections.
+- In dark mode, where a shadow does not show on the dark page, the header bar, its open menu and the page's edge over the footer keep their hairline beside the shadow.
+- A sticky header at the top of the page, which casts no shadow yet, is parted by its hairline from a first band of its own colour, also while shadows are on.
+- The large menu and the search box opening in the preview no longer take the focus from the tool, which in Firefox lost keys typed at that moment.
+- The large menu no longer draws an empty row with a line above or below its columns where the design has its rows on but the site gives them nothing, or has them off.
+- An arrow button's focus ring keeps off its word and its arrow, which it touched, and the word stays at the edge of its column.
+
 ## [0.2.0] – 2026-11-11
 
 ### Added

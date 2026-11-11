@@ -19,9 +19,9 @@ interface Props extends HTMLAttributes<'header'> {
   start?: 'below' | 'under'; autohide?: boolean; surface?: 'page' | 'brand';
   menu?: MenuItem[]; linkMenu?: boolean; menuButton?: MenuButton | false;
   languages?: Language[]; search?: Search; cta?: Cta; level?: Level; numbered?: boolean;
-  skipTo?: string;
+  menuAbove?: boolean; menuBelow?: boolean; skipTo?: string;
 }
-const { identity, arrangement = 'A', attachment = 'flow', start = 'below', autohide = false, surface = 'page', menu = [], linkMenu = false, menuButton = false, languages = [], search, cta, level = 2, numbered = false, skipTo = '#content', id = nextId('kn-header'), class: className, ...attributes } = Astro.props;
+const { identity, arrangement = 'A', attachment = 'flow', start = 'below', autohide = false, surface = 'page', menu = [], linkMenu = false, menuButton = false, languages = [], search, cta, level = 2, numbered = false, menuAbove = true, menuBelow = true, skipTo = '#content', id = nextId('kn-header'), class: className, ...attributes } = Astro.props;
 // Page start and sliding away are a sticky header's only.
 const sticky = attachment === 'sticky';
 const slides = sticky && autohide;
@@ -33,6 +33,10 @@ const button = menuButton || { word: linkMenu ? 'Menu' : '', icon: 'menu' as con
 const steps = givingWaySteps({ slogan: !!identity.slogan, logo: !!identity.logo, name: !!identity.name, links: inLinkMenu, word: hasMenu && (button.word ?? 'Menu') !== '', language: languages.length > 0, cta: !!cta, search: !!search });
 // Written inline in every page, so without its comments.
 const headerFitScript = headerFit.replace(/^\s*\/\/.*\n/gm, '');
+// The rows above and below the large menu hold what the site gives in the menu-above and menu-below slots, where the
+// design has them on: headerProps passes the design's menu-above and menu-below as menuAbove and menuBelow.
+const rowAbove = menuAbove && Astro.slots.has('menu-above');
+const rowBelow = menuBelow && Astro.slots.has('menu-below');
 const opens = (target?: string) => (target ? { commandfor: target, command: 'show-modal', 'aria-haspopup': 'dialog', 'aria-controls': target } : {});
 ---
 <header {...attributes} id={id} class:list={['kn-header', className]} data-kn-arrangement={arrangement} data-kn-attachment={attachment} data-kn-start={sticky ? start : 'below'} data-kn-autohide={String(slides)} data-kn-surface={surface} data-kn-steps={steps.join(' ')}>
@@ -47,9 +51,9 @@ const opens = (target?: string) => (target ? { commandfor: target, command: 'sho
         {item === 'menu' && <HeaderMenuButton controls={`${id}-menu`} button={button} automatic={!menuButton} />}
         {item === 'cta' && <Button href={cta?.href} class="kn-header-cta" {...opens(cta?.href === undefined ? cta?.dialog : undefined)}>{cta?.label}</Button>}
       </>)}</div>)}
-      {hasMenu && <Megamenu id={`${id}-menu`} items={menu} level={level} numbered={numbered} languages={languages} search={search} cta={cta}>
-        {Astro.slots.has('menu-above') && <Fragment slot="above"><slot name="menu-above" /></Fragment>}
-        {Astro.slots.has('menu-below') && <Fragment slot="below"><slot name="menu-below" /></Fragment>}
+      {hasMenu && <Megamenu id={`${id}-menu`} items={menu} level={level} numbered={numbered} languages={languages} search={search} cta={cta} above={rowAbove} below={rowBelow}>
+        <Fragment slot="above"><slot name="menu-above" /></Fragment>
+        <Fragment slot="below"><slot name="menu-below" /></Fragment>
       </Megamenu>}
       {search && <SearchPanel search={search} id={`${id}-search`} level={level} />}
     </div>

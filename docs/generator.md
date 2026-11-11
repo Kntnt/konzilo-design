@@ -64,8 +64,8 @@ const liveCss = coreCss(preview);
   `oklchToRgb`, `oklchToHex`, `oklchToLinearRgb`, `inGamut`, `fitChroma`,
   `luminance`, `contrast`, `solveLightness`, `ramp`, `ramps`, `typeScale`,
   `spacing`, `radii`, `fluid`, `endpoints`, `rem`, `number`, `shadow`,
-  `resolveColor`, `shadowsForSurface` and `grayChroma`. Constants `STEPS`, `TARGETS`,
-  `BAND_MINIMUM`, `BAND_STEPS`, `BASE_SPACE`, `SPACE_ROLES`, `LEVELS` and `REFERENCE` are also exported.
+  `resolveColor`, `shadowsForSurface`, `frameFollows` and `grayChroma`. Constants `STEPS`, `TARGETS`,
+  `SCALES`, `BAND_MINIMUM`, `BAND_STEPS`, `BASE_SPACE`, `SPACE_ROLES`, `LEVELS` and `REFERENCE` are also exported.
   Low-level mathematical functions expect valid arguments; input validation occurs
   at `resolve` and consumer boundaries.
 
@@ -117,28 +117,37 @@ stays inside sRGB with 32 bisections, preserving lightness and hue. WCAG 2.x
 luminance uses the sRGB transfer function and coefficients 0.2126, 0.7152 and
 0.0722; contrast is `(lighter + 0.05) / (darker + 0.05)`.
 
-Each ramp solves lightness with 48 bisections against the white page. Steps
-100–900 and 950 target contrasts 1.12, 1.4, 2, 3.2, 4.8, 6, 8, 11, 16 and 18.5.
+Each ramp solves lightness with 48 bisections against the white page. Its twelve
+steps 100–800, 850, 900, 950 and 975 target contrasts 1.12, 1.4, 2, 3.2, 4.8, 6, 8,
+11, 13.5, 16, 18.5 and 19.5. Each mode reads ten of them (`SCALES`): light mode
+100–950 without 850, as it always has, and dark mode 100–800 with 850 and 975, its own
+steps for lighter plates and a blacker page (owner, 2026-11-11; plates.md), where it
+read 900 and 950 before. So light mode is exactly as it was in v0.2.0.
 The low-level `ramp(seed, options)` retains generic chroma scaling and tint
-handling: light steps 100–300 scale their in-gamut chroma by `tint`. The nearest
-lightness step is replaced by the exact seed by default. Consequently the anchor
+handling: light steps 100–300 scale their in-gamut chroma by `tint`. The seed replaces
+by default the nearest step in lightness on the light scale, and also dark mode's own
+step where it lies nearest 850 or 975 on the dark scale, unless the light scale already
+put it on 800, which both modes read. A seed on 800 darker than 800's target takes 850
+down with it, keeping their spacing of 13.5 to 11. Consequently an anchor
 can depart from its target, and hex quantisation also introduces small contrast
 differences. A ramp does not certify a Surface's contrast.
 
-The seed must not erase a band (owner, 2026-11-05). On a step that carries a band
-(`BAND_STEPS`: 100, 700, 800, 900) the seed is not anchored if it lies less than
-`BAND_MINIMUM` from a page, whichever band stands on that step: `ramp` takes the pages
-as `pages`, its solving page by default, and `ramps` gives white and grey 950. The
-solved step stays, and the seed still gives the ramp its hue and chroma. Steps 200–600
-and 950 carry no band, so a seed there is always anchored.
+The seed must not erase a band (owner, 2026-11-05). On a step that carries a band the
+seed is not anchored if it lies less than `BAND_MINIMUM` from a page. The light scale keeps
+the guard it always had, on 100, 700, 800 and 900 against white and grey 950, so light mode
+keeps its anchors; `ramp` takes those pages as `pages`, its solving page by default. Dark
+mode's own steps are guarded on the steps its bands stand on (`BAND_STEPS`: 100, 700, 800,
+850) against `darkPages`, white and grey 975. `ramps` gives both. The solved step stays, and
+the seed still gives the ramp its hue and chroma.
 
-The fill `background-hover` must differ visibly from both `background` and `background-alt` on every Surface and seed, which a test checks. On steps 700 and 800 it goes one or two steps darker, because a lighter step fails `link-hover`; on steps 900 and 950 it goes lighter. The table is under Surfaces.
+The fill `background-hover` must differ visibly from both `background` and `background-alt` on every Surface and seed, which a test checks. On steps 700 and 800 it goes one or two steps darker, because a lighter step fails `link-hover`; on the two darkest steps of its mode it goes lighter. The table is under Surfaces.
 
-The status ramps carry a ceiling of their own on the steps behind the status Surfaces (100, 200, 800 and 900), so that green does not shout beside blue, amber and red; the status roles use steps 300 and 600, uncapped.
+The status ramps carry a ceiling of their own on the steps behind the status Surfaces (100, 200, 800, 850 and 900), so that green does not shout beside blue, amber and red; the status roles use steps 300 and 600, uncapped.
 
 Tool inputs have no chroma or tint dials: brand ramps use both factors at 1.
 Instead the brand ramps' tint steps carry a chroma ceiling (`TINT_CEILING`:
-0.03 at step 100, 0.06 at 200 and 900), decided by the owner on 2026-11-01, so a
+0.03 at step 100, 0.06 at 200 and 850, and 0.06 at 900, which carried the dark tint
+until 2026-11-11 and keeps its ceiling so light mode is unchanged), decided by the owner on 2026-11-01, so a
 loud seed gives a calm tint in both modes while a muted seed's steps, already
 below the ceiling, stay as they are. Steps 300 and 800 have none: the first is a
 foreground on dark Surfaces, the second carries the brand Surface. An anchored
@@ -221,7 +230,21 @@ Frame width is independent, 0–3px, always solid when used by a component.
 Frame `default` follows the shadow's colour setting before the dark-Surface
 exception, so on a dark Surface a default frame takes the light text colour and
 stays visible while the shadow turns black; other choices use the same colour
-encoding. A target uses its own corner radius; filled buttons draw the frame as
+encoding. The frame alone has one more choice, `border`, the quiet edge (owner,
+2026-11-11): each Surface's frame colour is its own `border` role, so a plated card's
+frame follows its kind and the mode, grey 200 on grey 100 in light and grey 800 on
+grey 850 in dark for `raised`. With it the emitter gives every Surface
+`--kn-frame-ring: var(--kn-button-background-hover)`, which a filled button reads
+before `--kn-frame-color`: a filled button is a small plate whose quiet edge is its
+hover fill, the step beside its fill, where the Surface's border would draw a pale
+line inside a dark button or a dark one round a white button. `frameFollows(surfaces,
+role)` tells whether every Surface's frame is its own role of that name; the emitter
+and DESIGN.md read the quiet edge from it, and `resolved` stores nothing more. At 1px
+the text colour is what makes a frame heavy, not its width: there is no width below
+1px, since in the three engines at scale factors 1 and 2 (Playwright's, 2026-11-11)
+Gecko and Chromium drew a 0.5px border as 1px, WebKit drew it as a device pixel only
+at scale 2, and a 0.5px inset ring is unsnapped, a faint half pixel at scale 1, so
+cards and buttons would disagree. A target uses its own corner radius; filled buttons draw the frame as
 an inset ring, outline buttons keep at least a hairline, and plated cards take the frame as a border. Only plated cards
 use the box and lifted-box shadows among the first six components.
 
@@ -232,36 +255,40 @@ in light and dark mode, each
 with seventeen context roles, a polarity, its six shadows and its frame colour.
 Each role is a recipe over the ramps (a ramp and step, or white or black).
 
-- **Polarity:** a background's step gives it: white and 100 are light, 700 to 950 dark. So `brand`, `inverse` and
+- **Polarity:** a background's step gives it: white and 100 are light, 700 and darker dark. So `brand`, `inverse` and
   `accent` are dark in both modes, and `page`, `raised` and the tints follow the mode. `picture-dark` is dark in both
   modes and `picture-light` light in both.
-- **Backgrounds (the owner's rule, 2026-11-05; plates.md):** page white (dark mode grey 950); raised grey 100 (900); tint
-  primary 100 (900), and each rank tint and status kind its colour's 100 (900); brand primary 800; accent primary 700; inverse
-  grey 950 (dark mode grey 800, since a dark band is never darker than 800 in dark mode); the picture kinds a white or black
-  scrim over the image.
-- **What stands on a background (the same rule):** every other role follows the background's polarity and step, in `ON_STEP`,
-  never its kind. A kind contributes only its family, for fills and lines alike, except that accent's muted text and borders are
+- **Backgrounds (the owner's rule, 2026-11-05, with dark mode's own steps of 2026-11-11; plates.md):** page white (dark
+  mode grey 975); raised grey 100 (850); tint primary 100 (850), and each rank tint and status kind its colour's 100 (850);
+  brand primary 800; accent primary 700; inverse grey 950 (dark mode grey 800, since a dark band is never darker than 800
+  in dark mode); the picture kinds a white or black scrim over the image.
+- **What stands on a background (the same rule):** every other role follows the mode and the background's step, on that
+  mode's scale, in `ON_STEP`, never its kind. Each mode solves a role along its own scale too (`solveRole`'s `steps`), and a
+  picture along the light scale in both modes, so it is the same in both. A kind contributes only its family, for fills and lines alike, except that accent's muted text and borders are
   grey, and a light band's muted text (raised, the tints and the status kinds) is grey in both modes, so that in dark mode it
   is not the colour of the links and the accent (owner, 2026-11-10). Light polarity's muted text is always grey 600, and strong borders are 500 in light polarity and 400 in dark. Pictures
   stand on no step: their own fill is also their alternate fill, and their other roles are grey, as in the last two rows.
 
-  | Polarity | Background | Alternate fill | Hover fill | Muted text | Border |
+  | Mode | Background | Alternate fill | Hover fill | Muted text | Border |
   |---|---|---|---|---|---|
   | light | white | 100 | 200 | grey 600 | 200 |
   | light | 100 | white | 200 | grey 600 | 200 |
-  | dark | 700 | 800 | 900 | 300 | 800 |
-  | dark | 800 | 900 | 950 | 200 | 700 |
-  | dark | 900 | 950 | 800 | 300 | 800 |
-  | dark | 950 | 900 | 800 | 300 | 800 |
-  | light | `picture-light` | white | 200 | grey 600 | 200 |
-  | dark | `picture-dark` | black | 800 | 300 | 800 |
+  | light | 700 | 800 | 900 | 300 | 800 |
+  | light | 800 | 900 | 950 | 200 | 700 |
+  | light | 950 | 900 | 800 | 300 | 800 |
+  | dark | 700 | 800 | 850 | 300 | 800 |
+  | dark | 800 | 850 | 975 | 200 | 700 |
+  | dark | 850 | 975 | 800 | 300 | 800 |
+  | dark | 975 | 850 | 800 | 300 | 800 |
+  | both | `picture-light` | white | 200 | grey 600 | 200 |
+  | both | `picture-dark` | black | 800 | 300 | 800 |
 - **Rank tints:** `tint-secondary` and `tint-tertiary` exist only when that
   brand colour does (`kindsFor(palette)`); each is the tint recipe on its own
   colour's ramp, following the mode.
 - **Alternate backgrounds (decided with the components, 2026-11-02):**
   `background-alt`, emitted as `--kn-background-alt`, is a fixed fill recipe,
-  outside foreground solving, in the table above. A background on step 800 takes 900:
-  700 misses `link-alt` at about 4:1 for the teal, yellow, blue, red and near-black test
+  outside foreground solving, in the table above. A background on step 800 takes the next
+  step down, 900 in light mode and 850 in dark: 700 misses `link-alt` at about 4:1 for the teal, yellow, blue, red and near-black test
   seeds. That preserves the approved foregrounds and the 4.5:1 target.
 - **Rank:** links and the brand Surfaces from the primary; `accent` and `focus`
   from the secondary when there is one, else the primary, on every Surface,
@@ -306,7 +333,8 @@ Each role is a recipe over the ramps (a ramp and step, or white or black).
   no image samples and never send a foreground through solving a second time.
   The pair `background-page` holds a band apart from the page (owner, 2026-11-05): the
   Surface's background against the page's in the same mode, at `BAND_MINIMUM`, 1.1, just below
-  the lowest legitimate values (about 1.11 in light and 1.15 in dark). The page and the picture kinds
+  the lowest legitimate value, about 1.11 in light; in dark mode it is about 1.42, and about 1.24 for a seed
+  held on 800 darker than its target, which takes 850 down with it. The page and the picture kinds
   do not have this pair. It joins the same failure and stale-report guards, so a resolved file from
   before it must be resolved again.
 - **CSS and modes:** `[data-kn-surface="<kind>"]` redeclares the roles as
@@ -442,7 +470,7 @@ The automated tests retain only neutral values and generic constants.
 
 ***Decided* with the components, 2026-11-02:** add `background-hover` (emitted as `--kn-background-hover`), `info` (`--kn-info`, seed `#1d6fd1`) and four mode-following status kinds. `STATUS_KINDS` exports `status-info`, `status-success`, `status-warning`, `status-error` beside `KINDS`; `kindsFor` always includes them before optional ranked tints. The schema requires every new kind, role and pair, so stored pre-review results need CLI re-resolution.
 
-Each status kind is the tint recipe on its own status ramp: background 100/900, alternate white/950, border 200/800, strong border 500/400, muted text gray-600 / gray-300 (owner, 2026-11-10), accent own-600/300 in light/dark respectively. Status accent deliberately uses that status ramp even when there is a secondary brand seed. Link/focus and Button recipes retain their usual rank/polarity policies. Every ordinary Surface pair applies, including the information status foreground at 4.5:1.
+Each status kind is the tint recipe on its own status ramp: background 100/850, alternate white/975, border 200/800, strong border 500/400, muted text gray-600 / gray-300 (owner, 2026-11-10), accent own-600/300 in light/dark respectively. Status accent deliberately uses that status ramp even when there is a secondary brand seed. Link/focus and Button recipes retain their usual rank/polarity policies. Every ordinary Surface pair applies, including the information status foreground at 4.5:1.
 
 Hover fills are opaque and fixed recipes, independent of foreground solving. `text-hover` and `link-hover` check existing text/link over that fill at 4.5:1, including pictures without scrim samples. They join the failure and stale-report guards. No extra foreground roles are introduced.
 
@@ -452,9 +480,9 @@ Hover fills are opaque and fixed recipes, independent of foreground solving. `te
 | raised | gray-200 | gray-800 |
 | tint / rank tint | own-200 | own-800 |
 | status kind | own-200 | own-800 |
-| brand | primary-950 | primary-950 |
-| inverse | gray-800 | gray-950 |
-| accent | primary-900 | primary-900 |
+| brand | primary-950 | primary-975 |
+| inverse | gray-800 | gray-975 |
+| accent | primary-900 | primary-850 |
 | picture-light | gray-200 | gray-200 |
 | picture-dark | gray-800 | gray-800 |
 

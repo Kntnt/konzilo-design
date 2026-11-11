@@ -10,7 +10,8 @@ import TableOfContents from '../../../src/components/TableOfContents.astro';
 import AsideBlock from '../../../src/components/AsideBlock.astro';
 import { sample, headings } from '../samples.js';
 import { headerProps, footerProps, pageProps } from '../frame.js';
-const { id, project, resolved } = Astro.props;
+const { id, project, resolved, catalogue } = Astro.props;
+const BAND_NAMES = { tint: 'Tint', brand: 'Brand colour', inverse: 'Dark' };
 ---
 
 {id.startsWith('header-') && <Header {...headerProps(resolved.header, project)} />}
@@ -31,14 +32,18 @@ const { id, project, resolved } = Astro.props;
 {id === 'band' && (
   <div class="sample-stack sample-bands">
     {['tint', 'brand', 'inverse'].map((surface) => (
-      <Band surface={surface} data-look={`band-colour:${surface}`}>
-        <HeadingGroup
-          eyebrow="A band"
-          heading="A Surface marks a section"
-          type="heading-3"
-          deck="The content stays on the same rail as the header and footer."
-        />
-      </Band>
+      <>
+        {/* The design tool's catalogue names each colour a band can have, above it. */}
+        {catalogue && <p class="catalogue-caption specimen-rail">{BAND_NAMES[surface]}</p>}
+        <Band surface={surface}>
+          <HeadingGroup
+            eyebrow="A band"
+            heading="A Surface marks a section"
+            type="heading-3"
+            deck="The content stays on the same rail as the header and footer."
+          />
+        </Band>
+      </>
     ))}
   </div>
 )}

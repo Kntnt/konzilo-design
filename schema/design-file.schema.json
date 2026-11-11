@@ -44,6 +44,79 @@
         "brief": {
           "type": "string"
         },
+        "menu": {
+          "type": "array",
+          "description": "The client's own menu, which the tool's preview and the presentation show in place of the sample menu: the top level is the link menu and the large menu's headings, and the items under each its links. Not design: no input, fingerprint, CSS or site reads it.",
+          "items": {
+            "$ref": "#/$defs/menu-item"
+          }
+        },
+        "footer": {
+          "type": "object",
+          "description": "The client's own words in the footer's cells, each in place of the sample's where the tool's preview and the presentation show the footer; a cell left out keeps the sample's. The upper band's A1 is the brand, which the identity gives. Not design: no input, fingerprint, CSS or site reads it.",
+          "properties": {
+            "upper": {
+              "type": "object",
+              "properties": {
+                "b1": {
+                  "type": "array",
+                  "description": "Social media, one network a line, such as LinkedIn or Email; a network the library has an icon for shows as its icon, any other as its name.",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "a2": {
+                  "type": "string",
+                  "minLength": 1,
+                  "description": "A short statement presenting the brand. Each line stands on a line of its own."
+                },
+                "b2": {
+                  "type": "array",
+                  "description": "Links for navigation, by their words. Left out, the top level of the menu shown.",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                }
+              },
+              "additionalProperties": false
+            },
+            "lower": {
+              "type": "object",
+              "properties": {
+                "a1": {
+                  "type": "string",
+                  "minLength": 1,
+                  "description": "The address. Each line stands on a line of its own."
+                },
+                "b1": {
+                  "type": "string",
+                  "minLength": 1,
+                  "description": "The registration number and registered office. Each line stands on a line of its own."
+                },
+                "a2": {
+                  "type": "array",
+                  "description": "Links to policies, by their words.",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "b2": {
+                  "type": "array",
+                  "description": "Links to change privacy settings and revoke consents, by their words.",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        },
         "contact": {
           "type": "object",
           "properties": {
@@ -99,6 +172,29 @@
   ],
   "additionalProperties": false,
   "$defs": {
+    "menu-item": {
+      "type": "object",
+      "properties": {
+        "label": {
+          "type": "string",
+          "minLength": 1
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/menu-item"
+          }
+        }
+      },
+      "required": [
+        "label"
+      ],
+      "additionalProperties": false
+    },
     "role": {
       "type": "object",
       "properties": {
@@ -440,7 +536,8 @@
             },
             "color": {
               "type": "string",
-              "pattern": "^(?:default|primary|secondary|tertiary|gray|black|#[0-9a-fA-F]{3}|#[0-9a-fA-F]{6})$"
+              "pattern": "^(?:default|border|primary|secondary|tertiary|gray|black|#[0-9a-fA-F]{3}|#[0-9a-fA-F]{6})$",
+              "description": "The shadow's colour choices, and border: each Surface's own border role, a quiet edge that follows the Surface and the mode."
             }
           },
           "required": [],
@@ -709,7 +806,8 @@
           "type": "string",
           "enum": [
             "trail",
-            "parent"
+            "parent",
+            "fit"
           ]
         }
       },
@@ -833,6 +931,11 @@
           "type": "string",
           "pattern": "^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$"
         },
+        "850": {
+          "type": "string",
+          "pattern": "^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$",
+          "description": "Dark mode's own step for the light bands (2026-11-11). A file resolved before it has none."
+        },
         "900": {
           "type": "string",
           "pattern": "^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$"
@@ -840,6 +943,11 @@
         "950": {
           "type": "string",
           "pattern": "^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$"
+        },
+        "975": {
+          "type": "string",
+          "pattern": "^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$",
+          "description": "Dark mode's own step for the page (2026-11-11). A file resolved before it has none."
         }
       },
       "required": [
@@ -1446,71 +1554,71 @@
       "properties": {
         "background": {
           "type": "string",
-          "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|950))$"
+          "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|850|950|975))$"
         },
         "background-alt": {
           "type": "string",
-          "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|950))$"
+          "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|850|950|975))$"
         },
         "text": {
           "type": "string",
-          "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|950))$"
+          "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|850|950|975))$"
         },
         "text-muted": {
           "type": "string",
-          "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|950))$"
+          "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|850|950|975))$"
         },
         "border": {
           "type": "string",
-          "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|950))$"
+          "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|850|950|975))$"
         },
         "border-strong": {
           "type": "string",
-          "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|950))$"
+          "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|850|950|975))$"
         },
         "link": {
           "type": "string",
-          "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|950))$"
+          "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|850|950|975))$"
         },
         "accent": {
           "type": "string",
-          "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|950))$"
+          "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|850|950|975))$"
         },
         "focus": {
           "type": "string",
-          "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|950))$"
+          "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|850|950|975))$"
         },
         "success": {
           "type": "string",
-          "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|950))$"
+          "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|850|950|975))$"
         },
         "warning": {
           "type": "string",
-          "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|950))$"
+          "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|850|950|975))$"
         },
         "error": {
           "type": "string",
-          "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|950))$"
+          "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|850|950|975))$"
         },
         "button-background": {
           "type": "string",
-          "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|950))$"
+          "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|850|950|975))$"
         },
         "button-text": {
           "type": "string",
-          "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|950))$"
+          "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|850|950|975))$"
         },
         "button-background-hover": {
           "type": "string",
-          "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|950))$"
+          "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|850|950|975))$"
         },
         "background-hover": {
           "type": "string",
-          "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|950))$"
+          "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|850|950|975))$"
         },
         "info": {
           "type": "string",
-          "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|950))$"
+          "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|850|950|975))$"
         }
       },
       "required": [
@@ -1542,11 +1650,11 @@
           "properties": {
             "from": {
               "type": "string",
-              "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|950))$"
+              "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|850|950|975))$"
             },
             "to": {
               "type": "string",
-              "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|950))$"
+              "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|850|950|975))$"
             }
           },
           "required": [
@@ -1560,11 +1668,11 @@
           "properties": {
             "from": {
               "type": "string",
-              "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|950))$"
+              "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|850|950|975))$"
             },
             "to": {
               "type": "string",
-              "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|950))$"
+              "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|850|950|975))$"
             }
           },
           "required": [
@@ -1578,11 +1686,11 @@
           "properties": {
             "from": {
               "type": "string",
-              "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|950))$"
+              "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|850|950|975))$"
             },
             "to": {
               "type": "string",
-              "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|950))$"
+              "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|850|950|975))$"
             }
           },
           "required": [
@@ -1596,11 +1704,11 @@
           "properties": {
             "from": {
               "type": "string",
-              "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|950))$"
+              "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|850|950|975))$"
             },
             "to": {
               "type": "string",
-              "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|950))$"
+              "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|850|950|975))$"
             }
           },
           "required": [
@@ -1614,11 +1722,11 @@
           "properties": {
             "from": {
               "type": "string",
-              "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|950))$"
+              "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|850|950|975))$"
             },
             "to": {
               "type": "string",
-              "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|950))$"
+              "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|850|950|975))$"
             }
           },
           "required": [
@@ -1632,11 +1740,11 @@
           "properties": {
             "from": {
               "type": "string",
-              "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|950))$"
+              "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|850|950|975))$"
             },
             "to": {
               "type": "string",
-              "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|950))$"
+              "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|850|950|975))$"
             }
           },
           "required": [
@@ -1650,11 +1758,11 @@
           "properties": {
             "from": {
               "type": "string",
-              "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|950))$"
+              "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|850|950|975))$"
             },
             "to": {
               "type": "string",
-              "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|950))$"
+              "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|850|950|975))$"
             }
           },
           "required": [
@@ -1668,11 +1776,11 @@
           "properties": {
             "from": {
               "type": "string",
-              "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|950))$"
+              "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|850|950|975))$"
             },
             "to": {
               "type": "string",
-              "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|950))$"
+              "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|850|950|975))$"
             }
           },
           "required": [
@@ -1686,11 +1794,11 @@
           "properties": {
             "from": {
               "type": "string",
-              "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|950))$"
+              "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|850|950|975))$"
             },
             "to": {
               "type": "string",
-              "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|950))$"
+              "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|850|950|975))$"
             }
           },
           "required": [
@@ -1704,11 +1812,11 @@
           "properties": {
             "from": {
               "type": "string",
-              "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|950))$"
+              "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|850|950|975))$"
             },
             "to": {
               "type": "string",
-              "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|950))$"
+              "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|850|950|975))$"
             }
           },
           "required": [
@@ -1722,11 +1830,11 @@
           "properties": {
             "from": {
               "type": "string",
-              "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|950))$"
+              "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|850|950|975))$"
             },
             "to": {
               "type": "string",
-              "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|950))$"
+              "pattern": "^(?:white|black|(?:primary|secondary|tertiary|gray|info|success|warning|error)-(?:[1-9]00|850|950|975))$"
             }
           },
           "required": [

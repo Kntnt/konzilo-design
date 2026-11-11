@@ -8,6 +8,8 @@ import Content from './specimens/Content.astro';
 import Finding from './specimens/Finding.astro';
 import Forms from './specimens/Forms.astro';
 import Composition from './specimens/Composition.astro';
+import Shadow from './specimens/Shadow.astro';
+import PageLayout from './specimens/PageLayout.astro';
 const { id } = Astro.props;
 const groups = [
   [
@@ -33,10 +35,11 @@ const groups = [
   ],
   [
     Cards,
-    ['card', 'card-unplated', 'card-person', 'content-card', 'card-grid'],
+    ['card', 'card-unplated', 'card-person', 'content-card', 'content-row', 'card-grid'],
   ],
+  [PageLayout, ['page-layout']],
   [Media, ['figure', 'embed']],
-  [Content, ['table', 'accordion', 'callout', 'table-more', 'accordion-more', 'callout-more']],
+  [Content, ['table', 'accordion', 'quotation', 'callout', 'table-more', 'accordion-more', 'callout-more']],
   [Finding, ['content-loop', 'visitor-filters', 'search', 'breadcrumbs', 'pagination']],
   [
     Forms,
@@ -52,7 +55,7 @@ const groups = [
   ],
 ];
 const Component =
-  groups.find(([, ids]) => ids.includes(id))?.[0] || Composition;
+  id.startsWith('shadow-') ? Shadow : groups.find(([, ids]) => ids.includes(id))?.[0] || Composition;
 ---
 
 <Component {...Astro.props} />

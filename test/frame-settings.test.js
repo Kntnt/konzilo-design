@@ -97,6 +97,8 @@ test('the header props follow the settings', () => {
   assert.equal(headerProps({ ...header, 'menu-button': 'off' }, project).menuButton, false);
   assert.equal(headerProps({ ...header, search: false }, project).search, undefined);
   assert.equal(headerProps({ ...header, 'search-links': false }, project).search.links, undefined);
+  assert.deepEqual([props.menuAbove, props.menuBelow], [false, false]);
+  assert.deepEqual(['menuAbove', 'menuBelow'].map((key) => headerProps({ ...header, 'menu-above': true, 'menu-below': true }, project)[key]), [true, true]);
   const flow = headerProps({ ...header, attachment: 'flow', start: 'under', autohide: true }, project);
   assert.equal(flow.start, 'below', 'only a sticky header has a page under it');
   assert.equal(flow.autohide, false);
@@ -164,6 +166,12 @@ test('a design says how its breadcrumbs show', () => {
   assert.deepEqual([icon.home, icon.items[0].label, icon.current, icon.narrow], ['icon', 'Home', false, 'parent']);
   const words = (breadcrumbs) => designMd({ inputs: settings(), project: { name: 'Name' }, resolved: derive(inputs({ breadcrumbs })) }, 'name.design.json');
   assert.match(words({ home: 'icon', narrow: 'parent' }), /directly above the page's H1[^\n]*a house icon[^\n]*one level up/);
+  // As much as fits, from the end: a third choice that leaves the default and the two others as they were.
+  for (const narrow of ['trail', 'parent', 'fit']) validateInputs(inputs({ breadcrumbs: { narrow } }));
+  assert.throws(() => validateInputs(inputs({ breadcrumbs: { narrow: 'end' } })));
+  assert.equal(breadcrumbProps({ ...defaults, narrow: 'fit' }, { name: 'Site' }).narrow, 'fit');
+  assert.match(words({ narrow: 'fit' }), /On a phone \(a window of 40rem or less\) it keeps to one line and to its end[^\n]*an ellipsis \(…\) at the start edge[^\n]*with no script[^\n]*keyboard focus, the whole trail shows/);
+  assert.match(words({}), /On a phone the whole trail wraps\./);
   assert.match(words({ show: false }), /Breadcrumb Navigation:\*\* none/);
 });
 

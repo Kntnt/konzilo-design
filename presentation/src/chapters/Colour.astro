@@ -44,8 +44,8 @@ const summary = (kind, mode) => {
         </div>
         <figcaption data-kn-type="small" data-ratios={JSON.stringify({ light: summary(kind, 'light'), dark: summary(kind, 'dark') })}>{summary(kind, 'light')}</figcaption>
       </figure>)}</div>;
-      return index === 0 ? examples : <details><summary>{t('combinations')}</summary>{examples}</details>;
+      return examples;
     })}
   </div>
-  <details class="prose"><summary>{t('contrast.help')}</summary><p>{t('contrast.explain')}</p></details>
+  <section class="prose reference"><h2 data-kn-type="heading-4">{t('contrast.help')}</h2><p>{t('contrast.explain')}</p></section>
 </>}

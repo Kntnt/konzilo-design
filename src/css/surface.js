@@ -1,4 +1,4 @@
-import { ROLES } from '../generator/surface.js';
+import { ROLES, frameFollows } from '../generator/surface.js';
 
 // light-dark() answers to the element's own colour scheme, so it serves only a kind whose scheme follows the mode.
 const pair = (light, dark) => light === dark ? light : `light-dark(${light}, ${dark})`;
@@ -20,6 +20,9 @@ function shadowPair(light, dark, choose) {
 const firstBand = (test) => `[data-kn-surface]:has(> main > :first-child${test}) > [data-kn-start="under"]`;
 
 export function surfaceCss(surfaces) {
+  // With the quiet edge a plate's frame is its own border role. A filled button is a small plate on the Surface, whose
+  // own quiet edge is its hover fill, the step beside its fill; it reads --kn-frame-ring before --kn-frame-color.
+  const quiet = frameFollows(surfaces, 'border');
   const clear = [
     `${firstBand('[data-kn-mode="light"]')} {\n  --kn-mode: light;\n  color-scheme: light;\n${switches.light}\n}`,
     `${firstBand('[data-kn-mode="dark"]')} {\n  --kn-mode: dark;\n  color-scheme: dark;\n${switches.dark}\n}`,
@@ -38,6 +41,7 @@ export function surfaceCss(surfaces) {
     lines.push(`  --kn-polarity: ${polarity};`, `  color-scheme: ${polarity};`);
     for (const name of Object.keys(light.shadow)) lines.push(`  --kn-shadow-${name}: ${shadowPair(light.shadow[name], dark.shadow[name], choose)};`);
     lines.push(`  --kn-frame-color: ${choose(light['frame-color'], dark['frame-color'])};`);
+    if (quiet) lines.push('  --kn-frame-ring: var(--kn-button-background-hover);');
     clear.push(`${firstBand(kind === 'page' ? ':is(:not([data-kn-surface]), [data-kn-surface="page"])' : `[data-kn-surface="${kind}"]`)} {\n${lines.join('\n')}\n}`);
     lines.push('  background: var(--kn-background);', '  color: var(--kn-text);');
     if (light.scrim) {

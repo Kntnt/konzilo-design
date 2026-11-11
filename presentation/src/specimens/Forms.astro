@@ -8,7 +8,7 @@ import ConsentBanner from '../../../src/components/ConsentBanner.astro';
 import Table from '../../../src/components/Table.astro';
 import { fields, categories, consentTexts } from '../samples.js';
 import { t } from '../data.js';
-const { id } = Astro.props;
+const { id, catalogue } = Astro.props;
 // A field has no look for the pointer on it or for being pressed.
 const states = ['default', 'focus', 'disabled'];
 ---
@@ -63,8 +63,8 @@ const states = ['default', 'focus', 'disabled'];
 {id === 'form-states' && (
   <div class="sample-state-row" style="--state-columns:3">
     {states.map((state) => (
-      <div data-look={`field-state:${state}`}>
-        <p data-kn-type="label" data-report-only>{t(`state.${state}`)}</p>
+      <div>
+        <p class={catalogue ? 'catalogue-caption' : undefined} data-kn-type={catalogue ? undefined : 'label'}>{t(`state.${state}`)}</p>
         <Field
           class={`is-${state}`}
           name={`field-${state}`}

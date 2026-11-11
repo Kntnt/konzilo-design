@@ -8,7 +8,7 @@ import Pagination from '../../../src/components/Pagination.astro';
 import { context } from './context.js';
 import { ownPictures } from '../data.js';
 import { breadcrumbProps } from '../frame.js';
-const { id, project, resolved } = Astro.props;
+const { id, project, resolved, catalogue } = Astro.props;
 const { list } = context(project, resolved, ownPictures);
 const results = Array.from({ length: 4 }, (_, index) => ({
   title: [
@@ -29,28 +29,32 @@ const filters = {
 
 {id === 'content-loop' && (
   <div class="sample-stack">
-    <ContentLoop
-      items={list.map(({ picture, ...item }) => item)}
-      columns={3}
-      surface="raised"
-      data-look="loop-layout:cards"
-    />
-    <ContentLoop
-      presentation="rows"
-      images={false}
-      data-look="loop-layout:rows"
-      items={[
-        {
-          title: 'Service overview',
-          href: '#download',
-          kind: 'document',
-          fileType: 'PDF',
-          fileSize: '240 KB',
-          text: 'A short guide to the available services.',
-        },
-        { ...list[1], text: undefined, picture: undefined },
-      ]}
-    />
+    <div>
+      {catalogue && <p class="catalogue-caption">Cards</p>}
+      <ContentLoop
+        items={list.map(({ picture, ...item }) => item)}
+        columns={3}
+        surface="raised"
+      />
+    </div>
+    <div>
+      {catalogue && <p class="catalogue-caption">Rows</p>}
+      <ContentLoop
+        presentation="rows"
+        images={false}
+        items={[
+          {
+            title: 'Service overview',
+            href: '#download',
+            kind: 'document',
+            fileType: 'PDF',
+            fileSize: '240 KB',
+            text: 'A short guide to the available services.',
+          },
+          { ...list[1], text: undefined, picture: undefined },
+        ]}
+      />
+    </div>
   </div>
 )}
 {id === 'visitor-filters' && (

@@ -6,8 +6,11 @@ import Button from './Button.astro';
 interface Props {
   id: string; items: MenuItem[]; level?: Level; numbered?: boolean; surface?: Surface;
   languages?: Language[]; search?: Search; cta?: Cta;
+  // Whether the rows above and below the columns show. Astro counts a slot written inside a condition as filled even
+  // when the condition is false, so the Header says it outright; on its own the menu goes by its slots.
+  above?: boolean; below?: boolean;
 }
-const { id, items, level = 2, numbered = false, surface = 'page', languages = [], search, cta } = Astro.props;
+const { id, items, level = 2, numbered = false, surface = 'page', languages = [], search, cta, above = Astro.slots.has('above'), below = Astro.slots.has('below') } = Astro.props;
 const Heading = `h${level}` as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
 // A modal dialog that the menu button opens with no script: Esc and a click outside close it, focus stays in it and
 // returns to the button.
@@ -19,7 +22,7 @@ const Heading = `h${level}` as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
       {languages.length > 0 && <LanguageSwitcher languages={languages} inline />}
       {cta && <Button class="kn-header-cta" href={cta.href} commandfor={cta.href === undefined ? cta.dialog : undefined} command={cta.href === undefined && cta.dialog ? 'show-modal' : undefined} aria-haspopup={cta.href === undefined && cta.dialog ? 'dialog' : undefined} aria-controls={cta.href === undefined ? cta.dialog : undefined} data-kn-moved="cta">{cta.label}</Button>}
     </div>}
-    {Astro.slots.has('above') && <div class="kn-megamenu-above"><slot name="above" /></div>}
+    {above && <div class="kn-megamenu-above"><slot name="above" /></div>}
     {items.length > 0 && <div class="kn-megamenu-columns" style={{ '--kn-header-menu-columns': Math.min(6, items.length) }}>
       {items.map((item, i) => <div class="kn-megamenu-column">
         <Heading class="kn-megamenu-heading" data-kn-type="heading-6"><a href={item.href} aria-current={item.current ? 'page' : undefined}>
@@ -28,6 +31,6 @@ const Heading = `h${level}` as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
         {item.children?.length && <ul>{item.children.map((child) => <li><a href={child.href} aria-current={child.current ? 'page' : undefined}><span>{child.label}</span>{child.description && <span class="kn-megamenu-description">{child.description}</span>}</a></li>)}</ul>}
       </div>)}
     </div>}
-    {Astro.slots.has('below') && <div class="kn-megamenu-below"><slot name="below" /></div>}
+    {below && <div class="kn-megamenu-below"><slot name="below" /></div>}
   </nav>
 </dialog>

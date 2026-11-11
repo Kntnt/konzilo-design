@@ -62,6 +62,14 @@
   @container style(--kn-footer-same: 1) and style(--kn-shadow-page: none) {
     .kn-page > .kn-page-main { border-block-end: 1px solid var(--kn-border); }
   }
+  /* In dark mode a shadow does not show, so wherever the page casts one on the footer, the hairline marks its edge too
+     (owner, 2026-11-11). */
+  @container style(--kn-mode: dark) {
+    .kn-page > .kn-page-main[data-kn-shadow] { border-block-end: 1px solid var(--kn-border); }
+  }
+  @container style(--kn-mode: dark) and style(--kn-footer-same: 1) {
+    .kn-page > .kn-page-main { border-block-end: 1px solid var(--kn-border); }
+  }
   @media print {
     .kn-page > .kn-page-main[data-kn-shadow] { box-shadow: none; }
   }

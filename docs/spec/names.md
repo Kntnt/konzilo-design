@@ -195,6 +195,7 @@ Shadows are off by default; enabling them starts at the reference positions in t
 |---|---|---|---|---|
 | `--frame-width` | Frame thickness, 0–3px, in px like hairlines | tool.md §§2–3; proposed here | Proposed here | Uses CSS's border-width vocabulary without encoding a unit. |
 | `--frame-color` | Frame colour, defaulting to the shadow's chosen colour | tool.md §2; proposed here | Proposed here | Uses the same English spelling as the colour inputs. |
+| `--frame-ring` | A filled button's frame ring where it differs from the frame colour: with the quiet edge, the button's hover fill | The assistant, 2026-11-11 | *Built* | A button is not a Surface, so it cannot read a plate's own border; absent, the ring is the frame colour. |
 
 The frame is always solid, off by default, with corners from the corner slider. There is no frame-style setting or separate frame radius. Table/field hairlines use context border roles; their naming is not absorbed into frame. Which components take a frame remains for the components.
 
@@ -311,6 +312,7 @@ The reusable repository stores no actual presentation identity or project-specif
 | `inputs.footer.horizontal-rules`, `inputs.footer.vertical-rule`, `inputs.footer.rule-extent` | Lines between rows and between columns, and where they end: `content` (default) or `full` | footer.md | *Built* 2026-11-03 | Unchanged by the decision of 2026-11-05. |
 | `inputs.page` | The page's shadow on the footer, its edge line and its fill in each mode | page.md | *Built* 2026-11-03 | Named for the component they go to. The tool sets the shadow and the edge line on its Footer page, beside the attachment, since 2026-11-11. |
 | `inputs.breadcrumbs` | Whether a trail shows, its mark, first step, end, and form on a phone | components.md | *Built* 2026-11-03 | Named for the component they go to. |
+| `inputs.breadcrumbs.narrow` | The trail on a phone: `trail` (whole, wrapping; default), `parent` (only the way up one level) or `fit` (as much as fits, from the end, on one line), written as `data-kn-narrow` | components.md, How breadcrumbs show | *Built* 2026-11-03; `fit` 2026-11-11 | Each value names what shows; `fit` says as much as fits, as the owner put it. |
 | `inputs.hero` | The design's default Hero; a page may depart from it | components.md, Band compositions | *Built* 2026-11-05 | Named for the component it goes to. |
 | `inputs.hero.picture` | Where the picture stands: `none`, `behind` (default), `start`, `end`, `start-bleed` or `end-bleed` | components.md, Band compositions | *Decided* 2026-11-05 | The values are logical, so right-to-left works; the tool says Left and Right. |
 | `inputs.hero.surface` | The Surface without a picture behind: `none` (default), `page`, `raised`, `tint`, `brand` or `inverse` | components.md, Band compositions | *Decided* 2026-11-05 | Reuses the Surface kinds; `none` lets what lies beneath show. |
@@ -538,6 +540,10 @@ The public query keys are `q`, the declared filter names and `page`; repeated va
 ## Dark-mode rule names (2026-11-05)
 
 ***Decided* with the owner's rule of 2026-11-05 (plates.md):** `background-page` is the contrast-pair name for a band's background against the page in the same mode, following the names `text-alt` and `link-hover`: what is checked, then what over. It adds no role, and the page and the picture kinds do not have it. `BAND_MINIMUM` names its target and `BAND_STEPS` the steps of a ramp that carry a band.
+
+## Dark mode's steps (2026-11-11)
+
+***Named* by the assistant with the owner's choice of a blacker dark page and lighter plates (plates.md):** dark mode's two steps of its own are `850` and `975`. A ramp's steps are named by their place in lightness on the hundreds scale, so a step that falls between two takes the number between them: 850 at 13.5 lies between 800 at 11 and 900 at 16, and 975 at 19.5 beyond 950 at 18.5. They follow the existing keys in `resolved.ramps.<rank>` and in recipes (`gray-975`), and no other name changes. `SCALES` names the ten steps each mode reads, `SCALES.light` and `SCALES.dark`.
 
 ## Owner’s review names (2026-11-02)
 

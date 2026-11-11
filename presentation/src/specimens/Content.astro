@@ -4,7 +4,10 @@ import Accordion from '../../../src/components/Accordion.astro';
 import Quotation from '../../../src/components/Quotation.astro';
 import Callout from '../../../src/components/Callout.astro';
 import { columns, rows, questions } from '../samples.js';
-const { id } = Astro.props;
+const { id, catalogue } = Astro.props;
+// The design tool's catalogue names each variant it shows.
+const STATUSES = { info: 'Info', success: 'Success', warning: 'Warning', error: 'Error' };
+const STYLES = { filled: 'Filled', outlined: 'Outlined' };
 ---
 
 {id.startsWith('table') && (
@@ -23,16 +26,16 @@ const { id } = Astro.props;
   </div>
 )}
 {id.startsWith('accordion') && (
+  <div class:list={[id.endsWith('more') ? 'sample-pair' : 'sample-stack']}>
+    <Accordion
+      variant={id === 'accordion' ? 'hairlines' : 'boxes'}
+      mode="multiple"
+      items={questions}
+    />
+  </div>
+)}
+{id === 'quotation' && (
   <div class="sample-stack">
-    <div class:list={[id.endsWith('more') ? 'sample-pair' : 'sample-stack']}>
-      {(id === 'accordion' ? ['hairlines'] : ['boxes']).map((variant) => (
-        <Accordion
-          variant={variant}
-          mode="multiple"
-          items={questions.slice(0, 1)}
-        />
-      ))}
-    </div>
     <Quotation name="Service team" context="Our approach" surface="tint">
       <p>The most useful plan makes the next step clear.</p>
     </Quotation>
@@ -41,32 +44,39 @@ const { id } = Astro.props;
 {id.startsWith('callout') && (
   <div class:list={[id.endsWith('more') ? 'sample-callouts' : 'sample-stack']}>
     {(id === 'callout' ? ['filled'] : ['filled', 'outlined']).flatMap((style) =>
-      (id === 'callout' ? ['info'] : ['info', 'success', 'warning', 'error']).map((variant, index) => (
-        <Callout
-          variant={variant}
-          style={style}
-          data-look={`callout-status:${variant} callout-style:${style}`}
-          title={
-            [
-              'Before you begin',
-              'Request confirmed',
-              'Check the date',
-              'Address missing',
-            ][index]
-          }
-        >
-          <p>
-            {
+      (id === 'callout' ? ['info'] : ['info', 'success', 'warning', 'error']).map((variant, index) => {
+        const callout = (
+          <Callout
+            variant={variant}
+            style={style}
+            title={
               [
-                'Keep your details ready.',
-                'We will be in touch.',
-                'Allow time for review.',
-                'Add a complete email.',
+                'Before you begin',
+                'Request confirmed',
+                'Check the date',
+                'Address missing',
               ][index]
             }
-          </p>
-        </Callout>
-      )),
+          >
+            <p>
+              {
+                [
+                  'Keep your details ready.',
+                  'We will be in touch.',
+                  'Allow time for review.',
+                  'Add a complete email.',
+                ][index]
+              }
+            </p>
+          </Callout>
+        );
+        return catalogue ? (
+          <div class="catalogue-cell">
+            <p class="catalogue-caption">{STATUSES[variant]} · {STYLES[style]}</p>
+            {callout}
+          </div>
+        ) : callout;
+      }),
     )}
   </div>
 )}

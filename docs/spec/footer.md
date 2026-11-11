@@ -44,6 +44,8 @@ The assistant reads the owner's "or" as a design choice (2026-11-05, ***approved
 | A2 | A position statement, or a similar short text presenting the brand | Cookie policy • Privacy policy (links) |
 | B2 | Links for navigation: a selection from the megamenu, all of it, or links that do not fit there | Change privacy settings • Revoke consents (links) |
 
+**The client's own** (the owner, 2026-11-11): the tool's Start page takes the client's words for every cell but the upper band's A1, the brand, and the design file keeps them in `project.footer`. Where the tool's preview and the presentation show the footer, a cell with the client's words shows them and one without shows the sample's; the upper band's B2 without links of its own is the top level of the menu shown, the client's once there is one. It is content, not design, so a site's footer gets none of it (tool.md, The client's own menu and footer).
+
 **The brand follows the header** (the owner, 2026-11-05): what is chosen in the header holds in the footer too. A1 of the upper band shows what `header.identity` says, logo only, name only, or logo and name, following `brand-axis` too and optically centred as in the header (header.md, point 13), with no slogan. It has the header's sizes, and the logo for the band's Surface: a band dark in both modes takes the dark logo, and one that follows the mode holds both, for CSS to choose. Changing them changes the preview's footer where it stands. A site gets the same from `footerBrand` in `src/components/brand.js`, as a cell's `content`.
 
 **The tool's control** (the owner): a miniature of this structure, in which one clicks the cells to turn them on and off and sees the result in the preview. Eight cells in all.

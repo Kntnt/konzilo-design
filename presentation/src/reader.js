@@ -263,6 +263,7 @@ function initFrame(specimen) {
   function applyToolbar() {
     const width = pressedValue(page, 'data-frame-width', 'wide');
     frame.style.width = width === 'wide' ? '100%' : `${width}px`;
+    specimen.toggleAttribute('data-narrow', width !== 'wide');
     if (frame.contentDocument) {
       frame.contentDocument.documentElement.dataset.knMode = pressedValue(page, 'data-frame-mode', 'light');
       frame.contentDocument.documentElement.dataset.knPictures = pressedValue(page, 'data-frame-pictures', 'on');
@@ -306,7 +307,10 @@ function initFrame(specimen) {
 function updateWidthOptions(page) {
   const group = page.querySelector('[data-frame-width]');
   if (!group) return;
-  const available = page.querySelector('.page-content').clientWidth;
+  const screen = page.querySelector('.specimen-screen');
+  const style = screen && getComputedStyle(screen);
+  const border = style ? parseFloat(style.borderInlineStartWidth) + parseFloat(style.borderInlineEndWidth) : 0;
+  const available = page.querySelector('.page-content').clientWidth - border;
   let offered = 0;
   for (const button of group.querySelectorAll('button')) {
     const fits = button.dataset.value === 'wide' || Number(button.dataset.value) <= available;

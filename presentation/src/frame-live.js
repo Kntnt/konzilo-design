@@ -1,12 +1,13 @@
 // The design tool's preview: it changes the sample page's header, footer and page as the settings change,
-// without a build. The header comes from a built template with every item, and leaves out what is off; its giving-way
+// without a build. The header comes from a built template with every item, takes the design's own menu in place of the
+// sample's, and leaves out what is off; its giving-way
 // script, which the template brings, measures it again when it changes. The trail goes with the page's H1, in hero-live.js.
 import { layoutFooter } from '../../src/components/footer.js';
 // The preview can set its footer at the edge of the screen at any time, so it carries the script that says whether
 // the footer fits; it watches for that itself.
 import '../../src/components/footer-fit.js';
 import { footerHtml } from '../../src/components/footer-html.js';
-import { footerProps, identityProps } from './frame.js';
+import { footerProps, identityProps, menuOf } from './frame.js';
 import { search } from './samples.js';
 
 function identity(header, settings, project) {
@@ -32,6 +33,50 @@ function identityIn(link, wanted) {
   if (wanted.slogan) slogan.firstElementChild.textContent = wanted.slogan;
   else slogan.remove();
 }
+// The link menu and the large menu with the menu shown, each entry made from the template's own first one, so they stay
+// the component's markup: its first column has links with descriptions under its heading.
+function menuIn(header, menu) {
+  const linked = (element, { label, href, current }) => {
+    element.setAttribute('href', href);
+    if (current) element.setAttribute('aria-current', 'page');
+    else element.removeAttribute('aria-current');
+  };
+  for (const list of header.querySelectorAll('.kn-header-link-menu ul')) {
+    const pattern = list.firstElementChild;
+    list.replaceChildren(...menu.filter((item) => item.linkMenu !== false).map((item) => {
+      const entry = pattern.cloneNode(true);
+      const link = entry.querySelector('a');
+      linked(link, item);
+      link.textContent = item.label;
+      return entry;
+    }));
+  }
+  for (const columns of header.querySelectorAll('.kn-megamenu-columns')) {
+    const pattern = columns.firstElementChild;
+    columns.style.setProperty('--kn-header-menu-columns', String(Math.min(6, menu.length)));
+    columns.replaceChildren(...menu.map((item, index) => {
+      const column = pattern.cloneNode(true);
+      const link = column.querySelector('.kn-megamenu-heading a');
+      const number = link.querySelector('.kn-megamenu-number');
+      linked(link, item);
+      if (number) number.textContent = `${String(index + 1).padStart(2, '0')} /`;
+      link.replaceChildren(...(number ? [number] : []), item.label);
+      const list = column.querySelector('ul');
+      const child = list.firstElementChild;
+      if (!item.children?.length) list.remove();
+      else list.replaceChildren(...item.children.map((wanted) => {
+        const entry = child.cloneNode(true);
+        const [words, description] = entry.querySelectorAll('a > span');
+        linked(entry.querySelector('a'), wanted);
+        words.textContent = wanted.label;
+        if (wanted.description) description.textContent = wanted.description;
+        else description?.remove();
+        return entry;
+      }));
+      return column;
+    }));
+  }
+}
 // An image set again is decoded again, and blinks, so the one already showing moves over to where it is wanted.
 function keepImages(from, into) {
   const showing = [...from.querySelectorAll('img')];
@@ -54,6 +99,8 @@ function buildHeader(settings, project) {
   header.dataset.knAutohide = String(sticky && settings.autohide);
   header.dataset.knSurface = settings.surface;
   identity(header, settings, project);
+  // The template holds the sample menu, which a design's own takes the place of.
+  if (project.menu?.length) menuIn(header, menuOf(project));
   if (!settings['link-menu']) drop('.kn-header-link-menu');
   if (!settings.language) drop('.kn-header-language, [data-kn-moved="language"]');
   if (!settings.search) drop('.kn-header-search-trigger, [data-kn-panel="search"], [data-kn-moved="search"]');
@@ -125,26 +172,69 @@ function updateFooter(page, main, props) {
   }
   if (atEnd) end();
 }
+// The attributes of one element onto another; a held dialog keeps being open.
+function copyAttributes(into, from, keep = []) {
+  for (const { name } of [...into.attributes]) if (!from.hasAttribute(name) && !keep.includes(name)) into.removeAttribute(name);
+  for (const { name, value } of from.attributes) if (into.getAttribute(name) !== value) into.setAttribute(name, value);
+}
+// The new header's content in place of the old, but the dialog held open stays the same element, and so does each element
+// that holds it, since a dialog taken out of the page closes, and opening it again would take the focus from the tool.
+// Where the new header has no such dialog, or holds it elsewhere, it says so and changes nothing.
+function replaceKeeping(old, next, kept) {
+  const fresh = next.querySelector(`dialog[data-kn-panel="${kept.dataset.knPanel}"]`);
+  if (!fresh) return false;
+  const chain = [];
+  for (let here = kept, there = fresh; here !== old; here = here.parentElement, there = there.parentElement) {
+    if (there === next || here.localName !== there.localName) return false;
+    chain.unshift([here, there]);
+  }
+  if (chain[0][1].parentNode !== next) return false;
+  let parentOld = old;
+  for (const [here, there] of chain) {
+    const nodes = [...there.parentNode.childNodes];
+    const index = nodes.indexOf(there);
+    for (const node of [...parentOld.childNodes]) if (node !== here) node.remove();
+    here.before(...nodes.slice(0, index));
+    here.after(...nodes.slice(index + 1));
+    if (here === kept) {
+      copyAttributes(here, there, ['open']);
+      here.setAttribute('closedby', 'none');
+      here.replaceChildren(...there.childNodes);
+    } else copyAttributes(here, there);
+    parentOld = here;
+  }
+  return true;
+}
 export function setupLiveFrame() {
   if (document.body.dataset.specimen !== 'preview') return;
   const page = document.querySelector('.kn-page');
   const main = page.querySelector('.kn-page-main');
   let shown = {};
-  let panel = null;
-  // The panels the tool holds open, the megamenu and the search box, are modal dialogs: the one asked for opens as its
-  // button would open it, but by the dialog itself, so it opens whether its button is in the bar or has given way, and
-  // in a browser without invoker commands too. Any other closes as the browser closes it.
+  // The tool's Header page shows the large menu and the search box open, each in a frame of its own: this page with
+  // ?panel=menu or ?panel=search. The panel is a modal dialog, opened by the dialog itself rather than its button, so it
+  // opens whether its button is in the bar or has given way, and in a browser without invoker commands too.
+  const held = new URLSearchParams(location.search).get('panel');
+  const heldPanel = () => page.querySelector(`:scope > .kn-header dialog[data-kn-panel="${held}"]`);
   const showPanel = () => {
-    for (const node of page.querySelectorAll(':scope > .kn-header [data-kn-panel]')) {
-      if (node.dataset.knPanel === panel || !node.matches('[open], :popover-open')) continue;
-      if (node.matches('dialog')) node.close();
-      else node.hidePopover();
-    }
-    const wanted = panel && page.querySelector(`:scope > .kn-header dialog[data-kn-panel="${panel}"]`);
-    if (wanted && !wanted.open) wanted.showModal();
+    const wanted = held && heldPanel();
+    if (!wanted || wanted.open) return;
+    // Esc and a click beside it do not close it here, and what else would is undone at once.
+    wanted.setAttribute('closedby', 'none');
+    // Opening it would focus its first link or field, or else the dialog itself, which takes the focus from the tool,
+    // keys being typed there included. Inert for that moment, neither it nor anything in it can take the focus.
+    wanted.inert = true;
+    wanted.showModal();
+    wanted.inert = false;
+    // Opening it took the focus, which the control being used in the tool takes back.
+    document.activeElement?.blur();
+    parent.postMessage({ type: 'kn-frame-panel-shown' }, location.origin);
   };
+  if (held) {
+    document.addEventListener('cancel', (event) => { if (event.target === heldPanel()) event.preventDefault(); }, true);
+    document.addEventListener('close', (event) => { if (event.target === heldPanel()) showPanel(); }, true);
+  }
   function apply({ header, footer, page: settings }, project) {
-    const headerKey = JSON.stringify([header, project.name, project.logo, project['logo-dark'], project.slogan]);
+    const headerKey = JSON.stringify([header, project.name, project.logo, project['logo-dark'], project.slogan, project.menu]);
     if (headerKey !== shown.header) {
       // The header stays the same element, as the footer does: it takes the new attributes and content, with the
       // logos already showing moved over, before a paint.
@@ -152,15 +242,14 @@ export function setupLiveFrame() {
       const next = buildHeader(header, project);
       if (old) {
         keepImages(old, next);
-        for (const { name } of [...old.attributes]) if (!next.hasAttribute(name)) old.removeAttribute(name);
-        for (const { name, value } of next.attributes) old.setAttribute(name, value);
-        old.replaceChildren(...next.childNodes);
+        copyAttributes(old, next);
+        const kept = held && heldPanel();
+        if (!(kept?.open && replaceKeeping(old, next, kept))) old.replaceChildren(...next.childNodes);
       } else page.prepend(next);
       showPanel();
-      // An open search box takes the focus, and the control being used should keep it.
-      if (panel) parent.postMessage({ type: 'kn-frame-panel-shown' }, location.origin);
     }
-    const footerKey = JSON.stringify([footer, header.identity, header['brand-axis'], project.name, project.logo, project['logo-dark']]);
+    // The footer's links for navigation follow the menu shown where the design has none of its own.
+    const footerKey = JSON.stringify([footer, header.identity, header['brand-axis'], project.name, project.logo, project['logo-dark'], project.footer, project.menu]);
     if (footerKey !== shown.footer) updateFooter(page, main, footerProps(footer, project, header));
     const pageKey = JSON.stringify(settings);
     if (pageKey !== shown.page) {
@@ -176,11 +265,6 @@ export function setupLiveFrame() {
     shown = { header: headerKey, footer: footerKey, page: pageKey };
   }
   window.addEventListener('message', (event) => {
-    if (event.source !== parent) return;
-    if (event.data?.type === 'kn-frame-panel') {
-      panel = event.data.panel;
-      showPanel();
-      if (panel) parent.postMessage({ type: 'kn-frame-panel-shown' }, location.origin);
-    } else if (event.data?.type === 'kn-design' && event.data.frame) apply(event.data.frame, event.data.project);
+    if (event.source === parent && event.data?.type === 'kn-design' && event.data.frame) apply(event.data.frame, event.data.project);
   });
 }

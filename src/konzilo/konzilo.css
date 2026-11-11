@@ -83,7 +83,7 @@
     cursor: pointer;
     background: var(--kn-button-background);
     color: var(--kn-button-text);
-    box-shadow: inset 0 0 0 var(--kn-frame-width) var(--kn-frame-color);
+    box-shadow: inset 0 0 0 var(--kn-frame-width) var(--kn-frame-ring, var(--kn-frame-color));
     transition: background var(--kn-duration-feedback) var(--kn-easing-standard), color var(--kn-duration-feedback) var(--kn-easing-standard), box-shadow var(--kn-duration-feedback) var(--kn-easing-standard);
   }
   :is(.konzilo-consent-choice, .konzilo-form-send, .konzilo-search-box button, .konzilo-search form button):is(:hover, :active) { background: var(--kn-button-background-hover); }

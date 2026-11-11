@@ -45,8 +45,10 @@ export function pictures(ramps, own = {}) {
     people: [0, 1, 2, 3].map((index) => own[`person-${index + 1}`] ?? person(index)),
   };
 }
+// Where a sample's link leads: nowhere but a fragment named for its words.
+export const anchor = (label) => `#${label.trim().toLowerCase().replace(/\s+/g, '-')}`;
 // A site's menu at a typical size. The link menu shows the first three, and the menu button all of them.
-const page = (label, description) => ({ label, href: `#${label.toLowerCase().replaceAll(' ', '-')}`, ...(description && { description }) });
+const page = (label, description) => ({ label, href: anchor(label), ...(description && { description }) });
 export const menu = [
   { ...page('Products'), children: [page('Compact series', 'For where space is short'), page('Modular series', 'Built to grow with the need'), page('Accessories', 'What completes the set'), page('Spare parts', 'Kept in stock and sent at once')] },
   { ...page('Services'), children: [page('Planning', 'A practical route forward'), page('Delivery', 'Keep responsibilities and dates clear'), page('Review', 'Check the work against the agreed plan'), page('Support', 'Help when you need it')] },
@@ -55,6 +57,32 @@ export const menu = [
   { ...page('Knowledge'), linkMenu: false },
   { ...page('About'), linkMenu: false, children: [page('About us'), page('Career'), page('History'), page('Board of directors'), page('Management team'), page('Contact us')] },
 ];
+// The networks a footer's icons can name: the library's icons, each with what else a person may call it and the
+// addresses that are its, so an address pasted from a client's site finds its icon too.
+export const SOCIAL_NETWORKS = [
+  { name: 'LinkedIn', icon: 'linkedin', hosts: ['linkedin.com'] },
+  { name: 'Facebook', icon: 'facebook', hosts: ['facebook.com', 'fb.com'] },
+  { name: 'Instagram', icon: 'instagram', hosts: ['instagram.com'] },
+  { name: 'YouTube', icon: 'youtube', hosts: ['youtube.com', 'youtu.be'] },
+  { name: 'X', icon: 'brand-x', also: ['Twitter'], hosts: ['x.com', 'twitter.com'] },
+  { name: 'Spotify', icon: 'spotify', hosts: ['spotify.com'] },
+  { name: 'Email', icon: 'mail', also: ['E-mail', 'Mail', 'E-post'] },
+  { name: 'RSS', icon: 'rss', also: ['Feed'] },
+];
+// The sample footer's words, cell by cell, in the shape a design's own take in `project.footer`. The upper band's A1
+// is the brand, as the header shows it, and its B2 the top level of the menu shown, so neither is here.
+export const footer = {
+  upper: {
+    b1: ['LinkedIn', 'Facebook', 'YouTube', 'Spotify', 'Email', 'RSS'],
+    a2: 'Clear information and practical next steps, for anyone planning what comes next.',
+  },
+  lower: {
+    a1: '12 Example Street, 123 45 Sampleton',
+    b1: 'Registration no. 000000-0000. Registered office: Sampleton.',
+    a2: ['Cookie policy', 'Privacy policy'],
+    b2: ['Change privacy settings', 'Revoke consents'],
+  },
+};
 export const search = {
   action: '#search',
   label: 'Search resources',
@@ -90,6 +118,10 @@ export const questions = [
   {
     question: 'What happens after the review?',
     answer: '<p>You receive a clear plan with responsibilities and dates.</p>',
+  },
+  {
+    question: 'Can the plan change later?',
+    answer: '<p>Yes. We review it together at each milestone and adjust what no longer fits.</p>',
   },
 ];
 export const headings = [

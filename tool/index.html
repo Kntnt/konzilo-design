@@ -7,6 +7,7 @@
     <style id="kn-live-core">@layer kn-core, kn-base, kn-components;</style>
     <link rel="stylesheet" href="/src/fonts/fonts.css" />
     <link rel="stylesheet" href="/tool/components.css" />
+    <link rel="stylesheet" href="/presentation/src/page-sketch.css" />
     <link rel="stylesheet" href="/tool/style.css" />
   </head>
   <body data-kn-surface="page">
@@ -55,9 +56,14 @@
               <span class="end-dot"></span><b>Mobile</b><span class="figures">390 px</span>
               <output class="figures" data-end-sizes></output><span class="end-follows"></span>
             </header>
-            <div class="view" id="view-narrow"><div class="frame-host">
-              <iframe id="preview-narrow" title="Live preview at mobile width" src="/preview.html"></iframe>
-            </div></div>
+            <div class="view" id="view-narrow">
+              <p class="frame-caption">The page</p>
+              <div class="frame-host"><iframe id="preview-narrow" title="Live preview at mobile width" src="/preview.html"></iframe></div>
+              <p class="frame-caption">The large menu, open</p>
+              <div class="frame-host" data-panel="menu"><iframe data-panel-frame="menu" title="The large menu, open, at mobile width" inert></iframe></div>
+              <p class="frame-caption">The search box, open</p>
+              <div class="frame-host" data-panel="search"><iframe data-panel-frame="search" title="The search box, open, at mobile width" inert></iframe></div>
+            </div>
           </section>
           <section class="end" data-end="wide" aria-label="Desktop preview">
             <header class="end-bar">
@@ -68,9 +74,14 @@
               <button id="fit" class="figures" type="button"></button>
               <output class="figures end-sizes-wide" data-end-sizes></output><span class="end-follows"></span>
             </header>
-            <div class="view" id="view-wide"><div class="frame-host">
-              <iframe id="preview" title="Live preview at desktop width" src="/preview.html"></iframe>
-            </div></div>
+            <div class="view" id="view-wide">
+              <p class="frame-caption">The page</p>
+              <div class="frame-host"><iframe id="preview" title="Live preview at desktop width" src="/preview.html"></iframe></div>
+              <p class="frame-caption">The large menu, open</p>
+              <div class="frame-host" data-panel="menu"><iframe data-panel-frame="menu" title="The large menu, open, at desktop width" inert></iframe></div>
+              <p class="frame-caption">The search box, open</p>
+              <div class="frame-host" data-panel="search"><iframe data-panel-frame="search" title="The search box, open, at desktop width" inert></iframe></div>
+            </div>
           </section>
         </div>
       </section>

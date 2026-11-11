@@ -1,16 +1,31 @@
 ---
 import { rem } from '../../../src/generator/fluid.js';
-import { resolved as r, inputs, t, num } from '../data.js';
+import { resolved as r, inputs, project, t, num } from '../data.js';
 import { range } from '../words.js';
+import { SHADOW_SCENES } from '../catalog.js';
+import { footerProps } from '../frame.js';
+import { layoutFooter } from '../../../src/components/footer.js';
 import Button from '../../../src/components/Button.astro';
 import Field from '../../../src/components/Field.astro';
+import Specimen from '../Specimen.astro';
 import Components from './Components.astro';
 const { id } = Astro.props;
+// Where a site with this design casts each shadow, as header.css and page.css decide it: the header only where content
+// lies under it, so only a sticky one, and the page on its footer where the design gives it the shadow, or at the edge
+// of the screen where the footer's first colour is the page's last, in the scene the page's own.
+const shadows = Object.values(r.shadow).some((value) => value !== 'none');
+const footerStart = layoutFooter(footerProps(r.footer, project, r.header)).bands[0]?.surface;
+const casts = {
+  header: r.header.attachment === 'sticky',
+  page: !!footerStart && (r.page.shadow || (r.footer.attachment === 'reveal' && !r.page['edge-line'] && footerStart === 'page')),
+};
+// Under each scene, what its shadow does, and where the design has shadows but this one casts none, that it does not.
+const about = (name) => [t(`shadow.${name}.job`), shadows && (r.shadow[name] === 'none' || casts[name] === false) && t('shadow.none')].filter(Boolean).join(' ');
 ---
 {id === 'space' && <>
   <p class="prose">{t(inputs['density-profile'] < 35 ? 'space.compact' : inputs['density-profile'] > 70 ? 'space.loose' : 'space.balanced')}</p>
   <Components specimens={['space-section']} />
-  <details><summary>{t('steps')}</summary><div class="spacing-steps">{Object.entries(r.space.steps).map(([step, value]) => <div><span>{step}</span><i style={{ width: rem(value.max) }}></i><span>{range(value)}</span></div>)}</div></details>
+  <div class="spacing-steps">{Object.entries(r.space.steps).map(([step, value]) => <div><span>{step}</span><i style={{ width: rem(value.max) }}></i><span>{range(value)}</span></div>)}</div>
 </>}
 {id === 'corners' && <>
   <p>{t(inputs['corner-profile'] === 0 ? 'corners.square' : inputs['corner-profile'] < 60 ? 'corners.discreet' : 'corners.round')}</p>
@@ -22,9 +37,6 @@ const { id } = Astro.props;
   </div>
 </>}
 {id === 'shadow' && <>
-  <p class="prose">{t(Object.values(r.shadow).some((value) => value !== 'none') ? 'shadow.on' : 'shadow.off')}</p>
-  <div class="shadow-grid">{Object.keys(r.shadow).map((name) => <div>
-    <div class="shadow-object" data-kn-surface="raised" style={{ boxShadow: `var(--kn-shadow-${name})` }}><h2 data-kn-type="heading-4">{t(`shadow.${name}`)}</h2></div>
-    <p data-kn-type="small">{t(`shadow.${name}.job`)}</p>
-  </div>)}</div>
+  <p class="prose">{t(shadows ? 'shadow.on' : 'shadow.off')}</p>
+  {SHADOW_SCENES.map((name) => <Specimen id={`shadow-${name}`} name={t(`shadow.${name}`)} caption={about(name)} />)}
 </>}

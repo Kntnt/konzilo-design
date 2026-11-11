@@ -32,11 +32,13 @@ const json = (value) => JSON.stringify(value).replaceAll('<', '\\u003c');
     <aside id="sidebar" data-kn-surface="raised">
       <div class="sidebar-identity">{brand.logo && <img src={project.logo} alt={brand.name ? '' : project.name} />}{brand.name && <p data-kn-type="heading-4">{project.name}</p>}<p data-kn-type="small">{t('document.title')}</p></div>
       <nav aria-label={t('nav.label')}>
-        {chapters.filter((chapter) => chapter !== 'comments').map((chapter) => {
+        {chapters.map((chapter) => {
           const entries = pages.filter((page) => page.chapter === chapter);
+          // The comments close the document as its last chapter, in the list with the rest, where a reader finds them
+          // (owner, 2026-11-11), with the count of comments written so far.
           return (
             <div class="nav-chapter" data-nav-chapter={chapter}>
-              <a class="nav-chapter-link" href={`#${entries[0].id}`} data-nav-page={entries.length === 1 ? entries[0].id : undefined} data-kn-type="label">{t(`chapter.${chapter}`)}</a>
+              <a class:list={['nav-chapter-link', chapter === 'comments' && 'nav-comments']} href={`#${entries[0].id}`} data-nav-page={entries.length === 1 ? entries[0].id : undefined} data-kn-type="label">{t(`chapter.${chapter}`)}{chapter === 'comments' && <span data-total-count>0</span>}</a>
               {entries.length > 1 && (
                 <div class="nav-pages">
                   {entries.map((page) => <a href={`#${page.id}`} data-nav-page={page.id}>{t(`${page.id}.title`)}</a>)}
@@ -46,7 +48,6 @@ const json = (value) => JSON.stringify(value).replaceAll('<', '\\u003c');
           );
         })}
       </nav>
-      <a class="nav-comments" href="#comments" data-nav-page="comments">{t('comments.title')}<span data-total-count>0</span></a>
     </aside>
     <main id="main">
       {pages.map((page) => <Sheet page={page} pages={pages}>

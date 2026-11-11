@@ -1,6 +1,6 @@
 {
   "name": "@kntnt/konzilo-design",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "A design system generator with a visual tool: from a few inputs, a checked design system for any website, with a presentation, CSS, components and a DESIGN.md export.",
   "private": true,
   "license": "AGPL-3.0-or-later",

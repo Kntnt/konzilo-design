@@ -2,13 +2,32 @@
 import Card from '../../../src/components/Card.astro';
 import CardGrid from '../../../src/components/CardGrid.astro';
 import ContentCard from '../../../src/components/ContentCard.astro';
+import ContentLoop from '../../../src/components/ContentLoop.astro';
 import { context } from './context.js';
 import { t, ownPictures } from '../data.js';
 const { id, project, resolved, catalogue } = Astro.props;
 const { list, people, landscapes } = context(project, resolved, ownPictures);
+const person = (index) => ({ heading: ['Team lead', 'Project adviser', 'Support specialist'][index], variant: 'person', personRole: 'Service team', picture: { src: people[index], alt: 'Abstract head and shoulders in tints' } });
+// The design tool's catalogue shows each kind of card with a plate and without one, side by side and named.
+const kinds = [
+  ['Link · On a plate', { heading: list[0].title, text: list[0].text, href: '#services', picture: { src: landscapes[0], alt: '' }, surface: 'raised' }],
+  ['Link · No plate', { heading: list[1].title, text: list[1].text, href: '#services', picture: { src: landscapes[1], alt: '' } }],
+  ['Person · On a plate', { ...person(0), surface: 'tint' }],
+  ['Person · No plate', person(2)],
+];
 ---
 
-{['card', 'card-unplated'].includes(id) && (
+{id === 'card' && catalogue && (
+  <CardGrid columns={4}>
+    {kinds.map(([caption, props]) => (
+      <div class="catalogue-cell">
+        <p class="catalogue-caption">{caption}</p>
+        <Card {...props} />
+      </div>
+    ))}
+  </CardGrid>
+)}
+{['card', 'card-unplated'].includes(id) && !catalogue && (
   <CardGrid columns={3}>
     {list.map((item, index) => (
       <Card
@@ -17,51 +36,40 @@ const { list, people, landscapes } = context(project, resolved, ownPictures);
         href="#services"
         picture={{ src: landscapes[index], alt: '' }}
         surface={id === 'card' ? 'raised' : undefined}
-        data-report-only={index > 0 || undefined}
       />
     ))}
   </CardGrid>
 )}
 {id === 'card-person' && (
   <CardGrid columns={3}>
-    {[
-      'Team lead',
-      'Project adviser',
-      'Support specialist',
-    ].map((heading, index) => (
-      <Card
-        heading={heading}
-        variant="person"
-        personRole="Service team"
-        picture={{
-          src: people[index],
-          alt: 'Abstract head and shoulders in tints',
-        }}
-        surface={index < 2 ? 'tint' : undefined}
-        data-look={['card-plate:plate', undefined, 'card-plate:none'][index]}
-        data-report-only={index === 1 || undefined}
-      />
+    {[0, 1, 2].map((index) => (
+      <Card {...person(index)} surface={index < 2 ? 'tint' : undefined} />
     ))}
   </CardGrid>
 )}
 {id === 'content-card' && (
   <CardGrid>
-    {list.map((item, index) => (
+    {list.map((item) => (
       <ContentCard
         {...item}
         surface="raised"
         imageInset={false}
-        data-report-only={index > 0 || undefined}
         cta={{ label: 'Read more', style: 'link', icon: '→' }}
       />
     ))}
   </CardGrid>
 )}
+{id === 'content-row' && (
+  <ContentLoop
+    presentation="rows"
+    items={list.slice(0, 2).map((item) => ({ ...item, cta: { label: 'Read more', style: 'link', icon: '→' } }))}
+  />
+)}
 {id === 'card-grid' && (
   <div class="sample-stack card-grid-comparison">
     {(catalogue ? [2, 3, 4] : [2, 4]).map((columns) => (
-      <div data-look={`grid-columns:${columns}`}>
-        <p class="grid-caption" data-kn-type="label" data-report-only>
+      <div>
+        <p class={catalogue ? 'catalogue-caption' : 'grid-caption'} data-kn-type={catalogue ? undefined : 'label'}>
           {t('card-grid.columns', { count: columns })}
         </p>
         <CardGrid columns={columns}>

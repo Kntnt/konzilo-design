@@ -40,18 +40,37 @@ test('over the seed list, in both modes, every band stands apart from the page a
   }
 });
 
+test('in dark mode the page is blacker and the plates lighter, and a hover on a plate still shows (owner, 2026-11-11)', () => {
+  const near = (hex, target) => Math.abs(contrast(hex, '#ffffff') / target - 1) < 0.015;
+  for (const [name, inputs] of designs()) for (const temperature of [-100, 0, 100]) {
+    const { surfaces, ramps: solved } = derive({ ...inputs, 'gray-temperature': temperature });
+    const page = surfaces.page.dark.roles.background;
+    assert.ok(near(page, 19.5) && near(surfaces.raised.dark.roles.background, 13.5), `${name}@${temperature}`);
+    for (const [kind, modes] of Object.entries(surfaces)) if (isBand(kind) && modes.dark.recipes.background.endsWith('-850')) {
+      const { background, 'background-hover': hover } = modes.dark.roles;
+      const rank = modes.dark.recipes.background.split('-')[0], family = solved[rank];
+      // About 1.44 from the page, where it was 1.16, and its hover as far from it as a light plate's is in light mode.
+      // A seed kept on 800 for light mode but darker than 800's 11 takes 850 down with it, keeping their spacing.
+      const pushed = !!family && family[800] === inputs['brand-colors'][rank]?.toLowerCase() && contrast(family[800], '#ffffff') > 11;
+      assert.ok(contrast(background, page) >= (pushed ? 1.2 : 1.4), `${name}@${temperature} ${kind}: ${contrast(background, page)} from the page`);
+      if (pushed) assert.ok(contrast(background, family[800]) >= 1.2, `${name}@${temperature} ${kind}: ${contrast(background, family[800])} from 800`);
+      assert.ok(contrast(hover, background) >= 1.1, `${name}@${temperature} ${kind}: hover ${contrast(hover, background)}`);
+    }
+  }
+});
+
 test('the page, the light bands and the dark bands stand where the rule says, keeping their family', () => {
   const { surfaces } = derive({ 'brand-colors': { primary: '#168b83', ...FURTHER } });
   const expected = {
-    page: ['white', 'gray-950'],
-    raised: ['gray-100', 'gray-900'],
-    tint: ['primary-100', 'primary-900'],
-    'tint-secondary': ['secondary-100', 'secondary-900'],
-    'tint-tertiary': ['tertiary-100', 'tertiary-900'],
-    'status-info': ['info-100', 'info-900'],
-    'status-success': ['success-100', 'success-900'],
-    'status-warning': ['warning-100', 'warning-900'],
-    'status-error': ['error-100', 'error-900'],
+    page: ['white', 'gray-975'],
+    raised: ['gray-100', 'gray-850'],
+    tint: ['primary-100', 'primary-850'],
+    'tint-secondary': ['secondary-100', 'secondary-850'],
+    'tint-tertiary': ['tertiary-100', 'tertiary-850'],
+    'status-info': ['info-100', 'info-850'],
+    'status-success': ['success-100', 'success-850'],
+    'status-warning': ['warning-100', 'warning-850'],
+    'status-error': ['error-100', 'error-850'],
     brand: ['primary-800', 'primary-800'],
     accent: ['primary-700', 'primary-700'],
     inverse: ['gray-950', 'gray-800'],
@@ -64,14 +83,19 @@ test('the page, the light bands and the dark bands stand where the rule says, ke
   for (const kind of Object.keys(expected).filter((name) => !['brand', 'accent', 'inverse'].includes(name))) for (const mode of MODES) assert.equal(surfaces[kind][mode].polarity, mode, kind);
 });
 
-test('every other role follows the step and polarity of the background, whatever the kind', () => {
+test('every other role follows the mode and step of the background, whatever the kind', () => {
+  // Each mode on its own scale (owner, 2026-11-11): the dark rows are the same in both, with 850 and 975 in dark mode
+  // where light mode has 900 and 950.
   const ROWS = {
     'light/white': { alternate: 100, hover: 200, border: 200, strong: 500 },
     'light/100': { alternate: 'white', hover: 200, border: 200, strong: 500 },
-    'dark/700': { alternate: 800, hover: 900, muted: 300, border: 800, strong: 400 },
-    'dark/800': { alternate: 900, hover: 950, muted: 200, border: 700, strong: 400 },
-    'dark/900': { alternate: 950, hover: 800, muted: 300, border: 800, strong: 400 },
-    'dark/950': { alternate: 900, hover: 800, muted: 300, border: 800, strong: 400 },
+    'light/700': { alternate: 800, hover: 900, muted: 300, border: 800, strong: 400 },
+    'light/800': { alternate: 900, hover: 950, muted: 200, border: 700, strong: 400 },
+    'light/950': { alternate: 900, hover: 800, muted: 300, border: 800, strong: 400 },
+    'dark/700': { alternate: 800, hover: 850, muted: 300, border: 800, strong: 400 },
+    'dark/800': { alternate: 850, hover: 975, muted: 200, border: 700, strong: 400 },
+    'dark/850': { alternate: 975, hover: 800, muted: 300, border: 800, strong: 400 },
+    'dark/975': { alternate: 850, hover: 800, muted: 300, border: 800, strong: 400 },
   };
   const seen = new Set();
   for (const [, inputs] of designs()) {
@@ -79,9 +103,10 @@ test('every other role follows the step and polarity of the background, whatever
     for (const [kind, modes] of Object.entries(surfaces)) if (!isPicture(kind)) for (const mode of MODES) {
       const { polarity, recipes } = modes[mode];
       const [family, step = recipes.background] = recipes.background === 'white' ? ['gray'] : recipes.background.split('-');
-      const row = ROWS[`${polarity}/${step}`];
-      assert.ok(row, `${kind}/${mode} stands on ${polarity}/${step}`);
-      seen.add(`${polarity}/${step}/${kind}/${mode}`);
+      const row = ROWS[`${mode}/${step}`];
+      assert.ok(row, `${kind}/${mode} stands on ${mode}/${step}`);
+      assert.equal(polarity, ['white', '100'].includes(step) ? 'light' : 'dark', `${kind}/${mode}`);
+      seen.add(`${mode}/${step}/${kind}`);
       // The family is all a kind adds, and accent's muted text and borders are its one grey family.
       const lines = kind === 'accent' ? 'gray' : family;
       // A light band, one that follows the mode, keeps grey muted text in dark mode too (owner, 2026-11-10).
@@ -94,7 +119,7 @@ test('every other role follows the step and polarity of the background, whatever
     }
   }
   // Two kinds meet on one row: brand and inverse in dark mode, so the rule has not become a list of kinds.
-  for (const id of ['dark/800/brand/dark', 'dark/800/inverse/dark', 'dark/950/page/dark', 'dark/950/inverse/light']) assert.ok(seen.has(id), id);
+  for (const id of ['dark/800/brand', 'dark/800/inverse', 'dark/975/page', 'light/950/inverse', 'light/800/brand']) assert.ok(seen.has(id), id);
 });
 
 test('picture Surfaces stand on no step and keep their recipes', () => {
@@ -107,7 +132,9 @@ test('picture Surfaces stand on no step and keep their recipes', () => {
 });
 
 test('a seed no longer erases a band, and every other seed keeps its anchor', () => {
-  // A seed that lies too near a page on a step that carries a band, in any brand rank.
+  // A seed that lies too near a page on a step that carries a band, in any brand rank. The two dark seeds lie too near
+  // grey 950 on 900, which the light scale still guards so light mode stays as it was; on the dark scale they are
+  // nearest 975, where no band stands, and dark mode takes them there (owner, 2026-11-11).
   for (const seed of ['#ffffff', '#fdfdfd', '#f8f8f8', '#f5f5f5', '#1b1b1b', '#1c1c1c']) for (const brand of [{ primary: seed }, { primary: '#168b83', secondary: seed }, { primary: '#168b83', secondary: '#7a3e9d', tertiary: seed }]) {
     const { surfaces, 'contrast-check': check } = derive({ 'brand-colors': brand });
     assert.equal(check.status, 'passed', seed);
@@ -126,10 +153,15 @@ test('a seed no longer erases a band, and every other seed keeps its anchor', ()
       assert.ok(contrast(modes[mode].roles.background, surfaces.page[mode].roles.background) >= BAND_MINIMUM, `#${channel}@${temperature} ${kind}/${mode}`);
     }
   }
-  // Seeds that leave a band standing keep their exact colour, on a band step or beside one.
-  for (const [seed, step] of [['#168b83', 500], ['#ffe9b0', 100], ['#0b2f6b', 800], ['#333333', 800], ['#000000', 950], ['#0a0a0a', 950]]) {
-    assert.equal(ramps({ primary: seed }, 0).primary[step], seed, seed);
+  // Seeds that leave a band standing keep their exact colour, on a band step or beside one: on the light scale as before,
+  // and on dark mode's own steps where the seed lies nearest one of them.
+  for (const [seed, steps] of [['#168b83', [500]], ['#ffe9b0', [100]], ['#0b2f6b', [800]], ['#333333', [800]], ['#000000', [950, 975]], ['#0a0a0a', [950, 975]], ['#1b1b1b', [975]], ['#1c1c1c', [975]]]) {
+    const solved = ramps({ primary: seed }, 0).primary;
+    assert.deepEqual(Object.keys(solved).filter((step) => solved[step] === seed).map(Number), steps, seed);
   }
+  // A seed the light scale puts on 800 is not given to 850 as well, which would make dark mode's tint its brand band.
+  const { surfaces } = derive({ 'brand-colors': { primary: '#333333' } });
+  assert.notEqual(surfaces.tint.dark.roles.background, surfaces.brand.dark.roles.background);
 });
 
 test('the steps that guard the anchor are the steps a band stands on', () => {
@@ -197,7 +229,7 @@ test('the schema and the check share the minimum, and it stays below every band 
     const gray = ramps({ primary: '#808080' }, temperature).gray;
     const solved = Object.fromEntries(ramp(seed, { anchor: false, ceiling: TINT_CEILING }).map(({ step, hex }) => [step, hex]));
     assert.ok(contrast(solved[100], '#ffffff') >= BAND_MINIMUM, `${seed} step 100`);
-    assert.ok(contrast(solved[900], gray[950]) >= BAND_MINIMUM, `${seed}@${temperature} step 900`);
+    assert.ok(contrast(solved[850], gray[975]) >= BAND_MINIMUM, `${seed}@${temperature} step 850`);
   }
 });
 

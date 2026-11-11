@@ -1,5 +1,5 @@
 import { contrast, hexToRgb, luminance } from './color.js';
-import { BAND_MINIMUM, ramp, STEPS } from './ramps.js';
+import { BAND_MINIMUM, ramp, SCALES } from './ramps.js';
 import { resolveColor, shadowsForSurface } from './shadow.js';
 
 export const KINDS = Object.freeze(['page', 'raised', 'tint', 'brand', 'inverse', 'accent', 'picture-light', 'picture-dark']);
@@ -11,8 +11,9 @@ export const MODES = Object.freeze(['light', 'dark']);
 export const ROLES = Object.freeze(['background', 'background-alt', 'background-hover', 'text', 'text-muted', 'border', 'border-strong', 'link', 'accent', 'focus', 'info', 'success', 'warning', 'error', 'button-background', 'button-text', 'button-background-hover']);
 // Accent is also checked at 3:1, so it can carry non-text emphasis. background-page holds a band apart from the page.
 export const ROLE_TARGETS = Object.freeze({ text: 4.5, 'text-muted': 4.5, border: 0, 'border-strong': 3, link: 4.5, accent: 3, focus: 3, info: 4.5, success: 4.5, warning: 4.5, error: 4.5, 'button-background': 3, 'button-text': 4.5, 'button-text-hover': 4.5, 'text-alt': 4.5, 'text-muted-alt': 4.5, 'link-alt': 4.5, 'text-hover': 4.5, 'link-hover': 4.5, 'background-page': BAND_MINIMUM });
-// Steps carrying the status Surfaces and their borders; the status roles use 300 and 600, uncapped.
-const STATUS_CEILING = Object.freeze({ 100: 0.05, 200: 0.08, 800: 0.09, 900: 0.06 });
+// Steps carrying the status Surfaces and their borders, 850 in dark mode, and 900 as it was (ramps.js, TINT_CEILING);
+// the status roles use 300 and 600, uncapped.
+const STATUS_CEILING = Object.freeze({ 100: 0.05, 200: 0.08, 800: 0.09, 850: 0.06, 900: 0.06 });
 export const STATUS_SEEDS = Object.freeze({ info: '#1d6fd1', success: '#16803c', warning: '#b77900', error: '#c53030' });
 const ref = (ramp, step) => `${ramp}-${step}`;
 const color = (recipe, palette) => recipe === 'white' ? '#ffffff' : recipe === 'black' ? '#000000' : palette[recipe.split('-')[0]][recipe.split('-')[1]];
@@ -48,13 +49,13 @@ export function surfacePairs(surface, page = surface) {
   }));
 }
 
-// Search by distance in the ordered step list, rather than by numeric shade gap.
+// Search by distance in the ordered step list of the mode's scale, rather than by numeric shade gap.
 // Ties keep the polarity's foreground direction. Never jump to another ramp.
-export function solveRole(recipe, palette, target, ratio, polarity) {
+export function solveRole(recipe, palette, target, ratio, polarity, steps = SCALES.light) {
   const original = color(recipe, palette);
   if (ratio(original) >= target || !recipe.includes('-')) return { recipe, color: original };
-  const [name, shade] = recipe.split('-'), start = STEPS.indexOf(Number(shade));
-  const candidates = STEPS.map((step, i) => ({ step, distance: Math.abs(i - start) }))
+  const [name, shade] = recipe.split('-'), start = steps.indexOf(Number(shade));
+  const candidates = steps.map((step, i) => ({ step, distance: Math.abs(i - start) }))
     .sort((a, b) => a.distance - b.distance || (polarity === 'dark' ? a.step - b.step : b.step - a.step));
   for (const { step } of candidates) {
     const candidate = ref(name, step), hex = color(candidate, palette);
@@ -64,13 +65,14 @@ export function solveRole(recipe, palette, target, ratio, polarity) {
 }
 
 // One rule from light mode to dark mode (owner, 2026-11-05): the step each kind's background stands on in each mode,
-// and its family. The page is white in light and 950 in dark. Light bands mirror, 100 in light being 900 in dark. Dark
-// bands keep their step, but in dark mode are never darker than 800: the page and the light bands have 950 and 900.
+// and its family. Each mode reads its own scale (ramps.js, SCALES). The page is white in light and 975 in dark. Light
+// bands mirror, 100 in light being 850 in dark (owner, 2026-11-11, where they were 950 and 900). Dark bands keep their
+// step, but in dark mode are never darker than 800: the page and the light bands have 975 and 850.
 // A light band's muted text is grey in both modes, as it is in light mode, so that in dark mode it is not the colour of
 // the links and the accent (owner, 2026-11-10).
-const LIGHT_BAND = Object.freeze({ light: 100, dark: 900, mutedFamily: 'gray' });
+const LIGHT_BAND = Object.freeze({ light: 100, dark: 850, mutedFamily: 'gray' });
 const STANDS = Object.freeze({
-  page: { family: 'gray', light: 'white', dark: 950 },
+  page: { family: 'gray', light: 'white', dark: 975 },
   raised: { family: 'gray', ...LIGHT_BAND },
   brand: { family: 'primary', light: 800, dark: 800 },
   inverse: { family: 'gray', light: 950, dark: 800 },
@@ -78,22 +80,27 @@ const STANDS = Object.freeze({
   accent: { family: 'primary', lines: 'gray', light: 700, dark: 700 },
 });
 const standsOf = (kind) => STANDS[kind] ?? { family: kind === 'tint' ? 'primary' : kind.split('-')[1], ...LIGHT_BAND };
-// What stands on a background follows its polarity and step, never its kind. A hover fill must show against both the
-// background and the alternate fill. On 700 and 800 a lighter hover would fail link-hover, so these go darker, and 800's
-// alternate is 900 because 700 fails link-alt; on 900 and 950 the hover goes lighter.
+// What stands on a background follows the mode and the step, never the kind; white and 100 are light, the rest dark. A
+// hover fill must show against both the background and the alternate fill. On 700 and 800 a lighter hover would fail
+// link-hover, so these go darker, and 800's alternate is the next step down because 700 fails link-alt; on the two
+// darkest steps the hover goes lighter. The dark rows are the same in both modes, each on its own mode's scale.
 const ON_STEP = Object.freeze({
   light: {
     white: { alternate: 100, hover: 200, border: 200 },
     100: { alternate: 'white', hover: 200, border: 200 },
-  },
-  dark: {
     700: { alternate: 800, hover: 900, muted: 300, border: 800 },
     800: { alternate: 900, hover: 950, muted: 200, border: 700 },
-    900: { alternate: 950, hover: 800, muted: 300, border: 800 },
     950: { alternate: 900, hover: 800, muted: 300, border: 800 },
   },
+  dark: {
+    700: { alternate: 800, hover: 850, muted: 300, border: 800 },
+    800: { alternate: 850, hover: 975, muted: 200, border: 700 },
+    850: { alternate: 975, hover: 800, muted: 300, border: 800 },
+    975: { alternate: 850, hover: 800, muted: 300, border: 800 },
+  },
 });
-// A picture stands on no step: its grey family's roles are fixed, and its scrim's colour is also its alternate fill.
+// A picture stands on no step: its grey family's roles are fixed, and its scrim's colour is also its alternate fill. It
+// reads the light scale in both modes, so it is the same in both, as it always was.
 const PICTURES = Object.freeze({
   'picture-light': { polarity: 'light', family: 'gray', alternate: 'white', hover: 200, border: 200 },
   'picture-dark': { polarity: 'dark', family: 'gray', alternate: 'black', hover: 800, muted: 300, border: 800 },
@@ -104,9 +111,9 @@ function recipesFor(kind, mode, palette) {
   const picture = PICTURES[kind];
   const stands = picture ?? standsOf(kind);
   const { family, lines = family } = stands;
-  const polarity = picture ? picture.polarity : stands[mode] in ON_STEP.light ? 'light' : 'dark';
+  const polarity = picture ? picture.polarity : ['white', 100].includes(stands[mode]) ? 'light' : 'dark';
   const dark = polarity === 'dark';
-  const row = picture ?? ON_STEP[polarity][stands[mode]];
+  const row = picture ?? ON_STEP[mode][stands[mode]];
   const fill = (step) => ['white', 'black'].includes(step) ? step : ref(family, step);
   return { polarity, recipes: {
     background: fill(picture ? picture.alternate : stands[mode]), 'background-alt': fill(row.alternate), 'background-hover': fill(row.hover), text: dark ? 'white' : 'gray-900',
@@ -123,7 +130,7 @@ function recipesFor(kind, mode, palette) {
 
 export function surfaces(settings, palette) {
   const seeds = settings['brand-colors'];
-  const status = Object.fromEntries(Object.entries(STATUS_SEEDS).map(([name, seed]) => [name, Object.fromEntries(ramp(seed, { ceiling: STATUS_CEILING, pages: ['#ffffff', palette.gray[950]] }).map(({ step, hex }) => [step, hex]))]));
+  const status = Object.fromEntries(Object.entries(STATUS_SEEDS).map(([name, seed]) => [name, Object.fromEntries(ramp(seed, { ceiling: STATUS_CEILING, pages: ['#ffffff', palette.gray[950]], darkPages: ['#ffffff', palette.gray[975]] }).map(({ step, hex }) => [step, hex]))]));
   const all = { ...palette, ...status };
   return Object.fromEntries(kindsFor(palette).map((kind) => [kind, Object.fromEntries(MODES.map((mode) => {
     const { polarity, recipes } = recipesFor(kind, mode, all);
@@ -137,7 +144,7 @@ export function surfaces(settings, palette) {
         // dark end of a step leaves too little margin for a hover fill lighter than the background.
         const fills = ['alt', 'hover'].filter((fill) => ROLE_TARGETS[`${role}-${fill}`]).map((fill) => surface.roles[`background-${fill}`]);
         const ratio = (hex) => Math.min(...fills.map((fill) => contrast(hex, fill)), ...(surface.scrim ? ['#000000', '#ffffff'].map((image) => pictureContrast(hex, surface.scrim, image)) : [contrast(hex, surface.roles.background)]));
-        const solved = solveRole(recipes[role], all, target, ratio, polarity);
+        const solved = solveRole(recipes[role], all, target, ratio, polarity, SCALES[kind.startsWith('picture-') ? 'light' : mode]);
         surface.roles[role] = solved.color;
         if (solved.recipe !== recipes[role]) surface.adjustments[role] = { from: recipes[role], to: solved.recipe };
       }
@@ -156,11 +163,17 @@ export function surfaces(settings, palette) {
     } else solveRoles();
     const context = { polarity, text: surface.roles.text, colors: { ...seeds, gray: palette.gray[500] } };
     surface.shadow = shadowsForSurface(settings.shadow, context);
-    // Default frame takes the chosen shadow ink before the dark-Surface exception.
-    surface['frame-color'] = resolveColor(settings.frame.color === 'default' ? settings.shadow.color : settings.frame.color, context);
+    // Default frame takes the chosen shadow ink before the dark-Surface exception. The quiet edge, `border`, is the
+    // Surface's own border role, so a plate's frame follows its kind and the mode (owner, 2026-11-11).
+    const frame = settings.frame.color;
+    surface['frame-color'] = frame === 'border' ? surface.roles.border : resolveColor(frame === 'default' ? settings.shadow.color : frame, context);
     return [mode, surface];
   }))]));
 }
+
+// Whether every Surface's frame is its own role of that name in both modes: `text` for a default frame with the
+// default shadow colour, `border` for the quiet edge. A colour of its own cannot match both modes of every Surface.
+export const frameFollows = (surfaces, role) => Object.values(surfaces).every((modes) => MODES.every((mode) => modes[mode]['frame-color'] === modes[mode].roles[role]));
 
 export function contrastCheck(surfaces) {
   const matrix = Object.fromEntries(Object.keys(surfaces).map((kind) => [kind, Object.fromEntries(MODES.map((mode) => [mode, {

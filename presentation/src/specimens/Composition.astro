@@ -16,7 +16,6 @@ import Callout from '../../../src/components/Callout.astro';
 import CtaBand from '../../../src/components/CtaBand.astro';
 import {
   sample,
-  menu,
   search,
   columns,
   rows,
@@ -24,7 +23,7 @@ import {
 } from '../samples.js';
 import { context } from './context.js';
 import { ownPictures } from '../data.js';
-import { headerProps, footerProps, pageProps, breadcrumbProps, heroProps, nextHeadingProps } from '../frame.js';
+import { headerProps, footerProps, pageProps, breadcrumbProps, heroProps, nextHeadingProps, menuOf } from '../frame.js';
 import Breadcrumbs from '../../../src/components/Breadcrumbs.astro';
 const { id, project, resolved } = Astro.props;
 const images = context(project, resolved, ownPictures);
@@ -177,7 +176,7 @@ const below = resolved.hero.h1 === 'below';
   <>
     <Header
       identity={identity}
-      menu={menu}
+      menu={menuOf(project)}
       linkMenu
       menuButton={{ word: 'Menu' }}
       search={search}

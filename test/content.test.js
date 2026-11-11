@@ -182,7 +182,8 @@ test('background-alt has fixed recipes and all three checked text pairs across s
     assert.match(coreCss(r), /--kn-background-alt:/);
     for (const [kind, modes] of Object.entries(r.surfaces)) for (const [mode, surface] of Object.entries(modes)) {
       const dark = mode === 'dark';
-      const expected = kind.startsWith('picture-') ? surface.recipes.background : kind === 'brand' ? 'primary-900' : kind === 'accent' ? 'primary-800' : kind === 'inverse' ? 'gray-900' : (kind.startsWith('tint') || kind.startsWith('status-')) ? dark ? `${kind === 'tint' ? 'primary' : kind.startsWith('status-') ? kind.slice(7) : kind.slice(5)}-950` : 'white' : kind === 'raised' ? dark ? 'gray-950' : 'white' : dark ? 'gray-900' : 'gray-100';
+      // Each mode on its own scale: dark mode's two darkest steps are 850 and 975 (plates.md, 2026-11-11).
+      const expected = kind.startsWith('picture-') ? surface.recipes.background : kind === 'brand' ? (dark ? 'primary-850' : 'primary-900') : kind === 'accent' ? 'primary-800' : kind === 'inverse' ? (dark ? 'gray-850' : 'gray-900') : (kind.startsWith('tint') || kind.startsWith('status-')) ? dark ? `${kind === 'tint' ? 'primary' : kind.startsWith('status-') ? kind.slice(7) : kind.slice(5)}-975` : 'white' : kind === 'raised' ? dark ? 'gray-975' : 'white' : dark ? 'gray-850' : 'gray-100';
       assert.equal(surface.recipes['background-alt'], expected, `${primary}/${kind}/${mode}`);
       const fill = kind.startsWith('status-') ? surface.roles['background-alt'] : expected === 'white' ? '#ffffff' : expected === 'black' ? '#000000' : r.ramps[expected.split('-')[0]][expected.split('-')[1]];
       assert.equal(surface.roles['background-alt'], fill);

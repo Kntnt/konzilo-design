@@ -5,8 +5,10 @@ import assert from 'node:assert/strict';
 import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { chromium } from 'playwright-core';
+import { chromium, firefox, webkit } from 'playwright-core';
 import { startTool } from '../tool/server.js';
+import { derive } from '../src/generator/index.js';
+import { pageWidths, SKETCH_WINDOWS } from '../presentation/src/page-sketch.js';
 import { failContrastOn, failingColour } from './helpers/failing-contrast.js';
 
 let directory;
@@ -14,6 +16,7 @@ let path;
 let tool;
 let browser;
 let STEP_ROWS;
+let SCALE_ROWS;
 let CHAPTERS;
 before(async () => {
   directory = await mkdtemp(join(tmpdir(), 'kn-controls-'));
@@ -23,9 +26,9 @@ before(async () => {
   // The tool's own lists, as the browser has them: the module's imports only resolve there.
   const page = await browser.newPage();
   await page.goto(tool.url);
-  ({ STEP_ROWS, CHAPTERS } = await page.evaluate(async () => {
+  ({ STEP_ROWS, SCALE_ROWS, CHAPTERS } = await page.evaluate(async () => {
     const pages = await import('/tool/pages.js');
-    return { STEP_ROWS: pages.STEP_ROWS, CHAPTERS: pages.CHAPTERS };
+    return { STEP_ROWS: pages.STEP_ROWS, SCALE_ROWS: pages.SCALE_ROWS, CHAPTERS: pages.CHAPTERS };
   }));
   await page.close();
 }, { timeout: 180000 });
@@ -36,8 +39,8 @@ after(async () => {
 });
 
 const STORE = 'konzilo-tool-ui';
-async function opened({ width = 1440, height = 900, stored } = {}) {
-  const context = await browser.newContext({ viewport: { width, height } });
+async function opened({ width = 1440, height = 900, stored, engine = browser } = {}) {
+  const context = await engine.newContext({ viewport: { width, height } });
   const page = await context.newPage();
   page.errors = [];
   page.on('pageerror', (error) => page.errors.push(error.message));
@@ -86,9 +89,15 @@ test('on the type scale nothing moves, whichever control is pressed or dragged t
   await page.waitForFunction(() => document.querySelector('[data-arrow="min"]').style.left);
   const start = await controlsNow(page);
   const rows = () => page.locator('[data-page="type-scale"] .step').evaluateAll((nodes) => nodes.map((node) => node.getBoundingClientRect().height));
-  assert.deepEqual(await rows(), STEP_ROWS.map(([, , height]) => height * 16));
+  assert.deepEqual(await rows(), SCALE_ROWS.map(([, , height]) => height * 16));
+  // Body text stands in the table as the base, step 0, between the lead and small text, with nothing to press.
+  const names = await page.locator('[data-page="type-scale"] .step-name').allTextContents();
+  assert.deepEqual(names.slice(names.indexOf('Lead'), names.indexOf('Lead') + 3), ['Lead', 'Body', 'Small']);
+  const body = page.locator('.step', { has: page.locator('[data-step-sample="body"]') });
+  assert.equal(await body.locator('button').count(), 0);
+  assert.equal(await body.locator('[data-step-value="body"]').textContent(), '0');
   const samplesTrue = async (what) => {
-    for (const [key] of STEP_ROWS) {
+    for (const [key] of SCALE_ROWS) {
       const shown = Number.parseInt(await page.locator(`[data-size="${key}"]`).textContent());
       const real = await page.locator(`[data-step-sample="${key}"]`).evaluate((node) => Number.parseFloat(getComputedStyle(node).fontSize));
       assert.equal(Math.round(real), shown, `${what}: ${key} is shown at the size it says`);
@@ -96,7 +105,7 @@ test('on the type scale nothing moves, whichever control is pressed or dragged t
   };
   await samplesTrue('as it starts');
   // At the design's own sizes every sample stands whole in its row.
-  for (const [key] of STEP_ROWS) {
+  for (const [key] of SCALE_ROWS) {
     const [text, row] = await page.locator(`[data-step-sample="${key}"]`).evaluate((node) => {
       const range = document.createRange();
       range.selectNodeContents(node);
@@ -106,7 +115,7 @@ test('on the type scale nothing moves, whichever control is pressed or dragged t
   }
   const still = async (what, own) => {
     assertStill(start, await controlsNow(page), what, own);
-    assert.deepEqual(await rows(), STEP_ROWS.map(([, , height]) => height * 16), what);
+    assert.deepEqual(await rows(), SCALE_ROWS.map(([, , height]) => height * 16), what);
   };
   const drag = async (locator, targets, what, own) => {
     const box = await locator.boundingBox();
@@ -568,66 +577,134 @@ test('the identity has its four controls, none disabled, nothing on the left mov
   await page.context().close();
 });
 
-test('the large menu and the search box stay open in the preview while they are set, in this window and in the preview\'s own window', { timeout: 120000 }, async () => {
-  const page = await opened();
-  await turnTo(page, 'frame', 'header');
-  const endsOf = async (window) => Promise.all(['#preview', '#preview-narrow'].map(async (selector) => (await window.locator(selector).elementHandle()).contentFrame()));
-  const inEnds = (ends, check, arg) => Promise.all(ends.map((end) => end.waitForFunction(check, arg)));
-  const open = (kind) => document.querySelector(`dialog[data-kn-panel="${kind}"]`)?.open && document.querySelectorAll('.kn-header-panel:is([open], :popover-open)').length === 1;
+// Each engine opens a modal dialog and moves the focus in its own way, so this runs in all three.
+test('the Header page shows the large menu and the search box open, each in a frame of its own at both ends, following every setting', { timeout: 300000 }, async () => {
+  for (const [name, launch] of [['chromium', null], ['firefox', firefox], ['webkit', webkit]]) {
+    const engine = launch ? await launch.launch() : browser;
+    try {
+      await headerFrames(await opened({ engine }), name);
+    } catch (error) {
+      throw new Error(`${name}: ${error.message}\n${error.stack}`, { cause: error });
+    } finally {
+      if (launch) await engine.close();
+    }
+  }
+});
+async function headerFrames(page, name) {
+  const framesOf = async (window, panel) => Promise.all(['#view-wide', '#view-narrow'].map(async (view) => (await window.locator(`${view} [data-panel-frame="${panel}"]`).elementHandle()).contentFrame()));
+  const inAll = (ends, check, arg) => Promise.all(ends.map((end) => end.waitForFunction(check, arg)));
+  // Open as a modal dialog, and the same element as when it opened: a setting never closes it to open it again.
+  const held = (kind) => {
+    const dialog = document.querySelector(`.kn-page > .kn-header dialog[data-kn-panel="${kind}"]`);
+    window.knHeld ??= dialog;
+    return !!dialog?.matches(':modal') && dialog === window.knHeld && document.querySelectorAll('.kn-header-panel:is([open], :popover-open)').length === 1;
+  };
   const flag = (name) => page.locator(`[data-flag="inputs.header.${name}"]`);
+  // The control last used has the focus, and no frame takes it from it. WebKit focuses no button on a click, so there a
+  // button's click leaves it with the page, unless a panel opening in a frame took it, which gives it to the button.
+  const kept = (control) => page.waitForFunction(([wanted, webkit]) => {
+    const here = document.activeElement;
+    return here?.dataset.flag === wanted || here?.dataset.path === wanted || (webkit && here === document.body && !wanted.startsWith('project.'));
+  }, [control, name === 'webkit']);
+  await turnTo(page, 'frame', 'header');
+  const arrangement = (await onDisk()).inputs.header.arrangement;
+  const surface = page.locator('[data-path="inputs.header.search-surface"]');
+  const surfaceBefore = await surface.inputValue();
+  const menus = await framesOf(page, 'menu');
+  const searches = await framesOf(page, 'search');
+  await inAll(menus, held, 'menu');
+  await inAll(searches, held, 'search');
+  // At the ends' own widths, under the page, which holds nothing open itself.
+  assert.deepEqual(await Promise.all([...menus, ...searches].map((end) => end.evaluate(() => innerWidth))), [1440, 390, 1440, 390]);
+  for (const selector of ['#preview', '#preview-narrow']) {
+    const end = await (await page.locator(selector).elementHandle()).contentFrame();
+    assert.equal(await end.evaluate(() => document.querySelectorAll('.kn-header-panel:is([open], :popover-open)').length), 0);
+  }
+  const order = await page.locator('#view-wide').evaluate((view) => [...view.children].filter((node) => node.getClientRects().length).map((node) => node.querySelector('iframe')?.dataset.panelFrame ?? (node.querySelector('iframe') ? 'page' : node.textContent.trim())));
+  assert.deepEqual(order, ['The page', 'page', 'The large menu, open', 'menu', 'The search box, open', 'search']);
+
+  // The large menu follows its settings, and the control pressed keeps the focus.
+  await flag('numbered').click();
+  await inAll(menus, () => document.querySelector('dialog[data-kn-panel="menu"]').open && !!document.querySelector('.kn-megamenu-number'));
+  await kept('inputs.header.numbered');
+  await flag('menu-above').click();
+  await flag('menu-below').click();
+  await inAll(menus, () => !!document.querySelector('.kn-megamenu-above') && !!document.querySelector('.kn-megamenu-below'));
+  assert.ok(await menus[0].evaluate(() => getComputedStyle(document.querySelector('.kn-megamenu-above')).display !== 'none'), 'a desktop shows the row above');
+  await flag('menu-above').click();
+  await flag('menu-below').click();
+  await inAll(menus, () => !document.querySelector('.kn-megamenu-above') && !document.querySelector('.kn-megamenu-below'));
+  const other = arrangement === 'B' ? 'C' : 'B';
+  await page.locator(`[data-pick="inputs.header.arrangement"][data-value="${other}"]`).click();
+  await inAll(menus, (wanted) => document.querySelector('.kn-header').dataset.knArrangement === wanted, other);
+  await inAll(menus, held, 'menu');
+
+  // So does the search box, in the box and in the menu alike.
   const placeholder = page.locator('[data-path="inputs.header.search-placeholder"]');
-  const ends = await endsOf(page);
-  await page.locator('[data-show-panel="search"]').click();
-  await inEnds(ends, open, 'search');
-  assert.equal(await page.locator('[data-show-panel="search"]').getAttribute('aria-pressed'), 'true');
-  // What the empty field shows, held open while it changes, in the box and in the menu alike.
   const field = (wanted) => {
     const fields = [...document.querySelectorAll('.kn-search-field')];
     return document.querySelector('dialog[data-kn-panel="search"]').open && fields.length === 2 && fields.every((node) => node.querySelector('input').getAttribute('placeholder') === wanted.placeholder && !!node.querySelector('.kn-icon') === wanted.icon);
   };
-  assert.equal(await placeholder.inputValue(), 'word');
-  await inEnds(ends, field, { placeholder: 'Search', icon: false });
+  await inAll(searches, field, { placeholder: 'Search', icon: false });
   await placeholder.selectOption('icon');
-  await inEnds(ends, field, { placeholder: ' ', icon: true });
-  await placeholder.selectOption('none');
-  await inEnds(ends, field, { placeholder: null, icon: false });
+  await inAll(searches, field, { placeholder: ' ', icon: true });
   await placeholder.selectOption('word');
-  await inEnds(ends, field, { placeholder: 'Search', icon: false });
-  // The close button goes and comes back; without the heading it keeps its room above the field.
-  assert.equal(await flag('search-close').getAttribute('aria-pressed'), 'true');
+  await surface.selectOption('tint');
+  await inAll(searches, () => document.querySelector('.kn-header-search-box').dataset.knSurface === 'tint');
+  await flag('search-links').click();
+  await inAll(searches, () => !document.querySelector('.kn-header-search-links'));
+  await kept('inputs.header.search-links');
+  await flag('search-links').click();
   await flag('search-close').click();
-  await inEnds(ends, () => document.querySelector('dialog[data-kn-panel="search"]').open && !document.querySelector('.kn-header-search-close'));
-  await flag('search-heading').click();
+  await inAll(searches, () => !document.querySelector('.kn-header-search-close') && !!document.querySelector('.kn-header-search-links'));
   await flag('search-close').click();
-  await inEnds(ends, () => {
-    const close = document.querySelector('dialog[data-kn-panel="search"][open] .kn-header-search-close')?.getBoundingClientRect();
-    const heading = document.querySelector('.kn-header-search-box > :is(h1, h2, h3, h4, h5, h6)');
-    return close && heading.hidden && document.querySelector('.kn-header-search-box input').getBoundingClientRect().top - close.bottom >= 8;
-  });
-  await flag('search-heading').click();
-  await page.locator('[data-show-panel="menu"]').click();
-  await inEnds(ends, open, 'menu');
-  assert.equal(await page.locator('[data-show-panel="search"]').getAttribute('aria-pressed'), 'false');
+  await inAll(searches, held, 'search');
+  // Typing keeps its focus and every letter, while the header in each frame follows the slogan.
+  const slogan = page.locator('[data-path="project.slogan"]');
+  await slogan.click();
+  await page.keyboard.type('Calm and clear', { delay: 40 });
+  await inAll([...menus, ...searches], () => document.querySelector('.kn-header-slogan')?.textContent === 'Calm and clear');
+  assert.equal(await slogan.inputValue(), 'Calm and clear');
+  await kept('project.slogan');
+  await slogan.fill('');
+  await inAll(menus, held, 'menu');
+  await inAll(searches, held, 'search');
 
-  // In the preview's own window the menu is still held open, and a button here opens the box there and keeps it.
+  // Without a magnifier there is no search box to show; with it back, the box opens again and the control keeps the focus.
+  await flag('search').click();
+  await inAll(searches, () => !document.querySelector('dialog[data-kn-panel="search"]'));
+  await flag('search').click();
+  await inAll(searches, () => !!document.querySelector('dialog[data-kn-panel="search"]')?.matches(':modal'));
+  await kept('inputs.header.search');
+  // Esc in a frame does not close what it holds open.
+  await searches[0].locator('dialog[data-kn-panel="search"] input').focus();
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(200);
+  assert.ok(await searches[0].evaluate(() => document.querySelector('dialog[data-kn-panel="search"]').matches(':modal')));
+
+  // Another page has no such frames, and they come back with the Header page.
+  await turnTo(page, 'frame', 'footer');
+  assert.deepEqual(await page.locator('.view').evaluateAll((views) => views.map((view) => view.hasAttribute('data-panels'))), [false, false]);
+  assert.equal(await page.locator('[data-panel-frame]:visible').count(), 0);
+  assert.deepEqual(await page.locator('[data-panel-frame]').evaluateAll((frames) => frames.map((frame) => frame.contentWindow.location.href)), Array(4).fill('about:blank'));
+  await turnTo(page, 'frame', 'header');
+  await inAll(await framesOf(page, 'menu'), held, 'menu');
+
+  // The preview's own window shows them too, and follows this one.
   const [own] = await Promise.all([page.context().waitForEvent('page'), page.locator('#own-window').click()]);
-  await own.waitForFunction(() => [...document.querySelectorAll('iframe')].every((frame) => frame.contentDocument?.querySelector('.kn-page > .kn-header')));
-  const far = await endsOf(own);
-  await inEnds(far, open, 'menu');
-  await page.locator('[data-show-panel="search"]').click();
-  await inEnds(far, open, 'search');
-  await flag('search-links').click();
-  await inEnds(far, () => document.querySelector('dialog[data-kn-panel="search"]').open && !document.querySelector('.kn-header-search-links'));
-  await flag('search-links').click();
-  await inEnds(far, () => document.querySelector('dialog[data-kn-panel="search"]').open && !!document.querySelector('.kn-header-search-links'));
-  await page.locator('[data-show-panel="search"]').click();
-  await inEnds(far, () => !document.querySelector('.kn-header-panel:is([open], :popover-open)'));
+  await own.waitForFunction(() => document.querySelectorAll('[data-panel-frame]').length === 4 && [...document.querySelectorAll('[data-panel-frame]')].every((frame) => frame.contentDocument?.querySelector('dialog[data-kn-panel]:modal')));
+  const far = await framesOf(own, 'menu');
+  await flag('numbered').click();
+  await inAll(far, () => !document.querySelector('.kn-megamenu-number') && document.querySelector('dialog[data-kn-panel="menu"]').open);
   await page.locator('#bring-back').click();
   await page.locator('#preview-pane').waitFor({ state: 'visible' });
+  // As it was, for the tests after this one.
+  await page.locator(`[data-pick="inputs.header.arrangement"][data-value="${arrangement}"]`).click();
+  await surface.selectOption(surfaceBefore);
   await settled(page);
   assert.deepEqual(page.errors, []);
   await page.context().close();
-});
+}
 
 test('the footer is said to be fixed to the end of the page or the bottom of the window, with how the page meets it beside that', { timeout: 60000 }, async () => {
   const page = await opened();
@@ -641,6 +718,58 @@ test('the footer is said to be fixed to the end of the page or the bottom of the
   assert.equal(titles[titles.indexOf('Attachment') + 1], 'Where the page meets the footer');
   assert.equal(await page.locator('[data-page="footer"] [data-flag="inputs.page.shadow"], [data-page="footer"] [data-flag="inputs.page.edge-line"]').count(), 2);
   assert.equal(await page.locator('[data-page="page"] [data-flag^="inputs.page."]').count(), 0);
+  await page.context().close();
+});
+
+// What the Page page's drawing says for a design, in the tool's figures.
+function sketchFigures(inputs) {
+  const resolved = derive(inputs);
+  const px = (value) => `${Math.round(value)} px`;
+  const figures = {};
+  for (const [kind, width] of SKETCH_WINDOWS) {
+    const w = pageWidths(resolved, width);
+    figures[`${kind} content`] = `Content width · ${px(w.content)}`;
+    figures[`${kind} narrow`] = `Reading width · ${px(w.narrow)}`;
+    figures[`${kind} aside`] = `Aside · ${px(w.aside)}`;
+  }
+  const { twoFrom } = pageWidths(resolved, 1440);
+  figures.columns = twoFrom ? `Text and Aside side by side from a window of ${px(twoFrom)}` : '';
+  return figures;
+}
+
+test('the Page page draws the widths to scale and follows Content width and Reading width as they move, and nothing moves on the left', { timeout: 60000 }, async () => {
+  const page = await opened();
+  await turnTo(page, 'frame', 'page');
+  const inputs = (await onDisk()).inputs;
+  const drawn = () => page.locator('[data-page="page"] [data-page-sketch]').evaluate((sketch) => {
+    const { top, height } = sketch.getBoundingClientRect();
+    const figures = Object.fromEntries([...sketch.querySelectorAll('[data-figure]')].map((node) => [`${node.closest('[data-sketch]')?.dataset.sketch ?? ''} ${node.dataset.figure}`.trim(), node.textContent]));
+    return { place: [top, height], figures };
+  });
+  const assertDrawn = async (layout, what) => {
+    const { figures } = await drawn();
+    for (const [key, text] of Object.entries(sketchFigures({ ...inputs, layout }))) assert.equal(figures[key], text, `${what}: ${key}`);
+  };
+  const start = await controlsNow(page);
+  const first = await drawn();
+  const layout = { wide: 1200, narrow: 720, ...inputs.layout };
+  await assertDrawn(layout, 'as the design has it');
+  const set = (path, value) => page.locator(`[data-path="${path}"]`).evaluate((node, to) => {
+    node.value = to;
+    node.dispatchEvent(new Event('input', { bubbles: true }));
+  }, value);
+  // Each end of each slider, and a reading width wider than the content width, where one column is all there is.
+  for (const [wide, narrow] of [[800, layout.narrow], [1800, layout.narrow], [layout.wide, 480], [layout.wide, 960], [800, 960]]) {
+    await set('inputs.layout.wide', wide);
+    await set('inputs.layout.narrow', narrow);
+    await assertDrawn({ wide, narrow }, `at ${wide} and ${narrow}`);
+    assertStill(start, await controlsNow(page), `at ${wide} and ${narrow}`);
+    assert.deepEqual((await drawn()).place, first.place, `the drawing keeps its place and height at ${wide} and ${narrow}`);
+  }
+  assert.equal((await drawn()).figures.columns, '', 'no room for the Aside beside 960 px of text in 800 px');
+  await set('inputs.layout.wide', layout.wide);
+  await set('inputs.layout.narrow', layout.narrow);
+  assert.deepEqual(page.errors, []);
   await page.context().close();
 });
 
@@ -829,5 +958,40 @@ test('a change waiting for the pause when a setting then fails is not sent, and 
   await hex.fill(good);
   await settled(page);
   assert.equal(await page.locator('#notice').isHidden(), true);
+  await page.context().close();
+});
+
+test('the frame can be a quiet edge, each card in its own border colour and a filled button in its hover fill, which the shadow cannot take', { timeout: 30000 }, async () => {
+  const page = await opened();
+  await turnTo(page, 'space', 'corners');
+  const colour = page.locator('[data-path="inputs.frame.color"]');
+  assert.deepEqual(await colour.locator('option').evaluateAll((options) => options.map((option) => [option.value, option.textContent])).then((pairs) => pairs.slice(0, 2)), [['default', 'Text'], ['border', 'Quiet edge']]);
+  assert.match(await page.locator(`#${await colour.getAttribute('aria-describedby')}`).textContent(), /Quiet edge gives each card its own border colour/);
+  assert.equal(await page.locator('[data-path="inputs.shadow.color"] option[value="border"]').count(), 0);
+  await page.locator('[data-path="inputs.frame.width"]').evaluate((node) => {
+    node.value = 1;
+    node.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+  await colour.selectOption('border');
+  await settled(page);
+  assert.deepEqual((await onDisk()).inputs.frame, { width: 1, color: 'border' });
+  // What the sample draws, against the roles of the Surface each stands on.
+  const drawn = () => page.evaluate(() => {
+    const host = document.querySelector('[data-page="corners"]');
+    const card = host.querySelector('.kn-card[data-kn-surface]'), button = host.querySelector('.kn-button');
+    const probe = (inside, value) => {
+      const node = inside.appendChild(document.createElement('i'));
+      node.style.color = value;
+      const seen = getComputedStyle(node).color;
+      node.remove();
+      return seen;
+    };
+    return { card: getComputedStyle(card).borderTopColor, border: probe(card, 'var(--kn-border)'), ring: getComputedStyle(button).boxShadow, hover: probe(button, 'var(--kn-button-background-hover)') };
+  });
+  await page.waitForFunction(() => getComputedStyle(document.querySelector('[data-page="corners"] .kn-card[data-kn-surface]')).borderTopWidth === '1px');
+  const seen = await drawn();
+  assert.equal(seen.card, seen.border);
+  assert.ok(seen.ring.includes(seen.hover), `${seen.ring} rings in ${seen.hover}`);
+  assert.deepEqual(page.errors, []);
   await page.context().close();
 });

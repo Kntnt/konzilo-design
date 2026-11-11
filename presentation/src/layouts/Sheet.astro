@@ -2,6 +2,7 @@
 import { project, t, date } from '../data.js';
 import { componentPages } from '../catalog.js';
 import PageToolbar from '../PageToolbar.astro';
+import PageSketch from '../PageSketch.astro';
 const { page, pages } = Astro.props;
 const index = pages.findIndex((entry) => entry.id === page.id);
 const explanationKeys = {
@@ -14,7 +15,7 @@ const explanationKeys = {
   opening: 'components',
 };
 const motivation = project.explanations?.[explanationKeys[page.id]];
-const specimenPages = [...componentPages.map(([id]) => id), 'typography-use', 'space'];
+const specimenPages = [...componentPages.map(([id]) => id), 'typography-use', 'space', 'shadow'];
 const picturePages = ['page', 'opening', 'sections', 'cards', 'media', 'finding'];
 const paragraphs = (text) => String(text).split(/\n\s*\n/).filter((part) => part.trim());
 ---
@@ -31,6 +32,8 @@ const paragraphs = (text) => String(text).split(/\n\s*\n/).filter((part) => part
     {paragraphs(motivation).map((paragraph) => <p>{paragraph}</p>)}
     {project.contact?.name && <p data-kn-type="small">{project.contact.name}</p>}
   </aside>}
+  {/* The page's layout is a drawing of the design's widths, which the toolbar's switches below do not change. */}
+  {page.id === 'page' && <PageSketch />}
   {specimenPages.includes(page.id) && <PageToolbar pictures={picturePages.includes(page.id)} />}
   {page.id === 'colour-together' && <PageToolbar width={false} />}
   <div class="page-content"><slot /></div>

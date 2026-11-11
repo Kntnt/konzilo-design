@@ -185,7 +185,8 @@ test('the tool chooses the design\'s hero with nothing disabled, and the overlay
     assert.ok(words.every((word) => word.length <= 11), `short choices: ${words}`);
 
     // Nothing is ever disabled, and no control moves, whatever is pressed. Every combination reaches the sample.
-    const places = () => controls.evaluateAll((nodes) => nodes.filter((node) => node.getClientRects().length).map((node) => { const { left, top, width, height } = node.getBoundingClientRect(); return [left, top, width, height]; }));
+    // Where each control stands in the document, so a click that scrolls one into view is no move.
+    const places = () => controls.evaluateAll((nodes) => nodes.filter((node) => node.getClientRects().length).map((node) => { const { left, top, width, height } = node.getBoundingClientRect(); return [left, top + document.getElementById('document').scrollTop, width, height]; }));
     const still = await places();
     for (const picture of PICTURES) for (const place of PLACES) for (const height of HEIGHTS) {
       await choose({ picture, place, height });
@@ -374,7 +375,7 @@ test('the tool chooses the design\'s hero with nothing disabled, and the overlay
 
     // Outside a sample's made-up screen, the share is of the window, and tall content grows past it.
     const direct = await browser.newPage({ viewport: { width: 1440, height: 900 } });
-    await direct.goto(`${tool.url}/catalogue.html`);
+    await direct.goto(`${tool.url}/catalogue/opening.html`);
     const real = await direct.locator('[data-component="hero"] .kn-hero').evaluate((node) => {
       node.dataset.knHeight = 'full';
       document.body.prepend(node);
@@ -463,7 +464,7 @@ test('on a phone a chosen picture never vanishes: it keeps a 16:9 share of its w
   const selector = '[data-component="hero"] .kn-hero';
   const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
   try {
-    await page.goto(`${tool.url}/catalogue.html`);
+    await page.goto(`${tool.url}/catalogue/opening.html`);
     for (const width of [390, 320]) {
       await page.setViewportSize({ width, height: 844 });
       const screen = width * 2.16;
@@ -511,6 +512,8 @@ test('no point of a picture is darker or lighter than its overlay\'s tested stre
     await page.goto(tool.url);
     await page.locator('.chapter', { hasText: 'Frame' }).click();
     await page.locator('[data-path="inputs.header.start"]').selectOption('under');
+    // The Page page, whose preview is the sample page alone: the Header page shares it with its open panels.
+    await page.locator('.page-link[data-go="page"]').click();
     const preview = await (await page.$('#preview')).contentFrame();
     const first = '.kn-page-main > .kn-hero:first-child';
     await preview.waitForSelector(`.kn-page:has(> .kn-header[data-kn-attachment="sticky"][data-kn-start="under"]) > ${first}`);

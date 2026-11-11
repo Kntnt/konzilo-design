@@ -25,15 +25,21 @@ import {
   placeLabels,
   logosOf,
   withoutSavedLogos,
+  parseOwn,
+  ownText,
+  ownValue,
+  setOwn,
+  outlineText,
   LINE,
   DIVIDER,
 } from './logic.js';
 import { capture, thaw, createHistory, historyAction, isSlider, isTextField, TYPING_PAUSE } from './history.js';
-import { CHAPTERS, PAGES, MOVED_PAGES, ROLES, STEP_ROWS, axesMarkup, documentMarkup, pageName, tip, tipOnce, takeTips, escapeHtml } from './pages.js';
-import { setupPreview, paint, measure, followPage, showPanelInPreview } from './preview.js';
+import { CHAPTERS, PAGES, MOVED_PAGES, ROLES, STEP_ROWS, SCALE_ROWS, axesMarkup, documentMarkup, pageName, tip, tipOnce, takeTips, escapeHtml } from './pages.js';
+import { setupPreview, paint, measure, followPage } from './preview.js';
 import { setupTooltips } from '/gallery/src/tooltips.js';
-import { pictures, flatPictures, PICTURE_SLOTS } from '/presentation/src/samples.js';
-import { lookDefaults } from '/presentation/src/looks.js';
+import { pictures, flatPictures, PICTURE_SLOTS, menu as sampleMenu } from '/presentation/src/samples.js';
+// The Page page's drawing of the widths is not a control: it is fetched apart from the rest, and the tool runs without it.
+const { pageSketch } = await import('/presentation/src/page-sketch.js').catch(() => ({}));
 
 const params = new URLSearchParams(location.search);
 const inPreviewWindow = params.get('window') === 'preview';
@@ -83,8 +89,6 @@ const ui = {
   role: ROLES.some(([role]) => role === saved.role) ? saved.role : 'main',
   mode: saved.mode === 'dark' ? 'dark' : 'light',
   pictures: saved.pictures === 'off' ? 'off' : 'on',
-  // Which variation of each component the preview shows. It lasts while the window is open, and is never saved.
-  looks: lookDefaults(),
   own: data.pictures,
   view: ['both', 'phone', 'desktop'].includes(saved.view) ? saved.view : 'both',
   width: [1440, 1024, 768].includes(saved.width) ? saved.width : 1440,
@@ -92,10 +96,13 @@ const ui = {
   where: 'pane',
   controls: Number(saved.controls) || 540,
   atOptimal: saved.atOptimal !== false,
-  panel: null,
   windowWidth: 1440,
   touched: null,
+  // On the Start page, the part the field in use writes, `menu` or `footer`, which the preview follows.
+  part: null,
 };
+// What the preview follows: the page, or on the Start page the part being written.
+const followed = (state = ui) => (state.page === 'start' && state.part ? `start-${state.part}` : state.page);
 const remember = () => {
   try {
     const { page, role, mode, pictures: showing, view, width, fit, controls, atOptimal } = ui;
@@ -165,19 +172,11 @@ const scroller = () => (getComputedStyle(doc).overflowY === 'visible' ? document
 function goTo(page) {
   if (page === ui.page) return;
   ui.page = page;
-  setPanel(null);
+  ui.part = null;
   renderPageRow();
   scroller().scrollTop = 0;
   followPage(page, true);
   remember();
-  share();
-}
-// Which panel of the header stays open in the preview while its settings change.
-// The preview's own window holds it open too, so it goes there with the rest of the window's state.
-function setPanel(panel) {
-  ui.panel = panel;
-  showPanelInPreview(panel);
-  for (const button of form.querySelectorAll('[data-show-panel]')) button.setAttribute('aria-pressed', String(button.dataset.showPanel === panel));
   share();
 }
 function writeChrome() {
@@ -187,7 +186,6 @@ function writeChrome() {
   for (const button of document.querySelectorAll('[data-mode]')) button.setAttribute('aria-pressed', String(button.dataset.mode === ui.mode));
   for (const button of document.querySelectorAll('[data-view]')) button.setAttribute('aria-pressed', String(button.dataset.view === ui.view));
   for (const button of document.querySelectorAll('[data-pictures]')) button.setAttribute('aria-pressed', String(button.dataset.pictures === ui.pictures));
-  for (const button of form.querySelectorAll('[data-look-key]')) button.setAttribute('aria-pressed', String(ui.looks[button.dataset.lookKey] === button.dataset.lookValue));
   document.getElementById('desktop-width').value = String(ui.width);
   document.getElementById('bring-back').hidden = ui.where !== 'window';
   const own = document.getElementById('own-window');
@@ -312,6 +310,33 @@ function writeForm() {
     form.querySelector(`[data-logo-word="${key}"]`).textContent = source ? '' : 'Click to add a logo';
     form.querySelector(`[data-remove-logo="${key}"]`).hidden = !source;
   }
+  writeOwn();
+}
+// The client's own menu and footer: each field shows what the design file holds, in its words, but stays as typed
+// while it comes to the same, so its caret, the browser's own text undo and the way it was written stay.
+function writeOwn() {
+  for (const field of form.querySelectorAll('[data-own]')) {
+    const { own: path, ownKind: kind } = field.dataset;
+    const words = ownText(kind, ownValue(model.project, path));
+    if (JSON.stringify(parseOwn(kind, field.value)) !== JSON.stringify(parseOwn(kind, words))) field.value = words;
+  }
+  writeOwnStates();
+}
+// Each part says whether the client's words or the sample's show. The links for navigation, left empty, are the top
+// level of the menu shown, so their grey text follows the menu.
+function writeOwnStates() {
+  const menu = model.project.menu?.length ? model.project.menu : sampleMenu;
+  for (const state of form.querySelectorAll('[data-own-state]')) {
+    const path = state.dataset.ownState;
+    const own = ownValue(model.project, path);
+    const filled = Array.isArray(own) ? own.length > 0 : Boolean(own);
+    state.textContent = path === 'menu'
+      ? (filled ? 'The client’s own, in the header and the large menu' : 'The sample menu until the client’s own is written')
+      : filled ? 'Client’s' : path === 'footer.upper.b2' && menu !== sampleMenu ? 'From the menu' : 'Sample';
+  }
+  const links = form.querySelector('[data-own="footer.upper.b2"]');
+  const wanted = menu.map((item) => item.label).join('\n');
+  if (links.placeholder !== wanted) links.placeholder = wanted;
 }
 function writeSliders(resolved) {
   for (const control of form.querySelectorAll('input[type="range"][data-path]')) {
@@ -392,6 +417,19 @@ function placeScaleLine() {
   const view = line.querySelector('[data-line-label="view"]');
   view.style.left = `${Math.min(total - view.offsetWidth, Math.max(0, at.view - view.offsetWidth / 2))}px`;
 }
+// The Page page's drawing, in the presentation's words and the tool's figures. Its heights are fixed, so a width dragged
+// changes what it shows and moves nothing; it is written anew only when that has changed.
+const sketchWords = {
+  t: (key, values = {}) => (copy[key] ?? '').replace(/\{([\w-]+)\}/g, (_, name) => values[name] ?? `{${name}}`),
+  num: (value) => String(Math.round(value)),
+};
+let sketched = '';
+function writePageSketch(resolved) {
+  const host = form.querySelector('[data-page-sketch]');
+  if (!pageSketch || !host) return;
+  const markup = pageSketch(resolved, sketchWords);
+  if (markup !== sketched) host.innerHTML = sketched = markup;
+}
 function writeResolved(resolved) {
   for (const [key, ramp] of Object.entries(resolved.ramps)) if (form.querySelector(`[data-ramp="${key}"]`)) writeRamp(key, ramp);
   for (const key of COLOURS) {
@@ -416,11 +454,13 @@ function writeResolved(resolved) {
     for (const figure of box.querySelectorAll('[data-ratio]')) figure.textContent = pairs[figure.dataset.ratio].ratio.toFixed(1);
   }
   const absolute = absoluteSteps(model.inputs.type.steps);
-  for (const [key] of STEP_ROWS) {
-    form.querySelector(`[data-step-value="${key}"]`).value = String(absolute[key]);
+  for (const [key] of SCALE_ROWS) {
     const size = sizeAt(resolved['type-scale'], resolved.type[key].step, windowWidth);
     form.querySelector(`[data-size="${key}"]`).value = `${Math.round(size)} px`;
     form.querySelector(`[data-step-sample="${key}"]`).style.fontSize = rem(Number(size.toFixed(1)));
+  }
+  for (const [key] of STEP_ROWS) {
+    form.querySelector(`[data-step-value="${key}"]`).value = String(absolute[key]);
     const [min, max] = stepLimits(model.inputs.type.steps, key);
     for (const button of form.querySelectorAll(`[data-step="${key}"]`))
       button.disabled = Number(button.dataset.delta) < 0 ? absolute[key] <= min : absolute[key] >= max;
@@ -429,6 +469,7 @@ function writeResolved(resolved) {
   writeAxes(resolved);
   writeScaleLine();
   writeFrameControls();
+  writePageSketch(resolved);
   for (const button of form.querySelectorAll('[data-target]')) button.setAttribute('aria-pressed', String(Boolean(model.inputs.shadow.targets[button.dataset.target])));
   form.querySelector('[data-dial]').setAttribute('transform', `rotate(${model.inputs.shadow.angle} 22 22)`);
   colourTracks();
@@ -990,11 +1031,86 @@ function commitLineField(field) {
   field.value = String(width);
 }
 form.addEventListener('submit', (event) => event.preventDefault());
+// A field of the client's own, once left, shows what it came to, so what is kept is what is seen: bullets gone, two
+// spaces a level, a network by its name. Not while the window is away, where the caret must stay where it was.
+form.addEventListener('focusout', (event) => {
+  const field = event.target.closest?.('[data-own]');
+  if (!field) return;
+  setTimeout(() => {
+    if (document.activeElement === field) return;
+    const words = ownText(field.dataset.ownKind, ownValue(model.project, field.dataset.own));
+    if (field.value !== words) field.value = words;
+  });
+});
+// On the Start page the preview follows the field in use: the menu's takes the page to its top, where the header is,
+// and a footer cell's to its end. The large menu stands open under the page there all the time.
+form.addEventListener('focusin', (event) => {
+  const field = event.target.closest?.('[data-own]');
+  if (!field || ui.page !== 'start') return;
+  const part = field.dataset.own === 'menu' ? 'menu' : 'footer';
+  if (ui.part === part) return;
+  ui.part = part;
+  followPage(followed(), true);
+  share();
+});
+// An outline copied from a document or a site holds its levels for certain as a list in its HTML, while its plain text
+// may have lost them: so a pasted list comes into the menu's field in its words, set in two spaces a level.
+function outlineFromHtml(html) {
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  // A node's own words, without the lists in it or Word's bullets, with a space wherever two elements meet.
+  const wordsOf = (node) => {
+    const copy = node.cloneNode(true);
+    for (const inner of copy.querySelectorAll('ul, ol, [style*="mso-list:ignore" i]')) inner.remove();
+    const walker = doc.createTreeWalker(copy, NodeFilter.SHOW_TEXT);
+    const parts = [];
+    while (walker.nextNode()) parts.push(walker.currentNode.nodeValue);
+    return parts.join(' ').replace(/\s+/g, ' ').replace(/ ([,.;:!?])/g, '$1').trim();
+  };
+  const entries = [];
+  let headed = false;
+  let listed = false;
+  for (const node of doc.body.querySelectorAll('h1, h2, h3, h4, h5, h6, li, p[style*="mso-list" i]')) {
+    const words = wordsOf(node);
+    if (!words) continue;
+    // A heading over a list, as a site's large menu or a site map has them, is the level above the list.
+    if (/^h\d$/.test(node.localName)) {
+      headed = true;
+      entries.push({ depth: 0, words });
+      continue;
+    }
+    listed = true;
+    let depth = -1;
+    if (node.localName === 'p') depth = Number(/level(\d+)/i.exec(node.getAttribute('style'))?.[1] ?? 1) - 1;
+    // A Google Docs list says each item's level; otherwise it is how many lists hold it.
+    else if (Number(node.getAttribute('aria-level')) >= 1) depth = Number(node.getAttribute('aria-level')) - 1;
+    else for (let up = node.parentElement; up; up = up.parentElement) if (up.localName === 'ul' || up.localName === 'ol') depth += 1;
+    entries.push({ depth: Math.max(0, depth) + (headed ? 1 : 0), words });
+  }
+  return listed ? outlineText(entries) : null;
+}
+form.addEventListener('paste', (event) => {
+  const field = event.target.closest?.('[data-own-kind="menu"]');
+  const html = field && event.clipboardData?.getData('text/html');
+  const outline = html && outlineFromHtml(html);
+  if (!outline) return;
+  event.preventDefault();
+  // As typed, so the field's own undo takes it back; where a browser cannot, as typed all the same.
+  if (!document.execCommand('insertText', false, outline)) {
+    field.setRangeText(outline, field.selectionStart, field.selectionEnd, 'end');
+    field.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+});
 form.addEventListener('input', (event) => {
   const control = event.target;
   const path = control.dataset.path;
   // A typed figure counts when it is done, not at each key.
   if (control.dataset.lineBase || control.dataset.linePx) return;
+  if (control.dataset.own) {
+    setOwn(model.project, control.dataset.own, parseOwn(control.dataset.ownKind, control.value));
+    writeOwnStates();
+    ui.touched = null;
+    return changed();
+  }
   if (control.dataset.hex) {
     if (!/^#[0-9a-f]{6}$/i.test(control.value)) return;
     setColourFromHex(control.dataset.hex, control.value);
@@ -1036,7 +1152,6 @@ form.addEventListener('click', (event) => {
   const button = event.target.closest('button');
   if (!button) return;
   if (button.dataset.go) return goTo(button.dataset.go);
-  if (button.dataset.lookKey) return setUi({ looks: { ...ui.looks, [button.dataset.lookKey]: button.dataset.lookValue } });
   if (button.dataset.roleTab) {
     ui.role = button.dataset.roleTab;
     showRole();
@@ -1071,8 +1186,6 @@ form.addEventListener('click', (event) => {
     setValue(button.dataset.flag, !getValue(button.dataset.flag));
   } else if (button.dataset.pick) {
     setValue(button.dataset.pick, button.dataset.value);
-  } else if (button.dataset.showPanel) {
-    return setPanel(ui.panel === button.dataset.showPanel ? null : button.dataset.showPanel);
   } else if (button.dataset.target) {
     const targets = model.inputs.shadow.targets;
     targets[button.dataset.target] = !targets[button.dataset.target];
@@ -1135,7 +1248,7 @@ function setUi(patch) {
   writeChrome();
   layout();
   sync();
-  if (followAfter) followPage(ui.page, false);
+  if (followAfter) followPage(followed(), false);
   remember();
   share();
 }
@@ -1234,7 +1347,7 @@ function backToPane() {
   writeChrome();
   layout();
   sync();
-  followPage(ui.page, false);
+  followPage(followed(), false);
 }
 function openOwnWindow() {
   const opened = window.open(`/?window=preview&main=${windowId}`, `konzilo-preview-${windowId}`, 'popup,width=1500,height=950');
@@ -1255,12 +1368,11 @@ document.getElementById('bring-back').addEventListener('click', () => {
   backToPane();
 });
 let previewFollowed = null;
-let previewPanel = null;
 channel.addEventListener('message', ({ data: message }) => {
   if (inPreviewWindow) {
     if (message.type === 'state') {
       model = message.model;
-      const page = message.ui.page;
+      const page = followed(message.ui);
       Object.assign(ui, message.ui, { where: 'pane', controls: ui.controls, atOptimal: ui.atOptimal });
       writeChrome();
       layout();
@@ -1268,10 +1380,6 @@ channel.addEventListener('message', ({ data: message }) => {
       if (page !== previewFollowed) {
         followPage(page, previewFollowed !== null);
         previewFollowed = page;
-      }
-      if (ui.panel !== previewPanel) {
-        previewPanel = ui.panel;
-        showPanelInPreview(ui.panel);
       }
       document.title = `Preview · ${model.project.name || 'Konzilo'}`;
     } else if (message.type === 'main-gone') {
@@ -1444,11 +1552,12 @@ if (!inPreviewWindow) {
 setupTooltips();
 writeChrome();
 layout();
-setupPreview(() => {
-  sync();
-  followPage(ui.page, false);
+setupPreview((frame, panel) => {
   // The keys go where the focus is, and after a click in the preview that is inside a frame.
-  for (const frame of document.querySelectorAll('iframe')) frame.contentWindow?.addEventListener('keydown', historyKey);
+  frame.contentWindow?.addEventListener('keydown', historyKey);
+  if (panel) return;
+  sync();
+  followPage(followed(), false);
 });
 new ResizeObserver(layout).observe(tool);
 // The line's page may be hidden when the design is written, and the divider changes its width.

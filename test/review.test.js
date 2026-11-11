@@ -28,7 +28,8 @@ test('hover and information roles, status kinds and all their pairs pass varied 
       if (kind.startsWith('status-')) {
         const family = kind.slice(7), dark = mode === 'dark';
         assert.equal(surface.polarity, mode);
-        assert.equal(surface.recipes.background, `${family}-${dark ? 900 : 100}`);
+        // Dark mode's own step for the light bands (plates.md, 2026-11-11).
+        assert.equal(surface.recipes.background, `${family}-${dark ? 850 : 100}`);
         assert.equal(surface.recipes.accent, `${family}-${dark ? 300 : 600}`);
       }
     }

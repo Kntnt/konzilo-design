@@ -498,3 +498,42 @@ test('the header has its step before the page first paints, wide or narrow, in e
     }
   }
 });
+
+// A shadow does not show on a dark page, so in dark mode the header, its open menu and the page over the footer keep
+// their hairline beside the shadow (owner, 2026-11-11). And at the top, before anything lies under it, a header casts no
+// shadow, so a first band of its own colour is parted from it by the line in either mode.
+test('in dark mode a hairline stands with every shadow, and a header at the top keeps its line over a band of its colour, in every engine', { timeout: 240000 }, async () => {
+  const inputs = defaultInputs();
+  inputs.shadow.strength = 60;
+  const css = coreCss(derive(inputs)) + await componentsCss();
+  const bands = [];
+  for (let i = 0; i < 8; i++) bands.push(await render('Band', { id: `b${i}` }, { default: `<h2>Band ${i}</h2><p>Some words in band ${i}.</p>` }));
+  const body = await render('Page', { shadow: true }, { header: await render('Header', { ...header, attachment: 'sticky' }), default: bands.join(''), footer: await render('Footer', footer) });
+  const doc = (mode) => `<!doctype html><html lang="en" data-kn-mode="${mode}"><head><meta charset="utf-8"><title>Lines</title><style>${css}</style></head><body>${body}</body></html>`;
+  const files = { '/light.html': doc('light'), '/dark.html': doc('dark') };
+  const edges = (tab) => tab.evaluate(() => {
+    const bar = getComputedStyle(document.querySelector('.kn-header-bar'));
+    return { shadow: bar.boxShadow !== 'none', line: bar.borderBlockEndColor !== 'rgba(0, 0, 0, 0)', page: getComputedStyle(document.querySelector('.kn-page-main')).borderBlockEndStyle };
+  });
+  for (const [name, type] of ENGINES) {
+    const { browser, tab } = await open(type, files);
+    try {
+      for (const mode of ['light', 'dark']) {
+        const dark = mode === 'dark';
+        await tab.goto(`${ORIGIN}/${mode}.html`);
+        await tab.waitForTimeout(300);
+        const top = await edges(tab);
+        assert.deepEqual([top.shadow, top.line], [false, true], `${name} ${mode}: at the top no shadow, and a line over the first band of its colour`);
+        await scroll(tab, 400);
+        const down = await edges(tab);
+        assert.deepEqual([down.shadow, down.line], [true, dark], `${name} ${mode}: over content the shadow, and the line only in dark mode`);
+        assert.equal(down.page, dark ? 'solid' : 'none', `${name} ${mode}: the page's edge over the footer`);
+        await tab.locator('[data-kn-trigger="menu"]').first().click();
+        await tab.waitForTimeout(300);
+        const menu = await tab.evaluate(() => getComputedStyle(document.querySelector('.kn-megamenu')).borderBlockEndStyle);
+        assert.equal(menu, dark ? 'solid' : 'none', `${name} ${mode}: the open menu's lower edge`);
+        await tab.keyboard.press('Escape');
+      }
+    } finally { await browser.close(); }
+  }
+});

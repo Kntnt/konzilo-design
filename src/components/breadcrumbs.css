@@ -18,12 +18,32 @@
   .kn-breadcrumbs[data-kn-current="false"] > ol > li:last-child { display: none; }
   /* With the page's own level hidden, a trail needs two other steps to show: one of the start page alone is none. */
   .kn-breadcrumbs[data-kn-current="false"]:not(:has(> ol > li:nth-child(3))) { display: none; }
-  /* On a narrow screen a long trail takes room from the heading, so only the way up one level remains. */
+  /* On a narrow screen a long trail takes room from the heading, so a design may keep only the way up one level. */
   @media (width <= 40rem) {
     .kn-breadcrumbs[data-kn-narrow="parent"] > ol > li { display: none; }
     .kn-breadcrumbs[data-kn-narrow="parent"] > ol > li:nth-last-child(2) { display: inline-flex; }
     .kn-breadcrumbs[data-kn-narrow="parent"] > ol > li:nth-last-child(2) .kn-breadcrumbs-separator { display: none; }
     .kn-breadcrumbs[data-kn-narrow="parent"] > ol > li:nth-last-child(2) a::before { content: "\2190"; margin-inline-end: 0.5em; }
     .kn-breadcrumbs[data-kn-narrow="parent"]:dir(rtl) > ol > li:nth-last-child(2) a::before { content: "\2192"; }
+    /* Or as much as fits, from the end, on one line and with no script. The row is reversed and runs from the page's own
+       step, so the steps that do not fit wrap out of sight from the start, whole. The start keeps 1em for an ellipsis,
+       which the first step takes back while the whole trail fits. The ellipsis follows the first step's line and sticks
+       to the line below the one shown, then moves up onto it, so it shows only while that step is hidden. A step longer
+       than the line is cut at its end. With a keyboard focus in it, the whole trail shows and wraps. */
+    .kn-breadcrumbs[data-kn-narrow="fit"]:where(:not(:has(a:focus-visible))) > ol { flex-direction: row-reverse; justify-content: flex-end; row-gap: 0; block-size: 1lh; overflow: hidden; padding-inline-start: 1em; }
+    .kn-breadcrumbs[data-kn-narrow="fit"]:where(:not(:has(a:focus-visible))) > ol > li { order: 99; block-size: 1lh; white-space: nowrap; }
+    .kn-breadcrumbs[data-kn-narrow="fit"]:where(:not(:has(a:focus-visible))) > ol > li:first-child { margin-inline-start: -1em; }
+    .kn-breadcrumbs[data-kn-narrow="fit"]:where(:not(:has(a:focus-visible))) > ol > li > :last-child { min-inline-size: 0; overflow: hidden; text-overflow: ellipsis; }
+    .kn-breadcrumbs[data-kn-narrow="fit"]:where(:not(:has(a:focus-visible))) > ol::after { content: "\2026"; content: "\2026" / ""; order: 100; flex: none; inline-size: 1em; margin-inline-start: -1em; position: sticky; inset-block-end: -1lh; translate: 0 -1lh; }
+    .kn-breadcrumbs[data-kn-narrow="fit"]:where(:not(:has(a:focus-visible))) > ol > li:nth-last-child(1) { order: 1; }
+    .kn-breadcrumbs[data-kn-narrow="fit"]:where(:not(:has(a:focus-visible))) > ol > li:nth-last-child(2) { order: 2; }
+    .kn-breadcrumbs[data-kn-narrow="fit"]:where(:not(:has(a:focus-visible))) > ol > li:nth-last-child(3) { order: 3; }
+    .kn-breadcrumbs[data-kn-narrow="fit"]:where(:not(:has(a:focus-visible))) > ol > li:nth-last-child(4) { order: 4; }
+    .kn-breadcrumbs[data-kn-narrow="fit"]:where(:not(:has(a:focus-visible))) > ol > li:nth-last-child(5) { order: 5; }
+    .kn-breadcrumbs[data-kn-narrow="fit"]:where(:not(:has(a:focus-visible))) > ol > li:nth-last-child(6) { order: 6; }
+    .kn-breadcrumbs[data-kn-narrow="fit"]:where(:not(:has(a:focus-visible))) > ol > li:nth-last-child(7) { order: 7; }
+    .kn-breadcrumbs[data-kn-narrow="fit"]:where(:not(:has(a:focus-visible))) > ol > li:nth-last-child(8) { order: 8; }
+    .kn-breadcrumbs[data-kn-narrow="fit"]:where(:not(:has(a:focus-visible))) > ol > li:nth-last-child(9) { order: 9; }
+    .kn-breadcrumbs[data-kn-narrow="fit"]:where(:not(:has(a:focus-visible))) > ol > li:nth-last-child(10) { order: 10; }
   }
 }

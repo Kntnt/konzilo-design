@@ -120,7 +120,8 @@
 
   /* ---------- Shadow and line ----------
      The shadow while content lies under an opaque sticky header; a hairline where it casts none and nothing else
-     parts it from the page: content under it, or a first band of its own colour. */
+     parts it from the page: content under it, or a first band of its own colour. In dark mode the hairline comes with
+     the shadow too, since a shadow does not show on a dark page (owner, 2026-11-11). */
   .kn-header[data-kn-attachment="sticky"] { --kn-header-under: 1; }
   @container style(--kn-header-scrolled: 0) {
     .kn-header[data-kn-attachment="sticky"] { --kn-header-under: 0; }
@@ -131,6 +132,13 @@
     .kn-header > .kn-header-bar { box-shadow: var(--kn-shadow-header); }
   }
   @container style(--kn-shadow-header: none) and style(--kn-header-clear: 0) and (style(--kn-header-under: 1) or style(--kn-header-same: 1)) {
+    .kn-header > .kn-header-bar { border-block-end-color: var(--kn-border); }
+  }
+  /* At the top, with nothing under it yet, it casts no shadow, so a first band of its own colour needs the line. */
+  @container style(--kn-header-same: 1) and style(--kn-header-under: 0) and style(--kn-header-clear: 0) {
+    .kn-header > .kn-header-bar { border-block-end-color: var(--kn-border); }
+  }
+  @container style(--kn-mode: dark) and style(--kn-header-clear: 0) and (style(--kn-header-under: 1) or style(--kn-header-same: 1)) {
     .kn-header > .kn-header-bar { border-block-end-color: var(--kn-border); }
   }
   .kn-header:has(:modal, :popover-open) > .kn-header-bar { box-shadow: var(--kn-shadow-header-panel); border-block-end-color: transparent; }
@@ -278,8 +286,12 @@
     inline-size: 100%; max-inline-size: none; max-block-size: calc(100dvh - var(--kn-header-height)); margin: 0;
     overflow-y: auto; overscroll-behavior: contain; border-block-start: 1px solid var(--kn-border);
   }
-  /* A layer without a shadow is set off by the hairline, as at strength zero. */
+  /* A layer without a shadow is set off by the hairline, as at strength zero, and so is any layer in dark mode, where
+     a shadow does not show. */
   @container style(--kn-shadow-panel: none) {
+    .kn-header .kn-megamenu:modal { border-block-end: 1px solid var(--kn-border); }
+  }
+  @container style(--kn-mode: dark) {
     .kn-header .kn-megamenu:modal { border-block-end: 1px solid var(--kn-border); }
   }
   .kn-megamenu-inner { inline-size: var(--kn-layout-content-area); margin-inline: auto; display: grid; gap: 2rem; padding-block: 2rem 2.5rem; }

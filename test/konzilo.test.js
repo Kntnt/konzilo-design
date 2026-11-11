@@ -471,6 +471,31 @@ test('design props take a site\'s own content, and a setting that is off leaves 
   assert.deepEqual(Object.keys(pageProps(r.page)), ['shadow', 'edgeLine', 'fillLight', 'fillDark']);
 });
 
+test('the rows above and below the large menu reach a site where the design has them on, and only there', async () => {
+  const r = derive(defaultInputs());
+  const project = { name: 'Example' };
+  const menu = [{ label: 'One', href: '/one/', children: [{ label: 'Two', href: '/two/' }] }];
+  assert.deepEqual([r.header['menu-above'], r.header['menu-below']], [false, false], 'off in a design that says nothing');
+  const rows = { 'menu-above': '<p class="site-above">From the journal</p>', 'menu-below': '<p class="site-below">Contact us</p>' };
+  const shown = async (settings) => {
+    const props = headerProps({ ...r.header, ...settings }, project, { menu });
+    const html = await render('Header', props, rows);
+    // The row's own box counts on its own: an empty row would still draw its space and its line.
+    assert.equal(html.includes('kn-megamenu-above'), html.includes('site-above'), 'a row above shows only with what it holds');
+    assert.equal(html.includes('kn-megamenu-below'), html.includes('site-below'), 'a row below shows only with what it holds');
+    return [props.menuAbove, props.menuBelow, html.includes('kn-megamenu-above'), html.includes('kn-megamenu-below')];
+  };
+  assert.deepEqual(await shown({}), [false, false, false, false], 'what the site gives for a row that is off stays out');
+  assert.deepEqual(await shown({ 'menu-above': true }), [true, false, true, false]);
+  assert.deepEqual(await shown({ 'menu-below': true }), [false, true, false, true]);
+  assert.deepEqual(await shown({ 'menu-above': true, 'menu-below': true }), [true, true, true, true]);
+  // Header used on its own, as the gallery does, shows what its slots hold, and no row where it is given nothing.
+  const alone = await render('Header', { identity: { label: 'Example', href: '/', name: 'Example' }, menu, menuButton: { word: 'Menu' } }, rows);
+  assert.ok(alone.includes('site-above') && alone.includes('site-below'));
+  const empty = await render('Header', headerProps({ ...r.header, 'menu-above': true, 'menu-below': true }, project, { menu }));
+  assert.equal(empty.includes('kn-megamenu-above') || empty.includes('kn-megamenu-below'), false, 'rows on but nothing to hold draw no row');
+});
+
 // konzilo.md's layout, copied as written, for any choice of cells: every cell that shows holds something, so no empty
 // cell counts when the footer spreads the others, and the first is the brand, as the header shows it.
 test('the footer in konzilo.md\'s layout fills every cell a design turns on, with the brand in the upper band\'s A1', async () => {

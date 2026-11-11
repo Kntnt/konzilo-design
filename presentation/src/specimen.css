@@ -227,23 +227,103 @@ body {
 /* While the tool tunes a design, every step shows at once rather than easing after the control. */
 [data-kn-tuning] * { transition: none !important; }
 
-/* The tool's catalogue: every component in one page, named where it stands. */
-.catalogue-page { display: grid; grid-template-columns: minmax(0, 1fr); gap: 2.5rem; padding-block: 2rem; }
-.catalogue-page + .catalogue-page { border-block-start: 1px solid var(--kn-border); }
-.catalogue-title { margin: 0; padding-inline: var(--kn-layout-side-margin); font-family: var(--kn-typeface-heading); font-size: var(--kn-type-heading-2-size); font-weight: var(--kn-type-heading-2-weight); }
-.catalogue-name { margin: 0 0 0.75rem; padding-inline: var(--kn-layout-side-margin); font-family: var(--kn-typeface-label); font-size: var(--kn-type-label-size); font-weight: var(--kn-type-label-weight); letter-spacing: var(--kn-type-label-letter-spacing); text-transform: uppercase; color: var(--kn-text-muted); }
-/* Each component once: a variation shows when it is chosen, and what only the report needs does not show. */
-body[data-specimen='catalogue'] [data-look]:not([data-look-on]),
-body[data-specimen='catalogue'] [data-report-only] { display: none !important; }
-/* What the report lays out side by side stands alone here. */
-body[data-specimen='catalogue'] .sample-bands { min-height: 0; grid-template-rows: auto; }
-body[data-specimen='catalogue'] .sample-callouts { display: block; min-height: 0; }
-body[data-specimen='catalogue'] :is([data-component='accordion'], [data-component='table']) .sample-pair { grid-template-columns: minmax(0, 1fr); }
-body[data-specimen='catalogue'] .sample-state-row { grid-template-columns: minmax(0, 28rem); }
-/* One card of a grid keeps the width it has among others, instead of filling the row. */
-body[data-specimen='catalogue'] .kn-card-grid:has(> [data-report-only]) { grid-template-columns: repeat(auto-fill, minmax(min(100%, max(var(--kn-card-grid-minimum), calc((100% - 2 * var(--kn-space-column-gap)) / 3))), 1fr)); }
+/* The tool's catalogue: a document for each component page, each component in a section of its own, named, and in it
+   every variant a site chooses per use, side by side, each named by a caption. */
+.catalogue-page { display: grid; grid-template-columns: minmax(0, 1fr); gap: 3rem; padding-block: 2rem 3rem; }
+.catalogue-title, .catalogue-name, .catalogue-variant > .catalogue-caption { width: var(--kn-layout-content-area); margin-inline: auto; }
+.catalogue-title { margin-block: 0; font-family: var(--kn-typeface-heading); font-size: var(--kn-type-heading-2-size); font-weight: var(--kn-type-heading-2-weight); line-height: 1.2; }
+.catalogue-section { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.5rem; }
+.catalogue-section + .catalogue-section { padding-block-start: 3rem; border-block-start: 1px solid var(--kn-border); }
+.catalogue-name { margin-block: 0; font-family: var(--kn-typeface-heading); font-size: var(--kn-type-heading-5-size); font-weight: var(--kn-type-heading-5-weight); line-height: 1.3; }
+.catalogue-variant > .sample-root { padding-block: 0; }
+.catalogue-variant > .sample-root[data-full] { padding-block: 0; }
+.catalogue-caption { margin: 0 0 0.625rem; font-family: var(--kn-typeface-label); font-size: var(--kn-type-label-size); font-weight: var(--kn-type-label-weight); letter-spacing: var(--kn-type-label-letter-spacing); text-transform: uppercase; color: var(--kn-text-muted); }
+.catalogue-caption.specimen-rail { margin-inline: auto; }
+.catalogue-cell { display: grid; grid-template-rows: auto 1fr; align-content: start; min-width: 0; }
+.catalogue-cell > .catalogue-caption { align-self: end; }
+/* What the report sets in a frame of its own height or beside an empty half stands as it is here. */
+body[data-specimen='catalogue'] .sample-bands { min-height: 0; grid-template-rows: none; }
+body[data-specimen='catalogue'] .sample-bands > .catalogue-caption { margin-block: 1.25rem 0.625rem; }
+body[data-specimen='catalogue'] .sample-bands > .catalogue-caption:first-child { margin-block-start: 0; }
+body[data-specimen='catalogue'] .sample-callouts { grid-template-rows: repeat(4, auto); min-height: 0; gap: 1.5rem 1.875rem; }
+body[data-specimen='catalogue'] .sample-callouts > .catalogue-cell { grid-template-rows: auto minmax(0, 1fr); }
+body[data-specimen='catalogue'] .sample-callouts .kn-callout { margin: 0; }
+body[data-specimen='catalogue'] .sample-pair:has(> :only-child) { grid-template-columns: minmax(0, 1fr); }
+body[data-specimen='catalogue'] .text-image-stage { min-height: 0; }
+/* A grid of variants: a row each kind or Surface, a column each state. A phone has each row's name above its cells,
+   two to a line and each named; a wider window names the columns once, above the first row. */
+.catalogue-block { padding: 1.25rem 1.5rem; }
+.catalogue-grid { display: grid; gap: 1.25rem; }
+.catalogue-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem 1.25rem; align-items: end; }
+.catalogue-row[data-kn-surface] { padding: 1.25rem 1.5rem; }
+.catalogue-grid:has(> .catalogue-row[data-kn-surface]) { gap: 0; }
+.catalogue-row > .catalogue-row-name { grid-column: 1 / -1; margin: 0; color: var(--kn-text); }
+.catalogue-row .catalogue-cell > .kn-body-text p, .catalogue-row .catalogue-cell > .kn-body-text { margin: 0; }
+@media (width >= 48rem) {
+  .catalogue-row { grid-template-columns: 11rem repeat(var(--catalogue-columns, 3), minmax(0, 1fr)); align-items: center; }
+  .catalogue-row > .catalogue-row-name { grid-column: auto; }
+  .catalogue-row + .catalogue-row .catalogue-cell > .catalogue-caption { display: none; }
+}
 .preview-menu-row { display: grid; gap: 0.25rem; }
 .preview-menu-row p { margin: 0; }
+
+/* The Shadow page: for each shadow a small window onto a page, of fixed height, clipping the rest. Its header stands
+   as on a page scrolled past the header's turn: opaque, and casting its shadow where content lies under it. */
+.shadow-scene {
+  --kn-header-scrolled: 1;
+  --kn-header-past: 1;
+  --kn-header-beyond: 0;
+  block-size: 13rem;
+  overflow: clip;
+}
+/* The page fills the window, as a page does, so its own end never shows in a scene about something else. */
+.shadow-scene .kn-page { min-block-size: 100%; }
+/* Under a sticky header, 2.5rem of the page's text has scrolled under the bar. */
+.shadow-scene[data-shadow-scene='header'] .kn-page:has(> .kn-header[data-kn-attachment='sticky']) > .kn-page-main {
+  margin-block-start: calc(-1 * (var(--kn-space-band) + 2.5rem));
+}
+/* The menu open under the bar, placed as header.css places an open one, with the scene for its window, but held open by
+   these rules instead of as a modal dialog, which would take the reader's focus. It lies over the bar's own shadow, as
+   the top layer does. On a phone it fills the window, as it does there, and hides the page. */
+.shadow-scene[data-shadow-scene='panel'] { --shadow-window: 26rem; block-size: var(--shadow-window); }
+@media (width <= 60rem) {
+  .shadow-scene[data-shadow-scene='panel'] { --shadow-window: 34rem; }
+}
+.shadow-scene[data-shadow-scene='panel'] .kn-megamenu {
+  display: block;
+  position: absolute;
+  inset-block-start: 100%;
+  inset-inline: 0;
+  inline-size: 100%;
+  max-inline-size: none;
+  max-block-size: calc(var(--shadow-window) - var(--kn-header-height));
+  margin: 0;
+  overflow: clip;
+  border-block-start: 1px solid var(--kn-border);
+}
+@container style(--kn-shadow-panel: none) {
+  .shadow-scene[data-shadow-scene='panel'] .kn-megamenu { border-block-end: 1px solid var(--kn-border); }
+}
+.shadow-scene[data-shadow-scene='panel'] .kn-header-bar { box-shadow: var(--kn-shadow-header-panel); border-block-end-color: transparent; }
+.shadow-scene[data-shadow-scene='panel'] .kn-header-chevron { rotate: 180deg; }
+/* The end of a page, its last lines, over the top of its footer, cut short enough to fit the window, as a footer at
+   the edge of the screen must to lie under the page. */
+.shadow-scene[data-shadow-scene='page'] { block-size: calc(var(--kn-space-band) + 12rem); }
+.shadow-scene[data-shadow-scene='page'] .kn-page-main {
+  flex: none;
+  block-size: calc(var(--kn-space-band) + 4rem);
+  min-block-size: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: unsafe flex-end;
+  overflow: clip;
+}
+.shadow-scene[data-shadow-scene='page'] .kn-footer { max-block-size: 8rem; overflow: clip; }
+/* A card under the name of its Surface or its state. */
+.shadow-cell { display: grid; grid-template-rows: auto 1fr; align-content: start; min-width: 0; }
+.shadow-caption { margin: 0 0 0.625rem; color: var(--kn-text-muted); }
+/* The same card twice, at rest and under the pointer, on the narrow measure, so neither grows wider than a card in a row of three. */
+.shadow-pair { max-inline-size: var(--kn-layout-narrow); }
 
 /* One screen, as a visitor sees it before scrolling: 16:10 on a desktop, then a tablet and a phone upright.
    A preview's own height says nothing about a screen, and a report's frame grows to fit what it holds. */
