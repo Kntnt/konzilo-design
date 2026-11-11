@@ -9,9 +9,110 @@
   .kn-visitor-filter-group { min-inline-size: 0; padding: 0; margin: 0; border: 0; }
   .kn-visitor-filter-group legend { margin-block-end: 0.5em; }
   .kn-visitor-filter-toggles { display: flex; flex-wrap: wrap; gap: 0.5em; }
-  button.kn-pill { min-block-size: 1.75rem; padding-inline: 0.8em; background: transparent; color: var(--kn-text); border-color: var(--kn-border-strong); cursor: pointer; }
-  button.kn-pill[aria-pressed="true"] { background: var(--kn-button-background); color: var(--kn-button-text); border-color: var(--kn-button-background); }
-  button.kn-pill:hover { text-decoration: underline; text-underline-offset: 0.18em; }
-  .kn-visitor-filters[data-kn-enhanced] .kn-visitor-filter-submit { display: none; }
+  /* A pill is a checkbox in its label (the assistant's choice, 2026-11-10): the box itself covers the pill, unseen, so a
+     click anywhere on it, Space and a screen reader all reach a native checkbox, named by the pill's text and grouped
+     by the legend. A checked pill is filled; its focus ring is the design's. */
+  .kn-visitor-filter-toggles > .kn-pill { position: relative; min-block-size: 1.75rem; padding-inline: 0.8em; background: transparent; color: var(--kn-text); border-color: var(--kn-border-strong); cursor: pointer; }
+  .kn-visitor-filter-toggles > .kn-pill > input { position: absolute; inset: 0; margin: 0; border-radius: inherit; appearance: none; opacity: 0; cursor: inherit; }
+  .kn-visitor-filter-toggles > .kn-pill:has(> input:checked) { background: var(--kn-button-background); color: var(--kn-button-text); border-color: var(--kn-button-background); }
+  .kn-visitor-filter-toggles > .kn-pill:hover { text-decoration: underline; text-underline-offset: 0.18em; }
+  .kn-visitor-filter-toggles > .kn-pill:has(> input:focus-visible) { outline: 2px solid var(--kn-focus); outline-offset: 2px; }
+  .kn-visitor-filter-toggles > .kn-pill:has(> input:disabled) { opacity: 0.5; cursor: not-allowed; }
+  /* Forced colours drop the fill, so the native box shows its own state there, as Switch does. */
+  @media (forced-colors: active) {
+    .kn-visitor-filter-toggles > .kn-pill > input { position: static; margin-inline-end: 0.4em; appearance: auto; opacity: 1; }
+  }
   .kn-visitor-filter-count { color: var(--kn-text-muted); margin: 0; }
+
+  /* Filtering by CSS, with no script (docs/spec/principles.md; the assistant's choice, 2026-11-10). The form filters the
+     items, `[data-kn-item]`, that stand beside it under its parent. A stylesheet cannot compare a value with a value, so
+     each control carries a key, `data-kn-match="g-v"`, its group's place in the form and its value's place in the group,
+     and each item the keys of its values, `data-kn-matches`; visitor-filters.js gives both. A group with a checked pill,
+     or a chosen option, hides every item that has none of its checked keys: values on one row widen the result, and
+     each further row narrows it. One rule a group and one alternative a value, up to FILTER_GROUPS and FILTER_VALUES
+     in visitor-filters.js, which test/visitor-filters.test.js holds this list to. */
+  :has(> .kn-visitor-filters [data-kn-match^="1-"]:checked) [data-kn-item]:not(
+    :has(> .kn-visitor-filters [data-kn-match="1-1"]:checked) [data-kn-matches~="1-1"],
+    :has(> .kn-visitor-filters [data-kn-match="1-2"]:checked) [data-kn-matches~="1-2"],
+    :has(> .kn-visitor-filters [data-kn-match="1-3"]:checked) [data-kn-matches~="1-3"],
+    :has(> .kn-visitor-filters [data-kn-match="1-4"]:checked) [data-kn-matches~="1-4"],
+    :has(> .kn-visitor-filters [data-kn-match="1-5"]:checked) [data-kn-matches~="1-5"],
+    :has(> .kn-visitor-filters [data-kn-match="1-6"]:checked) [data-kn-matches~="1-6"],
+    :has(> .kn-visitor-filters [data-kn-match="1-7"]:checked) [data-kn-matches~="1-7"],
+    :has(> .kn-visitor-filters [data-kn-match="1-8"]:checked) [data-kn-matches~="1-8"],
+    :has(> .kn-visitor-filters [data-kn-match="1-9"]:checked) [data-kn-matches~="1-9"],
+    :has(> .kn-visitor-filters [data-kn-match="1-10"]:checked) [data-kn-matches~="1-10"],
+    :has(> .kn-visitor-filters [data-kn-match="1-11"]:checked) [data-kn-matches~="1-11"],
+    :has(> .kn-visitor-filters [data-kn-match="1-12"]:checked) [data-kn-matches~="1-12"],
+    :has(> .kn-visitor-filters [data-kn-match="1-13"]:checked) [data-kn-matches~="1-13"],
+    :has(> .kn-visitor-filters [data-kn-match="1-14"]:checked) [data-kn-matches~="1-14"],
+    :has(> .kn-visitor-filters [data-kn-match="1-15"]:checked) [data-kn-matches~="1-15"],
+    :has(> .kn-visitor-filters [data-kn-match="1-16"]:checked) [data-kn-matches~="1-16"],
+    :has(> .kn-visitor-filters [data-kn-match="1-17"]:checked) [data-kn-matches~="1-17"],
+    :has(> .kn-visitor-filters [data-kn-match="1-18"]:checked) [data-kn-matches~="1-18"],
+    :has(> .kn-visitor-filters [data-kn-match="1-19"]:checked) [data-kn-matches~="1-19"],
+    :has(> .kn-visitor-filters [data-kn-match="1-20"]:checked) [data-kn-matches~="1-20"],
+    :has(> .kn-visitor-filters [data-kn-match="1-21"]:checked) [data-kn-matches~="1-21"],
+    :has(> .kn-visitor-filters [data-kn-match="1-22"]:checked) [data-kn-matches~="1-22"],
+    :has(> .kn-visitor-filters [data-kn-match="1-23"]:checked) [data-kn-matches~="1-23"],
+    :has(> .kn-visitor-filters [data-kn-match="1-24"]:checked) [data-kn-matches~="1-24"]
+  ) { display: none; }
+  :has(> .kn-visitor-filters [data-kn-match^="2-"]:checked) [data-kn-item]:not(
+    :has(> .kn-visitor-filters [data-kn-match="2-1"]:checked) [data-kn-matches~="2-1"],
+    :has(> .kn-visitor-filters [data-kn-match="2-2"]:checked) [data-kn-matches~="2-2"],
+    :has(> .kn-visitor-filters [data-kn-match="2-3"]:checked) [data-kn-matches~="2-3"],
+    :has(> .kn-visitor-filters [data-kn-match="2-4"]:checked) [data-kn-matches~="2-4"],
+    :has(> .kn-visitor-filters [data-kn-match="2-5"]:checked) [data-kn-matches~="2-5"],
+    :has(> .kn-visitor-filters [data-kn-match="2-6"]:checked) [data-kn-matches~="2-6"],
+    :has(> .kn-visitor-filters [data-kn-match="2-7"]:checked) [data-kn-matches~="2-7"],
+    :has(> .kn-visitor-filters [data-kn-match="2-8"]:checked) [data-kn-matches~="2-8"],
+    :has(> .kn-visitor-filters [data-kn-match="2-9"]:checked) [data-kn-matches~="2-9"],
+    :has(> .kn-visitor-filters [data-kn-match="2-10"]:checked) [data-kn-matches~="2-10"],
+    :has(> .kn-visitor-filters [data-kn-match="2-11"]:checked) [data-kn-matches~="2-11"],
+    :has(> .kn-visitor-filters [data-kn-match="2-12"]:checked) [data-kn-matches~="2-12"],
+    :has(> .kn-visitor-filters [data-kn-match="2-13"]:checked) [data-kn-matches~="2-13"],
+    :has(> .kn-visitor-filters [data-kn-match="2-14"]:checked) [data-kn-matches~="2-14"],
+    :has(> .kn-visitor-filters [data-kn-match="2-15"]:checked) [data-kn-matches~="2-15"],
+    :has(> .kn-visitor-filters [data-kn-match="2-16"]:checked) [data-kn-matches~="2-16"],
+    :has(> .kn-visitor-filters [data-kn-match="2-17"]:checked) [data-kn-matches~="2-17"],
+    :has(> .kn-visitor-filters [data-kn-match="2-18"]:checked) [data-kn-matches~="2-18"],
+    :has(> .kn-visitor-filters [data-kn-match="2-19"]:checked) [data-kn-matches~="2-19"],
+    :has(> .kn-visitor-filters [data-kn-match="2-20"]:checked) [data-kn-matches~="2-20"],
+    :has(> .kn-visitor-filters [data-kn-match="2-21"]:checked) [data-kn-matches~="2-21"],
+    :has(> .kn-visitor-filters [data-kn-match="2-22"]:checked) [data-kn-matches~="2-22"],
+    :has(> .kn-visitor-filters [data-kn-match="2-23"]:checked) [data-kn-matches~="2-23"],
+    :has(> .kn-visitor-filters [data-kn-match="2-24"]:checked) [data-kn-matches~="2-24"]
+  ) { display: none; }
+  :has(> .kn-visitor-filters [data-kn-match^="3-"]:checked) [data-kn-item]:not(
+    :has(> .kn-visitor-filters [data-kn-match="3-1"]:checked) [data-kn-matches~="3-1"],
+    :has(> .kn-visitor-filters [data-kn-match="3-2"]:checked) [data-kn-matches~="3-2"],
+    :has(> .kn-visitor-filters [data-kn-match="3-3"]:checked) [data-kn-matches~="3-3"],
+    :has(> .kn-visitor-filters [data-kn-match="3-4"]:checked) [data-kn-matches~="3-4"],
+    :has(> .kn-visitor-filters [data-kn-match="3-5"]:checked) [data-kn-matches~="3-5"],
+    :has(> .kn-visitor-filters [data-kn-match="3-6"]:checked) [data-kn-matches~="3-6"],
+    :has(> .kn-visitor-filters [data-kn-match="3-7"]:checked) [data-kn-matches~="3-7"],
+    :has(> .kn-visitor-filters [data-kn-match="3-8"]:checked) [data-kn-matches~="3-8"],
+    :has(> .kn-visitor-filters [data-kn-match="3-9"]:checked) [data-kn-matches~="3-9"],
+    :has(> .kn-visitor-filters [data-kn-match="3-10"]:checked) [data-kn-matches~="3-10"],
+    :has(> .kn-visitor-filters [data-kn-match="3-11"]:checked) [data-kn-matches~="3-11"],
+    :has(> .kn-visitor-filters [data-kn-match="3-12"]:checked) [data-kn-matches~="3-12"],
+    :has(> .kn-visitor-filters [data-kn-match="3-13"]:checked) [data-kn-matches~="3-13"],
+    :has(> .kn-visitor-filters [data-kn-match="3-14"]:checked) [data-kn-matches~="3-14"],
+    :has(> .kn-visitor-filters [data-kn-match="3-15"]:checked) [data-kn-matches~="3-15"],
+    :has(> .kn-visitor-filters [data-kn-match="3-16"]:checked) [data-kn-matches~="3-16"],
+    :has(> .kn-visitor-filters [data-kn-match="3-17"]:checked) [data-kn-matches~="3-17"],
+    :has(> .kn-visitor-filters [data-kn-match="3-18"]:checked) [data-kn-matches~="3-18"],
+    :has(> .kn-visitor-filters [data-kn-match="3-19"]:checked) [data-kn-matches~="3-19"],
+    :has(> .kn-visitor-filters [data-kn-match="3-20"]:checked) [data-kn-matches~="3-20"],
+    :has(> .kn-visitor-filters [data-kn-match="3-21"]:checked) [data-kn-matches~="3-21"],
+    :has(> .kn-visitor-filters [data-kn-match="3-22"]:checked) [data-kn-matches~="3-22"],
+    :has(> .kn-visitor-filters [data-kn-match="3-23"]:checked) [data-kn-matches~="3-23"],
+    :has(> .kn-visitor-filters [data-kn-match="3-24"]:checked) [data-kn-matches~="3-24"]
+  ) { display: none; }
+
+  /* The count is the server's, true of the page as it was sent. Once the visitor's choice differs from the controls'
+     defaults it no longer is, and no script can count again, so it steps aside rather than say what is not so. */
+  .kn-visitor-filters:has([data-kn-match]:checked:not(:default), [data-kn-match]:default:not(:checked)) .kn-visitor-filter-count { display: none; }
+  /* Pills and a select that filter at once need no button; a search field still sends the form. */
+  .kn-visitor-filters:has([data-kn-match]):not(:has(input[type="search"])) .kn-visitor-filter-submit { display: none; }
 }

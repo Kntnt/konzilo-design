@@ -46,7 +46,8 @@ function marks(end) {
     .filter((section) => !section.parentElement.closest(SECTIONS))
     .map((section) => {
       const box = section.getBoundingClientRect();
-      return { top: box.top + scroll - headerHeight, height: box.height, footer: section.matches('.kn-footer'), fixed: getComputedStyle(section).position === 'fixed' };
+      // A footer at the edge of the screen sticks under the page, so where it shows is not where it scrolls to.
+      return { top: box.top + scroll - headerHeight, height: box.height, footer: section.matches('.kn-footer'), fixed: section.matches('.kn-footer') && getComputedStyle(section).position === 'sticky' };
     });
 }
 function syncFrom(source, target) {
@@ -63,7 +64,7 @@ function syncFrom(source, target) {
   }
   let from = marks(source);
   let to = marks(target);
-  // A footer revealed under the page has no place in it to scroll to, so neither end counts its footer.
+  // A footer revealed under the page has no place of its own to scroll to, so neither end counts its footer.
   if ([...from, ...to].some((mark) => mark.fixed)) {
     from = from.filter((mark) => !mark.footer);
     to = to.filter((mark) => !mark.footer);

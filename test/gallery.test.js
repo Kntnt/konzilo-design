@@ -56,7 +56,10 @@ test('built gallery embeds every resource and the actual bundle runs without cry
   for (const [, , url] of cssSources.matchAll(/url\(\s*(['"]?)(.*?)\1\s*\)/gi)) assert.ok(url.startsWith('data:'), url);
   assert.doesNotMatch(html, /@import\b|<link[^>]*rel="(?:stylesheet|modulepreload|preconnect|dns-prefetch)"/i);
   const bundles = [...html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)].filter(([, attrs]) => attrs.includes('type="module"')).map(([, , js]) => js);
-  assert.equal(bundles.length, 9, 'gallery controls, frame entries, and the five interaction entries');
+  // Visitor Filters, the Reading Area and Form no longer run a script (principles.md), so none has an entry; each
+  // header's giving-way script is inline, not a module.
+  assert.equal(bundles.length, 4, 'gallery controls, frame entries, and the interaction entries');
+  assert.equal([...html.matchAll(/<script data-kn-header-fit>/g)].length, 3, 'one inline giving-way script per header');
   const ui = controls();
   const noNetwork = () => { throw new Error('Unexpected network request'); };
   for (const bundle of bundles) {
@@ -100,7 +103,8 @@ test('the real Page and Bands frame all examples, including the seven new compon
 test('Reading Areas keep their inline notes and Aside Blocks in the requested reading order', () => {
   const areas = [...beforeDirectives(html).matchAll(/<div\b[^>]*class="kn-reading-area"([^>]*)>([\s\S]*?)(?=<\/section>)/g)];
   assert.equal(areas.length, 8);
-  for (const [, attrs] of areas) assert.match(attrs, /data-kn-columns="1"/);
+  // Nothing measures them, so nothing marks how many columns they have (reading-area.test.js).
+  for (const [, attrs] of areas) assert.doesNotMatch(attrs, /data-kn-columns/);
   const [, endAttrs, end] = areas[0];
   assert.match(endAttrs, /data-kn-side="end" data-kn-stack="before"/);
   assert.ok(end.indexOf('kn-reading-area-aside') < end.indexOf('kn-reading-area-flow'));
@@ -250,27 +254,29 @@ test('rendered header groups, skip link, identity, panel controls, current links
     const header = one(tree, `#gallery-header-${arrangement}`);
     assert.equal(header.attributes['data-kn-attachment'], 'flow');
     assert.equal(header.children.find((node) => node.type === 1).attributes.class, 'kn-skip-link');
-    const groups = all(header, '.kn-header-group');
+    const groups = all(header, '.kn-header-row > .kn-header-group');
     assert.deepEqual(groups.map((group) => group.children.filter((node) => node.type === 1).map((node) => {
       const cls = node.attributes.class;
       return cls.includes('identity') ? 'identity' : cls.includes('search-trigger') ? 'search' : cls.includes('language') ? 'language' : cls.includes('link-menu') ? 'links' : cls.includes('menu-button') ? 'menu' : 'cta';
     })), expected[arrangement]);
-    const identity = one(header, '.kn-header-identity');
+    const identity = one(header, '.kn-header-row .kn-header-identity');
     assert.equal(identity.name, 'a');
     assert.equal(identity.attributes.href, '#home');
     assert.equal(identity.attributes['aria-label'], 'Juniper Atlas');
     assert.equal(all(identity, 'a').filter((node) => node !== identity).length, 0);
+    // The browser keeps the panels' state: no control writes one of its own.
     for (const trigger of all(header, '[data-kn-trigger]')) {
-      assert.equal(trigger.attributes['aria-expanded'], 'false');
+      assert.ok(!('aria-expanded' in trigger.attributes));
       assert.ok(one(tree, `#${trigger.attributes['aria-controls']}`));
       assert.ok(trigger.attributes['aria-label']);
     }
-    const search = one(header, '.kn-header-search-trigger');
-    assert.equal(search.name, 'a');
-    assert.match(search.attributes.href, /q=/);
-    const nativeMenu = one(header, '[data-kn-trigger="menu"]');
-    assert.equal(nativeMenu.attributes.popovertarget, nativeMenu.attributes['aria-controls']);
-    assert.equal(one(header, '.kn-header-link-menu [aria-current="page"]').attributes.href, '#home');
+    for (const kind of ['menu', 'search']) {
+      const trigger = one(header, `[data-kn-trigger="${kind}"]`);
+      assert.equal(trigger.name, 'button');
+      assert.equal(trigger.attributes.commandfor, trigger.attributes['aria-controls']);
+      assert.equal(trigger.attributes.command, 'show-modal');
+    }
+    assert.equal(one(one(header, '.kn-header-row .kn-header-link-menu'), '[aria-current="page"]').attributes.href, '#home');
     const links = all(header, '.kn-header-language-list a');
     assert.deepEqual(links.map((node) => node.attributes.lang), ['en', 'sv', 'de']);
     assert.ok(links.every((node) => node.attributes.hreflang === node.attributes.lang));
@@ -404,7 +410,9 @@ test('the final six families have working compositions, all eleven local embed p
   const tree = parse(html);
   for (const id of ['content-loop', 'visitor-filters', 'search-results', 'video-player', 'embeds', 'forms', 'forms-brand', 'consent-banner']) assert.ok(one(tree, `#${id}`));
   assert.equal(all(one(tree, '#filtered-rows'), '[data-kn-item]').length, 15);
-  assert.equal(one(tree, '[data-kn-for="filtered-rows"]').attributes['data-kn-page-size'], '4');
+  // No script filters them: the items carry the keys their pills match (visitor-filters.test.js).
+  assert.ok(all(one(tree, '#filtered-rows'), '[data-kn-item]').every((item) => /^1-\d+ 2-\d+$/.test(item.attributes['data-kn-matches'])));
+  assert.equal(all(one(tree, '#visitor-filters'), 'input[data-kn-match]').length, 4);
   assert.equal(all(one(tree, '#filtered-cards'), '.kn-card').length, 6);
   assert.ok(one(tree, '#search-rows mark'));
   assert.equal(one(tree, '#loop-documents .kn-content-link').attributes.href.startsWith('data:'), true);
@@ -508,23 +516,33 @@ test('the directive chapters show every directive and variant as the contract wr
   for (const part of ['.kn-timeline[data-kn-numbering="decimal"]', '.kn-timeline[data-kn-numbering="upper-latin"][data-kn-punctuation="period"]', '.kn-timeline[data-kn-numbering="lower-roman"][data-kn-punctuation="brackets"]', '.kn-reasons[data-kn-sign="cross"]']) assert.ok(one(tree, part), part);
   for (const presentation of ['cards', 'featured', 'filtered']) assert.ok(has(tree, `.kn-post-list[data-kn-presentation="${presentation}"]`, '.kn-card-link'), presentation);
   const filtered = one(tree, '.kn-post-list[data-kn-presentation="filtered"]');
-  assert.ok(all(one(filtered, `#${one(filtered, 'form.kn-visitor-filters').attributes['data-kn-for']}`), '[data-kn-item][data-kn-filter]').length > 4);
+  assert.ok(all(filtered, '[data-kn-item][data-kn-matches]').length > 4);
+  assert.equal(all(filtered, '.kn-pill input[data-kn-match]').length, 4);
   // Panels: questions, tabs, choice and toc.
   const questions = one(tree, '#directive-questions');
   assert.ok(all(questions, '.kn-accordion').some((accordion) => 'data-kn-questions' in accordion.attributes && one(accordion, 'details[name][open]')));
   assert.ok(all(questions, '.kn-accordion').some((accordion) => !('data-kn-questions' in accordion.attributes) && accordion.attributes['data-kn-accordion-mode'] === 'multiple'));
+  // Tabs and a choice are exclusive groups of <details name>: the first tab open, no answer open.
   const tabs = one(tree, '#directive-tabs .kn-tabs');
-  for (const tab of all(tabs, '[role="tab"]')) assert.equal(one(tabs, `#${tab.attributes['aria-controls']}`).attributes['aria-labelledby'], tab.attributes.id);
+  const items = all(tabs, 'details.kn-tabs-item');
+  assert.equal(items.length, 3);
+  assert.ok(items.every((item) => item.attributes.name === items[0].attributes.name && one(item, 'summary.kn-tabs-tab') && one(item, '.kn-tabs-panel')));
+  assert.deepEqual(items.map((item) => 'open' in item.attributes), [true, false, false]);
   assert.ok(one(tabs, '.kn-tabs-text + .kn-tabs-parts'));
-  assert.ok(all(tree, '.kn-tabs-panel, .kn-choice-panel').every((panel) => !('hidden' in panel.attributes)), 'the runtimes hide the panels');
   const choice = one(tree, '#directive-choice');
-  assert.ok(all(choice, '.kn-choice-answer').every((answer) => answer.attributes['aria-expanded'] === 'false' && answer.attributes['data-kn-surface']));
+  const answers = all(choice, 'details.kn-choice-item');
+  assert.ok(answers.length === 2 && answers.every((item) => item.attributes.name === answers[0].attributes.name && !('open' in item.attributes)));
+  assert.ok(all(choice, 'summary.kn-choice-answer').every((answer) => answer.attributes['data-kn-surface']));
+  for (const part of [tabs, choice]) assert.equal(all(part, '[role="tab"], [aria-expanded], .kn-tabs-list, .kn-choice-answers').length, 0);
   assert.ok(all(choice, '.kn-choice-panel').some((panel) => panel.attributes['data-kn-surface'] && one(panel, 'form.konzilo-form')));
   assert.ok(all(choice, '.kn-choice-panel').some((panel) => !panel.attributes['data-kn-surface']));
   assert.ok(has(tree, '#directive-toc', '.kn-aside-block[data-kn-sticky="true"]', '.kn-toc[data-kn-follow]'));
-  // No inline style in what a site writes, and the runtimes reach the page.
+  // No inline style in what a site writes, and no runtime for what CSS does.
   const written = html.slice(html.indexOf('id="directive-hero"'));
   assert.doesNotMatch(written.slice(0, written.indexOf('<footer')), /\sstyle="/);
   const bundle = [...html.matchAll(/<script\b[^>]*type="module"[^>]*>([\s\S]*?)<\/script>/gi)].map(([, js]) => js).join('\n');
-  for (const selector of ['.kn-tabs', '.kn-choice', '.kn-toc[data-kn-follow]', '.kn-section-head:has(']) assert.ok(bundle.includes(selector), selector);
+  // No runtime for tabs, a choice, a section's head or a Reading Area (principles.md).
+  for (const gone of ['setupTabs', 'setupChoices', 'setupSections', 'setupReadingAreas', 'konzilo-preview-show']) assert.ok(!bundle.includes(gone), gone);
+  // Neither the following menu nor Visitor Filters runs a script (principles.md).
+  for (const gone of ['setupFollowingMenus', 'setupVisitorFilters', 'data-kn-follow]']) assert.ok(!bundle.includes(gone), gone);
 });

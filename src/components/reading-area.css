@@ -1,53 +1,115 @@
 @layer kn-components {
+  /* Reading Area (docs/spec/page.md, The Reading Area), in CSS alone: one column, in document order, until the window has
+     room for two (below). Nothing is measured, so the first paint is the layout. */
   .kn-reading-area {
     --kn-reading-content-size: min(calc(100vw - 2 * var(--kn-layout-side-margin)), var(--kn-layout-wide));
     --kn-reading-inset: calc((100vw - var(--kn-reading-content-size)) / 2);
     --kn-reading-flow-offset: 0rem;
-    --kn-reading-min-block-size: 0rem;
     --kn-reading-sticky-inset: calc(var(--kn-header-visible-height, 0rem) + var(--kn-space-component-gap));
-    --kn-sidenote-position: 0rem;
     position: relative;
     min-inline-size: 0;
-    min-block-size: var(--kn-reading-min-block-size);
   }
   .kn-reading-area-flow { inline-size: min(100%, var(--kn-layout-narrow)); min-inline-size: 0; display: flow-root; }
   .kn-reading-area[data-kn-side="none"] { --kn-reading-flow-offset: max(0rem, calc((var(--kn-reading-content-size) - var(--kn-layout-narrow)) / 2)); }
   .kn-reading-area[data-kn-side="none"] > .kn-reading-area-flow { margin-inline: auto; }
   .kn-reading-area-aside { display: flex; flex-direction: column; gap: var(--kn-space-component-gap); margin-block-end: var(--kn-space-column-gap); min-inline-size: 0; }
   .kn-reading-area[data-kn-stack="after"] > .kn-reading-area-aside { margin-block: var(--kn-space-column-gap) 0; }
-  .kn-reading-area[data-kn-columns="2"] { display: grid; grid-template-columns: var(--kn-layout-narrow) minmax(0, 1fr); column-gap: var(--kn-space-column-gap); align-items: start; }
-  .kn-reading-area[data-kn-columns="2"] > .kn-reading-area-flow { grid-column: 1; grid-row: 1; }
-  .kn-reading-area[data-kn-columns="2"] > .kn-reading-area-aside { grid-column: 2; grid-row: 1; align-self: stretch; margin-block: 0; }
-  .kn-reading-area[data-kn-columns="2"][data-kn-side="start"] { grid-template-columns: minmax(0, 1fr) var(--kn-layout-narrow); --kn-reading-flow-offset: calc(var(--kn-reading-content-size) - var(--kn-layout-narrow)); }
-  .kn-reading-area[data-kn-columns="2"][data-kn-side="start"] > .kn-reading-area-flow { grid-column: 2; }
-  .kn-reading-area[data-kn-columns="2"][data-kn-side="start"] > .kn-reading-area-aside { grid-column: 1; }
-  .kn-reading-area[data-kn-columns="2"] .kn-sidenote { position: absolute; inset-block-start: var(--kn-sidenote-position); inset-inline-end: 0; inline-size: calc(100% - var(--kn-layout-narrow) - var(--kn-space-column-gap)); margin-block: 0; }
-  .kn-reading-area[data-kn-columns="2"][data-kn-side="start"] .kn-sidenote { inset-inline-start: 0; inset-inline-end: auto; }
-  .kn-reading-area [data-kn-sticky-active] { position: sticky; inset-block-start: var(--kn-reading-sticky-inset); }
   /* A stop the following menu leads to lands at the reading line, under the header, where the menu marks it. */
   .kn-reading-area-flow [id] { scroll-margin-block-start: var(--kn-space-component-gap); }
+
+  /* Breakouts in one column: wide is Narrow, while full and the one-sided widths still reach the window's edges. */
   .kn-reading-area-flow [data-kn-width] { margin-inline-end: 0; }
-  .kn-reading-area-flow [data-kn-width="narrow"] { inline-size: min(100%, var(--kn-layout-narrow)); margin-inline-start: 0; }
-  .kn-reading-area-flow [data-kn-width="wide"] { inline-size: var(--kn-reading-content-size); margin-inline-start: calc(-1 * var(--kn-reading-flow-offset)); }
+  .kn-reading-area-flow :is([data-kn-width="narrow"], [data-kn-width="wide"]) { inline-size: min(100%, var(--kn-layout-narrow)); margin-inline-start: 0; }
   .kn-reading-area-flow [data-kn-width="full"] { inline-size: 100vw; margin-inline-start: calc(-1 * (var(--kn-reading-inset) + var(--kn-reading-flow-offset))); }
   .kn-reading-area-flow [data-kn-width="bleed-start"], .kn-reading-area-flow [data-kn-width="bleed-end"] { inline-size: calc(var(--kn-reading-content-size) + var(--kn-reading-inset)); }
   .kn-reading-area-flow [data-kn-width="bleed-start"] { margin-inline-start: calc(-1 * (var(--kn-reading-inset) + var(--kn-reading-flow-offset))); }
   .kn-reading-area-flow [data-kn-width="bleed-end"] { margin-inline-start: calc(-1 * var(--kn-reading-flow-offset)); }
-  .kn-reading-area:not([data-kn-columns="2"]) .kn-reading-area-flow [data-kn-width="wide"] { inline-size: min(100%, var(--kn-layout-narrow)); margin-inline-start: 0; }
-  .kn-reading-area:not([data-kn-columns="2"]) .kn-figure[data-kn-width="wide"] { --kn-figure-caption-offset: 0rem; }
-  .kn-reading-area-flow [data-kn-beside-block] { inline-size: min(100%, var(--kn-layout-narrow)); margin-inline-start: 0; }
-  /* Resolve rem, calc and fluid role values through layout, never parseFloat on a token. Wider than a phone's window, it hangs
-     from the area's end and top, since what lies beyond the start of a page cannot be scrolled to. */
-  .kn-reading-area-measure { position: absolute; inset-block-start: 0; inset-inline-end: 0; visibility: hidden; pointer-events: none; inline-size: var(--kn-layout-narrow); block-size: var(--kn-layout-aside-min); padding-inline-start: var(--kn-space-column-gap); padding-block-start: var(--kn-space-component-gap); }
+  .kn-reading-area .kn-figure[data-kn-width="wide"] { --kn-figure-caption-offset: 0rem; }
+
+  /* Two columns where the window has room for them: the core sets --kn-reading-columns to 2 by a media query in rem that
+     the CSS emitter works out from the design (src/generator/layout.js), and these rules read it. A browser without
+     style queries keeps one column (the assistant's choice, 2026-11-10). */
+  @container style(--kn-reading-columns: 2) {
+    /* Two columns, laid out one of two ways, by what the flow holds (the assistant's choices, 2026-11-10).
+
+       With nothing in the flow that reaches into the Aside, the Aside is a grid column of its own, as tall as the flow,
+       so an Aside Block may stay in view. */
+    .kn-reading-area:not([data-kn-side="none"]):not(:has(> .kn-reading-area-flow :is(.kn-sidenote, [data-kn-width]:not([data-kn-width="narrow"])))) {
+      display: grid;
+      grid-template-columns: minmax(0, var(--kn-layout-narrow)) minmax(0, 1fr);
+      column-gap: var(--kn-space-column-gap);
+      align-items: start;
+    }
+    .kn-reading-area:not([data-kn-side="none"]):not(:has(> .kn-reading-area-flow :is(.kn-sidenote, [data-kn-width]:not([data-kn-width="narrow"])))) > .kn-reading-area-flow { grid-column: 1; grid-row: 1; }
+    .kn-reading-area:not([data-kn-side="none"]):not(:has(> .kn-reading-area-flow :is(.kn-sidenote, [data-kn-width]:not([data-kn-width="narrow"])))) > .kn-reading-area-aside { grid-column: 2; grid-row: 1; align-self: stretch; margin-block: 0; }
+    .kn-reading-area[data-kn-side="start"]:not(:has(> .kn-reading-area-flow :is(.kn-sidenote, [data-kn-width]:not([data-kn-width="narrow"])))) { grid-template-columns: minmax(0, 1fr) minmax(0, var(--kn-layout-narrow)); }
+    .kn-reading-area[data-kn-side="start"]:not(:has(> .kn-reading-area-flow :is(.kn-sidenote, [data-kn-width]:not([data-kn-width="narrow"])))) > .kn-reading-area-flow { grid-column: 2; }
+    .kn-reading-area[data-kn-side="start"]:not(:has(> .kn-reading-area-flow :is(.kn-sidenote, [data-kn-width]:not([data-kn-width="narrow"])))) > .kn-reading-area-aside { grid-column: 1; }
+    /* A sticky block stays under the header. Taller than the window below it, it scrolls inside itself, so its end is
+       never out of reach. */
+    .kn-reading-area:not([data-kn-side="none"]):not(:has(> .kn-reading-area-flow :is(.kn-sidenote, [data-kn-width]:not([data-kn-width="narrow"])))) > .kn-reading-area-aside > .kn-aside-block[data-kn-sticky="true"] {
+      position: sticky;
+      inset-block-start: var(--kn-reading-sticky-inset);
+      max-block-size: calc(100dvh - var(--kn-reading-sticky-inset) - var(--kn-space-component-gap));
+      overflow-y: auto;
+      overscroll-behavior-block: contain;
+    }
+
+    /* With Sidenotes or Breakouts the area is one block formatting context. The Aside, when it comes first, floats to its
+       side at the top, each Sidenote floats there after its anchor and clears what floats before it, so notes stand
+       below the blocks and below one another, and the area holds the last. A Breakout is its own formatting context
+       with no width of its own: where a float stands beside it, it keeps Narrow, and elsewhere it takes the content
+       area. Everything else keeps Narrow at the reading line. */
+    .kn-reading-area:not([data-kn-side="none"]):has(> .kn-reading-area-flow :is(.kn-sidenote, [data-kn-width]:not([data-kn-width="narrow"]))) { display: flow-root; }
+    .kn-reading-area:not([data-kn-side="none"]):has(> .kn-reading-area-flow :is(.kn-sidenote, [data-kn-width]:not([data-kn-width="narrow"]))) > .kn-reading-area-flow { display: block; inline-size: auto; }
+    .kn-reading-area:not([data-kn-side="none"]):has(> .kn-reading-area-flow :is(.kn-sidenote, [data-kn-width]:not([data-kn-width="narrow"]))) :is(.kn-reading-area-flow, .kn-reading-area-flow :has(.kn-sidenote, [data-kn-width]:not([data-kn-width="narrow"]))) > :not(.kn-sidenote, [data-kn-width]:not([data-kn-width="narrow"]), :has(.kn-sidenote, [data-kn-width]:not([data-kn-width="narrow"]))) { max-inline-size: var(--kn-layout-narrow); }
+    .kn-reading-area[data-kn-side="start"]:has(> .kn-reading-area-flow :is(.kn-sidenote, [data-kn-width]:not([data-kn-width="narrow"]))) :is(.kn-reading-area-flow, .kn-reading-area-flow :has(.kn-sidenote, [data-kn-width]:not([data-kn-width="narrow"]))) > :not(.kn-sidenote, [data-kn-width]:not([data-kn-width="narrow"]), :has(.kn-sidenote, [data-kn-width]:not([data-kn-width="narrow"]))) { margin-inline-start: max(0rem, calc(100% - var(--kn-layout-narrow))); }
+    .kn-reading-area[data-kn-stack="before"]:not([data-kn-side="none"]):has(> .kn-reading-area-flow :is(.kn-sidenote, [data-kn-width]:not([data-kn-width="narrow"]))) > .kn-reading-area-aside {
+      float: inline-end;
+      inline-size: calc(100% - var(--kn-layout-narrow) - var(--kn-space-column-gap));
+      margin-block: 0 var(--kn-space-component-gap);
+      margin-inline: var(--kn-space-column-gap) 0;
+    }
+    .kn-reading-area[data-kn-stack="before"][data-kn-side="start"]:has(> .kn-reading-area-flow :is(.kn-sidenote, [data-kn-width]:not([data-kn-width="narrow"]))) > .kn-reading-area-aside { float: inline-start; margin-inline: 0 var(--kn-space-column-gap); }
+    /* Blocks written after the flow cannot float to the top of the Aside, so there they stay after it, at the reading
+       line, as in one column. */
+    .kn-reading-area[data-kn-stack="after"]:not([data-kn-side="none"]):has(> .kn-reading-area-flow :is(.kn-sidenote, [data-kn-width]:not([data-kn-width="narrow"]))) > .kn-reading-area-aside { clear: both; inline-size: min(100%, var(--kn-layout-narrow)); }
+    .kn-reading-area[data-kn-stack="after"][data-kn-side="start"]:has(> .kn-reading-area-flow :is(.kn-sidenote, [data-kn-width]:not([data-kn-width="narrow"]))) > .kn-reading-area-aside { margin-inline-start: auto; }
+    .kn-reading-area:not([data-kn-side="none"]) .kn-reading-area-flow .kn-sidenote {
+      float: inline-end;
+      clear: inline-end;
+      inline-size: calc(100% - var(--kn-layout-narrow) - var(--kn-space-column-gap));
+      margin-block: 0 var(--kn-space-component-gap);
+      margin-inline: var(--kn-space-column-gap) 0;
+    }
+    .kn-reading-area[data-kn-side="start"] .kn-reading-area-flow .kn-sidenote { float: inline-start; clear: inline-start; margin-inline: 0 var(--kn-space-column-gap); }
+    .kn-reading-area:not([data-kn-side="none"]) .kn-reading-area-flow [data-kn-width]:not([data-kn-width="narrow"]) {
+      /* 1 where the Breakout has its full width, 0 where a float beside it keeps it at Narrow: its own width, through
+         the container it is, against Narrow and a rem more. */
+      --kn-reading-reach: clamp(calc(-1 * var(--kn-reading-inset)), calc((var(--kn-layout-narrow) + 1rem - 100cqi) * 999), 0rem);
+      --kn-reading-edge-radius: clamp(0rem, calc((var(--kn-layout-narrow) + 1rem - 100cqi) * 999), var(--kn-radius-card));
+      inline-size: auto;
+      margin-inline: 0;
+    }
+    .kn-reading-area:not([data-kn-side="none"]) .kn-reading-area-flow [data-kn-width]:not([data-kn-width="narrow"]):not(table) { display: flow-root; }
+    /* A Figure reaches the window's edges with its picture alone, and only where nothing stands beside it. */
+    .kn-reading-area:not([data-kn-side="none"]) .kn-reading-area-flow .kn-figure:not([data-kn-width="narrow"]) { container-type: inline-size; --kn-figure-caption-offset: 0rem; }
+    .kn-reading-area[data-kn-side="start"] .kn-reading-area-flow .kn-figure:not([data-kn-width="narrow"]) { --kn-figure-caption-offset: max(0rem, calc(100cqi - var(--kn-layout-narrow))); }
+    .kn-reading-area:not([data-kn-side="none"]) .kn-reading-area-flow .kn-figure[data-kn-width="full"] > .kn-figure-media { margin-inline: var(--kn-reading-reach); border-radius: var(--kn-reading-edge-radius); }
+    .kn-reading-area:not([data-kn-side="none"]) .kn-reading-area-flow .kn-figure[data-kn-width="bleed-start"] > .kn-figure-media { margin-inline-start: var(--kn-reading-reach); border-start-start-radius: var(--kn-reading-edge-radius); border-end-start-radius: var(--kn-reading-edge-radius); }
+    .kn-reading-area:not([data-kn-side="none"]) .kn-reading-area-flow .kn-figure[data-kn-width="bleed-end"] > .kn-figure-media { margin-inline-end: var(--kn-reading-reach); border-start-end-radius: var(--kn-reading-edge-radius); border-end-end-radius: var(--kn-reading-edge-radius); }
+    /* Any other Breakout, such as a table, reaches the edges itself. Beside a float Firefox and Chromium keep it at
+       Narrow, while WebKit moves it below the float. */
+    .kn-reading-area:not([data-kn-side="none"]) .kn-reading-area-flow [data-kn-width="full"]:not(.kn-figure) { margin-inline: calc(-1 * var(--kn-reading-inset)); }
+    .kn-reading-area:not([data-kn-side="none"]) .kn-reading-area-flow [data-kn-width="bleed-start"]:not(.kn-figure) { margin-inline-start: calc(-1 * var(--kn-reading-inset)); }
+    .kn-reading-area:not([data-kn-side="none"]) .kn-reading-area-flow [data-kn-width="bleed-end"]:not(.kn-figure) { margin-inline-end: calc(-1 * var(--kn-reading-inset)); }
+  }
+
   @media print {
-    .kn-reading-area[data-kn-columns] { display: block; min-block-size: 0; --kn-reading-flow-offset: 0rem; }
-    .kn-reading-area[data-kn-columns] > .kn-reading-area-flow { inline-size: 100%; margin-inline: 0; }
-    .kn-reading-area[data-kn-columns] > .kn-reading-area-aside { margin-block: 0 var(--kn-space-column-gap); }
-    .kn-reading-area[data-kn-stack="after"] > .kn-reading-area-aside { margin-block: var(--kn-space-column-gap) 0; }
-    .kn-reading-area[data-kn-columns] .kn-sidenote { position: static; inline-size: auto; margin-block: var(--kn-space-component-gap); }
-    .kn-reading-area [data-kn-sticky-active] { position: static; }
+    :root { --kn-reading-columns: 1; }
+    .kn-reading-area { --kn-reading-flow-offset: 0rem; }
+    .kn-reading-area > .kn-reading-area-flow { inline-size: 100%; margin-inline: 0; }
     .kn-reading-area-flow [data-kn-width] { inline-size: 100%; margin-inline: 0; }
     .kn-reading-area .kn-figure { --kn-figure-caption-offset: 0rem; }
-    .kn-reading-area-measure { display: none; }
   }
 }

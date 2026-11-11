@@ -27,7 +27,10 @@ test('component CSS uses only logical properties, role reads and permitted drawi
     const local = new Set();
     walk(ast, { visit: 'Declaration', enter(node) { if (node.property.startsWith('--kn-')) local.add(node.property); } });
     assert.doesNotMatch(source, /--kn-space-[1-8]\b/, name);
-    assert.doesNotMatch(source, /\b(?:if|style)\(/, name);
+    // Style queries only where something reads a switch no selector can: the Reading Area's columns, which the core
+    // sets by a media query, and the page frame's scroll flags and edges (header.md and footer.md, How it is built).
+    // A plate's roles never depend on one (plates.md, point 7).
+    if (!['header.css', 'page.css'].includes(name)) assert.doesNotMatch(source.replace('@container style(--kn-reading-columns: 2)', ''), /\b(?:if|style)\(/, name);
     for (const [, role] of source.matchAll(/var\(\s*(--kn-[\w-]+)/g)) assert.ok(emitted.has(role) || shared.has(role) || local.has(role), `${name}: unknown role ${role}`);
     walk(ast, { visit: 'Declaration', enter(declaration) {
       assert.ok(!physical.test(declaration.property), `${name}: physical property ${declaration.property}`);
@@ -56,15 +59,30 @@ test('the plain HTML stylesheet flattens the component entry point and preserves
   assert.equal(execFileSync(process.execPath, [new URL('../bin/konzilo-design.js', import.meta.url).pathname, 'components-css'], { encoding: 'utf8' }), css);
 });
 
-test('every component has a typed wrapper; seven library runtimes and only the declared client entries', async () => {
+test('every component has a typed wrapper; only the declared client entries, the footer\'s fit and the header\'s polyfill loaders', async () => {
   const names = (await readdir(directory)).filter((name) => name.endsWith('.astro'));
   for (const name of names) {
     const source = await readFile(new URL(name, directory), 'utf8');
     assert.match(source, /interface Props/);
     assert.doesNotMatch(source, /import\s+['"][^'"]+\.css|client:/);
-    const entry = { 'ReadingArea.astro': 'reading-area', 'Header.astro': 'header', 'Footer.astro': 'footer', 'ContentLoop.astro': 'embed', 'Embed.astro': 'embed', 'VisitorFilters.astro': 'visitor-filters', 'Form.astro': 'form', 'ConsentBanner.astro': 'consent' }[name];
+    const entry = { 'ContentLoop.astro': 'embed', 'Embed.astro': 'embed', 'ConsentBanner.astro': 'consent' }[name];
     if (entry) assert.match(source, new RegExp(`<script>[\\s\\S]*${entry}\\.js`));
-    else if (name === 'Accordion.astro') {
+    else if (name === 'Footer.astro') {
+      // One script, only at the edge of the screen, fetched as a file of its own.
+      assert.deepEqual([...source.matchAll(/<script\b[^>]*>/g)].map(([tag]) => tag), ['<script is:inline type="module" src={footerFit} data-kn-footer-fit>']);
+      assert.match(source, /\{attachment === 'reveal' && <script /);
+    }
+    else if (name === 'Header.astro') {
+      // The giving-way script, inline, and two loaders, each testing for its feature before it fetches.
+      assert.match(source, /<script is:inline data-kn-header-fit set:html=\{headerFitScript\}><\/script>/);
+      assert.match(source, /import headerFit from '\.\/header-fit\.js\?raw';/);
+      const loaders = [...source.matchAll(/<script\b([^>]*data-kn-polyfill[^>]*)>([^<]*)<\/script>/g)];
+      assert.deepEqual(loaders.map(([, attributes]) => attributes.match(/data-kn-polyfill="([^"]+)"/)[1]), ['scroll-timeline', 'scroll-state']);
+      for (const [, attributes, code] of loaders) {
+        assert.match(attributes, /\bis:inline\b/);
+        assert.match(code, /^if \(!CSS\.supports\('[^']+'\)\) import\(src\);$/);
+      }
+    } else if (name === 'Accordion.astro') {
       assert.equal([...source.matchAll(/<script/g)].length, 1);
       assert.match(source, /<script type="application\/ld\+json" is:inline set:html=/);
     } else assert.doesNotMatch(source, /<script/);

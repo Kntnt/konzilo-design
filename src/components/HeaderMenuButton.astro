@@ -2,11 +2,13 @@
 import Button from './Button.astro';
 import Icon from './Icon.astro';
 import type { MenuButton } from './frame-types';
+// Opens the megamenu, a modal dialog, with no script: the browser's invoker command.
 interface Props { controls: string; button?: MenuButton; automatic?: boolean }
 const { controls, button = {}, automatic = false } = Astro.props;
 const { word = 'Menu', icon = 'chevron-down', label = 'Menu' } = button;
+const opens = { commandfor: controls, command: 'show-modal', 'aria-haspopup': 'dialog', 'aria-controls': controls, 'data-kn-trigger': 'menu' };
 ---
-<Button class="kn-header-menu-button kn-header-control" variant="outline" aria-expanded="false" aria-controls={controls} aria-label={label} popovertarget={controls} data-kn-trigger="menu" data-kn-automatic={automatic ? 'true' : undefined} data-kn-icon={word ? icon || 'none' : 'menu'}>
+<Button class="kn-header-menu-button kn-header-control" variant="outline" aria-label={label} {...opens} data-kn-automatic={automatic ? 'true' : undefined} data-kn-icon={word ? icon || 'none' : 'menu'}>
   {word && <span class="kn-header-menu-word">{word}</span>}
   {word && icon === 'chevron-down' && <Icon name="chevron-down" class="kn-header-chevron" />}
   <Icon name="menu" class="kn-header-hamburger" />

@@ -84,9 +84,11 @@ test('every other role follows the step and polarity of the background, whatever
       seen.add(`${polarity}/${step}/${kind}/${mode}`);
       // The family is all a kind adds, and accent's muted text and borders are its one grey family.
       const lines = kind === 'accent' ? 'gray' : family;
+      // A light band, one that follows the mode, keeps grey muted text in dark mode too (owner, 2026-11-10).
+      const lightBand = !['page', 'brand', 'inverse', 'accent'].includes(kind);
       assert.equal(recipes['background-alt'], row.alternate === 'white' ? 'white' : `${family}-${row.alternate}`, `${kind}/${mode}`);
       assert.equal(recipes['background-hover'], `${family}-${row.hover}`, `${kind}/${mode}`);
-      assert.equal(recipes['text-muted'], polarity === 'dark' ? `${lines}-${row.muted}` : 'gray-600', `${kind}/${mode}`);
+      assert.equal(recipes['text-muted'], polarity === 'dark' ? `${lightBand ? 'gray' : lines}-${row.muted}` : 'gray-600', `${kind}/${mode}`);
       assert.equal(recipes.border, `${lines}-${row.border}`, `${kind}/${mode}`);
       assert.equal(recipes['border-strong'], `${lines}-${row.strong}`, `${kind}/${mode}`);
     }

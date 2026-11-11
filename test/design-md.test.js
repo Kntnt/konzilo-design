@@ -200,7 +200,12 @@ test('DESIGN.md writes the overlay\'s fade and ceiling one way only, and the pag
   assert.match(body, /the trail stands above the eyebrow: from the top always trail, eyebrow, heading, deck, buttons/);
   assert.match(body, /level-2 links [^\n]*in the body style[^\n]*0\.75 times the body size/);
   assert.match(body, /not in every browser \(not in Firefox\); what works everywhere/);
-  assert.match(body, /which needs no anchor positioning/);
+  assert.match(body, /a native popover \(`popovertarget`\), placed absolutely in the top layer by the globe as its anchor/);
+  // How to build the header and footer without a script, and where a polyfill may stand in.
+  assert.match(body, /let a small script try them one after another in a single task, before the browser paints, so nothing flickers/);
+  assert.match(body, /Without the script, show the narrowest step: the identity and the menu button/);
+  assert.match(body, /Each loads only where `CSS\.supports` says the feature is missing, the second only for a header that slides away/);
+  assert.match(body, /A small script, loaded only by a footer at the edge of the screen, compares the footer's height with the window's/);
   assert.match(exported(DESIGNS[0], { name: 'Example', logo: base64(SVG) }).body, /A logo's own colours are part of the logo, not of the palette/);
 });
 
@@ -289,10 +294,10 @@ test('DESIGN.md draws the directives\' components by recipe: sections, series, q
     'four cards fall to two and two, never three and one',
     'an accordion whose headings are all questions',
     'is drawn as questions and answers',
-    'The ARIA tabs pattern',
-    'with a roving tabindex',
+    'An exclusive group of native disclosures (`<details name>`), the first open, drawn as tabs',
+    'there are no arrow keys between tabs',
     'None is chosen beforehand, and no panel shows until one is',
-    'mark it `aria-current="true"`',
+    'runs no script and marks no section as the one being read, so it is the same in every browser',
     'a logo, where a picture stands before the text',
     'with fine print under them as their note',
   ]) assert.ok(body.includes(words), words);

@@ -12,7 +12,3 @@ const { fields = [], columns = 1, honeypot, method = 'post', class: className, .
   <div class="kn-form-fields">{fields.map((field) => <Field {...field} />)}<slot />{honeypot && <Field {...honeypot} honeypot />}</div>
   {Astro.slots.has('actions') && <LinkGroup class="kn-form-actions"><slot name="actions" /></LinkGroup>}
 </form>
-<script>
-  import { setupForms } from './form.js';
-  setupForms();
-</script>

@@ -25,6 +25,8 @@
   .kn-field-help, .kn-field-error { margin: 0; }
   .kn-field-error { display: flex; gap: 0.5em; align-items: baseline; color: var(--kn-error); }
   .kn-field-error[hidden] { display: none; }
-  .kn-field [aria-invalid="true"] { border-color: var(--kn-error); }
+  /* The browser checks a field's constraints on submit and gives its own message; a field the visitor has left wrong is
+     drawn in the error colour once they have, and one the site found wrong carries aria-invalid. */
+  .kn-field :is([aria-invalid="true"], .kn-field-control:user-invalid) { border-color: var(--kn-error); }
   .kn-field[data-kn-honeypot] { position: absolute; clip-path: inset(50%); inline-size: 0.0625rem; block-size: 0.0625rem; overflow: hidden; }
 }

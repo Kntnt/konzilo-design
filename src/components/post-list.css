@@ -2,15 +2,8 @@
   /* Post List (docs/spec/directives.md, `::post-list`): the core's teaser cards in the presentation the site declares.
      `cards` and `filtered` hold a series, laid out as every series is (cards.css); `filtered` puts Visitor Filters over it. */
   .kn-post-list { min-inline-size: 0; }
-  /* `filtered`: its pills are submit buttons, so a form of pills alone needs no "Show". Visitor Filters hides it once its
-     runtime has run; here it is hidden from the start wherever script runs, so the cards do not move up when the runtime
-     starts. Without script the pills still submit the form. */
-  @media (scripting: enabled) {
-    .kn-post-list[data-kn-presentation="filtered"] > .kn-visitor-filters:not(:has(input, select)) .kn-visitor-filter-submit { display: none; }
-  }
-  /* The pagination's place, empty until the runtime moves it after the cards and fills it, takes no row of the form's grid. */
-  .kn-post-list[data-kn-presentation="filtered"] [data-kn-pagination-host]:empty { display: none; }
-
+  /* `filtered`: its pills filter the cards by CSS, as Visitor Filters does anywhere (visitor-filters.css), and need no
+     "Show"; nothing here waits for a script, so nothing moves when the page has loaded. */
   /* `featured`: the latest large, the next two small beside it, and any further posts after them as the small ones. The
      columns follow the list's own width at the series' minimum card width: one, then two, the latest across both, then
      three, the latest over two columns and two rows. Its picture grows to fill what the two beside it take. */

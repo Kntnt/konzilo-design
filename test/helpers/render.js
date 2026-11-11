@@ -11,10 +11,16 @@ export async function render(name, props = {}, slots) {
       name: 'interaction-components',
       resolveId(id, importer) {
         if (id === 'virtual:component') return id;
+        // An asset's address, as Vite gives it to a component: here only its name.
+        if (/\?url\b/.test(id)) return `virtual:url:${id.split('?')[0].split('/').pop()}`;
+        // A file's text, as Vite gives it to a component that writes it inline.
+        if (id.endsWith('?raw')) return `virtual:raw:${fileURLToPath(new URL(id.slice(0, -4), pathToFileURL(importer)))}`;
         if (id.endsWith('.astro')) return fileURLToPath(id.startsWith('file:') ? id : new URL(id, pathToFileURL(importer)));
         return { id: id.startsWith('.') ? new URL(id, pathToFileURL(importer)).href : import.meta.resolve(id), external: true };
       },
       async load(id) {
+        if (id.startsWith('virtual:raw:')) return `export default ${JSON.stringify(await readFile(id.slice(12), 'utf8'))};`;
+        if (id.startsWith('virtual:url:')) return `export default ${JSON.stringify(`/_astro/${id.slice(12)}`)};`;
         return id === 'virtual:component' ? `export { default } from ${JSON.stringify(entry.href)};` : id.endsWith('.astro') ? transform(await readFile(id, 'utf8'), { filename: id, internalURL: 'astro/compiler-runtime', resultScopedSlot: true }).code : null;
       },
     }] });

@@ -1,7 +1,8 @@
 import { recogniseEmbed } from './embed-providers.js';
 import { hasConsent } from './consent.js';
-import { isPrimaryClick } from './visitor-filters.js';
 export { recogniseEmbed } from './embed-providers.js';
+// A plain left click, which the overlay takes; any other opens the link as the visitor asked.
+export const isPrimaryClick = (event) => event.button === 0 && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey;
 // The site's own words replace this through props; every text here is only a default.
 export const embedNotice = (provider) => `Showing this content shares your information, such as your IP address, with ${provider}. Is that OK with you?`;
 export function localPreview(address) {

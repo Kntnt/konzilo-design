@@ -1,27 +1,190 @@
+/* The header in HTML and CSS (header.md, How it is built). Native dialogs and a popover are its panels; hidden copies
+   of the bar and container queries give way; a sticky header's look follows three flags that scroll-driven animations
+   set on the root, and sliding away follows a scroll-state query on the root scroller. Where a browser lacks one of
+   these two scroll features, a polyfill sets the same flags or a parallel attribute, and nothing else. */
+@property --kn-header-height { syntax: '<length>'; inherits: true; initial-value: 0; }
+@property --kn-header-scrolled-at { syntax: '<length>'; inherits: true; initial-value: 0; }
+@property --kn-header-past-at { syntax: '<length>'; inherits: true; initial-value: 0; }
+@property --kn-header-beyond-at { syntax: '<length>'; inherits: true; initial-value: 0; }
 @layer kn-components {
-  :root { --kn-header-height: 0rem; --kn-header-visible-height: 0rem; }
-  :root[data-kn-sticky-header] { scroll-padding-block-start: var(--kn-header-visible-height); }
+  /* The bar's height is the design's, not measured: the tallest of a control and the identity, with 0.75rem above
+     and below, and its hairline. A line of words counts from baseline to cap height, taken as 0.66 of its size, a
+     little under most typefaces' caps, so the bar is never taller than the identity needs; where the caps are taller,
+     the identity takes a pixel or two of the bar's padding. Each header works out its own height, and the root the
+     one of the page's header, for what lies outside it. */
+  :root { --kn-header-height: 0rem; --kn-header-visible-height: 0rem; --kn-header-cap: 0.66; }
+  :is(:root:has(.kn-page > .kn-header), .kn-header) {
+    --kn-header-logo: 0rem; --kn-header-name: 0rem; --kn-header-slogan: 0rem; --kn-header-slogan-gap: 0rem;
+    --kn-header-brand: max(var(--kn-header-logo), var(--kn-header-name));
+    --kn-header-identity: max(var(--kn-header-brand), var(--kn-header-slogan));
+    --kn-header-height: calc(max(4rem, var(--kn-header-identity) + 1.5rem) + 0.0625rem);
+  }
+  :is(:root:has(.kn-page > .kn-header .kn-brand-logo), .kn-header:has(.kn-brand-logo)) { --kn-header-logo: 2.25rem; }
+  :is(:root:has(.kn-page > .kn-header .kn-brand-name), .kn-header:has(.kn-brand-name)) { --kn-header-name: calc(var(--kn-type-heading-5-size) * var(--kn-header-cap)); }
+  :is(:root:has(.kn-page > .kn-header .kn-header-slogan), .kn-header:has(.kn-header-slogan)) { --kn-header-slogan: calc(var(--kn-type-small-size) * var(--kn-header-cap)); --kn-header-slogan-gap: 0.5rem; }
+  :is(:root:has(.kn-page > .kn-header .kn-brand[data-kn-axis="column"] > .kn-brand-logo + .kn-brand-name), .kn-header:has(.kn-brand[data-kn-axis="column"] > .kn-brand-logo + .kn-brand-name)) { --kn-header-brand: calc(var(--kn-header-logo) + 0.5rem + var(--kn-header-name)); }
+  :is(:root:has(.kn-page > .kn-header .kn-header-identity[data-kn-slogan-place="below"]), .kn-header:has(.kn-header-identity[data-kn-slogan-place="below"])) { --kn-header-identity: calc(var(--kn-header-brand) + var(--kn-header-slogan-gap) + var(--kn-header-slogan)); }
+  :is(:root:has(.kn-page > .kn-header .kn-header-identity[data-kn-slogan-place="below"] > .kn-brand[data-kn-axis="row"] > .kn-brand-logo + .kn-brand-name), .kn-header:has(.kn-header-identity[data-kn-slogan-place="below"] > .kn-brand[data-kn-axis="row"] > .kn-brand-logo + .kn-brand-name)) { --kn-header-identity: max(var(--kn-header-logo), var(--kn-header-name) + var(--kn-header-slogan-gap) + var(--kn-header-slogan)); }
+  /* Nothing hidden behind a sticky header: the scroll padding is its height. */
+  :root:has(.kn-page > .kn-header[data-kn-attachment="sticky"]) { scroll-padding-block-start: var(--kn-header-height); --kn-header-visible-height: var(--kn-header-height); }
+
   .kn-header {
     --kn-header-identity-scale: 1;
-    --kn-header-height: 4rem;
-    --kn-header-panel-top: var(--kn-header-height);
     --kn-header-menu-columns: 4;
+    --kn-header-under: 0;
+    --kn-header-same: 0;
     position: relative;
     z-index: 3;
+    anchor-scope: --kn-header-bar;
+    background: none;
+    color: var(--kn-text);
+    transition: translate var(--kn-duration-movement) var(--kn-easing-standard);
+  }
+  .kn-header-bar {
+    position: relative;
+    z-index: 2;
+    anchor-name: --kn-header-bar;
+    block-size: var(--kn-header-height);
+    overflow-x: clip;
     background: var(--kn-background);
     color: var(--kn-text);
-    transition: background-color var(--kn-duration-feedback) var(--kn-easing-standard), color var(--kn-duration-feedback) var(--kn-easing-standard), translate var(--kn-duration-movement) var(--kn-easing-standard);
+    border-block-end: 1px solid transparent;
+    transition: background-color var(--kn-duration-feedback) var(--kn-easing-standard), color var(--kn-duration-feedback) var(--kn-easing-standard);
   }
-  .kn-header[data-kn-enhanced][data-kn-attachment="sticky"] { position: sticky; inset-block-start: 0; }
-  .kn-header[data-kn-enhanced][data-kn-start="under"][data-kn-attachment="sticky"] { margin-block-end: calc(-1 * var(--kn-header-height)); }
-  .kn-header[data-kn-transparent] { background: transparent; background-image: none; }
-  .kn-header[data-kn-away] { translate: 0 -100%; }
-  .kn-header-bar { position: relative; z-index: 2; border-block-end: 1px solid transparent; }
-  .kn-header[data-kn-shadow] > .kn-header-bar { box-shadow: var(--kn-shadow-header); }
-  .kn-header[data-kn-panel-open] > .kn-header-bar { box-shadow: var(--kn-shadow-header-panel); }
-  .kn-header[data-kn-line] > .kn-header-bar { border-block-end-color: var(--kn-border); }
-  .kn-header-inner { inline-size: var(--kn-layout-content-area); min-block-size: 4rem; margin-inline: auto; padding-block: 0.75rem; display: flex; align-items: center; justify-content: space-between; column-gap: var(--kn-space-component-gap); overflow: auto; }
-  .kn-header[data-kn-enhanced] .kn-header-inner { overflow: visible; }
+
+  /* ---------- Attachment and page start ---------- */
+  .kn-header[data-kn-attachment="sticky"] { position: sticky; inset-block-start: 0; }
+  .kn-header[data-kn-attachment="sticky"][data-kn-start="under"] { margin-block-end: calc(-1 * var(--kn-header-height)); }
+  .kn-page:has(> .kn-header[data-kn-attachment="sticky"][data-kn-start="under"]) > .kn-page-main > .kn-band:first-child { padding-block-start: calc(var(--kn-header-height) + var(--kn-space-band)); }
+
+  /* ---------- The scroll flags ----------
+     On the root, where a page has a sticky header: --kn-header-scrolled turns 1 once anything has scrolled under the
+     header, --kn-header-past at T, 1.5rem down, and --kn-header-beyond past the header's own height. Each is a
+     discrete animation on the root scroller, which turns at the middle of a range twice its length. Where a browser
+     has no scroll timelines and no script, the flags stay unset, and the header is opaque, with its shadow, from the
+     start. */
+  :root:has(.kn-page > .kn-header[data-kn-attachment="sticky"]) {
+    --kn-header-scrolled-at: 0.0625rem;
+    --kn-header-past-at: 1.5rem;
+    --kn-header-beyond-at: var(--kn-header-height);
+    --kn-header-scrolled: 0;
+    --kn-header-past: 0;
+    --kn-header-beyond: 0;
+  }
+  @supports (animation-timeline: scroll()) {
+    /* Longhands, with the duration `auto` written out: a minifier that expands the shorthand writes 0s for it,
+       which ends a scroll-driven animation before it starts. */
+    :root:has(.kn-page > .kn-header[data-kn-attachment="sticky"]) {
+      animation-name: kn-header-scrolled, kn-header-past, kn-header-beyond;
+      animation-duration: auto;
+      animation-timing-function: linear;
+      animation-fill-mode: both;
+      animation-timeline: scroll(root);
+      animation-range: 0% calc(2 * var(--kn-header-scrolled-at)), 0% calc(2 * var(--kn-header-past-at)), 0% calc(2 * var(--kn-header-beyond-at));
+    }
+  }
+  @supports not (animation-timeline: scroll()) {
+    @media (scripting: none) {
+      :root:has(.kn-page > .kn-header[data-kn-attachment="sticky"]) { --kn-header-scrolled: initial; --kn-header-past: initial; --kn-header-beyond: initial; }
+    }
+  }
+  @keyframes kn-header-scrolled { from { --kn-header-scrolled: 0; } to { --kn-header-scrolled: 1; } }
+  @keyframes kn-header-past { from { --kn-header-past: 0; } to { --kn-header-past: 1; } }
+  @keyframes kn-header-beyond { from { --kn-header-beyond: 0; } to { --kn-header-beyond: 1; } }
+
+  /* ---------- Two appearances ----------
+     Over the page's start the header is clear: transparent, with the first band's Surface roles, which the generated
+     core gives it while its page sets --kn-header-clear. */
+  .kn-page { --kn-header-clear: 0; }
+  @container style(--kn-header-past: 0) {
+    .kn-page:has(> .kn-header[data-kn-attachment="sticky"][data-kn-start="under"]) { --kn-header-clear: 1; }
+  }
+  @container style(--kn-header-clear: 1) {
+    .kn-header > .kn-header-bar { background: transparent; }
+  }
+  /* Over the page's start the header takes the first band's colours only once that band has been parsed, after the
+     header's script has laid the header out; so its colours change with a transition only once the page has
+     scrolled, and none plays as the page loads. */
+  @container not style(--kn-header-scrolled: 1) {
+    .kn-header[data-kn-start="under"] > .kn-header-bar,
+    .kn-header[data-kn-start="under"] .kn-header-slogan,
+    .kn-header[data-kn-start="under"] > .kn-header-bar .kn-button { transition: none; }
+  }
+  .kn-header .kn-brand-logo [data-kn-logo="dark"] { display: none; }
+  @container style(--kn-polarity: dark) {
+    .kn-header .kn-brand-logo:has(> [data-kn-logo="dark"]) > [data-kn-logo="light"] { display: none; }
+    .kn-header .kn-brand-logo > [data-kn-logo="dark"] { display: block; }
+  }
+
+  /* ---------- Shadow and line ----------
+     The shadow while content lies under an opaque sticky header; a hairline where it casts none and nothing else
+     parts it from the page: content under it, or a first band of its own colour. */
+  .kn-header[data-kn-attachment="sticky"] { --kn-header-under: 1; }
+  @container style(--kn-header-scrolled: 0) {
+    .kn-header[data-kn-attachment="sticky"] { --kn-header-under: 0; }
+  }
+  .kn-page:has(> .kn-page-main > .kn-band:not(.kn-band ~ .kn-band):is(:not([data-kn-surface]), [data-kn-surface="page"])) > .kn-header[data-kn-surface="page"],
+  .kn-page:has(> .kn-page-main > .kn-band:not(.kn-band ~ .kn-band)[data-kn-surface="brand"]) > .kn-header[data-kn-surface="brand"] { --kn-header-same: 1; }
+  @container style(--kn-header-under: 1) and style(--kn-header-clear: 0) {
+    .kn-header > .kn-header-bar { box-shadow: var(--kn-shadow-header); }
+  }
+  @container style(--kn-shadow-header: none) and style(--kn-header-clear: 0) and (style(--kn-header-under: 1) or style(--kn-header-same: 1)) {
+    .kn-header > .kn-header-bar { border-block-end-color: var(--kn-border); }
+  }
+  .kn-header:has(:modal, :popover-open) > .kn-header-bar { box-shadow: var(--kn-shadow-header-panel); border-block-end-color: transparent; }
+
+  /* ---------- Sliding away ----------
+     Scrolled down past its own height, it slides up out of the window, unless a panel is open or the keyboard is in
+     it. Under the page's start it stays clear on its way down and while away, and comes back opaque, the change made
+     while it is out of sight. The root scroller answers which way it was last scrolled: a scroll-state query, or
+     where a browser lacks one, data-kn-scrolled from the polyfill, read by the parallel rules. */
+  :root:has(.kn-page > .kn-header[data-kn-autohide="true"]) { container: kn-scroller / scroll-state; }
+  @container kn-scroller scroll-state(scrolled: block-end) {
+    .kn-page:has(> .kn-header[data-kn-start="under"][data-kn-autohide="true"]):not(:has(> .kn-header :is(:modal, :popover-open, :focus-visible))) { --kn-header-clear: 1; }
+    @container style(--kn-header-beyond: 1) {
+      .kn-header[data-kn-autohide="true"]:not(:has(:modal, :popover-open, :focus-visible)) { translate: 0 -100%; }
+      .kn-page:has(> .kn-header[data-kn-autohide="true"]):not(:has(> .kn-header :is(:modal, :popover-open, :focus-visible))) > .kn-page-main { --kn-header-visible-height: 0rem; }
+    }
+  }
+  @container kn-scroller scroll-state(scrolled: block-start) {
+    @container style(--kn-header-beyond: 1) {
+      .kn-header[data-kn-autohide="true"] > .kn-header-bar { transition-duration: 0s; }
+    }
+  }
+  :root[data-kn-scrolled="block-end"] .kn-page:has(> .kn-header[data-kn-start="under"][data-kn-autohide="true"]):not(:has(> .kn-header :is(:modal, :popover-open, :focus-visible))) { --kn-header-clear: 1; }
+  @container style(--kn-header-beyond: 1) {
+    :root[data-kn-scrolled="block-end"] .kn-header[data-kn-autohide="true"]:not(:has(:modal, :popover-open, :focus-visible)) { translate: 0 -100%; }
+    :root[data-kn-scrolled="block-end"] .kn-page:has(> .kn-header[data-kn-autohide="true"]):not(:has(> .kn-header :is(:modal, :popover-open, :focus-visible))) > .kn-page-main { --kn-header-visible-height: 0rem; }
+    :root[data-kn-scrolled="block-start"] .kn-header[data-kn-autohide="true"] > .kn-header-bar { transition-duration: 0s; }
+  }
+
+  /* ---------- The bar and giving way ----------
+     header-fit.js writes the step the bar needs as data-kn-step (header.md, point 12): `none`, the last step it takes,
+     or `scale`. Without it, or before it has run, the bar shows its narrowest step: the identity and the menu button,
+     with everything else in the megamenu, and the last resort's way of keeping the identity whole (the owner,
+     2026-11-11). Each step taken sets a flag on the header, which the rules below read. */
+  .kn-header-inner { inline-size: var(--kn-layout-content-area); block-size: 100%; margin-inline: auto; padding-block: 0.75rem; display: flex; align-items: center; }
+  .kn-header-row { display: flex; flex: 1 1 auto; min-inline-size: 0; align-items: center; justify-content: space-between; column-gap: var(--kn-space-component-gap); }
+  .kn-header:is(:not([data-kn-step]), [data-kn-step="slogan"], [data-kn-step="name"], [data-kn-step="links"], [data-kn-step="word"], [data-kn-step="language"], [data-kn-step="cta"], [data-kn-step="search"], [data-kn-step="scale"]) { --kn-header-gone-slogan: 1; }
+  .kn-header:is(:not([data-kn-step]), [data-kn-step="name"], [data-kn-step="links"], [data-kn-step="word"], [data-kn-step="language"], [data-kn-step="cta"], [data-kn-step="search"], [data-kn-step="scale"]) { --kn-header-gone-name: 1; }
+  .kn-header:is(:not([data-kn-step]), [data-kn-step="links"], [data-kn-step="word"], [data-kn-step="language"], [data-kn-step="cta"], [data-kn-step="search"], [data-kn-step="scale"]) { --kn-header-gone-links: 1; }
+  .kn-header:is(:not([data-kn-step]), [data-kn-step="word"], [data-kn-step="language"], [data-kn-step="cta"], [data-kn-step="search"], [data-kn-step="scale"]) { --kn-header-gone-word: 1; }
+  .kn-header:is(:not([data-kn-step]), [data-kn-step="language"], [data-kn-step="cta"], [data-kn-step="search"], [data-kn-step="scale"]) { --kn-header-gone-language: 1; }
+  .kn-header:is(:not([data-kn-step]), [data-kn-step="cta"], [data-kn-step="search"], [data-kn-step="scale"]) { --kn-header-gone-cta: 1; }
+  .kn-header:is(:not([data-kn-step]), [data-kn-step="search"], [data-kn-step="scale"]) { --kn-header-gone-search: 1; }
+  /* The last resort: even the identity and the menu button do not fit, so the identity scales down a step, and if
+     that is not enough it gives up what it must for the menu button: a logo shrinks within its box, and the name
+     wraps, as two balanced lines centred in the bar, never cut (the owner, 2026-11-11). Without the script there is
+     no step, but the identity still gives way where it must. */
+  .kn-header[data-kn-step="scale"] { --kn-header-identity-scale: 0.8; }
+  .kn-header:is(:not([data-kn-step]), [data-kn-step="scale"]) .kn-header-row > .kn-header-group[data-kn-group="start"],
+  .kn-header:is(:not([data-kn-step]), [data-kn-step="scale"]) .kn-header-row > .kn-header-group[data-kn-group="start"] > .kn-header-identity,
+  .kn-header:is(:not([data-kn-step]), [data-kn-step="scale"]) .kn-header-identity > .kn-brand,
+  .kn-header:is(:not([data-kn-step]), [data-kn-step="scale"]) .kn-header-identity .kn-brand-logo { flex: 0 1 auto; min-inline-size: 0; }
+  .kn-header:is(:not([data-kn-step]), [data-kn-step="scale"]) .kn-header-identity .kn-brand-logo :is(img, svg) { max-inline-size: min(14rem, 100%); }
+  .kn-header:is(:not([data-kn-step]), [data-kn-step="scale"]) .kn-header-identity .kn-brand-name::before { display: none; }
+  .kn-header:is(:not([data-kn-step]), [data-kn-step="scale"]) .kn-header-identity .kn-brand-name > span { margin-block: 0; white-space: normal; text-wrap: balance; overflow-wrap: break-word; }
+
   .kn-header-group { display: flex; align-items: center; gap: var(--kn-space-component-gap); flex: none; }
   .kn-header-group:empty { display: none; }
   .kn-header-group > * { flex: none; white-space: nowrap; }
@@ -30,9 +193,8 @@
   /* The identity is one link. Its boxes reach only from baseline to cap height, so the link reaches past them
      without taking room in the bar. */
   .kn-header-identity { display: flex; align-items: center; column-gap: calc(0.875rem * var(--kn-header-identity-scale)); padding-block: 0.5rem; margin-block: -0.5rem; }
-  .kn-header .kn-brand-logo [data-kn-logo="dark"] { display: none; }
-  .kn-header[data-kn-logo-polarity="dark"] .kn-brand-logo:has([data-kn-logo="dark"]) [data-kn-logo="light"] { display: none; }
-  .kn-header[data-kn-logo-polarity="dark"] .kn-brand-logo [data-kn-logo="dark"] { display: block; }
+  /* A wide logotype keeps its shape within 14rem, so even a 20rem window has room for it beside the menu button. */
+  .kn-header .kn-brand-logo :is(img, svg) { max-inline-size: 14rem; object-fit: contain; object-position: 0 50%; }
   .kn-header-slogan { font-size: calc(var(--kn-type-small-size) * var(--kn-header-identity-scale)); line-height: 1.3; color: var(--kn-text-muted); transition: color var(--kn-duration-feedback) var(--kn-easing-standard); }
   /* Beside the brand, after a hairline as tall as the slogan's line, centred with it. */
   .kn-header-identity[data-kn-slogan-place="beside"] .kn-header-slogan { position: relative; padding-inline-start: calc(0.875rem * var(--kn-header-identity-scale)); }
@@ -41,11 +203,15 @@
   .kn-header-identity[data-kn-slogan-place="below"] { flex-direction: column; align-items: flex-start; row-gap: calc(0.5rem * var(--kn-header-identity-scale)); }
   /* Logo and name side by side: the logo stands beside the two lines, each centred on the other. The outer
      rows take what the taller of the two leaves over. Once the name has given way, the rule above holds. */
-  .kn-header:not([data-kn-collapsed~="name"]) .kn-header-identity[data-kn-slogan-place="below"]:has(> .kn-brand[data-kn-axis="row"] > .kn-brand-logo + .kn-brand-name) { display: grid; grid-template-columns: auto auto; grid-template-rows: 1fr auto auto 1fr; justify-content: start; align-items: center; column-gap: calc(0.625rem * var(--kn-header-identity-scale)); row-gap: 0; }
-  .kn-header:not([data-kn-collapsed~="name"]) .kn-header-identity[data-kn-slogan-place="below"] > .kn-brand[data-kn-axis="row"]:has(> .kn-brand-logo + .kn-brand-name) { display: contents; }
-  .kn-header:not([data-kn-collapsed~="name"]) .kn-header-identity[data-kn-slogan-place="below"] > .kn-brand[data-kn-axis="row"] > .kn-brand-logo:has(+ .kn-brand-name) { grid-column: 1; grid-row: 1 / -1; }
-  .kn-header:not([data-kn-collapsed~="name"]) .kn-header-identity[data-kn-slogan-place="below"] > .kn-brand[data-kn-axis="row"] > .kn-brand-logo + .kn-brand-name { grid-column: 2; grid-row: 2; }
-  .kn-header:not([data-kn-collapsed~="name"]) .kn-header-identity[data-kn-slogan-place="below"]:has(> .kn-brand[data-kn-axis="row"] > .kn-brand-logo + .kn-brand-name) > .kn-header-slogan { grid-column: 2; grid-row: 3; margin-block-start: calc(0.5rem * var(--kn-header-identity-scale)); }
+  .kn-header-identity[data-kn-slogan-place="below"]:has(> .kn-brand[data-kn-axis="row"] > .kn-brand-logo + .kn-brand-name) { display: grid; grid-template-columns: auto auto; grid-template-rows: 1fr auto auto 1fr; justify-content: start; align-items: center; column-gap: calc(0.625rem * var(--kn-header-identity-scale)); row-gap: 0; }
+  .kn-header-identity[data-kn-slogan-place="below"] > .kn-brand[data-kn-axis="row"]:has(> .kn-brand-logo + .kn-brand-name) { display: contents; }
+  .kn-header-identity[data-kn-slogan-place="below"] > .kn-brand[data-kn-axis="row"] > .kn-brand-logo:has(+ .kn-brand-name) { grid-column: 1; grid-row: 1 / -1; }
+  .kn-header-identity[data-kn-slogan-place="below"] > .kn-brand[data-kn-axis="row"] > .kn-brand-logo + .kn-brand-name { grid-column: 2; grid-row: 2; }
+  .kn-header-identity[data-kn-slogan-place="below"]:has(> .kn-brand[data-kn-axis="row"] > .kn-brand-logo + .kn-brand-name) > .kn-header-slogan { grid-column: 2; grid-row: 3; margin-block-start: calc(0.5rem * var(--kn-header-identity-scale)); }
+  @container style(--kn-header-gone-name: 1) {
+    .kn-header-identity[data-kn-slogan-place="below"]:has(> .kn-brand[data-kn-axis="row"] > .kn-brand-logo + .kn-brand-name) { display: flex; row-gap: calc(0.5rem * var(--kn-header-identity-scale)); }
+    .kn-header-identity[data-kn-slogan-place="below"] > .kn-brand[data-kn-axis="row"]:has(> .kn-brand-logo + .kn-brand-name) { display: flex; }
+  }
   .kn-header-link-menu ul { display: flex; gap: var(--kn-space-component-gap); list-style: none; margin: 0; padding: 0; }
   .kn-header-link-menu, .kn-header-menu-button { font-size: var(--kn-type-small-size); font-weight: var(--kn-type-heading-6-weight); letter-spacing: var(--kn-type-small-letter-spacing); }
   .kn-header .kn-header-control { background: transparent; box-shadow: none; border-radius: var(--kn-radius-control); color: var(--kn-text); padding: 0.4em 0; }
@@ -54,36 +220,66 @@
   .kn-header .kn-header-menu-button { line-height: var(--kn-type-small-line-height); }
   .kn-header-menu-button:hover .kn-header-menu-word { text-decoration: underline; text-underline-offset: 0.25em; }
   .kn-header-chevron { transition: rotate var(--kn-duration-feedback) var(--kn-easing-standard); }
-  [aria-expanded="true"] > .kn-header-chevron { rotate: 180deg; }
+  .kn-header:has(.kn-megamenu:modal) .kn-header-chevron { rotate: 180deg; }
   .kn-header-hamburger { display: none; }
   .kn-header-menu-button[data-kn-icon="menu"] .kn-header-hamburger { display: block; }
   .kn-header-menu-button[data-kn-automatic] { display: none; }
-  /* A slogan that stayed because it freed no width never outlasts the name. */
-  .kn-header:is([data-kn-collapsed~="slogan"], [data-kn-collapsed~="name"]) .kn-header-slogan,
-  .kn-header[data-kn-collapsed~="name"] .kn-brand:has(.kn-brand-logo) .kn-brand-name,
-  .kn-header[data-kn-collapsed~="links"] .kn-header-link-menu,
-  .kn-header[data-kn-collapsed~="word"] .kn-header-menu-word,
-  .kn-header[data-kn-collapsed~="word"] .kn-header-chevron,
-  .kn-header[data-kn-collapsed~="language"] .kn-header-bar .kn-header-language,
-  .kn-header[data-kn-collapsed~="cta"] .kn-header-bar .kn-header-cta,
-  .kn-header[data-kn-collapsed~="search"] .kn-header-bar .kn-header-search-trigger { display: none; }
-  .kn-header:is([data-kn-collapsed~="links"], [data-kn-collapsed~="language"], [data-kn-collapsed~="cta"], [data-kn-collapsed~="search"]) .kn-header-menu-button[data-kn-automatic] { display: inline-flex; }
-  .kn-header[data-kn-collapsed~="word"] .kn-header-hamburger { display: block; }
-  .kn-header[data-kn-collapsed~="word"] .kn-header-menu-button { inline-size: 2.5rem; block-size: 2.5rem; padding: 0; }
   .kn-header-moved, .kn-header-moved > * { display: none; }
-  .kn-header:is([data-kn-collapsed~="language"], [data-kn-collapsed~="cta"], [data-kn-collapsed~="search"]) .kn-header-moved { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem 1.5rem; padding-block-end: 1.25rem; border-block-end: 1px solid var(--kn-border); }
-  .kn-header[data-kn-collapsed~="language"] [data-kn-moved="language"],
-  .kn-header[data-kn-collapsed~="cta"] [data-kn-moved="cta"],
-  .kn-header[data-kn-collapsed~="search"] [data-kn-moved="search"] { display: flex; }
+  .kn-header [hidden] { display: none; }
+
+  /* What each step takes. A step whose item a page has taken away takes nothing, and brings no menu button or moved
+     row with it. */
+  @container style(--kn-header-gone-slogan: 1) or style(--kn-header-gone-name: 1) {
+    .kn-header-slogan { display: none; }
+  }
+  @container style(--kn-header-gone-name: 1) {
+    .kn-brand:has(> .kn-brand-logo) > .kn-brand-name { display: none; }
+  }
+  @container style(--kn-header-gone-links: 1) {
+    .kn-header-link-menu { display: none; }
+    .kn-header-row:has(> .kn-header-group .kn-header-link-menu) .kn-header-menu-button[data-kn-automatic] { display: inline-flex; }
+  }
+  @container style(--kn-header-gone-word: 1) {
+    .kn-header-menu-word, .kn-header-chevron { display: none; }
+    .kn-header-hamburger { display: block; }
+    .kn-header .kn-header-menu-button { inline-size: 2.5rem; block-size: 2.5rem; padding: 0; }
+  }
+  @container style(--kn-header-gone-language: 1) {
+    .kn-header-group > .kn-header-language { display: none; }
+    .kn-header-row:has(> .kn-header-group > .kn-header-language) .kn-header-menu-button[data-kn-automatic] { display: inline-flex; }
+    .kn-header-moved:has(> [data-kn-moved="language"]), .kn-header-moved > [data-kn-moved="language"] { display: flex; }
+  }
+  @container style(--kn-header-gone-cta: 1) {
+    .kn-header-group > .kn-header-cta { display: none; }
+    .kn-header-row:has(> .kn-header-group > .kn-header-cta) .kn-header-menu-button[data-kn-automatic] { display: inline-flex; }
+    .kn-header-moved:has(> [data-kn-moved="cta"]), .kn-header-moved > [data-kn-moved="cta"] { display: flex; }
+  }
+  @container style(--kn-header-gone-search: 1) {
+    .kn-header-group > .kn-header-search-trigger { display: none; }
+    .kn-header-row:has(> .kn-header-group > .kn-header-search-trigger) .kn-header-menu-button[data-kn-automatic] { display: inline-flex; }
+    .kn-header-moved:has(> [data-kn-moved="search"]), .kn-header-moved > [data-kn-moved="search"] { display: flex; }
+  }
+  .kn-header-moved { flex-wrap: wrap; align-items: center; gap: 0.75rem 1.5rem; padding-block-end: 1.25rem; border-block-end: 1px solid var(--kn-border); }
   .kn-header-moved-languages { align-items: center; flex-wrap: wrap; gap: 0.375rem 1.125rem; }
   .kn-header-moved-search { flex: 1 1 16rem; max-inline-size: 28rem; }
+
+  /* ---------- Panels ----------
+     The megamenu and the search box are modal dialogs, the language list a popover. In the top layer each is placed
+     absolutely, by the bar as its anchor: a fixed one sits at its anchor's unscrolled place in Firefox. */
   .kn-header-panel { border: 0; margin: 0; padding: 0; color: var(--kn-text); box-shadow: var(--kn-shadow-panel); }
-  .kn-header-panel { animation: kn-header-panel-in var(--kn-duration-feedback) var(--kn-easing-standard); }
+  .kn-header-panel:is([open], :popover-open) { animation: kn-header-panel-in var(--kn-duration-feedback) var(--kn-easing-standard); }
+  .kn-header-panel::backdrop { background: transparent; }
   @keyframes kn-header-panel-in { from { opacity: 0; translate: 0 -0.625rem; } }
-  .kn-header-panel[hidden] { display: none; }
-  .kn-megamenu[data-kn-line] { border-block-end: 1px solid var(--kn-border); }
-  .kn-header [hidden] { display: none; }
-  .kn-megamenu { position: fixed; inset-block-start: var(--kn-header-panel-top); inset-inline: 0; inline-size: 100%; max-block-size: calc(100dvh - var(--kn-header-panel-top)); overflow-y: auto; overscroll-behavior: contain; border-block-start: 1px solid var(--kn-border); }
+  :root:has(.kn-header :is(.kn-megamenu, .kn-header-search-overlay):modal) { overflow: hidden; }
+  .kn-header .kn-megamenu:modal {
+    position: absolute; inset: auto; inset-block-start: anchor(--kn-header-bar bottom); inset-inline: 0;
+    inline-size: 100%; max-inline-size: none; max-block-size: calc(100dvh - var(--kn-header-height)); margin: 0;
+    overflow-y: auto; overscroll-behavior: contain; border-block-start: 1px solid var(--kn-border);
+  }
+  /* A layer without a shadow is set off by the hairline, as at strength zero. */
+  @container style(--kn-shadow-panel: none) {
+    .kn-header .kn-megamenu:modal { border-block-end: 1px solid var(--kn-border); }
+  }
   .kn-megamenu-inner { inline-size: var(--kn-layout-content-area); margin-inline: auto; display: grid; gap: 2rem; padding-block: 2rem 2.5rem; }
   .kn-megamenu-columns { display: grid; grid-template-columns: repeat(var(--kn-header-menu-columns), minmax(0, 1fr)); gap: 2rem 1.5rem; }
   .kn-megamenu-heading { margin-block: 0 0.875rem; }
@@ -94,20 +290,30 @@
   .kn-megamenu-description { font-size: 0.75em; color: var(--kn-text-muted); }
   .kn-megamenu-above { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; }
   .kn-megamenu-below { display: flex; flex-wrap: wrap; gap: 0.5rem 1.75rem; padding-block-start: 1.25rem; border-block-start: 1px solid var(--kn-border); font-size: var(--kn-type-small-size); color: var(--kn-text-muted); }
+  /* The globe's list hangs under the globe, its end edge on the globe's, by the popover's own anchor. */
   .kn-header-language { position: relative; }
-  .kn-header-language-list { position: fixed; inset-block-start: var(--kn-header-panel-top); inset-inline-start: auto; inset-inline-end: var(--kn-layout-side-margin); z-index: 4; min-inline-size: 9.5rem; max-block-size: calc(100dvh - var(--kn-header-panel-top)); overflow-y: auto; padding: 0.375rem; list-style: none; border: 1px solid var(--kn-border); border-radius: var(--kn-radius-control); }
-  .kn-header[data-kn-enhanced] .kn-header-language-list { position: absolute; inset-block-start: calc(100% + 0.625rem); inset-inline-end: 0; }
+  .kn-header .kn-header-language-list:popover-open {
+    position: absolute; inset: auto; position-area: block-end span-inline-start; margin: 0; margin-block-start: 0.625rem;
+    min-inline-size: 9.5rem; max-block-size: calc(100dvh - var(--kn-header-height)); overflow-y: auto; padding: 0.375rem; list-style: none;
+    border: 1px solid var(--kn-border); border-radius: var(--kn-radius-control);
+  }
   .kn-header-language-list a { display: block; padding: 0.4375rem 0.625rem; }
   .kn-header-language-list a[aria-current] { font-weight: var(--kn-type-heading-6-weight); }
-  .kn-header-search-overlay { position: fixed; inset-block-start: var(--kn-header-panel-top); inset-block-end: 0; inset-inline: 0; inline-size: 100%; max-inline-size: none; max-block-size: none; padding: 1.5rem var(--kn-layout-side-margin); background: transparent; backdrop-filter: blur(0.75rem); overflow-y: auto; }
+  .kn-header .kn-header-search-overlay:modal {
+    position: absolute; inset: auto; inset-block-start: anchor(--kn-header-bar bottom); inset-inline: 0;
+    inline-size: 100%; block-size: calc(100dvh - var(--kn-header-height)); max-inline-size: none; max-block-size: none; margin: 0;
+    padding: 1.5rem var(--kn-layout-side-margin); background: transparent; backdrop-filter: blur(0.75rem); overflow-y: auto;
+  }
   .kn-header-search-overlay[data-kn-blur="false"] { backdrop-filter: none; }
   .kn-header-search-overlay::before { content: ""; position: absolute; inset: 0; background: var(--kn-background); opacity: 0.62; z-index: -1; }
+  /* A click beside the box closes it. */
+  .kn-header-search-dismiss { position: absolute; inset: 0; inline-size: 100%; block-size: 100%; margin: 0; padding: 0; border: 0; opacity: 0; background: none; cursor: default; }
+  .kn-header-search-box { position: relative; }
   .kn-header-search-box > :is(h1, h2, h3, h4, h5, h6) { margin: 0; padding-inline-end: 2.75rem; }
   .kn-header .kn-header-search-close { position: absolute; inset-block-start: 0.75rem; inset-inline-end: 0.75rem; inline-size: 2.25rem; block-size: 2.25rem; }
   .kn-skip-link { position: absolute; inset-block-start: 0.5rem; inset-inline-start: var(--kn-layout-side-margin); z-index: 5; padding: 0.5rem 0.75rem; border-radius: var(--kn-radius-control); background: var(--kn-background); color: var(--kn-text); }
   /* Hidden by clipping, not by moving it away, since content may lie above the header. */
   .kn-skip-link:not(:focus-visible) { clip-path: inset(50%); overflow: hidden; inline-size: 0.0625rem; block-size: 0.0625rem; padding: 0; white-space: nowrap; }
-  .kn-page[data-kn-header-start="under"] > .kn-page-main > .kn-band:first-child { padding-block-start: calc(var(--kn-header-height) + var(--kn-space-band)); }
   /* The rows above and below go once the columns fall to two: stacked, the row above would push the menu out of the window. */
   @media (width <= 60rem) {
     .kn-megamenu-columns { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -115,17 +321,16 @@
   }
   @media (width <= 37.5rem) {
     .kn-megamenu-columns { grid-template-columns: minmax(0, 1fr); }
-    .kn-header-search-overlay { padding-block-start: 0.75rem; }
+    .kn-header .kn-header-search-overlay:modal { padding-block-start: 0.75rem; }
   }
   @media (prefers-reduced-motion: reduce) {
     .kn-header, .kn-header * { transition: none; animation: none; }
   }
   @media print {
-    :root[data-kn-sticky-header] { scroll-padding-block-start: 0; }
-    .kn-header[data-kn-enhanced][data-kn-attachment][data-kn-start] { position: static; margin-block-end: 0; translate: none; background: var(--kn-background); }
-    .kn-header :is(.kn-header-panel, .kn-header-control, .kn-header-link-menu, .kn-header-cta, .kn-skip-link),
-    .kn-header[data-kn-enhanced][data-kn-attachment] :is(.kn-header-panel, .kn-header-control, .kn-header-link-menu, .kn-header-cta, .kn-skip-link) { display: none; }
-    .kn-header[data-kn-attachment] .kn-header-bar { box-shadow: none; }
-    .kn-page[data-kn-header-start="under"] > .kn-page-main > .kn-band:first-child { padding-block-start: var(--kn-space-band); }
+    :root:has(.kn-page > .kn-header[data-kn-attachment="sticky"]) { scroll-padding-block-start: 0; }
+    .kn-header[data-kn-attachment][data-kn-start] { position: static; margin-block-end: 0; translate: none; }
+    .kn-header[data-kn-attachment] > .kn-header-bar { background: var(--kn-background); box-shadow: none; }
+    .kn-header :is(.kn-header-panel, .kn-header-control, .kn-header-link-menu, .kn-header-cta, .kn-skip-link) { display: none; }
+    .kn-page:has(> .kn-header[data-kn-attachment="sticky"][data-kn-start="under"]) > .kn-page-main > .kn-band:first-child { padding-block-start: var(--kn-space-band); }
   }
 }

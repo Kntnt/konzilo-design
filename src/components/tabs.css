@@ -1,21 +1,21 @@
 @layer kn-components {
-  /* Tabs (docs/spec/directives.md, `tabs`): the ARIA tabs pattern, each tab's heading drawn as its button. */
+  /* Tabs (docs/spec/directives.md, `tabs`): an exclusive group of <details name>, the first open, drawn as tabs. Each
+     summary is a tab and the rest of its <details> the panel. No script: the browser opens one and closes the others.
+     Where a browser cannot lay ::details-content out on its own, it reads as an accordion. */
   .kn-tabs { margin-block: 1.5em; min-inline-size: 0; }
   .kn-tabs-label { margin-block-end: 0.5em; color: var(--kn-text-muted); }
   .kn-tabs-label > * { margin: 0; }
-  .kn-tabs-list { display: flex; flex-wrap: wrap; gap: 0 0.25em; border-block-end: 1px solid var(--kn-border); }
+  .kn-tabs-item { min-inline-size: 0; }
   .kn-tabs-tab {
-    display: inline-flex;
+    display: flex;
     align-items: center;
     min-block-size: 2.75rem;
     max-inline-size: 100%;
     margin: 0;
     padding: 0.55em 0.85em;
-    border: 0;
     border-block-end: 0.1875rem solid transparent;
     border-start-start-radius: var(--kn-radius-control);
     border-start-end-radius: var(--kn-radius-control);
-    background: transparent;
     color: var(--kn-text-muted);
     font-family: var(--kn-typeface-heading);
     font-size: var(--kn-type-heading-6-size);
@@ -27,14 +27,16 @@
     font-variation-settings: var(--kn-type-heading-6-variation, normal);
     text-align: start;
     overflow-wrap: anywhere;
+    list-style: none;
     cursor: pointer;
     transition: color var(--kn-duration-feedback) var(--kn-easing-standard), background-color var(--kn-duration-feedback) var(--kn-easing-standard), border-color var(--kn-duration-feedback) var(--kn-easing-standard);
   }
+  .kn-tabs-tab::-webkit-details-marker { display: none; }
   .kn-tabs-tab:hover { color: var(--kn-text); background: var(--kn-background-alt); }
-  .kn-tabs-tab[aria-selected="true"] { color: var(--kn-text); border-block-end-color: var(--kn-accent); }
-  .kn-tabs-panel { padding-block-start: var(--kn-space-component-gap); min-inline-size: 0; }
-  .kn-tabs-panel[hidden] { display: none; }
-  .kn-tabs-panel:focus-visible { outline-offset: 2px; }
+  /* The open tab takes the text colour and an accent bar, so its state is a shape, not a colour alone. A click on it
+     keeps it open, as a tab does; Enter or Space may still close it, as a disclosure does. */
+  .kn-tabs-item[open] > .kn-tabs-tab { color: var(--kn-text); border-block-end-color: var(--kn-accent); background: none; cursor: default; pointer-events: none; }
+  .kn-tabs-panel { padding-block-start: var(--kn-space-component-gap); border-block-start: 1px solid var(--kn-border); min-inline-size: 0; }
   :is(.kn-tabs-panel, .kn-tabs-text, .kn-tabs-parts) > :first-child { margin-block-start: 0; }
   :is(.kn-tabs-panel, .kn-tabs-text, .kn-tabs-parts) > :last-child { margin-block-end: 0; }
   /* A tab's text and then its components stand in two columns where both fit, and above one another where not. */
@@ -45,36 +47,32 @@
     align-items: start;
   }
   .kn-tabs-text, .kn-tabs-parts { min-inline-size: 0; }
-  /* Until the runtime has run, only the first panel shows, so the page does not jump when it does. */
-  @media screen and (scripting: enabled) {
-    .kn-tabs:not([data-kn-enhanced]) > .kn-tabs-panel ~ .kn-tabs-panel { display: none; }
+
+  /* As tabs: the summaries stand in a row that wraps, and the open panel takes the whole line under it. Each <details>
+     gives way to its summary and its ::details-content, which then stand in the row as the component's own. */
+  @supports selector(::details-content) {
+    .kn-tabs { display: flex; flex-wrap: wrap; align-items: end; column-gap: 0.25em; }
+    .kn-tabs-label { flex-basis: 100%; }
+    .kn-tabs-item { display: contents; }
+    .kn-tabs-tab { flex: 0 1 auto; }
+    .kn-tabs-item::details-content { order: 1; flex-basis: 100%; min-inline-size: 0; }
+    .kn-tabs-item:not([open])::details-content { display: none; }
   }
-  /* Without script, and on paper, every panel shows, each under its tab's heading, which is then no button. */
-  @media (scripting: none), print {
-    .kn-tabs { display: flex; flex-direction: column; }
-    .kn-tabs-list { display: contents; }
-    .kn-tabs-tab, .kn-tabs-panel { order: 99; }
-    .kn-tabs-label { order: 0; }
-    .kn-tabs-tab { margin-block-start: var(--kn-space-component-gap); padding: 0; min-block-size: 0; border: 0; color: var(--kn-text); background: none; cursor: auto; }
-    .kn-tabs-tab:first-child { margin-block-start: 0; }
-    .kn-tabs-panel { padding-block-start: 0.5em; }
-    .kn-tabs-tab:nth-child(1) { order: 1; } .kn-tabs-panel:nth-child(1 of .kn-tabs-panel) { order: 2; }
-    .kn-tabs-tab:nth-child(2) { order: 3; } .kn-tabs-panel:nth-child(2 of .kn-tabs-panel) { order: 4; }
-    .kn-tabs-tab:nth-child(3) { order: 5; } .kn-tabs-panel:nth-child(3 of .kn-tabs-panel) { order: 6; }
-    .kn-tabs-tab:nth-child(4) { order: 7; } .kn-tabs-panel:nth-child(4 of .kn-tabs-panel) { order: 8; }
-    .kn-tabs-tab:nth-child(5) { order: 9; } .kn-tabs-panel:nth-child(5 of .kn-tabs-panel) { order: 10; }
-    .kn-tabs-tab:nth-child(6) { order: 11; } .kn-tabs-panel:nth-child(6 of .kn-tabs-panel) { order: 12; }
-    .kn-tabs-tab:nth-child(7) { order: 13; } .kn-tabs-panel:nth-child(7 of .kn-tabs-panel) { order: 14; }
-    .kn-tabs-tab:nth-child(8) { order: 15; } .kn-tabs-panel:nth-child(8 of .kn-tabs-panel) { order: 16; }
-    .kn-tabs-tab:nth-child(9) { order: 17; } .kn-tabs-panel:nth-child(9 of .kn-tabs-panel) { order: 18; }
-    .kn-tabs-tab:nth-child(10) { order: 19; } .kn-tabs-panel:nth-child(10 of .kn-tabs-panel) { order: 20; }
-    .kn-tabs-tab:nth-child(11) { order: 21; } .kn-tabs-panel:nth-child(11 of .kn-tabs-panel) { order: 22; }
-    .kn-tabs-tab:nth-child(12) { order: 23; } .kn-tabs-panel:nth-child(12 of .kn-tabs-panel) { order: 24; }
+  /* As an accordion, where tabs cannot be laid out: each summary over its own panel. */
+  @supports not selector(::details-content) {
+    .kn-tabs-tab { list-style: revert; display: list-item; }
+    .kn-tabs-item + .kn-tabs-item { margin-block-start: 0.25em; }
   }
   @media (forced-colors: active) {
-    .kn-tabs-tab[aria-selected="true"] { border-block-end-color: currentColor; }
+    .kn-tabs-item[open] > .kn-tabs-tab { border-block-end-color: currentColor; }
   }
+  /* On paper every panel shows, each under its tab's name. */
   @media print {
-    .kn-tabs .kn-tabs-panel[hidden] { display: block; }
+    .kn-tabs { display: block; }
+    .kn-tabs-item { display: block; }
+    .kn-tabs-item::details-content, .kn-tabs-item:not([open])::details-content { display: block; content-visibility: visible; }
+    .kn-tabs-tab { padding: 0; min-block-size: 0; border: 0; color: var(--kn-text); }
+    .kn-tabs-item + .kn-tabs-item { margin-block-start: var(--kn-space-component-gap); }
+    .kn-tabs-panel { padding-block-start: 0.5em; border: 0; }
   }
 }

@@ -19,5 +19,5 @@ function band(band) {
 }
 export function footerHtml(layout, { attachment = 'flow', rules = 'content' } = {}) {
   if (!layout.bands.length) return '';
-  return `<footer class="kn-footer"${attributes({ 'data-kn-attachment': attachment, 'data-kn-rules': rules, 'data-kn-top-line': layout.topLine || undefined })}>${layout.bands.map(band).join('')}</footer>`;
+  return `<footer class="kn-footer"${attributes({ 'data-kn-attachment': attachment, 'data-kn-rules': rules })}>${layout.bands.map(band).join('')}</footer>`;
 }

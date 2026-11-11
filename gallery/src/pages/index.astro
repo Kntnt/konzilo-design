@@ -123,6 +123,9 @@ const labChecks = [
 ];
 const filterTitles = ['Gathering around the orchard table', 'Listening to the morning birds', 'A shelter for rainy afternoons', 'Sketches beside the footbridge', 'The old greenhouse door', 'A place to exchange seeds', 'Learning the names of trees', 'A bench facing the sunrise', 'The shape of a useful tool', 'Drawing a path together', 'Stories carried by the river', 'A workshop for winter evenings', 'Repairing the garden gate', 'Making room for a neighbour', 'The last leaf in the notebook'];
 const filteredItems = loopItems.map((item, index) => ({ ...item, title: filterTitles[index] }));
+// One description of the controls for the form and its loop, so the items carry the keys the pills match.
+const rowFilters = { toggles: [{ name: 'topic', label: 'Topics', options: topics }], select: { name: 'year', label: 'Year', options: yearOptions } };
+const cardFilters = { toggles: [{ name: 'card-topic', label: 'Card topics', options: topics }] };
 const filterCardTitles = ['Following a trail of questions', 'An open cupboard of materials', 'The sound of the courtyard', 'A model made from offcuts', 'Paths between shared gardens', 'Letters from the workshop'];
 const searchTitles = ['A useful place to pause', 'Starting with a blank page', 'Keeping the small discoveries', 'What we learned from the rain'];
 const accordionLabels = [
@@ -453,9 +456,9 @@ const bandRows = { page: ['Link', 'Article', 'Person'], tint: ['Link', 'Article'
         <ContentLoop id="loop-empty" items={[]} presentation="rows" empty="The next field note is still taking shape." />
       </Band>
       <Band surface="raised" id="visitor-filters" contentClass="g-stack">
-        <HeadingGroup heading="40 / Visitor Filters" deck="Search, select a topic or year, and follow the pages of the result." />
-        <div><VisitorFilters for="filtered-rows" action="#visitor-filters" search={{ label: 'Search field notes' }} toggles={[{ name: 'topic', label: 'Topics', options: topics }]} select={{ name: 'year', label: 'Year', options: yearOptions }} pageSize={4} total={loopItems.length} /><ContentLoop id="filtered-rows" data-g-configurable cta={{ label: 'Continue reading', style: 'link', icon: '→' }} items={filteredItems} presentation="rows" /></div>
-        <div><VisitorFilters for="filtered-cards" action="#visitor-filters" toggles={[{ name: 'card-topic', label: 'Card topics', options: topics }]} /><ContentLoop id="filtered-cards" data-g-configurable cta={{ label: 'Explore this story', style: 'link', icon: '→' }} items={loopItems.slice(0, 6).map((item, index) => ({ ...item, title: filterCardTitles[index], filters: { 'card-topic': item.filters.topic } }))} surface="page" /></div>
+        <HeadingGroup heading="40 / Visitor Filters" deck="Pills and a year filter the list at once, by CSS alone; the search goes to the site's own search page, and a server pages a long result." />
+        <div><VisitorFilters for="filtered-rows" action="#visitor-filters" search={{ label: 'Search field notes' }} toggles={rowFilters.toggles} select={rowFilters.select} total={loopItems.length} /><ContentLoop id="filtered-rows" data-g-configurable cta={{ label: 'Continue reading', style: 'link', icon: '→' }} items={filteredItems} presentation="rows" filteredBy={rowFilters} /></div>
+        <div><VisitorFilters for="filtered-cards" action="#visitor-filters" toggles={cardFilters.toggles} total={6} countText="{count} stories" /><ContentLoop id="filtered-cards" data-g-configurable cta={{ label: 'Explore this story', style: 'link', icon: '→' }} items={loopItems.slice(0, 6).map((item, index) => ({ ...item, title: filterCardTitles[index], filters: { 'card-topic': item.filters.topic } }))} surface="page" filteredBy={cardFilters} /></div>
         <div><h3 data-kn-type="heading-5">Pagination for server pages</h3><Pagination page={6} pages={16} href={(page) => `?server-page=${page}#visitor-filters`} /></div>
       </Band>
       <Band surface="page" id="search-results" contentClass="g-stack">
@@ -514,10 +517,6 @@ const bandRows = { page: ['Link', 'Article', 'Person'], tint: ['Link', 'Article'
       import { setupControls } from '../controls.js';
       import { setupGalleryLab } from '../lab.js';
       import { hasConsent, setConsent } from '../../../src/components/consent.js';
-      import { setupSections } from '../../../src/components/section.js';
-      import { setupTabs } from '../../../src/components/tabs.js';
-      import { setupChoices } from '../../../src/components/choice.js';
-      import { setupFollowingMenus } from '../../../src/components/table-of-contents.js';
       const onChange = setupGalleryLab();
       setupControls({ derive, coreCss, onChange });
       const embedChoice = document.getElementById('g-embed-consent');
@@ -529,8 +528,6 @@ const bandRows = { page: ['Link', 'Article', 'Person'], tint: ['Link', 'Article'
       }
       if (typeof window !== 'undefined') {
         setupContentControls(); setupTooltips();
-        // The directive chapters' runtimes, as a Konzilo site's layout calls them once.
-        setupSections(); setupTabs(); setupChoices(); setupFollowingMenus();
         // The core's forms post to the core; in the gallery they only validate.
         document.querySelectorAll('form.konzilo-form').forEach((form) => form.addEventListener('submit', (event) => event.preventDefault()));
         document.getElementById('g-show-consent')?.addEventListener('click', () => {

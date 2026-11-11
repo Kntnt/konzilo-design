@@ -84,7 +84,10 @@ export async function inlineBuild(directory, resolved, designFile) {
     let html = source;
     for (const match of [...source.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)]) {
       if (/application\/json/.test(match[1])) continue;
-      const path = match[1].match(/src="([^"]+)"/);
+      // A header's polyfill loader fetches its polyfill by address, which an offline document cannot: the polyfill
+      // itself goes in instead, and tests for its feature as the loader did.
+      const polyfill = /\bdata-kn-polyfill\b/.test(match[1]) && match[2].match(/const src = "([^"]+)"/);
+      const path = polyfill ? [, polyfill[1]] : match[1].match(/src="([^"]+)"/);
       const source = path ? await bundle(path[1]) : match[2];
       const code = safeScript(`(function () {${source}})();`);
       scriptIds.push(intern(scripts, code));

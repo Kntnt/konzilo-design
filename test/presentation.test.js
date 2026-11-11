@@ -229,6 +229,8 @@ test('offline ZIP reader works from file URLs for normal, primary-only and stres
       const header = await readyFrame(page, 'header-a-menu');
       await header.locator('[data-kn-trigger="menu"]').click();
       assert.equal(await header.locator('[data-kn-panel="menu"]').isVisible(), true);
+      // The megamenu is a modal dialog: Esc closes it before the magnifier opens the search box.
+      await header.locator('[data-kn-panel="menu"]').press('Escape');
       await header.locator('[data-kn-trigger="search"]').click();
       assert.equal(await header.locator('[data-kn-panel="search"]').isVisible(), true);
       const toolbar = page.locator('#header .page-toolbar');
@@ -453,24 +455,24 @@ test('tool saves presentation prose, keeps controls still and serves the exporte
     // The search box can be held open while it is set, and the control keeps the focus.
     const showSearch = page.locator('[data-show-panel="search"]');
     await showSearch.click();
-    await preview.waitForFunction(() => !document.querySelector('[data-kn-panel="search"]').hidden);
+    await preview.waitForFunction(() => document.querySelector('[data-kn-panel="search"]').open);
     await page.waitForFunction(() => document.activeElement?.dataset.showPanel === 'search');
     await page.locator('[data-path="inputs.header.search-surface"]').selectOption('tint');
-    await preview.waitForFunction(() => document.querySelector('.kn-header-search-box').dataset.knSurface === 'tint' && !document.querySelector('[data-kn-panel="search"]').hidden);
+    await preview.waitForFunction(() => document.querySelector('.kn-header-search-box').dataset.knSurface === 'tint' && document.querySelector('[data-kn-panel="search"]').open);
     await flag('header.search-blur').click();
     await preview.waitForFunction(() => document.querySelector('[data-kn-panel="search"]').dataset.knBlur === 'false');
     await flag('header.search-links').click();
     await preview.waitForFunction(() => !document.querySelector('.kn-header-search-links'));
     await showSearch.click();
-    await preview.waitForFunction(() => document.querySelector('[data-kn-panel="search"]').hidden);
+    await preview.waitForFunction(() => !document.querySelector('[data-kn-panel="search"]').open);
     await page.locator('[data-show-panel="menu"]').click();
     await flag('header.numbered').click();
-    await preview.waitForFunction(() => !document.querySelector('[data-kn-panel="menu"]').hidden && document.querySelector('.kn-megamenu-number'));
+    await preview.waitForFunction(() => document.querySelector('[data-kn-panel="menu"]').open && document.querySelector('.kn-megamenu-number'));
     await page.locator('[data-show-panel="menu"]').click();
 
     // The footer's cells turn on and off where they stand, in the same footer, and no control is off.
     await openPage('Frame', 'Footer');
-    await preview.waitForFunction(() => document.querySelector('.kn-header-panel:not([hidden])') === null);
+    await preview.waitForFunction(() => document.querySelector('.kn-header-panel:is([open], :popover-open)') === null);
     const footerPage = page.locator('[data-page="footer"]');
     assert.equal(await footerPage.locator('button:disabled, select:disabled, input:disabled').count(), 0);
     const cell = (band, name) => flag(`footer.${band}.cells.${name}`);
@@ -731,7 +733,7 @@ test('tool saves presentation prose, keeps controls still and serves the exporte
     assert.equal(await page.locator('#notice a').getAttribute('href'), '/api/presentation-file');
     const refused = await fetch(tool.url + '/api/presentation', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
     assert.equal(refused.status, 403);
-    assert.match(await preview.locator('.kn-header-identity').getAttribute('aria-label'), /Placeholdr/);
+    assert.match(await preview.locator('.kn-header-row .kn-header-identity').getAttribute('aria-label'), /Placeholdr/);
     assert.deepEqual(errors, []);
   } finally {
     await browser.close();

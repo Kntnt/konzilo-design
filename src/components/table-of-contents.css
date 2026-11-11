@@ -8,10 +8,9 @@
   .kn-toc ol ol a { color: var(--kn-text-muted); }
   .kn-toc a:hover { text-decoration: underline; text-underline-offset: 0.18em; }
   .kn-toc[data-kn-surface] { padding: var(--kn-space-plate); border-radius: var(--kn-radius-card); }
-  /* A following menu (directives.md, `toc`) marks the section being read on a rail along its links. Its reading
-     line is the Reading Area's sticky inset, which the runtime reads, resolved, from this scroll margin. Only
-     colours change as the mark moves, so no line of the menu reflows. */
-  .kn-toc[data-kn-follow] { scroll-margin-block-start: var(--kn-reading-sticky-inset, calc(var(--kn-header-visible-height, 0rem) + var(--kn-space-component-gap))); }
+  /* A following menu (directives.md, `toc`) stands on a rail along its links. Nothing marks the section being read: no
+     script (the owner's principle, 2026-11-10, principles.md), and not the CSS scroll markers that only Chromium has,
+     since a site behaves the same in every engine (the owner, 2026-11-11). */
   .kn-toc[data-kn-follow] > ol { border-inline-start: 1px solid var(--kn-border); }
   .kn-toc[data-kn-follow] li { margin-block: 0; }
   .kn-toc[data-kn-follow] ol ol { padding-inline-start: 0; }
@@ -26,8 +25,4 @@
   }
   .kn-toc[data-kn-follow] ol ol a { padding-inline-start: 1.875em; }
   .kn-toc[data-kn-follow] a:hover { color: var(--kn-text); }
-  .kn-toc[data-kn-follow] a[aria-current="true"] { color: var(--kn-text); border-inline-start-color: var(--kn-accent); }
-  @media (forced-colors: active) {
-    .kn-toc[data-kn-follow] a[aria-current="true"] { border-inline-start-color: currentColor; }
-  }
 }

@@ -12,7 +12,6 @@ import { derive, defaultInputs } from '../src/generator/index.js';
 import { coreCss } from '../src/css/index.js';
 import { componentsCss } from '../src/css/components.js';
 import { sectionParts, DECK_LINE, surfaceOf, iconHtml } from '../src/directives/index.js';
-import { headFits, STICKY_HEADS } from '../src/components/section.js';
 import { icons } from '../src/components/icons.js';
 
 const blocks = (...kinds) => kinds.map((kind) => (typeof kind === 'string' ? { kind, text: kind === 'paragraph' ? 'A short paragraph.' : undefined } : kind));
@@ -73,12 +72,6 @@ test('Breadcrumbs counts only the steps it shows', async () => {
   assert.notEqual((await render('Breadcrumbs', { items: items(2) })).trim(), '');
 });
 
-test('a head stays only while it fits under the header', () => {
-  assert.equal(headFits({ height: 300, inset: 100, viewportHeight: 400 }), true);
-  assert.equal(headFits({ height: 301, inset: 100, viewportHeight: 400 }), false);
-  assert.equal(headFits({ height: 0, inset: 0, viewportHeight: 400 }), false);
-});
-
 test('the fixture is the contract\'s markup: no inline style, no <style>, and pictures with their alt', async () => {
   const html = await readFile(new URL('./fixtures/directives-section.html', import.meta.url), 'utf8');
   assert.doesNotMatch(html, /\sstyle=|<style/);
@@ -94,26 +87,22 @@ const PICTURES = { picture: svg(1200, 800), portrait: svg(600, 800), badge: svg(
 const bare = (w, h) => `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}"><rect width="${w}" height="${h}" fill="gray"/></svg>`)}`;
 PICTURES.badgeBare = bare(300, 200);
 PICTURES.logoBare = bare(400, 120);
-let styles, fixture, runtime;
+let styles, fixture;
 const browsers = [];
 before(async () => {
   styles = `${coreCss(derive(defaultInputs()))}${await componentsCss()}${await readFile(new URL('../src/konzilo/konzilo.css', import.meta.url), 'utf8')}`;
   fixture = await readFile(new URL('./fixtures/directives-section.html', import.meta.url), 'utf8');
   for (const [name, src] of Object.entries(PICTURES)) fixture = fixture.replaceAll(`{{${name}}}`, src);
-  // One module, with the scheduler the runtime imports standing before it.
-  const source = (name) => readFile(new URL(`../src/components/${name}.js`, import.meta.url), 'utf8');
-  runtime = `${await source('schedule')}\n${(await source('section')).replace(/^import .*$/m, '')}\nsetupSections();`;
   for (const [name, type] of BROWSERS) browsers.push([name, await type.launch()]);
 }, { timeout: 120000 });
 after(() => Promise.all(browsers.map(([, browser]) => browser.close())));
 
-async function open(browser, { width = 1440, height = 900, script = true } = {}) {
-  const tab = await browser.newPage({ viewport: { width, height } });
+// No script runs: the stylesheet alone lays every section out (principles.md).
+async function open(browser, { width = 1440, height = 900 } = {}) {
+  const context = await browser.newContext({ viewport: { width, height }, javaScriptEnabled: false });
+  const tab = await context.newPage();
   await tab.setContent(`<!doctype html><html lang="en"><head><style>${styles}</style></head><body data-kn-surface="page"><main>${fixture}</main></body></html>`);
-  if (script) {
-    await tab.addScriptTag({ type: 'module', content: runtime });
-    await tab.waitForSelector('.kn-section-head[data-kn-sticky]', { state: 'attached' });
-  }
+  tab.on('close', () => context.close().catch(() => {}));
   return tab;
 }
 // For each section, how its groups stand: beside (media or head and body side by side, sharing some height) or stacked, and the head's alignment.
@@ -146,11 +135,11 @@ test('a section\'s layout follows the first of the six rules that matches, and s
     other: { beside: false, centred: false, deckBeside: false }, // anything else
   };
   for (const [name, browser] of browsers) {
-    const tab = await open(browser, { script: false });
+    const tab = await open(browser);
     assert.deepEqual(await layout(tab), wide, `${name} at 1440`);
     await tab.close();
     for (const width of [390, 768]) {
-      const narrow = await open(browser, { width, script: false });
+      const narrow = await open(browser, { width });
       const found = await layout(narrow);
       for (const id of ['questions', 'story', 'plans']) assert.equal(found[id].beside || found[id].deckBeside, false, `${name} at ${width}: ${id}`);
       if (width === 390) for (const [id, facts] of Object.entries(found)) assert.equal(facts.beside, false, `${name} at 390: ${id}`);
@@ -160,30 +149,46 @@ test('a section\'s layout follows the first of the six rules that matches, and s
   }
 });
 
-test('a head beside its accordion stays in view as the page scrolls, while it fits', { timeout: 120000 }, async () => {
+test('a head beside its accordion stays in view by CSS alone, and one taller than the window scrolls inside itself', { timeout: 120000 }, async () => {
   for (const [name, browser] of browsers) {
     const tab = await open(browser);
-    assert.equal(await tab.$$eval(STICKY_HEADS, (heads) => heads.map((head) => head.closest('.kn-section').id).join()), 'questions', name);
-    assert.equal(await tab.getAttribute('#questions .kn-section-head', 'data-kn-sticky'), 'true', name);
-    const stays = await tab.evaluate(async () => {
+    assert.deepEqual(await tab.$$eval('main > .kn-section', (sections) => sections.filter((section) => getComputedStyle(section.querySelector('.kn-section-head') ?? section).position === 'sticky').map((section) => section.id)), ['questions'], name);
+    const place = () => tab.evaluate(() => {
       const head = document.querySelector('#questions .kn-section-head');
-      const body = document.querySelector('#questions .kn-section-body');
       const inset = parseFloat(getComputedStyle(head).insetBlockStart);
-      window.scrollTo(0, body.getBoundingClientRect().top + window.scrollY + 40);
-      await new Promise(requestAnimationFrame);
-      return Math.abs(head.getBoundingClientRect().top - inset) < 1.5;
+      const box = head.getBoundingClientRect();
+      return { inset, top: box.top, bottom: box.bottom, window: innerHeight, scrolls: head.scrollHeight > head.clientHeight + 1 };
     });
-    assert.equal(stays, true, `${name}: the head stays at the inset`);
-    // A window too short for the head lets it scroll with the page.
-    await tab.setViewportSize({ width: 1440, height: 120 });
-    await tab.waitForFunction(() => !document.querySelector('#questions .kn-section-head').hasAttribute('data-kn-sticky'));
+    await tab.evaluate(() => {
+      const body = document.querySelector('#questions .kn-section-body');
+      window.scrollTo(0, body.getBoundingClientRect().top + window.scrollY + 40);
+    });
+    let found = await place();
+    assert.ok(Math.abs(found.top - found.inset) < 1.5, `${name}: the head stays at the inset (${found.top} for ${found.inset})`);
+    assert.equal(found.scrolls, false, `${name}: a head that fits does not scroll`);
+    // A window too short for the head: it still stays, ends inside the window and scrolls inside itself to its end.
+    await tab.setViewportSize({ width: 1440, height: 160 });
+    await tab.evaluate(() => {
+      const body = document.querySelector('#questions .kn-section-body');
+      window.scrollTo(0, body.getBoundingClientRect().top + window.scrollY + 40);
+    });
+    found = await place();
+    assert.ok(Math.abs(found.top - found.inset) < 1.5 && found.bottom <= found.window + 0.5, `${name}: ${JSON.stringify(found)}`);
+    assert.equal(found.scrolls, true, `${name}: the head scrolls inside itself`);
+    const end = await tab.evaluate(() => {
+      const head = document.querySelector('#questions .kn-section-head');
+      head.scrollTop = head.scrollHeight;
+      const last = head.lastElementChild.getBoundingClientRect();
+      return last.bottom <= head.getBoundingClientRect().bottom + 0.5;
+    });
+    assert.equal(end, true, `${name}: the head's end can be reached`);
     await tab.close();
   }
 });
 
 test('the hero\'s logo, actions and fine print, the trail with its level hidden, and an article\'s meta line', { timeout: 120000 }, async () => {
   for (const [name, browser] of browsers) for (const width of [390, 1440]) {
-    const tab = await open(browser, { width, script: false });
+    const tab = await open(browser, { width });
     const facts = await tab.evaluate(() => {
       const box = (selector) => document.querySelector(selector).getBoundingClientRect();
       const logo = box('#hero .kn-hero-logo'), group = box('#hero .kn-heading-group'), actions = box('#hero .kn-actions'), note = box('#hero .kn-fine-print');
@@ -227,7 +232,7 @@ test('a live preview\'s data-konzilo-block on every block changes no layout, in 
 
 test('a section body: parts a column gap apart, a label at the component gap over its part, a heading group close over its text', { timeout: 120000 }, async () => {
   for (const [name, browser] of browsers) for (const width of [390, 1440]) {
-    const tab = await open(browser, { width, script: false });
+    const tab = await open(browser, { width });
     const facts = await tab.evaluate(() => {
       const probe = (length) => { const element = document.createElement('div'); element.style.inlineSize = length; document.querySelector('#other .kn-section-body').append(element); const size = element.getBoundingClientRect().width; element.remove(); return size; };
       const column = probe('var(--kn-space-column-gap)'), component = probe('var(--kn-space-component-gap)');
@@ -251,7 +256,7 @@ test('a section body: parts a column gap apart, a label at the component gap ove
 
 test('in a centred section a form reads down one edge, its button and its terms with it', { timeout: 120000 }, async () => {
   for (const [name, browser] of browsers) {
-    const tab = await open(browser, { script: false });
+    const tab = await open(browser);
     const facts = await tab.evaluate(() => {
       const form = document.querySelector('#konzilo-form-end').getBoundingClientRect();
       const send = document.querySelector('#konzilo-form-end .konzilo-form-send').getBoundingClientRect();
@@ -268,7 +273,7 @@ test('in a centred section a form reads down one edge, its button and its terms 
 
 test('a badge and a hero\'s logo with only a viewBox are drawn at the recipe\'s height, whole', { timeout: 120000 }, async () => {
   for (const [name, browser] of browsers) {
-    const tab = await open(browser, { script: false });
+    const tab = await open(browser);
     const sizes = await tab.evaluate(() => [document.querySelector('#hero .kn-hero-logo'), document.querySelector('#offer .kn-section-badges li:last-child img')].map((image) => {
       const { width, height } = image.getBoundingClientRect();
       return Math.round(width / height * 100) / 100;

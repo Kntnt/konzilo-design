@@ -60,46 +60,50 @@
       </hgroup>
     </header>
     <div class="kn-section-body kn-body-text">
-      <div class="kn-tabs">
+      <div class="kn-tabs" role="group" aria-labelledby="tabs-1">
         <div class="kn-tabs-label" id="tabs-1"><p data-kn-type="label">Our plans</p></div>
-        <div class="kn-tabs-list" role="tablist" aria-labelledby="tabs-1">
-          <button class="kn-tabs-tab" type="button" role="tab" id="tabs-1-tab-1" aria-controls="tabs-1-panel-1" aria-selected="true">Small</button>
-          <button class="kn-tabs-tab" type="button" role="tab" id="tabs-1-tab-2" aria-controls="tabs-1-panel-2" aria-selected="false" tabindex="-1">Large</button>
-          <button class="kn-tabs-tab" type="button" role="tab" id="tabs-1-tab-3" aria-controls="tabs-1-panel-3" aria-selected="false" tabindex="-1">For a whole organisation of many people</button>
-        </div>
-        <div class="kn-tabs-panel" role="tabpanel" id="tabs-1-panel-1" aria-labelledby="tabs-1-tab-1" tabindex="0">
-          <div class="kn-tabs-text">
-            <p>The small plan suits a team of a few people who meet now and then and want their notes in one place.</p>
-            <h3>What it holds</h3>
-            <p>Shared notes, a calendar and a list of tasks.</p>
-          </div>
-          <div class="kn-tabs-parts">
-            <div class="kn-accordion" data-kn-accordion-mode="multiple">
-              <details class="kn-accordion-item">
-                <summary class="kn-accordion-summary">
-                  <h4 class="kn-accordion-label" data-kn-type="heading-6">Notes</h4>
-                  <svg class="kn-icon kn-accordion-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6" /></svg>
-                </summary>
-                <div class="kn-body-text kn-accordion-content"><p>As many as you like.</p></div>
-              </details>
-              <details class="kn-accordion-item">
-                <summary class="kn-accordion-summary">
-                  <h4 class="kn-accordion-label" data-kn-type="heading-6">Calendar</h4>
-                  <svg class="kn-icon kn-accordion-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6" /></svg>
-                </summary>
-                <div class="kn-body-text kn-accordion-content"><p>One for the team.</p></div>
-              </details>
+        <details class="kn-tabs-item" name="tabs-1" open>
+          <summary class="kn-tabs-tab">Small</summary>
+          <div class="kn-tabs-panel">
+            <div class="kn-tabs-text">
+              <p>The small plan suits a team of a few people who meet now and then and want their notes in one place.</p>
+              <h3>What it holds</h3>
+              <p>Shared notes, a calendar and a list of tasks.</p>
+            </div>
+            <div class="kn-tabs-parts">
+              <div class="kn-accordion" data-kn-accordion-mode="multiple">
+                <details class="kn-accordion-item">
+                  <summary class="kn-accordion-summary">
+                    <h4 class="kn-accordion-label" data-kn-type="heading-6">Notes</h4>
+                    <svg class="kn-icon kn-accordion-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6" /></svg>
+                  </summary>
+                  <div class="kn-body-text kn-accordion-content"><p>As many as you like.</p></div>
+                </details>
+                <details class="kn-accordion-item">
+                  <summary class="kn-accordion-summary">
+                    <h4 class="kn-accordion-label" data-kn-type="heading-6">Calendar</h4>
+                    <svg class="kn-icon kn-accordion-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6" /></svg>
+                  </summary>
+                  <div class="kn-body-text kn-accordion-content"><p>One for the team.</p></div>
+                </details>
+              </div>
             </div>
           </div>
-        </div>
-        <div class="kn-tabs-panel" role="tabpanel" id="tabs-1-panel-2" aria-labelledby="tabs-1-tab-2" tabindex="0">
-          <p>The large plan adds rooms for every group, and <a href="#plans">a link</a> back up.</p>
-          <h3 id="large-details">More about it</h3>
-          <p>It keeps a year of history.</p>
-        </div>
-        <div class="kn-tabs-panel" role="tabpanel" id="tabs-1-panel-3" aria-labelledby="tabs-1-tab-3" tabindex="0">
-          <p>Write to us, and we will make a plan for you.</p>
-        </div>
+        </details>
+        <details class="kn-tabs-item" name="tabs-1">
+          <summary class="kn-tabs-tab">Large</summary>
+          <div class="kn-tabs-panel">
+            <p>The large plan adds rooms for every group, and <a href="#plans">a link</a> back up.</p>
+            <h3 id="large-details">More about it</h3>
+            <p>It keeps a year of history.</p>
+          </div>
+        </details>
+        <details class="kn-tabs-item" name="tabs-1">
+          <summary class="kn-tabs-tab">For a whole organisation of many people</summary>
+          <div class="kn-tabs-panel">
+            <p>Write to us, and we will make a plan for you.</p>
+          </div>
+        </details>
       </div>
     </div>
   </div>
@@ -108,18 +112,20 @@
 <section class="kn-band kn-section" id="start" data-kn-surface="brand">
   <div class="kn-band-content">
     <div class="kn-section-body kn-body-text">
-      <div class="kn-choice">
+      <div class="kn-choice" role="group" aria-labelledby="choice-1">
         <div class="kn-choice-label" id="choice-1"><p>Do you have an account?</p></div>
-        <div class="kn-choice-answers" role="group" aria-labelledby="choice-1">
-          <button class="kn-choice-answer" type="button" aria-expanded="false" aria-controls="choice-1-answer-1" data-kn-surface="raised">Yes</button>
-          <button class="kn-choice-answer" type="button" aria-expanded="false" aria-controls="choice-1-answer-2" data-kn-surface="raised">No, not yet</button>
-        </div>
-        <div class="kn-choice-panel" id="choice-1-answer-1" data-kn-surface="raised">
-          <h3>Welcome back</h3>
-          <p>Sign in with the address you gave us, and your notes are where you left them.</p>
-          <form class="konzilo-form" id="konzilo-form-sign-in" method="post" action="/_konzilo/forms/sign-in" aria-label="Sign in" data-konzilo-form="{}"><div class="konzilo-form-fields"><div class="konzilo-form-field konzilo-form-email"><label for="konzilo-form-sign-in-email">Email <span class="konzilo-form-required">(required)</span></label><input type="email" id="konzilo-form-sign-in-email" name="email" required maxlength="254" autocomplete="email"><p class="konzilo-form-problem" id="konzilo-form-sign-in-email-problem" hidden></p></div><button type="submit" class="konzilo-form-send">Send me a link</button></div></form>
-        </div>
-        <div class="kn-choice-panel" id="choice-1-answer-2"><form class="konzilo-form" id="konzilo-form-join" method="post" action="/_konzilo/forms/join" aria-label="Join" data-konzilo-form="{}"><div class="konzilo-form-fields"><div class="konzilo-form-field konzilo-form-text"><label for="konzilo-form-join-name">Name <span class="konzilo-form-required">(required)</span></label><input type="text" id="konzilo-form-join-name" name="name" required maxlength="200"><p class="konzilo-form-problem" id="konzilo-form-join-name-problem" hidden></p></div><div class="konzilo-form-field konzilo-form-email"><label for="konzilo-form-join-email">Email <span class="konzilo-form-required">(required)</span></label><input type="email" id="konzilo-form-join-email" name="email" required maxlength="254" autocomplete="email"><p class="konzilo-form-problem" id="konzilo-form-join-email-problem" hidden></p></div><button type="submit" class="konzilo-form-send">Join</button></div></form></div>
+        <details class="kn-choice-item" name="choice-1">
+          <summary class="kn-choice-answer" data-kn-surface="raised">Yes</summary>
+          <div class="kn-choice-panel" data-kn-surface="raised">
+            <h3>Welcome back</h3>
+            <p>Sign in with the address you gave us, and your notes are where you left them.</p>
+            <form class="konzilo-form" id="konzilo-form-sign-in" method="post" action="/_konzilo/forms/sign-in" aria-label="Sign in" data-konzilo-form="{}"><div class="konzilo-form-fields"><div class="konzilo-form-field konzilo-form-email"><label for="konzilo-form-sign-in-email">Email <span class="konzilo-form-required">(required)</span></label><input type="email" id="konzilo-form-sign-in-email" name="email" required maxlength="254" autocomplete="email"><p class="konzilo-form-problem" id="konzilo-form-sign-in-email-problem" hidden></p></div><button type="submit" class="konzilo-form-send">Send me a link</button></div></form>
+          </div>
+        </details>
+        <details class="kn-choice-item" name="choice-1">
+          <summary class="kn-choice-answer" data-kn-surface="raised">No, not yet</summary>
+          <div class="kn-choice-panel"><form class="konzilo-form" id="konzilo-form-join" method="post" action="/_konzilo/forms/join" aria-label="Join" data-konzilo-form="{}"><div class="konzilo-form-fields"><div class="konzilo-form-field konzilo-form-text"><label for="konzilo-form-join-name">Name <span class="konzilo-form-required">(required)</span></label><input type="text" id="konzilo-form-join-name" name="name" required maxlength="200"><p class="konzilo-form-problem" id="konzilo-form-join-name-problem" hidden></p></div><div class="konzilo-form-field konzilo-form-email"><label for="konzilo-form-join-email">Email <span class="konzilo-form-required">(required)</span></label><input type="email" id="konzilo-form-join-email" name="email" required maxlength="254" autocomplete="email"><p class="konzilo-form-problem" id="konzilo-form-join-email-problem" hidden></p></div><button type="submit" class="konzilo-form-send">Join</button></div></form></div>
+        </details>
       </div>
       <p class="kn-fine-print" data-kn-type="small" id="choice-terms">By joining you accept our terms.</p>
     </div>
@@ -129,7 +135,7 @@
 <section class="kn-band kn-section" id="guide">
   <div class="kn-band-content">
     <div class="kn-section-body kn-body-text">
-      <div class="kn-reading-area" data-kn-side="start" data-kn-stack="before" data-kn-columns="1">
+      <div class="kn-reading-area" data-kn-side="start" data-kn-stack="before">
         <div class="kn-reading-area-aside">
           <aside class="kn-aside-block" data-kn-sticky="true">
             <nav class="kn-toc" aria-labelledby="toc-1" data-kn-type="small" data-kn-follow>
@@ -156,7 +162,7 @@
 
 <section class="kn-band kn-article-body">
   <div class="kn-band-content">
-    <div class="kn-reading-area" data-kn-side="start" data-kn-stack="before" data-kn-columns="1">
+    <div class="kn-reading-area" data-kn-side="start" data-kn-stack="before">
       <div class="kn-reading-area-aside">
         <aside class="kn-aside-block" data-kn-sticky="true">
           <nav class="kn-toc" aria-labelledby="article-menu" data-kn-type="small" data-kn-follow>

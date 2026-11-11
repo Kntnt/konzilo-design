@@ -1,14 +1,18 @@
 // The design tool's preview: it changes the sample page's header, footer and page as the settings change,
-// without a build. The header comes from a built template with every item, and leaves out what is off.
-// The trail goes with the page's H1, in hero-live.js.
-import { setupHeaders } from '../../src/components/header.js';
-import { setupFooters, layoutFooter } from '../../src/components/footer.js';
+// without a build. The header comes from a built template with every item, and leaves out what is off; its giving-way
+// script, which the template brings, measures it again when it changes. The trail goes with the page's H1, in hero-live.js.
+import { layoutFooter } from '../../src/components/footer.js';
+// The preview can set its footer at the edge of the screen at any time, so it carries the script that says whether
+// the footer fits; it watches for that itself.
+import '../../src/components/footer-fit.js';
 import { footerHtml } from '../../src/components/footer-html.js';
 import { footerProps, identityProps } from './frame.js';
 
 function identity(header, settings, project) {
   const wanted = identityProps(settings, project);
-  const link = header.querySelector('.kn-header-identity');
+  for (const link of header.querySelectorAll('.kn-header-identity')) identityIn(link, wanted);
+}
+function identityIn(link, wanted) {
   link.setAttribute('aria-label', wanted.label);
   link.dataset.knSloganPlace = wanted.sloganPlace;
   const brand = link.querySelector('.kn-brand');
@@ -47,7 +51,6 @@ function buildHeader(settings, project) {
   header.dataset.knAttachment = settings.attachment;
   header.dataset.knStart = sticky ? settings.start : 'below';
   header.dataset.knAutohide = String(sticky && settings.autohide);
-  header.dataset.knOpaqueSurface = settings.surface;
   header.dataset.knSurface = settings.surface;
   identity(header, settings, project);
   if (!settings['link-menu']) drop('.kn-header-link-menu');
@@ -65,16 +68,16 @@ function buildHeader(settings, project) {
     if (!settings['search-blur']) header.querySelector('[data-kn-panel="search"]').dataset.knBlur = 'false';
   }
   // Without a button of its own, a header still has one for when items give way, unless nothing could.
-  const button = header.querySelector('[data-kn-trigger="menu"]');
   const mode = settings['menu-button'];
   if (mode !== 'off' || settings['link-menu'] || settings.search || settings.language || settings.cta) {
-    if (mode !== 'word') button.querySelector('.kn-header-chevron')?.remove();
-    if (mode === 'icon' || (mode === 'off' && !settings['link-menu'])) button.querySelector('.kn-header-menu-word')?.remove();
-    button.dataset.knIcon = mode === 'word' ? 'chevron-down' : 'menu';
-    if (mode === 'off') button.dataset.knAutomatic = 'true';
+    for (const button of header.querySelectorAll('.kn-header-menu-button')) {
+      if (mode !== 'word') button.querySelector('.kn-header-chevron')?.remove();
+      if (mode === 'icon' || (mode === 'off' && !settings['link-menu'])) button.querySelector('.kn-header-menu-word')?.remove();
+      button.dataset.knIcon = mode === 'word' ? 'chevron-down' : 'menu';
+      if (mode === 'off') button.dataset.knAutomatic = 'true';
+    }
   } else {
-    button.remove();
-    drop('[data-kn-panel="menu"]');
+    drop('.kn-header-menu-button, [data-kn-panel="menu"]');
   }
   return header;
 }
@@ -91,11 +94,9 @@ function updateFooter(page, main, props) {
   const end = () => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'instant' });
   const atEnd = window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 2;
   if (!next) {
-    old?.dispatchEvent(new Event('kn:dispose'));
     old?.remove();
   } else if (!old) {
     main.after(next);
-    setupFooters(page);
   } else {
     for (const cell of next.querySelectorAll('.kn-footer-cell')) {
       const live = old.querySelector(`[data-kn-band="${cell.parentElement.dataset.knBand}"] > [data-kn-cell="${cell.dataset.knCell}"]`);
@@ -110,13 +111,8 @@ function updateFooter(page, main, props) {
     old.replaceChildren(...next.childNodes);
     old.dataset.knAttachment = next.dataset.knAttachment;
     old.dataset.knRules = next.dataset.knRules;
-    old.dispatchEvent(new Event('kn:refresh'));
   }
-  if (atEnd) {
-    end();
-    // Under `reveal` the page reserves the footer's new height when the footer has been measured.
-    requestAnimationFrame(end);
-  }
+  if (atEnd) end();
 }
 export function setupLiveFrame() {
   if (document.body.dataset.specimen !== 'preview') return;
@@ -124,28 +120,30 @@ export function setupLiveFrame() {
   const main = page.querySelector('.kn-page-main');
   let shown = {};
   let panel = null;
-  // The header opens and closes its own panels, so it is asked as a click would ask it.
+  // The panels are a native dialog or popover: the one asked for opens as a click on its control opens it, and any
+  // other closes as the browser closes it.
   const showPanel = () => {
-    for (const trigger of page.querySelectorAll(':scope > .kn-header [data-kn-trigger]')) {
-      const open = trigger.getAttribute('aria-expanded') === 'true';
-      if (open !== (trigger.dataset.knTrigger === panel)) trigger.click();
+    for (const node of page.querySelectorAll(':scope > .kn-header [data-kn-panel]')) {
+      if (node.dataset.knPanel === panel || !node.matches('[open], :popover-open')) continue;
+      if (node.matches('dialog')) node.close();
+      else node.hidePopover();
     }
+    const trigger = panel && page.querySelector(`:scope > .kn-header [data-kn-trigger="${panel}"]`);
+    if (trigger && !document.getElementById(trigger.getAttribute('aria-controls'))?.matches('[open], :popover-open')) trigger.click();
   };
   function apply({ header, footer, page: settings }, project) {
     const headerKey = JSON.stringify([header, project.name, project.logo, project['logo-dark'], project.slogan]);
     if (headerKey !== shown.header) {
-      // The header stays the same element, as the footer does: its runtime lets go, it takes the new attributes and
-      // content, with the logos already showing moved over, and its runtime measures it again, all before a paint.
+      // The header stays the same element, as the footer does: it takes the new attributes and content, with the
+      // logos already showing moved over, before a paint.
       const old = page.querySelector(':scope > .kn-header');
       const next = buildHeader(header, project);
       if (old) {
-        old.dispatchEvent(new Event('kn:dispose'));
         keepImages(old, next);
         for (const { name } of [...old.attributes]) if (!next.hasAttribute(name)) old.removeAttribute(name);
         for (const { name, value } of next.attributes) old.setAttribute(name, value);
         old.replaceChildren(...next.childNodes);
       } else page.prepend(next);
-      setupHeaders(page);
       showPanel();
       // An open search box takes the focus, and the control being used should keep it.
       if (panel) parent.postMessage({ type: 'kn-frame-panel-shown' }, location.origin);
@@ -162,7 +160,6 @@ export function setupLiveFrame() {
         if (settings[key]) page.style.setProperty(property, settings[key]);
         else page.style.removeProperty(property);
       }
-      page.querySelector(':scope > .kn-footer')?.dispatchEvent(new Event('kn:refresh'));
     }
     shown = { header: headerKey, footer: footerKey, page: pageKey };
   }

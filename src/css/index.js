@@ -2,6 +2,7 @@ import { checkFingerprint } from '../generator/fingerprint.js';
 import { checkFormat, validateDesignFile } from '../generator/validate.js';
 import { number, rem, stepStart } from '../generator/fluid.js';
 import { checkContrast } from '../generator/surface.js';
+import { readingColumnQueries, readingColumnWindows } from '../generator/layout.js';
 import { surfaceCss } from './surface.js';
 
 // This consumer reads the stored resolved values; it never resolves the inputs.
@@ -34,6 +35,14 @@ ${sizes.join('\n')}
 `;
 }
 
+// The windows where a Reading Area's Narrow, column gap and Aside minimum fit in the content area, each a media query
+// in rem that sets the switch reading-area.css reads; a media query cannot read the design's custom properties, so
+// the numbers are worked out here.
+function readingColumns(r) {
+  return readingColumnQueries(readingColumnWindows(r.layout, r.space.roles['column-gap']))
+    .map((query) => `@media screen and ${query} {\n  :root { --kn-reading-columns: 2; }\n}\n`).join('');
+}
+
 // Synchronous output for freshly derived, in-memory preview values.
 export function coreCss(r) {
   const lines = [];
@@ -64,6 +73,8 @@ export function coreCss(r) {
   for (const [name, value] of Object.entries(r.layout)) {
     put(`layout-${name}`, name === 'side-margin' ? value.css : name === 'content-area' ? value : rem(value));
   }
+  // One column, unless a media query below finds room for two (readingColumns).
+  put('reading-columns', 1);
   for (const [name, value] of Object.entries(r.duration)) put(`duration-${name}`, `${value}ms`);
   put('easing-standard', r.easing.standard);
   // Literals, for a consumer that cannot read light-dark(): the primary seed exactly, and the page in light mode.
@@ -77,7 +88,7 @@ export function coreCss(r) {
 :root {
 ${lines.join('\n')}
 }
-${scaleCurve(r)}${staged}
+${scaleCurve(r)}${staged}${readingColumns(r)}
 /* Declared on each Surface, so a site's own first-heading colour can read that Surface's roles. */
 [data-kn-surface] { --kn-text-heading-1: var(--kn-${r['heading-1-color'] === 'accent' ? 'accent' : 'text'}); }
 

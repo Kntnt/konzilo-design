@@ -10,7 +10,7 @@ import { ownPictures } from '../data.js';
 import { breadcrumbProps } from '../frame.js';
 const { id, project, resolved } = Astro.props;
 const { list } = context(project, resolved, ownPictures);
-const results = Array.from({ length: 12 }, (_, index) => ({
+const results = Array.from({ length: 4 }, (_, index) => ({
   title: [
     'Planning the first stage',
     'Planning a useful review',
@@ -18,8 +18,13 @@ const results = Array.from({ length: 12 }, (_, index) => ({
   ][index % 3],
   href: '#guide',
   text: 'A practical guide to responsibilities, decisions and dates.',
-  filters: { topic: 'guides', year: '2026' },
+  filters: { topic: index === 2 ? 'reports' : 'guides', year: '2026' },
 }));
+// One description of the controls for the form and its rows, so each row carries the keys the pills match.
+const filters = {
+  toggles: [{ name: 'topic', label: 'Topics', options: [{ value: 'guides', label: 'Guides' }, { value: 'reports', label: 'Reports' }] }],
+  select: { name: 'year', label: 'Year', options: [{ value: '', label: 'All years' }, { value: '2026', label: '2026' }] },
+};
 ---
 
 {id === 'content-loop' && (
@@ -53,34 +58,9 @@ const results = Array.from({ length: 12 }, (_, index) => ({
     <VisitorFilters
       for="resources"
       search={{ label: 'Search resources', value: 'planning' }}
-      toggles={
-        id === 'visitor-filters'
-          ? [
-              {
-                name: 'topic',
-                label: 'Topics',
-                options: [
-                  { value: 'guides', label: 'Guides' },
-                  { value: 'reports', label: 'Reports' },
-                ],
-              },
-            ]
-          : []
-      }
-      select={
-        id === 'visitor-filters'
-          ? {
-              name: 'year',
-              label: 'Year',
-              options: [
-                { value: '', label: 'All years' },
-                { value: '2026', label: '2026' },
-              ],
-            }
-          : undefined
-      }
-      total={12}
-      pageSize={3}
+      toggles={filters.toggles}
+      select={filters.select}
+      total={results.length}
       countText="{count} results"
     />
     <ContentLoop
@@ -88,6 +68,7 @@ const results = Array.from({ length: 12 }, (_, index) => ({
       items={results.map(({ text, ...item }) => item)}
       presentation="rows"
       images={false}
+      filteredBy={filters}
     />
   </div>
 )}

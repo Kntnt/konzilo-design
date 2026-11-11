@@ -513,7 +513,7 @@ test('no point of a picture is darker or lighter than its overlay\'s tested stre
     await page.locator('[data-path="inputs.header.start"]').selectOption('under');
     const preview = await (await page.$('#preview')).contentFrame();
     const first = '.kn-page-main > .kn-hero:first-child';
-    await preview.waitForSelector(`.kn-page[data-kn-header-start="under"] > ${first}`);
+    await preview.waitForSelector(`.kn-page:has(> .kn-header[data-kn-attachment="sticky"][data-kn-start="under"]) > ${first}`);
     await pickHero(page, 'picture', 'behind');
     await page.waitForFunction(() => document.getElementById('status-text').textContent === 'Saved');
     const { resolved } = JSON.parse(await readFile(tool.path, 'utf8'));
@@ -552,7 +552,7 @@ test('under a transparent header the words keep the overlay\'s strength, and tex
     await page.locator('.chapter', { hasText: 'Frame' }).click();
     await page.locator('[data-path="inputs.header.start"]').selectOption('under');
     const preview = await (await page.$('#preview')).contentFrame();
-    await preview.waitForSelector('.kn-page[data-kn-header-start="under"] > .kn-page-main > .kn-hero:first-child');
+    await preview.waitForSelector('.kn-page:has(> .kn-header[data-kn-attachment="sticky"][data-kn-start="under"]) > .kn-page-main > .kn-hero:first-child');
     // The hero's controls are on another page, and a choice there reaches this sample all the same.
     const choose = async (name, value) => {
       await page.evaluate(([key, wanted]) => document.querySelector(`[data-pick="inputs.hero.${key}"][data-value="${wanted}"]`).click(), [name, value]);

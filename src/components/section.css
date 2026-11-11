@@ -11,8 +11,10 @@
   .kn-section > .kn-band-content { display: grid; grid-template-columns: minmax(0, 1fr); row-gap: var(--kn-space-column-gap); align-items: start; }
 
   /* The head: eyebrows, the heading and its deck in a heading group, and the actions after it. */
-  .kn-section-head {
+  .kn-section-head, .kn-section-media {
     --kn-reading-sticky-inset: calc(var(--kn-header-visible-height, 0rem) + var(--kn-space-component-gap));
+  }
+  .kn-section-head {
     display: grid;
     justify-self: var(--kn-section-head-place, stretch);
     justify-items: var(--kn-section-align, start);
@@ -21,10 +23,7 @@
     min-inline-size: 0;
     text-align: var(--kn-section-align, start);
     overflow-wrap: anywhere;
-    /* Always declared, so that setupSections reads the inset as the browser resolves it; it acts only where the head stays. */
-    inset-block-start: var(--kn-reading-sticky-inset);
   }
-  .kn-section-head[data-kn-sticky="true"] { position: var(--kn-section-head-position, static); }
   .kn-section-head > * { margin: 0; }
   .kn-section-head > .kn-actions { justify-content: var(--kn-section-align, start); }
   .kn-section-head > .kn-heading-group {
@@ -64,7 +63,9 @@
   .kn-section-badges > li { margin: 0; }
   /* A badge is as tall as the recipe says and as wide as its proportions make it, shown whole: an SVG with only a viewBox has no
      size of its own, and auto on both sides would draw it at none. */
-  .kn-section-badges img { display: block; inline-size: auto; block-size: 4rem; max-inline-size: 8rem; object-fit: contain; object-position: left center; }
+  /* As the hero's logo: at most 4rem high and never past its own size, an SVG 4rem high (the owner, 2026-11-11). */
+  .kn-section-badges img { display: block; inline-size: auto; block-size: auto; max-block-size: 4rem; max-inline-size: 8rem; object-fit: contain; object-position: left center; }
+  .kn-section-badges img:is([src$=".svg" i], [src*=".svg?" i], [src*=".svg#" i], [src^="data:image/svg" i]) { block-size: 4rem; }
   .kn-section-badges img:dir(rtl) { object-position: right center; }
 
   /* Rule 1, with a form in the body: the picture is what the form offers, so it is shown whole, as itself, and not cropped. */
@@ -103,6 +104,28 @@
       row-gap: 0;
     }
     .kn-section > .kn-band-content:has(> .kn-section-media) > .kn-section-media { grid-area: media; align-self: center; }
+    /* Where the head and body are taller than the picture, the picture grows to their height, cropped to fill it
+       (object-fit: cover), so it never floats with space above it, and never short of its own proportions. It grows to a
+       square at the most, and to no more than most of the window; beside text longer still it keeps that size and stays at
+       the top of the window as the text scrolls by, as a following menu does (the owner, 2026-11-11). With badges, the
+       picture and its badges stay together and follow at their own size. Not with a form, whose picture is shown whole. */
+    .kn-section > .kn-band-content:has(> .kn-section-media):not(:has(> .kn-section-body > form)):not(:has(.kn-section-badges)) > .kn-section-media {
+      align-self: stretch;
+      grid-template-rows: 1fr;
+      container-type: inline-size;
+    }
+    .kn-section > .kn-band-content:has(> .kn-section-media):not(:has(> .kn-section-body > form)):not(:has(.kn-section-badges)) .kn-section-picture {
+      align-self: start;
+      position: sticky;
+      inset-block-start: var(--kn-reading-sticky-inset);
+      min-block-size: min(100%, 100cqi, 85svh);
+      object-fit: cover;
+    }
+    .kn-section > .kn-band-content:has(> .kn-section-media):not(:has(> .kn-section-body > form)):has(.kn-section-badges) > .kn-section-media {
+      align-self: start;
+      position: sticky;
+      inset-block-start: var(--kn-reading-sticky-inset);
+    }
     .kn-section > .kn-band-content:has(> .kn-section-media) > .kn-section-head { grid-area: head; }
     .kn-section > .kn-band-content:has(> .kn-section-media) > .kn-section-body { grid-area: body; }
     .kn-section > .kn-band-content:has(> .kn-section-media) > .kn-section-head + .kn-section-body { margin-block-start: var(--kn-space-column-gap); }
@@ -115,11 +138,18 @@
   }
 
   @media (width >= 60rem) {
-    /* Rule 4: a head and an accordion alone. The head stands beside it, and stays in view where setupSections finds it fits. */
+    /* Rule 4: a head and an accordion alone. The head stands beside it and stays in view under the header. A head taller
+       than the window below the header scrolls inside itself, so its end is never out of reach. */
     .kn-section > .kn-band-content:not(:has(> .kn-section-media)):has(> .kn-section-head + .kn-section-body > .kn-accordion:only-child) {
-      --kn-section-head-position: sticky;
       grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
       column-gap: var(--kn-space-column-gap);
+    }
+    .kn-section > .kn-band-content:not(:has(> .kn-section-media)):has(> .kn-section-head + .kn-section-body > .kn-accordion:only-child) > .kn-section-head {
+      position: sticky;
+      inset-block-start: var(--kn-reading-sticky-inset);
+      max-block-size: calc(100dvh - var(--kn-reading-sticky-inset) - var(--kn-space-component-gap));
+      overflow-y: auto;
+      overscroll-behavior-block: contain;
     }
     /* Rule 5: a head and paragraphs only. The paragraphs stand beside the head. */
     .kn-section > .kn-band-content:not(:has(> .kn-section-media)):has(> .kn-section-head + .kn-section-body > p):not(:has(> .kn-section-body > :not(p))) {

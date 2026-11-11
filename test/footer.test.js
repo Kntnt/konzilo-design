@@ -1,15 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { footerFromDesign, footerSpans, layoutFooter, revealEligible } from '../src/components/footer.js';
+import { footerFromDesign, footerSpans, layoutFooter } from '../src/components/footer.js';
 import { footerHtml } from '../src/components/footer-html.js';
 import { render } from './helpers/render.js';
-
-test('reveal requires a nonempty footer that fits, including at the boundary, and always falls back for print', () => {
-  const base = { attachment: 'reveal', footerHeight: 600, viewportHeight: 600 };
-  assert.equal(revealEligible(base), true);
-  for (const change of [{ footerHeight: 601 }, { footerHeight: 0 }, { attachment: 'flow' }, { print: true }]) assert.equal(revealEligible({ ...base, ...change }), false);
-});
 
 const cells = (names) => Object.fromEntries(names.split(' ').filter(Boolean).map((name) => [name, true]));
 const spans = (names, fill) => footerSpans(cells(names), fill).map(({ cell, wide, tall }) => `${cell}${wide ? ' wide' : ''}${tall ? ' tall' : ''}`).join(', ');
@@ -112,14 +106,6 @@ test('a hairline stops at a merged cell and never runs between two colours', () 
   assert.deepEqual([off.horizontal, off.vertical], [null, null]);
 });
 
-test('a line above the footer is drawn only when its first band has the page colour and the page casts no shadow', () => {
-  const footer = (surface, options) => layoutFooter({ upper: { surface, cells: cells('a1') } }, options).topLine;
-  assert.equal(footer('page'), true);
-  assert.equal(footer('page', { pageShadow: true }), false);
-  assert.equal(footer('brand'), false);
-  assert.equal(layoutFooter().topLine, false);
-});
-
 test('a design\'s settings and a site\'s content make a Footer, and a cell that is off stays empty', () => {
   const settings = {
     attachment: 'reveal', fill: 'row', 'horizontal-rules': true, 'vertical-rule': false, 'rule-extent': 'full',
@@ -143,6 +129,18 @@ test('the preview\'s markup writes a cell, its box and its lines', () => {
   assert.match(html, /data-kn-cell="b2" data-kn-column="B" data-kn-columns="2" data-kn-row="2"/);
   assert.equal([...html.matchAll(/kn-footer-rule/g)].length, 1);
   assert.doesNotMatch(html, /kn-footer-vertical-rule/, 'a cell across each row leaves no room for the line');
+});
+
+test('only a footer at the edge of the screen loads the script that says whether it fits, and writes its bands once', async () => {
+  const props = { upper: { cells: { a1: { text: 'A' }, b1: { text: 'B' } } } };
+  const reveal = await render('Footer', { ...props, attachment: 'reveal' });
+  assert.equal([...reveal.matchAll(/class="kn-footer-band"/g)].length, 1);
+  assert.match(reveal, /<script type="module" src="\/_astro\/footer-fit\.js" data-kn-footer-fit><\/script>\s*<\/footer>/);
+  assert.doesNotMatch(await render('Footer', { ...props, attachment: 'flow' }), /<script/);
+  const source = await readFile(new URL('../src/components/footer-fit.js', import.meta.url), 'utf8');
+  assert.ok(source.trim().split('\n').length <= 20, 'it is small');
+  assert.match(source, /footer\.dataset\.knFit = value/);
+  assert.doesNotMatch(source, /\.style\b|classList|innerHTML|scrollTo/, 'it sets the one state and nothing else');
 });
 
 const normal = (html) => html.replace(/<script[\s\S]*?<\/script>/g, '').replace(/>\s+</g, '><').trim();

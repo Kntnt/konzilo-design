@@ -241,7 +241,8 @@ Each role is a recipe over the ramps (a ramp and step, or white or black).
   scrim over the image.
 - **What stands on a background (the same rule):** every other role follows the background's polarity and step, in `ON_STEP`,
   never its kind. A kind contributes only its family, for fills and lines alike, except that accent's muted text and borders are
-  grey. Light polarity's muted text is always grey 600, and strong borders are 500 in light polarity and 400 in dark. Pictures
+  grey, and a light band's muted text (raised, the tints and the status kinds) is grey in both modes, so that in dark mode it
+  is not the colour of the links and the accent (owner, 2026-11-10). Light polarity's muted text is always grey 600, and strong borders are 500 in light polarity and 400 in dark. Pictures
   stand on no step: their own fill is also their alternate fill, and their other roles are grey, as in the last two rows.
 
   | Polarity | Background | Alternate fill | Hover fill | Muted text | Border |
@@ -319,9 +320,16 @@ Each role is a recipe over the ramps (a ramp and step, or white or black).
   kinds set their own `color-scheme`, and `light-dark()` answers to that scheme and not to the mode, so
   a fixed-polarity kind whose values differ by mode, `inverse` today, writes them as
   `var(--kn-in-light, light) var(--kn-in-dark, dark)`. The two switches are set wherever `--kn-mode` is: the
-  current mode's is `initial`, giving its fallback, and the other is empty, giving nothing. Nothing depends
-  on style queries or `if()`. Shadow geometry is shared; only the ink and
+  current mode's is `initial`, giving its fallback, and the other is empty, giving nothing. No Surface
+  depends on style queries or `if()`. Shadow geometry is shared; only the ink and
   alpha differ by mode.
+- **A clear header** (2026-11-10, the assistant's choice, with the header's rebuild without script,
+  header.md, How it is built): inside `@container style(--kn-header-clear: 1)`, which a Page sets while
+  its sticky header is transparent over its start, each kind's roles, polarity, `color-scheme`, shadows and
+  frame colour are written again, without its background, for the header of a page whose first band is
+  that kind, and a first band's `data-kn-mode` for its mode. The selectors name no class:
+  `[data-kn-surface]:has(> main > :first-child[data-kn-surface="<kind>"]) > [data-kn-start="under"]`, the
+  page kind matching a first child with no Surface too.
 
 ### Layout, motion and CSS
 
@@ -352,11 +360,16 @@ narrow, wide, full, bleed-start and bleed-end with logical margins, so direction
 reverse in RTL. Use them in a full-width band or a parent centred on the viewport
 (including a centred Narrow or Wide container). These selectors supply width
 geometry; the Reading Area component adjusts them for its offset Narrow column,
-occupied Aside rows and caption alignment. Its sole runtime measures roles and
-places Sidenotes around blocks and Breakout rows, with pure placement functions
-covered in `test/reading-area.test.js`. A Breakout beside an occupied Aside row
-keeps Narrow, and the final note extends the area's height. No-script and print
-retain inline reading order. Viewport breakouts assume that inner containing
+occupied Aside rows and caption alignment, in CSS alone. The core writes
+`--kn-reading-columns: 1` on `:root` and, for each window `readingColumnWindows`
+(`src/generator/layout.js`) finds where `min(w − 2 × side margin, Wide)` holds
+Narrow, the column gap and the Aside minimum, a `@media screen and (width >= …rem)`
+that sets it to 2. It reads the side margin and the column gap back from their
+emitted clamps, so the arithmetic is the browser's; for the defaults the query is
+`(width >= 66.5775rem)`. `reading-area.css` reads the switch by a style query and
+floats the Aside and the Sidenotes, so a Breakout beside a float keeps Narrow and
+the area holds the last note; `test/reading-area.test.js` checks the windows by
+brute force and in every engine. Print retains inline reading order. Viewport breakouts assume that inner containing
 blocks do not clip their overflow; Page clips only horizontal viewport overflow.
 
 ## Defaults
@@ -429,7 +442,7 @@ The automated tests retain only neutral values and generic constants.
 
 ***Decided* with the components, 2026-11-02:** add `background-hover` (emitted as `--kn-background-hover`), `info` (`--kn-info`, seed `#1d6fd1`) and four mode-following status kinds. `STATUS_KINDS` exports `status-info`, `status-success`, `status-warning`, `status-error` beside `KINDS`; `kindsFor` always includes them before optional ranked tints. The schema requires every new kind, role and pair, so stored pre-review results need CLI re-resolution.
 
-Each status kind is the tint recipe on its own status ramp: background 100/900, alternate white/950, border 200/800, strong border 500/400, muted text gray-600 / own-300, accent own-600/300 in light/dark respectively. Status accent deliberately uses that status ramp even when there is a secondary brand seed. Link/focus and Button recipes retain their usual rank/polarity policies. Every ordinary Surface pair applies, including the information status foreground at 4.5:1.
+Each status kind is the tint recipe on its own status ramp: background 100/900, alternate white/950, border 200/800, strong border 500/400, muted text gray-600 / gray-300 (owner, 2026-11-10), accent own-600/300 in light/dark respectively. Status accent deliberately uses that status ramp even when there is a secondary brand seed. Link/focus and Button recipes retain their usual rank/polarity policies. Every ordinary Surface pair applies, including the information status foreground at 4.5:1.
 
 Hover fills are opaque and fixed recipes, independent of foreground solving. `text-hover` and `link-hover` check existing text/link over that fill at 4.5:1, including pictures without scrim samples. They join the failure and stale-report guards. No extra foreground roles are introduced.
 

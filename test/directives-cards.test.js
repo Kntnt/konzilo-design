@@ -244,15 +244,23 @@ test('a lone main action after cards that lead on shows more of them, as after a
   }
 });
 
-test('a filtered post list stays put when Visitor Filters starts: no "Show" and no empty pagination row before it', { timeout: 120000 }, async () => {
-  const runtime = `${await readFile(new URL('../src/components/visitor-filters.js', import.meta.url), 'utf8')}\nsetupVisitorFilters();`;
+test('a filtered post list filters by CSS alone: no "Show", pills that widen the result, and a count that steps aside', { timeout: 120000 }, async () => {
   for (const [name, browser] of browsers) {
     const tab = await page(browser);
-    const top = () => tab.$eval('#posts-1', (grid) => Math.round(grid.getBoundingClientRect().top + scrollY));
-    const was = await top();
-    await tab.addScriptTag({ type: 'module', content: runtime });
-    await tab.waitForSelector('#posts-filtered .kn-visitor-filters[data-kn-enhanced]', { state: 'attached' });
-    assert.equal(await top(), was, name);
+    const shown = () => tab.$$eval('#posts-1 > .kn-card', (cards) => cards.map((card, i) => card.getClientRects().length ? i + 1 : 0).filter(Boolean));
+    const visible = (selector) => tab.$eval(selector, (element) => element.getClientRects().length > 0);
+    assert.equal(await tab.evaluate(() => document.scripts.length), 0, name);
+    assert.equal(await visible('#posts-filtered .kn-visitor-filter-submit'), false, `${name}: pills alone need no "Show"`);
+    assert.deepEqual(await shown(), [1, 2, 3, 4, 5, 6, 7], name);
+    await tab.check('#posts-filtered input[value="tools"]');
+    assert.deepEqual(await shown(), [3, 5], `${name}: tools`);
+    await tab.check('#posts-filtered input[value="people"]');
+    assert.deepEqual(await shown(), [3, 4, 5, 6], `${name}: tools or people`);
+    assert.equal(await visible('#posts-filtered .kn-visitor-filter-count'), false, `${name}: "Showing 7 articles" is no longer true`);
+    await tab.uncheck('#posts-filtered input[value="tools"]');
+    await tab.uncheck('#posts-filtered input[value="people"]');
+    assert.deepEqual(await shown(), [1, 2, 3, 4, 5, 6, 7], name);
+    assert.ok(await visible('#posts-filtered .kn-visitor-filter-count'), name);
     await tab.close();
   }
 });

@@ -1,20 +1,23 @@
 ---
 import type { HTMLAttributes } from 'astro/types';
-import type { FooterBandData, FooterCellName, Surface } from './frame-types';
+import type { FooterBandData, FooterCellName } from './frame-types';
 import { FOOTER_CELLS, layoutFooter } from './footer.js';
-// Two bands of four cells. What stands in a cell comes from the site: as data, or in a slot named for the
-// band and the cell, such as `upper-a1`. A cell the data does not mention is filled if it has a slot.
+import footerFit from './footer-fit.js?url&no-inline';
+// Two bands of four cells, laid out here, with no script; the attachment is CSS (footer.css). What stands in a cell
+// comes from the site: as data, or in a slot named for the band and the cell, such as `upper-a1`. A cell the data
+// does not mention is filled if it has a slot. At the edge of the screen a small script says whether the footer fits
+// in the window, for the reveal (footer.md, Attachment); any other footer loads nothing.
 interface Props extends HTMLAttributes<'footer'> {
   upper?: FooterBandData; lower?: FooterBandData; fill?: 'column' | 'row';
   attachment?: 'flow' | 'reveal'; rules?: 'content' | 'full';
-  horizontalRules?: boolean; verticalRule?: boolean; pageSurface?: Surface;
+  horizontalRules?: boolean; verticalRule?: boolean;
 }
-const { upper, lower, fill, attachment = 'flow', rules = 'content', horizontalRules, verticalRule, pageSurface = 'page', class: className, ...attributes } = Astro.props;
+const { upper, lower, fill, attachment = 'flow', rules = 'content', horizontalRules, verticalRule, class: className, ...attributes } = Astro.props;
 const withSlots = (name: string, band?: FooterBandData) => ({ ...band, cells: Object.fromEntries((FOOTER_CELLS as FooterCellName[]).map((cell) => [cell, band?.cells?.[cell] ?? Astro.slots.has(`${name}-${cell}`)])) });
-const layout = layoutFooter({ upper: withSlots('upper', upper), lower: withSlots('lower', lower), fill, horizontalRules, verticalRule }, { pageSurface });
+const layout = layoutFooter({ upper: withSlots('upper', upper), lower: withSlots('lower', lower), fill, horizontalRules, verticalRule });
 const headingOf = (level = 2) => `h${level}` as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
 ---
-{layout.bands.length > 0 && <footer {...attributes} class:list={['kn-footer', className]} data-kn-attachment={attachment} data-kn-rules={rules} data-kn-top-line={layout.topLine || undefined}>
+{layout.bands.length > 0 && <footer {...attributes} class:list={['kn-footer', className]} data-kn-attachment={attachment} data-kn-rules={rules}>
   {layout.bands.map((band) => <div class="kn-footer-band" data-kn-band={band.name} data-kn-surface={band.surface} data-kn-rows={band.rows} data-kn-joined={band.joined || undefined}>
     {band.join && <div class="kn-footer-rule" aria-hidden="true" data-kn-join="true" />}
     {band.horizontal && <div class="kn-footer-rule" aria-hidden="true" data-kn-only={band.horizontal} />}
@@ -29,8 +32,5 @@ const headingOf = (level = 2) => `h${level}` as 'h1' | 'h2' | 'h3' | 'h4' | 'h5'
       </div>
     </div>; })}
   </div>)}
+  {attachment === 'reveal' && <script is:inline type="module" src={footerFit} data-kn-footer-fit></script>}
 </footer>}
-<script>
-  import { setupFooters } from './footer.js';
-  setupFooters();
-</script>

@@ -500,7 +500,7 @@ test('the tarball holds what a site needs, and no fonts, tool or presentation, a
   await mkdir(folder);
   const [{ filename, size, files }] = JSON.parse(execFileSync('npm', ['pack', '--json', '--silent', '--pack-destination', folder], { cwd: repo, encoding: 'utf8' }));
   const held = files.map(({ path }) => path);
-  for (const needed of ['package.json', 'README.md', 'bin/konzilo-design.js', 'bin/lib/backup.js', 'schema/design-file.schema.json', 'src/konzilo/index.js', 'src/konzilo/fonts.js', 'src/konzilo/logos.js', 'src/konzilo/konzilo.css', 'src/konzilo/body-styles.css', 'src/fonts/catalog.js', 'src/generator/index.js', 'src/css/index.js', 'src/components/index.css', 'src/components/Footer.astro', 'src/components/design-props.js', 'docs/spec/konzilo.md', 'docs/spec/names.md']) {
+  for (const needed of ['package.json', 'README.md', 'bin/konzilo-design.js', 'src/cli/backup.js', 'schema/design-file.schema.json', 'src/konzilo/index.js', 'src/konzilo/fonts.js', 'src/konzilo/logos.js', 'src/konzilo/konzilo.css', 'src/konzilo/body-styles.css', 'src/fonts/catalog.js', 'src/generator/index.js', 'src/css/index.js', 'src/components/index.css', 'src/components/Footer.astro', 'src/components/design-props.js', 'docs/spec/konzilo.md', 'docs/spec/names.md']) {
     assert.ok(held.includes(needed), `the tarball lacks ${needed}`);
   }
   const unwanted = held.filter((path) => /\.(woff2?|ttf|otf|zip|webp)$/.test(path) || /^(tool|presentation|gallery|test|examples)\//.test(path) || path === 'DESIGN.md' || /\.design(\.bak)?\.json$/.test(path) || path === 'src/fonts/fonts.css');

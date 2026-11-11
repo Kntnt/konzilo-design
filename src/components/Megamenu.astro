@@ -9,13 +9,15 @@ interface Props {
 }
 const { id, items, level = 2, numbered = false, surface = 'page', languages = [], search, cta } = Astro.props;
 const Heading = `h${level}` as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
+// A modal dialog that the menu button opens with no script: Esc and a click outside close it, focus stays in it and
+// returns to the button.
 ---
-<nav id={id} class="kn-header-panel kn-megamenu" data-kn-panel="menu" aria-label="Main menu" data-kn-surface={surface} popover="auto">
-  <div class="kn-megamenu-inner">
+<dialog id={id} class="kn-header-panel kn-megamenu" data-kn-panel="menu" aria-label="Menu" data-kn-surface={surface} closedby="any">
+  <nav class="kn-megamenu-inner" aria-label="Main menu">
     {(search || languages.length || cta) && <div class="kn-header-moved">
       {search && <SearchPanel search={search} inline />}
       {languages.length > 0 && <LanguageSwitcher languages={languages} inline />}
-      {cta && <Button class="kn-header-cta" href={cta.href} data-kn-dialog={cta.dialog} aria-haspopup={cta.dialog ? 'dialog' : undefined} aria-controls={cta.dialog} data-kn-moved="cta">{cta.label}</Button>}
+      {cta && <Button class="kn-header-cta" href={cta.href} commandfor={cta.href === undefined ? cta.dialog : undefined} command={cta.href === undefined && cta.dialog ? 'show-modal' : undefined} aria-haspopup={cta.href === undefined && cta.dialog ? 'dialog' : undefined} aria-controls={cta.href === undefined ? cta.dialog : undefined} data-kn-moved="cta">{cta.label}</Button>}
     </div>}
     {Astro.slots.has('above') && <div class="kn-megamenu-above"><slot name="above" /></div>}
     {items.length > 0 && <div class="kn-megamenu-columns" style={{ '--kn-header-menu-columns': Math.min(6, items.length) }}>
@@ -27,5 +29,5 @@ const Heading = `h${level}` as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
       </div>)}
     </div>}
     {Astro.slots.has('below') && <div class="kn-megamenu-below"><slot name="below" /></div>}
-  </div>
-</nav>
+  </nav>
+</dialog>

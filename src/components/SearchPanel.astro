@@ -5,14 +5,17 @@ interface Props { search: Search; id?: string; inline?: boolean; level?: Level }
 const { search, id, inline = false, level = 2 } = Astro.props;
 const Heading = `h${level}` as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
 const label = search.label ?? 'Search the site';
+// The search box is a modal dialog the magnifier opens with no script. A click beside the box lands on a button
+// behind it that closes it, as a click on the bar does by the dialog's own light dismiss.
 ---
 {inline ? <form class="kn-header-moved-search kn-header-search-row kn-search-row" role="search" action={search.action} method="get" data-kn-moved="search">
   <input data-kn-surface="page" type="search" name="q" placeholder={label} aria-label={label} /><Button type="submit">Search</Button>
-</form> : <div id={id} class="kn-header-panel kn-header-search-overlay" data-kn-panel="search" data-kn-surface="page" data-kn-blur={search.blur === false ? 'false' : undefined} popover="auto">
-  <div class="kn-header-search-box kn-search-box" data-kn-surface={search.surface ?? 'inverse'} role="dialog" aria-labelledby={`${id}-heading`}>
-    <Button class="kn-header-control kn-header-icon-button kn-header-search-close" variant="outline" icon="x" aria-label="Close search" data-kn-close popovertarget={id} popovertargetaction="hide" />
+</form> : <dialog id={id} class="kn-header-panel kn-header-search-overlay" data-kn-panel="search" data-kn-surface="page" data-kn-blur={search.blur === false ? 'false' : undefined} aria-labelledby={`${id}-heading`} closedby="any">
+  <button class="kn-header-search-dismiss" type="button" tabindex="-1" aria-hidden="true" commandfor={id} command="close"></button>
+  <div class="kn-header-search-box kn-search-box" data-kn-surface={search.surface ?? 'inverse'}>
+    <Button class="kn-header-control kn-header-icon-button kn-header-search-close" variant="outline" icon="x" aria-label="Close search" data-kn-close commandfor={id} command="close" />
     <Heading id={`${id}-heading`} data-kn-type="heading-5" hidden={search.heading === false}>Search</Heading>
-    <form class="kn-header-search-row kn-search-row" role="search" action={search.action} method="get"><input data-kn-surface="page" type="search" name="q" placeholder={label} aria-label={label} /><Button type="submit">Search</Button></form>
+    <form class="kn-header-search-row kn-search-row" role="search" action={search.action} method="get"><input data-kn-surface="page" type="search" name="q" placeholder={label} aria-label={label} autofocus /><Button type="submit">Search</Button></form>
     {search.links?.length && <ul class="kn-header-search-links kn-search-links">{search.links.map((link) => <li><a href={link.href}>{link.label}</a></li>)}</ul>}
   </div>
-</div>}
+</dialog>}

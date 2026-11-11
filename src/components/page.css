@@ -27,18 +27,42 @@
   .kn-page::before { background: var(--kn-page-fill-light); opacity: var(--kn-page-light-opacity); }
   .kn-page::after { background: var(--kn-page-fill-dark); opacity: var(--kn-page-dark-opacity); }
   .kn-page-main { flex: 1; min-inline-size: 0; }
-  .kn-page { --kn-footer-height: 0rem; }
-  .kn-page[data-kn-footer-attachment="reveal"] { padding-block-end: var(--kn-footer-height); }
-  .kn-page[data-kn-footer-attachment="reveal"] > .kn-page-main { position: relative; isolation: isolate; z-index: 1; background: var(--kn-background); }
-  .kn-page[data-kn-footer-attachment="reveal"] > .kn-page-main::before,
-  .kn-page[data-kn-footer-attachment="reveal"] > .kn-page-main::after { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none; }
-  .kn-page[data-kn-footer-attachment="reveal"] > .kn-page-main::before { background: var(--kn-page-fill-light); opacity: var(--kn-page-light-opacity); }
-  .kn-page[data-kn-footer-attachment="reveal"] > .kn-page-main::after { background: var(--kn-page-fill-dark); opacity: var(--kn-page-dark-opacity); }
-  .kn-page-main[data-kn-auto-shadow] { box-shadow: var(--kn-shadow-page); }
-  .kn-page-main:is([data-kn-edge-line], [data-kn-auto-line]) { border-block-end: 1px solid var(--kn-border); }
-  @media print {
-    .kn-page[data-kn-footer-attachment] { padding-block-end: 0; }
-    .kn-page > .kn-page-main[data-kn-shadow], .kn-page > .kn-page-main[data-kn-auto-shadow] { box-shadow: none; }
-  }
+  /* Under a footer at the edge of the screen, while it fits, the page is opaque and lies over it (footer.md,
+     Attachment). */
+  .kn-page:has(> .kn-footer[data-kn-attachment="reveal"][data-kn-fit="true"]) > .kn-page-main { position: relative; isolation: isolate; z-index: 1; background: var(--kn-background); }
+  .kn-page:has(> .kn-footer[data-kn-attachment="reveal"][data-kn-fit="true"]) > .kn-page-main::before,
+  .kn-page:has(> .kn-footer[data-kn-attachment="reveal"][data-kn-fit="true"]) > .kn-page-main::after { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none; }
+  .kn-page:has(> .kn-footer[data-kn-attachment="reveal"][data-kn-fit="true"]) > .kn-page-main::before { background: var(--kn-page-fill-light); opacity: var(--kn-page-light-opacity); }
+  .kn-page:has(> .kn-footer[data-kn-attachment="reveal"][data-kn-fit="true"]) > .kn-page-main::after { background: var(--kn-page-fill-dark); opacity: var(--kn-page-dark-opacity); }
   .kn-page-main[data-kn-shadow] { position: relative; z-index: 1; box-shadow: var(--kn-shadow-page); }
+  .kn-page-main[data-kn-edge-line] { border-block-end: 1px solid var(--kn-border); }
+  /* Where the page's last colour is the footer's first, the edge between them must still show. The page's last colour
+     is its last child's Surface, or the page's own where that has none; one Surface kind is one colour. */
+  .kn-page { --kn-footer-same: 0; }
+  .kn-page:has(> .kn-page-main > :last-child:is(:not([data-kn-surface]), [data-kn-surface="page"])):has(> .kn-footer .kn-footer-band:first-child[data-kn-surface="page"]),
+  .kn-page:has(> .kn-page-main > :last-child[data-kn-surface="raised"]):has(> .kn-footer .kn-footer-band:first-child[data-kn-surface="raised"]),
+  .kn-page:has(> .kn-page-main > :last-child[data-kn-surface="tint"]):has(> .kn-footer .kn-footer-band:first-child[data-kn-surface="tint"]),
+  .kn-page:has(> .kn-page-main > :last-child[data-kn-surface="tint-secondary"]):has(> .kn-footer .kn-footer-band:first-child[data-kn-surface="tint-secondary"]),
+  .kn-page:has(> .kn-page-main > :last-child[data-kn-surface="tint-tertiary"]):has(> .kn-footer .kn-footer-band:first-child[data-kn-surface="tint-tertiary"]),
+  .kn-page:has(> .kn-page-main > :last-child[data-kn-surface="brand"]):has(> .kn-footer .kn-footer-band:first-child[data-kn-surface="brand"]),
+  .kn-page:has(> .kn-page-main > :last-child[data-kn-surface="inverse"]):has(> .kn-footer .kn-footer-band:first-child[data-kn-surface="inverse"]),
+  .kn-page:has(> .kn-page-main > :last-child[data-kn-surface="accent"]):has(> .kn-footer .kn-footer-band:first-child[data-kn-surface="accent"]),
+  .kn-page:has(> .kn-page-main > :last-child[data-kn-surface="status-info"]):has(> .kn-footer .kn-footer-band:first-child[data-kn-surface="status-info"]),
+  .kn-page:has(> .kn-page-main > :last-child[data-kn-surface="status-success"]):has(> .kn-footer .kn-footer-band:first-child[data-kn-surface="status-success"]),
+  .kn-page:has(> .kn-page-main > :last-child[data-kn-surface="status-warning"]):has(> .kn-footer .kn-footer-band:first-child[data-kn-surface="status-warning"]),
+  .kn-page:has(> .kn-page-main > :last-child[data-kn-surface="status-error"]):has(> .kn-footer .kn-footer-band:first-child[data-kn-surface="status-error"]) { --kn-footer-same: 1; }
+  /* Under a footer at the edge of the screen that fits, the page casts its shadow anyway; where no shadow results, as
+     at the end of the page or with a footer too tall for the window, a hairline parts them. */
+  @container style(--kn-footer-same: 1) {
+    @media not print {
+      .kn-page:has(> .kn-footer[data-kn-attachment="reveal"][data-kn-fit="true"]) > .kn-page-main:not([data-kn-shadow], [data-kn-edge-line]) { box-shadow: var(--kn-shadow-page); }
+    }
+    .kn-page:not(:has(> .kn-footer[data-kn-attachment="reveal"][data-kn-fit="true"])) > .kn-page-main:not([data-kn-shadow]) { border-block-end: 1px solid var(--kn-border); }
+  }
+  @container style(--kn-footer-same: 1) and style(--kn-shadow-page: none) {
+    .kn-page > .kn-page-main { border-block-end: 1px solid var(--kn-border); }
+  }
+  @media print {
+    .kn-page > .kn-page-main[data-kn-shadow] { box-shadow: none; }
+  }
 }

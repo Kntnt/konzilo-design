@@ -3,7 +3,9 @@
      sets its columns: two for two, three for one or three, and from four on three or four, whichever leaves the last row
      fuller, four where both do alike (owner, 2026-11-10). A window too narrow for four does the same with three and two,
      so four cards fall to two and two, never three and one, and a window too narrow for three takes two, then one.
-     Only the items that show are counted, so a filtered series keeps the rule.
+     Only items without `hidden` are counted, so a series a site trims with `hidden` keeps the rule. The cards Visitor
+     Filters hides by CSS still count, since that filter is a `:has()` and no `:has()` may hold another, so a series
+     its pills narrow keeps the columns of all its cards (the assistant's finding, 2026-11-10).
 
      Each width is a track a hair under its share, which 1fr gives back, so no browser's rounding pushes the last item to
      a row of its own. The terms times 999 are the switches: each is far below the others while its columns fit, and

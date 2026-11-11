@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Runs the design system's tests. Any arguments go to the test runner.
 set -euo pipefail
-source "$(dirname "$(realpath "${BASH_SOURCE[0]}")")/lib/design-file.sh"
+source "$(dirname "$(realpath "${BASH_SOURCE[0]}")")/../src/cli/design-file.sh"
 
 cd "$root"
 exec npm test -- "$@"

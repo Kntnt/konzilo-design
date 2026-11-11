@@ -1,4 +1,4 @@
-# Shared by the design-* commands: where the repository is, and the design file the command must be given.
+# Shared by the design-* commands in bin: where the repository is, and the design file the command must be given.
 root="$(cd "$(dirname "$(realpath "${BASH_SOURCE[0]}")")/../.." && pwd)"
 konzilo="$root/bin/konzilo-design.js"
 

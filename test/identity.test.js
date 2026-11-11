@@ -147,7 +147,7 @@ async function documentFor(face, direction) {
   const rows = [];
   for (const identity of IDENTITIES) for (const place of PLACES) for (const axis of ['row', 'column']) {
     const html = await render('HeaderIdentity', { identity: { label: WORDS, href: '#home', slogan: WORDS, sloganPlace: place, brandAxis: axis, name: identity === 'logo' ? undefined : WORDS, logo: identity === 'name' ? undefined : { light: logo, dark: logo } } });
-    rows.push(`<header class="kn-header" id="${identity}-${place}-${axis}"><div class="kn-header-bar"><div class="kn-header-inner"><div class="kn-header-group" data-kn-group="start">${html}</div></div></div></header>`);
+    rows.push(`<header class="kn-header" data-kn-step="none" id="${identity}-${place}-${axis}"><div class="kn-header-bar"><div class="kn-header-inner"><div class="kn-header-group" data-kn-group="start">${html}</div></div></div></header>`);
   }
   return `<!doctype html><html lang="en" dir="${direction}"><head><link rel="stylesheet" href="/src/fonts/fonts.css"><style>${coreCss(derive(design))}${await componentsCss()}
     .measuring .kn-header * { visibility: hidden; }

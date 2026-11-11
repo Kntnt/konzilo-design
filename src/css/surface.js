@@ -14,7 +14,16 @@ function shadowPair(light, dark, choose) {
   return light.replace(/rgb\([^)]*\)/g, (ink) => choose(ink, inks[i++]));
 }
 
+// A sticky header over the page's start is clear at the top (header.css): transparent, with the roles and mode of the
+// page's first band, which these rules give it while its page sets --kn-header-clear. Like the rest of the core they
+// name no class: the page is the parent of the header, the only element with a page start, and of the main.
+const firstBand = (test) => `[data-kn-surface]:has(> main > :first-child${test}) > [data-kn-start="under"]`;
+
 export function surfaceCss(surfaces) {
+  const clear = [
+    `${firstBand('[data-kn-mode="light"]')} {\n  --kn-mode: light;\n  color-scheme: light;\n${switches.light}\n}`,
+    `${firstBand('[data-kn-mode="dark"]')} {\n  --kn-mode: dark;\n  color-scheme: dark;\n${switches.dark}\n}`,
+  ];
   const blocks = [
     `:where(:root) {\n  --kn-mode: light;\n${switches.light}\n}`,
     `:where([data-kn-mode="light"]) {\n  --kn-mode: light;\n  color-scheme: light;\n${switches.light}\n}`,
@@ -28,7 +37,9 @@ export function surfaceCss(surfaces) {
     const lines = ROLES.map((role) => `  --kn-${role}: ${choose(light.roles[role], dark.roles[role])};`);
     lines.push(`  --kn-polarity: ${polarity};`, `  color-scheme: ${polarity};`);
     for (const name of Object.keys(light.shadow)) lines.push(`  --kn-shadow-${name}: ${shadowPair(light.shadow[name], dark.shadow[name], choose)};`);
-    lines.push(`  --kn-frame-color: ${choose(light['frame-color'], dark['frame-color'])};`, '  background: var(--kn-background);', '  color: var(--kn-text);');
+    lines.push(`  --kn-frame-color: ${choose(light['frame-color'], dark['frame-color'])};`);
+    clear.push(`${firstBand(kind === 'page' ? ':is(:not([data-kn-surface]), [data-kn-surface="page"])' : `[data-kn-surface="${kind}"]`)} {\n${lines.join('\n')}\n}`);
+    lines.push('  background: var(--kn-background);', '  color: var(--kn-text);');
     if (light.scrim) {
       const { color, opacity } = light.scrim;
       const scrim = `rgb(from ${color} r g b / ${opacity})`;
@@ -46,5 +57,6 @@ export function surfaceCss(surfaces) {
     }
     blocks.push(`${selector} {\n${lines.join('\n')}\n}`);
   }
+  blocks.push(`@container style(--kn-header-clear: 1) {\n${clear.join('\n\n')}\n}`);
   return blocks.join('\n\n');
 }

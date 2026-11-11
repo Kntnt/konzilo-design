@@ -9,10 +9,12 @@ Records the HTML contract between the directive list Konzilo defines and this de
 - **The directive list Konzilo defines** decides which parts exist and the structure and meaning of their HTML. Its examples' colours, type steps and picture shapes are illustrative only.
 - **This design system decides every look:** colour, type, space, columns and states. Everything here works for any design the tool can make, light or dark, in any colours and any typefaces.
 - **The site writes only HTML**, with this package's classes (`kn-*`), text types (`data-kn-type`) and Surfaces (`data-kn-surface`). This file names the class of every part. A site's own classes are its own CSS and no part of this contract.
-- **Behaviour belongs to this design system:** tab switching, choosing an answer, one-open accordions, marking the section being read in the following menu, and a head that stays as the page scrolls. It ships as small runtimes, as the header, the footer and consent do.
+- **Behaviour belongs to this design system:** tab switching, choosing an answer, one-open accordions, marking the section being read in the following menu, and a head that stays as the page scrolls. It is HTML and CSS, with no script wherever that is possible (principles.md, owner, 2026-11-10): tabs, a choice and an accordion are native `<details>`, and a head or an Aside Block stays by `position: sticky`.
 - **The owner's decisions on look**, made with the directive list, bind this design system and override earlier specs where they clash (Superseded, below).
 
 ***The assistant's choices, 2026-11-10:*** the following menu "In this article" marks the section being read, and fact boxes (`aside`) stand in the reading column, not in the Aside.
+
+***Dropped* by the owner's principle (principles.md, HTML and CSS, not JavaScript), 2026-11-10:** marking the section being read was the assistant's choice and needed a script, so no script marks it now. Where a browser has CSS scroll markers it marks the section itself, as a progressive enhancement that costs nothing elsewhere (`toc`, below). Visitor Filters, for `filtered`, runs no script either (the assistant's choice, 2026-11-10).
 
 ## How the design reads content
 
@@ -71,30 +73,20 @@ Records the HTML contract between the directive list Konzilo defines and this de
 
 - **Card Grid's columns** (components.md, How a component is built, Links and layout): in a card series from the directives, the number of cards sets the columns, three or four, whichever leaves the last row fuller, and two cards stand in two (owner, 2026-11-10, via the directive list). Card Grid's `columns` holds for other uses, and on a window too narrow for four a directive series makes the same choice between three and two, then two and one (owner's rule, applied by the assistant, 2026-11-10); Card Grid's own `data-kn-columns="4"` still falls straight to two for other uses.
 - **Accordion's FAQ** (components.md, Owner's component review): an accordion whose headings are all questions is drawn as questions and answers, a look of its own read from `data-kn-questions` (owner, 2026-11-10, via the directive list). `faq` on the Astro component still adds only structured data.
-- **Table of Contents' "no scroll-spy is added"** (components.md, Navigation): the following menu marks the section being read (the assistant's choice, 2026-11-10, above). A Table of Contents without `data-kn-follow` stays as it was.
+- **Table of Contents' "no scroll-spy is added"** (components.md, Navigation): the following menu marked the section being read by a script (the assistant's choice, 2026-11-10, above), dropped the same day by the owner's principle. It stands again: no script is added, and only a browser's own scroll markers mark the section (`toc`). A Table of Contents without `data-kn-follow` stays as it was.
 
 ## The body of a page
 
 A post's body is a sequence of bands (page.md, point 3): heroes and sections. A run of blocks at the top level outside a hero or a section is written as a section without a Surface, as if the editor had put `:::section` around it, so a list of logos alone at the top stands in a band of its own.
 
-The runtimes below are modules in `@kntnt/konzilo-design/components/`. A site's layout imports each one it uses and calls its setup once; each finds its parts in the document and does nothing where there are none.
-
-| Runtime | Setup | For |
-|---|---|---|
-| `section.js` | `setupSections()` | A head that stays beside an accordion |
-| `tabs.js` | `setupTabs()` | Tabs |
-| `choice.js` | `setupChoices()` | A choice |
-| `table-of-contents.js` | `setupFollowingMenus()` | The following menu of `toc` and an article |
-| `reading-area.js` | `setupReadingAreas()` (existing) | The Reading Area of `toc` and an article |
-| `visitor-filters.js` | `setupVisitorFilters()` (existing) | The post list's `filtered` |
+No directive has a runtime (2026-11-10): a site's layout imports no script for a body. `section.js`, `tabs.js`, `choice.js` and `reading-area.js` are gone, replaced by native `<details>` and CSS, as each part below says; a site that still calls their setups must drop those imports.
 
 ### Behaviour in a live preview
 
 ***Specified* with the Konzilo core's contract for its live preview, 2026-11-10:**
 
 - **Blocks keep their mark.** In a preview the core writes `data-konzilo-block` on every block of a body, its value a path within containers and lists, such as `2.1`. Markup that renders a directive keeps the attribute on the blocks it is given. No selector of this package reads it, and none is broken by it: an attribute on any element changes no layout, which `test/directives-section.test.js` checks over every directive's fixture.
-- **What holds a selected block opens.** When an editor selects a block in a field, the page dispatches a bubbling `konzilo-preview-show` event from that block (`PREVIEW_EVENT` in `tabs.js` and `choice.js`). `setupTabs()` selects the tab whose panel contains `event.target`, and `setupChoices()` chooses the answer whose panel contains it, so a block in a tab inside an answer opens both. Neither scrolls: bringing the block into view is the preview's (the assistant's choice, 2026-11-10). The core opens a `<details>` itself, so an accordion needs nothing, and `setupSections()` does nothing.
-- **It costs nothing where the parts are absent.** Each runtime listens once, on the document, and only where it found something to enhance.
+- **What holds a selected block opens.** The core opens every `<details>` that holds the block an editor selects, and brings the block into view itself. Tabs, a choice and an accordion are all `<details>`, so this package needs nothing for it: an exclusive group (`name`) closes the others as the browser opens one, and a block in a tab inside an answer opens both. The `konzilo-preview-show` event the runtimes of tabs and a choice listened for went with them (2026-11-10).
 
 ## `hero`
 
@@ -120,7 +112,7 @@ The runtimes below are modules in `@kntnt/konzilo-design/components/`. A site's 
 ```
 
 - The heading is the post's title, as `h1`, or, where the design has `inputs.hero.h1` set to `below`, a paragraph in a `<div class="kn-heading-group">`, as Heading Group writes it (components.md, The H1, the trail and the hero's heading). `data-kn-type` is the design's `inputs.hero.type`.
-- The first paragraph is the deck. The last picture is the hero's picture, in `.kn-hero-media`; a picture before the text is a logo, `.kn-hero-logo`, first after the trail, drawn 4rem high at its own proportions, as a section's badges are, so an SVG with only a `viewBox` shows too (the assistant's choice, 2026-11-10). Everything else follows the heading group in the order written.
+- The first paragraph is the deck. The last picture is the hero's picture, in `.kn-hero-media`; a picture before the text is a logo, `.kn-hero-logo`, first after the trail, at its own proportions, at most 4rem high and 16rem wide, as a section's badges are at most 4rem high and 8rem wide (the assistant's choice, 2026-11-10). ***Decided* by the owner (2026-11-11):** 4rem is a largest height, not a set one, so a small raster logo is never drawn past its own size and blurred; an SVG, whose `src` ends in `.svg` or which is an SVG data address, is drawn 4rem high, since one with only a `viewBox` has no size of its own. Everything else follows the heading group in the order written.
 - Where the design's `inputs.hero.picture` is `none` and the hero holds a picture, it stands at `end`, Hero's default side, since content the editor chose is never dropped.
 - `surface` takes `page` (no attribute), `raised` (the default), `inverse`, `tint`, `brand` or `accent`.
 
@@ -167,7 +159,7 @@ The runtimes below are modules in `@kntnt/konzilo-design/components/`. A site's 
 
 | | The section holds | Read by | The design draws |
 |---|---|---|---|
-| 1 | A picture first | `C:has(> .kn-section-media)` | The picture beside the head and body, its badges with it. With a form in the body, `C:has(> .kn-section-body > form)`, the picture is what the form offers. |
+| 1 | A picture first | `C:has(> .kn-section-media)` | The picture beside the head and body, its badges with it. A head and body shorter than the picture stand in the middle of its height; where they are taller, the picture grows to their height and is cropped to fill it (`object-fit: cover`), never short of its own proportions, up to a square and `85svh`; beside text longer still it keeps that size and stays at the top of the window as the text scrolls by, as a following menu does. With badges, the picture and its badges stay together at their own size and follow together (***decided*** by the owner, 2026-11-11). With a form in the body, `C:has(> .kn-section-body > form)`, the picture is what the form offers. |
 | 2 | A heading with a form right after it | A head with neither deck nor actions, and `.kn-section-body > form:first-child` | The form beside the heading, with any fine print under the form. |
 | 3 | Another form or a choice | `C:has(> .kn-section-body > :is(form, .kn-choice))` | The whole section centred, as a page's end. A form, its button and its terms after it, and what a chosen answer shows, keep the start edge, so labels, fields and the button read down one edge (the assistant's choice, 2026-11-10). |
 | 4 | A head, its actions and an accordion | A head, and `.kn-section-body > .kn-accordion:only-child` | The head beside the accordion, staying in view as the page scrolls. |
@@ -177,7 +169,7 @@ The runtimes below are modules in `@kntnt/konzilo-design/components/`. A site's 
 
 On a narrow window everything beside stands above and below in document order. Rule 2 lets eyebrows stand over the heading, which the directive list's wording allows; rule 4 also holds with no actions, which is how the directive list's own build reads it.
 
-**Behaviour.** Rule 4's head stays in view under the header as the page scrolls, at `--kn-reading-sticky-inset`, and only while it fits in the window below the header. `setupSections()` measures that, as `reading-area.js` does for a sticky Aside Block, and writes `data-kn-sticky="true"` on the `.kn-section-head` that may stay; without the runtime the head scrolls with the page.
+**Behaviour.** *(CSS)* Rule 4's head stays in view under the header as the page scrolls, by `position: sticky` at `--kn-reading-sticky-inset`. It is at most as tall as the window below that inset less the component gap, and a head taller than that scrolls inside itself, so it never hides its own end (the assistant's choice, 2026-11-10, replacing `section.js`, which let a head too tall for the window scroll with the page).
 
 **Component.** New: Section, a composition of Band, Heading Group and Actions. Its parts are `.kn-section-media`, `.kn-section-picture`, `.kn-section-badges`, `.kn-section-head` and `.kn-section-body`.
 
@@ -196,7 +188,7 @@ On a narrow window everything beside stands above and below in document order. R
 
 **Read from content.** *(CSS)* Its eyebrow is a plain label, its heading small and a list in it in small type, with the design's bullets. In an article, a fact box with an `id` is a stop in the following menu, its heading the stop's name.
 
-**Behaviour.** None of its own; the following menu marks it as it marks a crosshead.
+**Behaviour.** None of its own; where the browser marks the section being read (`toc`), it marks a fact box as a crosshead.
 
 **Component.** New: Fact Box. It stands in the reading column, in the flow; Aside Block keeps the Aside.
 
@@ -483,36 +475,38 @@ The symbol is the image as the reader writes it: an `<img>`, or an inline `<svg>
 
 **Read from content.** *(CSS, with the questions fact.)* An accordion of questions is drawn as questions and answers (owner, 2026-11-10).
 
-**Behaviour.** The browser's own: `name` keeps one open at a time, and the animation is Accordion's.
+**Behaviour.** The browser's own: `name` keeps one open at a time, and an answer opens at once, with no animation, in every engine (the owner, 2026-11-11).
 
 **Component.** Accordion, its FAQ look superseded above.
 
 ## `tabs`
 
-**Markup.** The ARIA tabs pattern: the intro names the tabs, each item's heading is a tab's button, and what follows it the tab's panel, its headings raised a level.
+**Markup.** An exclusive group of `<details>`, the first open: the intro names the tabs, each item's heading is a tab's `<summary>`, and what follows it the tab's panel, its headings raised a level.
 
 ```html
-<div class="kn-tabs">
+<div class="kn-tabs" role="group" aria-labelledby="tabs-1">
   <div class="kn-tabs-label" id="tabs-1"><p data-kn-type="label">Our plans</p></div>
-  <div class="kn-tabs-list" role="tablist" aria-labelledby="tabs-1">
-    <button class="kn-tabs-tab" type="button" role="tab" id="tabs-1-tab-1" aria-controls="tabs-1-panel-1" aria-selected="true">Small</button>
-    <button class="kn-tabs-tab" type="button" role="tab" id="tabs-1-tab-2" aria-controls="tabs-1-panel-2" aria-selected="false" tabindex="-1">Large</button>
-  </div>
-  <div class="kn-tabs-panel" role="tabpanel" id="tabs-1-panel-1" aria-labelledby="tabs-1-tab-1" tabindex="0">
-    <div class="kn-tabs-text">…paragraphs, pictures…</div>
-    <div class="kn-tabs-parts">…an accordion, a list…</div>
-  </div>
-  <div class="kn-tabs-panel" role="tabpanel" id="tabs-1-panel-2" aria-labelledby="tabs-1-tab-2" tabindex="0">…in order…</div>
+  <details class="kn-tabs-item" name="tabs-1" open>
+    <summary class="kn-tabs-tab">Small</summary>
+    <div class="kn-tabs-panel">
+      <div class="kn-tabs-text">…paragraphs, pictures…</div>
+      <div class="kn-tabs-parts">…an accordion, a list…</div>
+    </div>
+  </details>
+  <details class="kn-tabs-item" name="tabs-1">
+    <summary class="kn-tabs-tab">Large</summary>
+    <div class="kn-tabs-panel">…in order…</div>
+  </details>
 </div>
 ```
 
-- Without an intro there is no `.kn-tabs-label` and no `aria-labelledby`.
-- No panel carries `hidden`: the runtime hides them, so without it every panel shows.
-- Where `panelParts` gives a grouping, the panel's blocks stand in `.kn-tabs-text` and `.kn-tabs-parts`; otherwise they stand directly in the panel, in order.
+- Every `<details>` of one tabs carries the same `name`, unique on the page, so the browser keeps one open; the first carries `open`.
+- Without an intro there is no `.kn-tabs-label`, no `role` and no `aria-labelledby`.
+- Where `panelParts` gives a grouping, the panel's blocks stand in `.kn-tabs-text` and `.kn-tabs-parts`; otherwise they stand directly in `.kn-tabs-panel`, in order.
 
-**Read from content.** *(CSS)* A tab's text and its components stand in two columns (owner, 2026-11-10), where the panel has both groups; a panel of anything else keeps its order in one column. Under `@media (scripting: enabled)` only the first panel shows before the runtime has run, so the page does not jump.
+**Read from content.** *(CSS)* Each `<details>` gives way to its summary and its `::details-content`: the summaries stand in a row that wraps, as tabs, and the open panel takes the whole line under them; in right-to-left the row runs from the right. A tab's text and its components stand in two columns (owner, 2026-11-10), where the panel has both groups; a panel of anything else keeps its order in one column. A browser without `::details-content` draws each summary over its own panel, as an accordion. In print every panel shows under its tab's name.
 
-**Behaviour.** `setupTabs()` marks `data-kn-enhanced` on `.kn-tabs` and shows only the selected panel, `hidden` on the others. A click or Enter selects a tab; the arrow keys along the list, logical in right-to-left, and Home and End move between tabs and select, with a roving `tabindex`. A live preview's `konzilo-preview-show` from a block in a panel selects its tab (Behaviour in a live preview).
+**Behaviour.** The browser's own, with no script (the assistant's choice, 2026-11-10, replacing `tabs.js`, by the owner's principle). A click, Enter or Space on a tab opens it and closes the others; a click on the open tab keeps it open, while Enter or Space on it closes it, as on any disclosure. Tab moves through the tabs in document order, each followed by what its open panel holds. **Given up:** the arrow keys, Home and End between tabs and the roving `tabindex` of the ARIA tabs pattern; a screen reader hears each tab as a disclosure, expanded or collapsed, not as a tab of a tab list. A link to something in a closed panel opens it, as the browser opens any `<details>` that holds a link's target.
 
 **Component.** Tabs, moved out of "Not now" (components.md).
 
@@ -521,7 +515,7 @@ The symbol is the image as the reader writes it: an `<img>`, or an inline `<svg>
 **Markup.** A Reading Area whose Aside holds a sticky Aside Block with a following menu, and whose flow holds the items, each heading carrying its anchor. It stands in a section's body.
 
 ```html
-<div class="kn-reading-area" data-kn-side="start" data-kn-stack="before" data-kn-columns="1">
+<div class="kn-reading-area" data-kn-side="start" data-kn-stack="before">
   <div class="kn-reading-area-aside">
     <aside class="kn-aside-block" data-kn-sticky="true">
       <nav class="kn-toc" aria-labelledby="toc-1" data-kn-type="small" data-kn-follow>
@@ -543,33 +537,35 @@ The intro is the menu's label; without one, the `<nav>` takes an `aria-label` in
 
 **Read from content.** *(CSS)* As Reading Area and Table of Contents. `data-kn-side="start"` puts the menu before the text.
 
-**Behaviour.** `setupFollowingMenus()` marks the section being read: on each `.kn-toc[data-kn-follow]` it gives `aria-current="true"` to the link whose target is the last to have passed the reading line, `--kn-reading-sticky-inset` below the window's top, and to the first before any has; it follows scrolling, resizing and `kn:headerchange`. Its decision is an exported pure function, `currentStop(tops, line)`. Reading Area's own runtime places the Aside and its stickiness.
+**Behaviour.** No script (the owner's principle, 2026-11-10). The menu stands on a rail along its links and stays in view as Reading Area keeps its Aside, and nothing marks the section being read. ***Removed* by the owner, 2026-11-11, under his rule that a site behaves the same in Gecko, WebKit and Chromium:** the assistant's choice of 2026-11-10, `scroll-target-group: auto` on `.kn-toc[data-kn-follow]`, by which a browser with CSS scroll markers marked the link whose section was being read with `:target-current`, drawn as the rail's accent; only Chromium had them (Firefox 157 and Safari 27.2 had neither).
 
-**Component.** Reading Area, Aside Block and Table of Contents, which gains `data-kn-follow` and its runtime.
+**Component.** Reading Area, Aside Block and Table of Contents, which gains `data-kn-follow`, with no runtime.
 
 ## `choice`
 
-**Markup.** The intro names the answers; each item's heading is an answer's button, and what follows it the answer's panel, its headings raised a level. No answer is chosen.
+**Markup.** An exclusive group of `<details>`, none open: the intro names the answers; each item's heading is an answer's `<summary>`, and what follows it the answer's panel, its headings raised a level.
 
 ```html
-<div class="kn-choice">
+<div class="kn-choice" role="group" aria-labelledby="choice-1">
   <div class="kn-choice-label" id="choice-1"><p>Do you have an account?</p></div>
-  <div class="kn-choice-answers" role="group" aria-labelledby="choice-1">
-    <button class="kn-choice-answer" type="button" aria-expanded="false" aria-controls="choice-1-answer-1" data-kn-surface="raised">Yes</button>
-    <button class="kn-choice-answer" type="button" aria-expanded="false" aria-controls="choice-1-answer-2" data-kn-surface="raised">No</button>
-  </div>
-  <div class="kn-choice-panel" id="choice-1-answer-1" data-kn-surface="raised">…more than a form…</div>
-  <div class="kn-choice-panel" id="choice-1-answer-2"><form class="konzilo-form" …>…</form></div>
+  <details class="kn-choice-item" name="choice-1">
+    <summary class="kn-choice-answer" data-kn-surface="raised">Yes</summary>
+    <div class="kn-choice-panel" data-kn-surface="raised">…more than a form…</div>
+  </details>
+  <details class="kn-choice-item" name="choice-1">
+    <summary class="kn-choice-answer" data-kn-surface="raised">No</summary>
+    <div class="kn-choice-panel"><form class="konzilo-form" …>…</form></div>
+  </details>
 </div>
 ```
 
-- The intro stands as written in `.kn-choice-label`; without one there is no label and no `aria-labelledby`.
+- Every `<details>` of one choice carries the same `name`, unique on the page; none carries `open`.
+- The intro stands as written in `.kn-choice-label`; without one there is no label, no `role` and no `aria-labelledby`.
 - Every answer takes `surfaceOf('choice-answer', ground)`. A panel that holds more than a form takes `surfaceOf('choice-panel', ground)`; a panel of only a form takes none.
-- No panel carries `hidden`, as for tabs.
 
-**Read from content.** *(CSS)* The answers are big buttons, none chosen beforehand; an answer with more than a form stands on a plate (owner, 2026-11-10). The chosen answer is marked. Under `@media (scripting: enabled)` no panel shows before the runtime has run. A section holding a choice is read by rule 3.
+**Read from content.** *(CSS)* The answers are big buttons side by side, each at least 14rem, none chosen beforehand; an answer with more than a form stands on a plate (owner, 2026-11-10). The chosen answer is marked, and its panel takes the whole line under the answers. A browser without `::details-content` puts each panel under its own answer; in print every panel shows under its answer. A section holding a choice is read by rule 3.
 
-**Behaviour.** `setupChoices()` marks `data-kn-enhanced` on `.kn-choice` and hides every panel. A click on an answer gives it `aria-expanded="true"`, the other answers `false`, and shows its panel alone; a click on the chosen answer keeps it chosen. A live preview's `konzilo-preview-show` from a block in a panel chooses its answer (Behaviour in a live preview).
+**Behaviour.** The browser's own, with no script (the assistant's choice, 2026-11-10, replacing `choice.js`). A click, Enter or Space chooses an answer and shows its panel alone; a click on the chosen answer keeps it chosen, while Enter or Space on it closes it, as on any disclosure. A link to something in a panel chooses its answer, as the browser opens any `<details>` that holds a link's target. **Given up:** the runtime's scrolling of a panel that opened far below the window into view.
 
 **Component.** New: Choice.
 
@@ -661,29 +657,29 @@ A teaser card is a link as a whole, so it takes `surfaceOf('link-card', ground)`
 
 ### `presentation="filtered"`
 
-**Markup.** Visitor Filters over the cards: one group of topic pills, each a post's topic, the topics with the most posts first, and each card an item with its topics.
+**Markup.** Visitor Filters over the cards: one group of topic pills, each a post's topic, the topics with the most posts first, at most 24, and each card an item with the keys of its topics. A pill is a checkbox in its label; its key, `data-kn-match`, is `1-` and its place among the pills, from 1, and a card's `data-kn-matches` holds the keys of its topics, separated by spaces. `filterKeys` and `itemMatches` in `components/visitor-filters.js` give both at build.
 
 ```html
 <div class="kn-post-list" data-kn-presentation="filtered">
-  <form class="kn-visitor-filters" role="search" method="get" action="" data-kn-for="posts-1" data-kn-page-size="0" data-kn-count-text="Showing {count} articles">
+  <form class="kn-visitor-filters" role="search" method="get" action="">
     <div class="kn-visitor-filter-panel">
       <fieldset class="kn-visitor-filter-group"><legend>Topic</legend>
         <div class="kn-visitor-filter-toggles">
-          <button class="kn-pill" type="submit" name="topic" value="planning" aria-pressed="false" data-kn-filter-name="topic">Planning</button>
+          <label class="kn-pill"><input type="checkbox" name="topic" value="planning" aria-controls="posts-1" data-kn-match="1-1">Planning</label>
+          <label class="kn-pill"><input type="checkbox" name="topic" value="costs" aria-controls="posts-1" data-kn-match="1-2">Costs</label>
         </div>
       </fieldset>
       <button class="kn-button kn-visitor-filter-submit" type="submit" data-kn-variant="outline">Show</button>
     </div>
-    <p class="kn-visitor-filter-count" role="status" aria-live="polite" data-kn-result-count data-kn-type="small">Showing 12 articles</p>
-    <div data-kn-pagination-host></div>
+    <p class="kn-visitor-filter-count" data-kn-type="small">Showing 12 articles</p>
   </form>
   <div class="kn-card-grid kn-cards" id="posts-1">
-    <article class="kn-card" data-kn-surface="raised" data-kn-item data-kn-filter='{"topic":["planning","costs"]}'>…</article>
+    <article class="kn-card" data-kn-surface="raised" data-kn-item data-kn-matches="1-1 1-2">…</article>
   </div>
 </div>
 ```
 
-**Read from content.** *(CSS)* The pills over the cards, as Visitor Filters draws them. Its "Show" button is hidden from the start wherever script runs, and its empty pagination place takes no row, so the cards do not move when the runtime starts; without script the pills, which are submit buttons, still filter (the assistant's choice, 2026-11-10). **Behaviour.** `visitor-filters.js`: with no pill pressed every card shows; pressing pills shows the cards with any of their topics, and the count follows. Without script the pills submit the form. **Component.** Post List, with Visitor Filters.
+**Read from content.** *(CSS)* The pills over the cards, as Visitor Filters draws them. **Behaviour.** None: no script (the owner's principle, 2026-11-10). With no pill checked every card shows; checking pills shows the cards with any of their topics, by CSS alone (components.md, Visitor Filters). A form of pills alone needs no "Show", so the stylesheet hides it. The count is the server's: it stands while no pill differs from how the page was sent and steps aside once one does, since nothing can count again; it is no live region. A screen-reader user hears each pill's state as a checkbox, and the cards that do not match are `display: none`, so they leave the accessibility tree and reading on finds only the matching cards. The columns stay those of all the cards while pills narrow them (cards.css). **Component.** Post List, with Visitor Filters. ***Superseded* (the assistant's choice, 2026-11-10):** the pills were submit buttons with `aria-pressed`, the form carried `data-kn-for`, `data-kn-page-size` and `data-kn-count-text`, the count was a polite live region, a pagination place followed it, and each card carried `data-kn-filter` as JSON, all for `visitor-filters.js`, which is gone; the Konzilo core writes the markup above instead.
 
 ## `::form`
 
@@ -734,7 +730,7 @@ An article's page is laid out by its fields, not by directives: an opening, the 
 ```html
 <section class="kn-band kn-article-body">
   <div class="kn-band-content">
-    <div class="kn-reading-area" data-kn-side="start" data-kn-stack="before" data-kn-columns="1">
+    <div class="kn-reading-area" data-kn-side="start" data-kn-stack="before">
       <div class="kn-reading-area-aside">
         <aside class="kn-aside-block" data-kn-sticky="true">
           <nav class="kn-toc" aria-labelledby="article-menu" data-kn-type="small" data-kn-follow>
@@ -761,9 +757,9 @@ An article's page is laid out by its fields, not by directives: an opening, the 
 
 **Read from content.** *(CSS)* Crossheads and the headings under them take the article's steps, which the design sets by place, so the body's headings carry no `data-kn-type`. A question is drawn as an interview's question.
 
-**Behaviour.** `setupFollowingMenus()` marks the section being read, as for `toc`; `setupReadingAreas()` places the menu and keeps it in view.
+**Behaviour.** Only a browser's own scroll markers mark the section being read, as for `toc`; the Reading Area's CSS places the menu and keeps it in view, with no script.
 
-**Component.** Reading Area, Aside Block, Table of Contents with `data-kn-follow`, Fact Box and Body Text. New: the class `kn-article-body` and the part `.kn-question`.
+**Component.** Reading Area, Aside Block, Table of Contents with `data-kn-follow` and no runtime, Fact Box and Body Text. New: the class `kn-article-body` and the part `.kn-question`.
 
 ### "Read more"
 
@@ -787,5 +783,6 @@ An article's page is laid out by its fields, not by directives: an opening, the 
 
 - **A deck in a section with a choice.** The directive list says a paragraph is no deck where it leads to a form. The rule above also takes a choice, as the directive list's own build does, since a choice's answers usually hold forms; a section with a choice is centred as a page's end either way.
 - **The trail's last level.** The core hides it by a setting per type, and the design has `current`. The core's setting wins where it hides the level; elsewhere the design's holds.
-- **"All topics".** Visitor Filters shows every card when no pill is pressed and lets several be pressed, so `filtered` has no "All topics" pill and pressing two topics shows the cards of either.
+- **"All topics".** Visitor Filters shows every card when no pill is checked and lets several be checked, so `filtered` has no "All topics" pill and checking two topics shows the cards of either.
+- **More than 24 topics.** The stylesheet knows 24 keys a group (components.md, Visitor Filters), so `filtered` shows the 24 topics with the most posts. Whether a site with more wants another way in is open.
 - **Captions in cards.** A picture in a card, a hero, a section's media or a logo band has no caption; the core's intake does not refuse one yet.

@@ -56,6 +56,16 @@ async function inline(source) {
     if (/\bimport\s*\(/.test(js)) throw new Error('Client script is not fully bundled');
     return `<script${before}${after}>${js.replace(/<\/script/gi, '<\\/script')}</script>`;
   });
+  // A header's polyfill loader fetches its polyfill by address: here the polyfill itself goes in, testing for its
+  // feature as the loader did.
+  await replace(/<script\b[^>]*\bdata-kn-polyfill\b[^>]*>([\s\S]*?)<\/script>/gi, async ([, code]) => {
+    const path = code.match(/const src = "([^"]+)"/)?.[1];
+    if (!path) throw new Error('Polyfill loader has no address');
+    const bundle = await rolldown({ input: fileURLToPath(localAsset(path)), logLevel: 'silent' });
+    const { output } = await bundle.generate({ format: 'iife', minify: true });
+    await bundle.close();
+    return `<script>${output[0].code.replace(/<\/script/gi, '<\\/script')}</script>`;
+  });
   source = source.replace(/<link\b[^>]*rel="(?:modulepreload|preload)"[^>]*>/gi, '');
   const decoded = source.replaceAll('&quot;', '"').replaceAll('&#39;', "'");
   const cssSources = [...decoded.matchAll(/<style\b[^>]*>([\s\S]*?)<\/style>/gi)].map(([, css]) => css).concat([...source.matchAll(/\bstyle="([^"]*)"/gi)].map(([, css]) => css.replaceAll('&quot;', '"').replaceAll('&#39;', "'").replaceAll('&amp;', '&'))).join('\n');
@@ -66,11 +76,13 @@ async function inline(source) {
   }
   return withTooltips(source);
 }
-// The frame controller owns the three enhancements after cloning its templates.
-// Remove component entry tags here so inserting a template never boots a second copy.
+// The frame controller owns the consent banner after cloning the lab's templates, and loads the header's and the
+// footer's scripts and polyfills. Remove component entry tags here so inserting a template never boots a second copy.
 const sampleSource = (await readFile(new URL('./dist/lab/index.html', import.meta.url), 'utf8'))
-  .replace(/<script\b[^>]*src="[^"]*\/(?:Header|Footer|ReadingArea|ConsentBanner)\.astro_[^"]*"[^>]*>\s*<\/script>/gi, '');
+  .replace(/<script\b[^>]*src="[^"]*\/ConsentBanner\.astro_[^"]*"[^>]*>\s*<\/script>/gi, '')
+  .replace(/<script\b[^>]*\bdata-kn-(?:header|footer)-fit\b[^>]*>[\s\S]*?<\/script>/gi, '');
 const sample = await inline(sampleSource);
+// Each header on the page keeps its giving-way script inline, as a site's does.
 let html = await inline(await readFile(output, 'utf8'));
 // A JSON string survives both the HTML parser and a sandbox with an opaque origin.
 html = html.replace(/(<script\b[^>]*id="g-lab-document"[^>]*>)[\s\S]*?(<\/script>)/, (_, start, end) => `${start}${JSON.stringify(sample).replace(/</g, '\\u003c')}${end}`);

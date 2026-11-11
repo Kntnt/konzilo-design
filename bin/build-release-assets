@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# Builds the files attached to a GitHub release, into release-assets/ (which the release empties first):
+#   kntnt-konzilo-design-<version>.tgz   the package a Konzilo site installs (npm pack)
+#   konzilo-design-fonts-<version>.zip   every shipped typeface with its licence, which the package leaves out
+#   konzilo-design-gallery-<version>.html every component in one self-contained page
+# Usage: build-release-assets
+set -euo pipefail
+cd "$(dirname "$(realpath "${BASH_SOURCE[0]}")")/.."
+
+version="$(node -p "require('./package.json').version")"
+out="release-assets"
+mkdir -p "$out"
+
+npm pack --silent --pack-destination "$out" >/dev/null
+(cd src/fonts && zip -q -r "../../$out/konzilo-design-fonts-$version.zip" .)
+npm run --silent gallery >/dev/null
+cp gallery/dist/index.html "$out/konzilo-design-gallery-$version.html"
+
+ls -1 "$out" >&2

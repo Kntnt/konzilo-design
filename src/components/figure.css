@@ -22,6 +22,4 @@
     color: var(--kn-text-muted);
     overflow-wrap: anywhere;
   }
-  .kn-figure[data-kn-beside-block] { --kn-figure-caption-offset: 0rem; }
-  .kn-figure[data-kn-beside-block] > .kn-figure-media { border-radius: var(--kn-radius-card); }
 }

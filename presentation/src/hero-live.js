@@ -75,10 +75,7 @@ export function followHero() {
     const trailKey = JSON.stringify([frame?.breadcrumbs, project?.name]);
     const nodes = document.querySelectorAll('[data-kn-live-hero]');
     if (heroKey !== shownHero) for (const node of nodes) setHero(node, hero.settings, hero.images);
-    if (frame && trailKey !== shownTrail) {
-      for (const node of nodes) setTrail(node, frame.breadcrumbs, project);
-      document.querySelector('.kn-page > .kn-header')?.dispatchEvent(new Event('kn:refresh'));
-    }
+    if (frame && trailKey !== shownTrail) for (const node of nodes) setTrail(node, frame.breadcrumbs, project);
     shownHero = heroKey;
     shownTrail = trailKey;
   });

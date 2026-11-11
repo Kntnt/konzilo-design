@@ -1,6 +1,5 @@
 @layer kn-components {
   .kn-sidenote {
-    --kn-sidenote-position: 0rem;
     margin-block: var(--kn-space-component-gap);
     margin-inline: 0;
     padding-inline-start: var(--kn-space-component-gap);

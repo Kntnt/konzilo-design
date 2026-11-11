@@ -3,7 +3,7 @@
 # Stop the tool first, or it will save its own copy over the restored file.
 # Usage: design-restore <design-file>
 set -euo pipefail
-source "$(dirname "$(realpath "${BASH_SOURCE[0]}")")/lib/design-file.sh"
+source "$(dirname "$(realpath "${BASH_SOURCE[0]}")")/../src/cli/design-file.sh"
 
 need_file "$@"
 design="$1"

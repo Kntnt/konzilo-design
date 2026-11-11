@@ -13,7 +13,7 @@ export interface ContentParts {
   kind?: 'article' | 'document' | 'video'; fileType?: string; fileSize?: string;
 }
 export interface ContentItem extends ContentParts {
-  surface?: Surface; group?: string; filters?: Record<string, string | string[]>; searchText?: string;
+  surface?: Surface; group?: string; filters?: Record<string, string | string[]>;
 }
 export interface FieldOption { value: string; label: string; disabled?: boolean }
 export interface ConsentService { name: string; provider: string; thirdParty: boolean; purpose: string; storage: string; data: string }

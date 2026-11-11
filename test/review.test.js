@@ -53,7 +53,7 @@ test('every plain and striped table has whole-row feedback and keeps both edge p
   assert.match(source, /padding-inline: 0.9em/); assert.doesNotMatch(source, /data-kn-column|padding-inline-(?:start|end): 0/);
 });
 
-test('Accordion variants keep FAQ invisible and animate both native states, including named single groups', async () => {
+test('Accordion variants keep FAQ invisible and open at once in every engine, including named single groups', async () => {
   for (const variant of ['hairlines', 'boxes']) for (const mode of ['single', 'multiple']) {
     const tree = parse(await render('Accordion', { variant, mode, items: [{ question: 'Before the walk', answer: 'Bring a pencil.' }, { question: 'After the walk', answer: 'Compare your notes.' }] }));
     assert.equal(one(tree, '.kn-accordion').attributes['data-kn-variant'], variant);
@@ -63,9 +63,8 @@ test('Accordion variants keep FAQ invisible and animate both native states, incl
     assert.equal(all(tree, 'script').length, 0);
   }
   const source = await css('accordion');
-  assert.match(source, /@supports \(interpolate-size: allow-keywords\)/);
-  assert.match(source, /::details-content[^\n]+block-size: 0[^\n]+content-visibility var\(--kn-duration-movement\) allow-discrete/);
-  assert.match(source, /\[open\]::details-content \{ block-size: auto/);
+  // Only Chromium could animate the opening (interpolate-size), so nothing does (the owner, 2026-11-11).
+  assert.doesNotMatch(source, /interpolate-size:|allow-discrete|@supports/);
   assert.match(source, /padding-inline: 0.75em/); assert.doesNotMatch(source, /text-decoration: underline/);
   assert.match(source, /data-kn-variant="boxes"[^\n]+border: 1px solid var\(--kn-border-strong\)/);
 });
@@ -122,7 +121,6 @@ test('row loops reserve missing picture columns, omit all pictures together and 
   const tree = parse(await render('ContentLoop', { presentation: 'rows', items }));
   assert.equal(all(tree, '.kn-content-picture').length, 2); assert.equal(all(tree, '[data-kn-placeholder]').length, 1);
   assert.deepEqual(all(tree, '[data-kn-content-group]').map(textOf), ['2026', '2025']);
-  assert.deepEqual(all(tree, '[data-kn-item]').map((node) => node.attributes['data-kn-group']), ['2026', '2025']);
   const none = parse(await render('ContentLoop', { presentation: 'rows', items, images: false })); assert.equal(all(none, '.kn-content-picture').length, 0);
 });
 
@@ -132,7 +130,7 @@ test('search variant uses the shared inverse box, field, submit and suggestions 
   assert.equal(one(box, 'input').attributes['aria-label'], 'Find a note'); assert.ok(one(box, 'button[type="submit"]'));
   assert.equal(one(box, '.kn-search-links a').attributes.href, '/walks/'); assert.equal(one(box, '[data-kn-close]'), undefined);
   const header = parse(await render('SearchPanel', { id: 'search-panel', search: { action: '/search/' } })); assert.ok(one(header, '.kn-search-box [data-kn-close]'));
-  assert.match(await css('visitor-filters'), /data-kn-enhanced[^\n]+kn-visitor-filter-submit \{ display: none/);
+  assert.match(await css('visitor-filters'), /:has\(\[data-kn-match\]\):not\(:has\(input\[type="search"\]\)\) \.kn-visitor-filter-submit \{ display: none/, 'pills that filter at once need no button');
   assert.match(await css('visitor-filters'), /kn-visitor-filter-panel \{ display: grid/, 'each filter has a row of its own');
   assert.match(await css('form'), /kn-field-select > \.kn-icon \{[^}]*inset-inline-end: 1em/, 'a select\'s arrow keeps its distance from the edge');
 });

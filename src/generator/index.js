@@ -22,6 +22,7 @@ export * from './fingerprint.js';
 export * from './fluid.js';
 export * from './validate.js';
 export * from './surface.js';
+export * from './layout.js';
 
 // Live previews need no secure context or asynchronous fingerprinting.
 export function derive(inputs) {

@@ -5,7 +5,7 @@ import { dirname, join } from 'node:path';
 import { resolve, checkFormat, checkFingerprint, checkContrast, validateInputs, validateDesignFile, withFormat } from '../src/generator/index.js';
 import { emitCss } from '../src/css/index.js';
 import { componentsCss } from '../src/css/components.js';
-import { backUp } from './lib/backup.js';
+import { backUp } from '../src/cli/backup.js';
 
 const usage = 'Usage: konzilo-design resolve <file> | css <file> [-o out.css] | check <file> | components-css [-o out.css] | fonts <file> [-o folder] | logos <file> [-o folder] | tool <file> [--port N] [--no-open] | presentation <file> [-o out.zip] | design-md <file> [-o out.zip|out.md]';
 

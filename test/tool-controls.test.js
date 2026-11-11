@@ -427,9 +427,11 @@ test('the identity has its four controls, none disabled, nothing on the left mov
             name: rect('.kn-header-identity .kn-brand-name'),
             logo: rect('.kn-header-identity .kn-brand-logo'),
             contents: getComputedStyle(brand).display === 'contents',
-            collapsed: document.querySelector('.kn-header').dataset.knCollapsed,
+            // What has given way: what the visible row no longer shows.
+            collapsed: ['.kn-header-slogan', '.kn-brand-name', '.kn-header-link-menu', '.kn-header-group > .kn-header-cta'].filter((selector) => document.querySelector(`.kn-header-row ${selector}`) && !document.querySelector(`.kn-header-row ${selector}`).getClientRects().length).join(' '),
             bar: document.querySelector('.kn-header-bar').getBoundingClientRect().height,
-            published: parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--kn-header-height')) * parseFloat(getComputedStyle(document.documentElement).fontSize),
+            // Registered as a length, so the browser gives it in pixels.
+            published: parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--kn-header-height')),
             footerSlogan: !!document.querySelector('.kn-footer .kn-header-slogan'),
           };
         });
@@ -483,9 +485,9 @@ test('the identity has its four controls, none disabled, nothing on the left mov
     await preview.waitForFunction(([wanted, shows]) => document.querySelector('.kn-page > .kn-header').dataset.knArrangement === wanted && (shows === null || !!document.querySelector('.kn-header-bar .kn-header-cta') === shows), [await page.locator('[data-pick="inputs.header.arrangement"][aria-pressed="true"]').getAttribute('data-value'), value]);
     const still = await preview.evaluate(() => {
       const header = document.querySelector('.kn-page > .kn-header');
-      return { header: header === window.keptHeader, logos: [...header.querySelectorAll('img')].every((image) => window.keptLogos.includes(image)), loads: window.logoLoads, enhanced: header.dataset.knEnhanced };
+      return { header: header === window.keptHeader, logos: [...header.querySelectorAll('img')].every((image) => window.keptLogos.includes(image)), loads: window.logoLoads };
     });
-    assert.deepEqual(still, { header: true, logos: true, loads: 0, enhanced: 'true' }, 'the header changes where it stands');
+    assert.deepEqual(still, { header: true, logos: true, loads: 0 }, 'the header changes where it stands');
   }
   // Beside, the slogan goes first. Below a wider name it frees no width, stays until the name goes, and goes with it.
   const narrow = await (await page.locator('#preview-narrow').elementHandle()).contentFrame();
@@ -495,14 +497,17 @@ test('the identity has its four controls, none disabled, nothing on the left mov
   await turnTo(page, 'frame', 'header');
   await page.locator('[data-path="project.slogan"]').fill('Calm');
   await narrow.waitForFunction(() => document.querySelector('.kn-header-slogan')?.textContent === 'Calm');
-  const steps = () => narrow.evaluate(() => document.querySelector('.kn-header').dataset.knCollapsed.split(' '));
-  await narrow.waitForFunction(() => document.querySelector('.kn-header').dataset.knCollapsed.includes('slogan'));
-  assert.ok((await steps()).includes('name'));
+  // A step taken in the visible row: its container query on the slack named for it holds.
+  const taken = (step) => narrow.evaluate((step) => getComputedStyle(document.querySelector('.kn-header-row')).getPropertyValue(`--kn-header-gone-${step}`) === '1', step);
+  await narrow.waitForFunction(() => getComputedStyle(document.querySelector('.kn-header-row')).getPropertyValue('--kn-header-gone-slogan') === '1');
+  assert.ok(await taken('name'));
   await control('slogan-place').selectOption('below');
-  await narrow.waitForFunction(() => document.querySelector('.kn-header-identity').dataset.knSloganPlace === 'below' && !document.querySelector('.kn-header').dataset.knCollapsed.includes('slogan'));
-  assert.ok((await steps()).includes('name'), 'the name still goes');
-  assert.equal(await narrow.locator('.kn-header-slogan').isVisible(), false, 'and the slogan goes with it');
-  assert.equal(await narrow.locator('.kn-header-identity .kn-brand-logo').isVisible(), true, 'the logo stays');
+  // Below a wider name the slogan frees no width: its copy is as wide as the one before it, so its step is taken
+  // together with the name's.
+  await narrow.waitForFunction(() => document.querySelector('.kn-header-identity').dataset.knSloganPlace === 'below');
+  assert.ok(await taken('name'), 'the name still goes');
+  assert.equal(await narrow.locator('.kn-header-row .kn-header-slogan').isVisible(), false, 'and the slogan goes with it');
+  assert.equal(await narrow.locator('.kn-header-row .kn-header-identity .kn-brand-logo').isVisible(), true, 'the logo stays');
   // Below with no slogan to stand there, logo and name are still centred on each other.
   await page.locator('[data-path="project.slogan"]').fill('');
   await preview.waitForFunction(() => !document.querySelector('.kn-header-slogan') && !!document.querySelector('.kn-header-identity .kn-brand-name'));

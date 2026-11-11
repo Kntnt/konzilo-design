@@ -208,7 +208,7 @@ The frame is always solid, off by default, with corners from the corner slider. 
 | `--layout-aside-min` | Minimum usable Aside width | plates.md §§2–3; page.md, Reading Area §4; proposed here | Proposed here | Names the condition that triggers the one-column layout. |
 | `--layout-content-area` | Available centred content width: `min(100% − 2 × side margin, Wide)` in the page's full-width context | page.md §2; proposed here | Proposed here | Distinguishes the computed width from Wide's maximum. |
 
-The Reading Area threshold is Narrow + column gap + Aside minimum; it gains no independently named breakpoint. The content area aligns the header, footer and bands. Layout values use rem or relations built from rem; names do not encode dimensions.
+The Reading Area threshold is Narrow + column gap + Aside minimum; it gains no independently named breakpoint. ***Built* 2026-11-10 (the assistant's choice):** `--kn-reading-columns`, `1` on `:root` and `2` inside the media query in rem the CSS emitter works out from that threshold (page.md, The Reading Area, point 4), is the one switch `reading-area.css` reads, by a style query; the generator's `readingColumnWindows` and `readingColumnQueries` give the windows and their queries. Inside the component, `--kn-reading-reach` and `--kn-reading-edge-radius` give a Breakout's picture its reach to the window's edges and its corners, zero and the card radius where it stands at Narrow beside a float. ***Removed* with `reading-area.js`:** `data-kn-columns` on a Reading Area, `data-kn-beside-block`, `data-kn-sticky-active`, `--kn-reading-min-block-size`, `--kn-sidenote-position` and the part `.kn-reading-area-measure`. The content area aligns the header, footer and bands. Layout values use rem or relations built from rem; names do not encode dimensions.
 
 ### Theme colours
 
@@ -442,12 +442,17 @@ The class grammar and selectors are shared by Astro and the plain HTML export.
 
 | Custom property | What it is |
 |---|---|
-| `--kn-header-height` | Measured bar height, published on the root and its Page in rem. |
-| `--kn-header-visible-height` | The sticky height currently shown; zero while fully away or in flow. Root scroll padding and the Reading Area follow it. |
-| `--kn-header-identity-scale` | Unitless, width-driven last-resort scale of the identity; independent of scrolling. A brand elsewhere has no scale, and reads it as 1. |
-| `--kn-header-panel-top` | Measured window position of the bar’s bottom edge, in rem. |
+| `--kn-header-height` | The bar's height, worked out in CSS from the identity's settings, not measured (2026-11-10): each header's own, and on the root the page header's, for what lies outside it. Registered as a length, so it is read in pixels. |
+| `--kn-header-visible-height` | The sticky height shown: the header's height, zero in flow and while it has slid away. The Reading Area and a Section's head follow it. |
+| `--kn-header-identity-scale` | Unitless last-resort scale of the identity, 1 or, where even the identity and the menu button do not fit, 0.8, after which the identity may shrink, its name wrapping to two lines (2026-11-10; the wrapping the owner's, 2026-11-11); independent of scrolling. A brand elsewhere has no scale, and reads it as 1. |
 | `--kn-header-menu-columns` | Number of level-1 columns, capped at six before responsive steps to two and one. |
-| `--kn-footer-height` | The measured footer height reserved by the Page under reveal, in rem. |
+| `--kn-header-scrolled`, `--kn-header-past`, `--kn-header-beyond` | The scroll flags, 0 or 1, on the root where a page has a sticky header: content under the header, past T and past the header's own height. Set by scroll-driven animations, or by `scroll-timeline-polyfill.js` where the browser has none (2026-11-10). |
+| `--kn-header-scrolled-at`, `--kn-header-past-at`, `--kn-header-beyond-at` | Where each flag turns: 0.0625rem, 1.5rem (T) and the header's height. Registered lengths, which the polyfill reads in pixels. |
+| `--kn-header-clear` | 1 on a Page whose header is clear, transparent with the first band's Surface roles; the generated core reads it (2026-11-10). |
+| `--kn-header-under`, `--kn-header-same` | On the header: content lies under it, and the first band has its colour; with no shadow, either draws its hairline. |
+| `--kn-header-gone-slogan` … `--kn-header-gone-search` | On the header, 1 where its giving-way step is taken, by `data-kn-step`, or with no step written. |
+| `--kn-header-logo`, `--kn-header-name`, `--kn-header-slogan`, `--kn-header-slogan-gap`, `--kn-header-brand`, `--kn-header-identity`, `--kn-header-cap` | Local terms of the bar's height: each part's box, a line of words counting as `--kn-header-cap`, 0.66, of its size. |
+| `--kn-footer-same` | 1 on a Page whose last child's Surface is the footer's first band's; the Page then shows its edge (2026-11-10). |
 | `--kn-footer-edge-start`, `--kn-footer-edge-end`, `--kn-footer-row-gap` | Local space at a band's edges and between its rows: as any Band, thin in the lower band, closed up where two bands share a colour. |
 | `--kn-footer-inner`, `--kn-footer-side` | Local grid relations for the shared content rail and its margins. |
 | `--kn-footer-separator` | Local width of the footer link list’s bullet strip, in em. |
@@ -461,9 +466,8 @@ The class grammar and selectors are shared by Astro and the plain HTML export.
 | Attribute | What it is |
 |---|---|
 | `data-kn-arrangement="A|B|C"` | Fixed Header groups and document order. |
-| `data-kn-attachment="flow|sticky"` | Requested Header attachment; effective only with its enhancement. |
-| `data-kn-start="below|under"`, `data-kn-autohide="true|false"` | Requested Header start and sliding behaviour. |
-| `data-kn-opaque-surface="page|brand"` | Header’s own opaque Surface; `data-kn-surface` carries its current complete context. |
+| `data-kn-attachment="flow|sticky"` | Header attachment. |
+| `data-kn-start="below|under"`, `data-kn-autohide="true|false"` | Header start and sliding away; a flow header writes `below` and `false`. |
 | `data-kn-group="start|end"` | The Header group, in document order. |
 | `data-kn-axis="row|column"` on `.kn-brand` | How logo and name stand, in the header and in a footer. |
 | `data-kn-slogan-place="beside|below"` | Where the slogan stands, on `.kn-header-identity`. |
@@ -471,29 +475,26 @@ The class grammar and selectors are shared by Astro and the plain HTML export.
 | `data-kn-picture="start|end|start-bleed|end-bleed"` | A Hero's picture beside its text: on that side inside the content width, or out to the window's edge and the hero's top and bottom. Absent with no such picture. |
 | `data-kn-place="top|bottom"` | Where a Hero's text stands up and down; `center`, the default, writes no attribute. |
 | `data-kn-height="third|half|two-thirds|full"` | A Hero's minimum share of the screen; tall text grows past it. |
-| `data-kn-enhanced`, `data-kn-transparent`, `data-kn-away` | Header enhancement and current appearance states. |
-| `data-kn-collapsed` | Space-separated accepted giving-way steps: `slogan name links word language cta search`. |
-| `data-kn-logo="light|dark"`, `data-kn-logo-polarity="light|dark"` | Image version and the Header’s script-resolved standard `color-scheme`; no CSS polarity branching. |
-| `data-kn-trigger`, `data-kn-panel` | Matching `menu`, `language` or `search` controller and panel names; native ARIA carries their IDs and expanded state. |
+| `data-kn-steps` on `.kn-header` | The giving-way steps this header can take, in order, space-separated, for `header-fit.js` (2026-11-11). |
+| `data-kn-step` on `.kn-header` | The step `header-fit.js` chose: `none`, the last step taken, or `scale`, the last resort. Absent without script, where the bar shows its narrowest step. |
+| `data-kn-header-fit`, `data-kn-footer-fit` | On the inline `header-fit.js` in each header and the element that loads `footer-fit.js`, for an offline build to find them. |
+| `data-kn-fit="true|false"` on a revealed `.kn-footer` | Whether it fits in the window, from `footer-fit.js`; the reveal applies only at `true` (2026-11-11). |
+| `data-kn-logo="light|dark"` | Image version; the header shows the one for its resolved `--kn-polarity`, by a style query. |
+| `data-kn-trigger`, `data-kn-panel` | Matching `menu`, `language` or `search` control and panel names, on the visible row's controls only. The browser keeps whether a panel is open. |
 | `data-kn-automatic`, `data-kn-icon` | Automatic menu-button visibility and its `chevron-down`, `menu` or `none` icon choice. |
 | `data-kn-moved="search|language|cta"` | Functional items at the megamenu’s top. |
-| `data-kn-close`, `data-kn-dialog` | Close control and the native dialog ID opened by a CTA. |
-| `data-kn-shadow`, `data-kn-line`, `data-kn-panel-open` | Header layer-edge states. On the Page’s main, `data-kn-shadow="true"` remains the chosen Page shadow. |
-| `data-kn-header-start="below|under"` | The Page’s enhanced Header-start geometry. |
-| `data-kn-sticky-header` | Root scroll-padding participation while a sticky Header is enhanced. |
-| `data-kn-attachment="flow|reveal"` | Requested Footer attachment. |
-| `data-kn-effective-attachment="flow|reveal"` | Footer’s currently eligible attachment; always flow in print. |
-| `data-kn-footer-attachment="flow|reveal"` | The Page’s matching reservation and opaque main-layer state. |
+| `data-kn-close` | The search box's close control. |
+| `data-kn-polyfill="scroll-timeline|scroll-state"` | On a header's inline loader: which polyfill it loads where the browser lacks the feature. An offline build puts the polyfill itself in its place. |
+| `data-kn-scrolled="block-end|block-start"` | On the root, where the browser has no scroll-state queries: the direction of the last relative scroll, which `scroll-state-polyfill.js` writes and the parallel rules read. |
+| `data-kn-attachment="flow|reveal"` | Footer attachment. |
 | `data-kn-rules="content|full"` | Footer hairline extent. |
 | `data-kn-band="upper|lower"`, `data-kn-rows="1|2"`, `data-kn-joined` | Which Footer band, how many rows it has, and that the two bands share a colour and close up. |
 | `data-kn-cell="a1|b1|a2|b2"`, `data-kn-column="A|B"`, `data-kn-columns="1|2"`, `data-kn-row="1|2|all"` | Cell address, the column that places its box, and what it covers. A vertical hairline uses `data-kn-row` too. |
 | `data-kn-only="a|b|both"`, `data-kn-join` | A hairline between a band's rows, over the columns no merged cell covers, or between two bands on one colour. |
 | `data-kn-logo="light|dark"` on `.kn-footer-logo` | Which mode a footer logo is for, on a band whose colour follows the mode. |
-| `data-kn-top-line` | Build-time Footer separator before attachment is measured, also used in static examples. |
-| `data-kn-edge-line="true"` | Explicit Page bottom-edge hairline. |
-| `data-kn-auto-shadow`, `data-kn-auto-line` | Measured Page edge treatment under the Footer’s attachment. |
+| `data-kn-shadow="true"`, `data-kn-edge-line="true"` | The Page's chosen shadow and bottom-edge hairline, on its main. |
 
-The `kn:headerchange` window event asks Reading Areas to recheck sticky eligibility when the shown height changes. A `kn:refresh` event on Header or Footer remeasures that component after a host replaces its generated core. These are notifications, not extra design inputs. Gallery-only controls and the frame’s `kn-frame-ready` / `kn-frame-config` messages are outside the component API.
+`.kn-header-row` holds the bar's groups and its panels; `.kn-header-search-dismiss` is the transparent close button behind the search box. ***Removed* 2026-11-11, by the owner's choice of a script over duplicated markup:** the giving way's hidden copies, `.kn-header-probe`, `.kn-header-slack`, `.kn-header-copy` with its `data-kn-collapsed`, the slack's `data-kn-step` and the containers named for the steps, and the revealed footer's second set of bands, `.kn-footer-fit`, `.kn-footer-reach`, `.kn-footer-sheet` and `.kn-footer-copy`, which stood for a few hours the same day. ***Removed* 2026-11-10, with `header.js`'s and `footer.js`'s runtimes, by the owner's principle:** `--kn-header-panel-top`, `--kn-footer-height`, `data-kn-opaque-surface`, `data-kn-enhanced`, `data-kn-transparent`, `data-kn-away`, `data-kn-logo-polarity`, `data-kn-shadow`, `data-kn-line` and `data-kn-panel-open` on the header, `data-kn-collapsed` on the header, `data-kn-dialog`, `data-kn-header-start` and `data-kn-footer-attachment` on the Page, `data-kn-sticky-header` on the root, `data-kn-effective-attachment` and `data-kn-top-line` on the footer, `data-kn-auto-shadow` and `data-kn-auto-line` on the Page's main, and the `kn:headerchange`, `kn:refresh` and `kn:dispose` events. Gallery-only controls and the frame's `kn-frame-ready` / `kn-frame-config` messages are outside the component API.
 
 
 ## Lists, media, forms and consent names (2026-11-02)
@@ -501,7 +502,7 @@ The `kn:headerchange` window event asks Reading Areas to recheck sticky eligibil
 ***Decided* with the last six families of the first list; the assistant’s technical choices, 2026-11-02.** The initial build added no generated token or Surface role; the review below adds hover and status contexts.
 
 - **Classes:** `.kn-content-loop`, `.kn-content-rows` and `.kn-content-row` with `heading`, `link`, `content`, `meta`, `excerpt`, `thumbnail` and `icon` parts; `.kn-visitor-filters`, `.kn-visitor-filter-group`, `toggles` and `count`; shared `.kn-pill`; `.kn-pagination`; `.kn-video`; `.kn-embed` with `stage`, `preview`, `poster`, `title`, `provider`, `notice`, `frame`, `original`, `dialog` and `gallery-note` parts; `.kn-form` with `fields` and `actions`; `.kn-field` with `label`, `required`, `control`, `options`, `option`, `help` and `error`; `.kn-consent`, `.kn-consent-settings`, `.kn-consent-settings-form` and `.kn-consent-category`. Parts retain the ordinary component-part grammar. Video and Embed also carry `.kn-figure` and reuse Figure’s media/caption parts and width attributes.
-- **Choices:** `data-kn-presentation="cards|rows"` selects Content Loop presentation. Form reuses `data-kn-columns="1|2"`; its two columns collapse intrinsically. Native `aria-pressed` selects a filter pill, and `aria-current="page"` selects a pager link. Neither adds another variant attribute. Media, forms and rows take no Frame or box shadow; the consent panel and native dialogs use `--kn-shadow-panel`.
+- **Choices:** `data-kn-presentation="cards|rows"` selects Content Loop presentation. Form reuses `data-kn-columns="1|2"`; its two columns collapse intrinsically. A native checked checkbox selects a filter pill (`aria-pressed` until 2026-11-10), and `aria-current="page"` selects a pager link. Neither adds another variant attribute. Media, forms and rows take no Frame or box shadow; the consent panel and native dialogs use `--kn-shadow-panel`.
 
 | Custom property | What it is |
 |---|---|
@@ -511,13 +512,12 @@ The `kn:headerchange` window event asks Reading Areas to recheck sticky eligibil
 
 | Attribute | What it is |
 |---|---|
-| `data-kn-item`, `data-kn-filter`, `data-kn-text` | One rendered loop item, its JSON object of stable filter values, and its searchable text. |
-| `data-kn-for` | Id of the Content Loop controlled by a Visitor Filters form. |
-| `data-kn-filter-name` | Allowlisted parameter name on a filter button or select; its native value supplies the stable key. |
-| `data-kn-page-size` | Client page size; zero keeps an unpaginated loop. Only one loop owns page state. |
-| `data-kn-count-text`, `data-kn-result-count` | Supplied count template with `{count}` / `{total}` and its polite live-region destination. |
-| `data-kn-pagination-host`, `data-kn-page` | Pager destination within the panel and the page number of an ordinary link. |
-| `data-kn-pagination-label`, `data-kn-previous`, `data-kn-next`, `data-kn-page-label` | Supplied navigation and link labels used when rebuilding a client pager. |
+| `data-kn-item` | One rendered loop item, which Visitor Filters may hide. |
+| `data-kn-match="g-v"` | On a filter checkbox or option: its key, its group's place in the form and its value's place in the group, from 1, which the stylesheet pairs with items (the assistant's choice, 2026-11-10). A select's empty option has none. |
+| `data-kn-matches` | On an item: the keys of its values, separated by spaces. |
+| `data-kn-page` | The page number of an ordinary pager link. |
+
+***Removed* with Visitor Filters' runtime by the owner's principle (2026-11-10):** `data-kn-filter`, `data-kn-text`, `data-kn-for`, `data-kn-filter-name`, `data-kn-page-size`, `data-kn-count-text`, `data-kn-result-count`, `data-kn-pagination-host`, `data-kn-pagination-label`, `data-kn-previous`, `data-kn-next`, `data-kn-page-label`, an item's `data-kn-group` and Visitor Filters' `data-kn-enhanced`. Visitor Filters' `for` now writes `aria-controls` on its keyed controls, and Content Loop gains `filteredBy`.
 | `data-kn-url`, `data-kn-embed-title`, `data-kn-format` | Registered original URL, accessible title and provider format (`16 / 9`, `4 / 3`, `audio` or `square`). |
 | `data-kn-embed-load` | Local one-view acceptance control; it grants no category. |
 | `data-kn-embed-overlay` | An ordinary link enhanced to a native player dialog on an unmodified primary click. |
@@ -546,9 +546,9 @@ The public query keys are `q`, the declared filter names and `page`; repeated va
 
 Content Card (`ContentCard.astro`, `.kn-card.kn-content-card`) and Content Row (`ContentRow.astro`, `.kn-content-row`) replace the earlier loop forms; Card retains only `link|person`. Props `imageRatio`, `imageInset`, `images`, `meta1`, `meta2`, `metaSeparator`, `cta`, `group`, `level` and `type` name their purposes. `meta1`/`meta2` entries are `{ text, datetime?, href?, pill? }`; CTA is `{ label, style: 'link'|'button', icon?: '›'|'»'|'→'|'➔' }`. Loop owns row `images`, `presentation`, `columns` and optional `surface` defaults. No numbered space step is public component input.
 
-**The assistant’s part names:** `.kn-content-items`, `.kn-content-item`, `.kn-content-picture`, `.kn-content-body`, `.kn-content-heading`, `.kn-content-link`, `.kn-content-meta`, `.kn-content-meta-item`, `.kn-content-file`, `.kn-content-text`, `.kn-content-cta`, `.kn-content-cta-icon`, `.kn-content-kind-icon`, `.kn-content-group`. Shared `.kn-pill` supplies filled metadata pills and pressed filter pills. Attributes `data-kn-image-ratio="2:1|3:2|1:1"`, `data-kn-image-inset="true|false"`, `data-kn-meta="1|2"`, `data-kn-separator="comma|bar|dot|none"`, `data-kn-pill`, `data-kn-placeholder` and `data-kn-content-group` describe existing parts. Item `data-kn-group` matches its label for visibility. Optional metadata `kind="author|date|category"` becomes `data-kn-meta-kind` for the gallery configurator; arbitrary metadata needs no kind.
+**The assistant’s part names:** `.kn-content-items`, `.kn-content-item`, `.kn-content-picture`, `.kn-content-body`, `.kn-content-heading`, `.kn-content-link`, `.kn-content-meta`, `.kn-content-meta-item`, `.kn-content-file`, `.kn-content-text`, `.kn-content-cta`, `.kn-content-cta-icon`, `.kn-content-kind-icon`, `.kn-content-group`. Shared `.kn-pill` supplies filled metadata pills and, as a checkbox's label, checked filter pills. Attributes `data-kn-image-ratio="2:1|3:2|1:1"`, `data-kn-image-inset="true|false"`, `data-kn-meta="1|2"`, `data-kn-separator="comma|bar|dot|none"`, `data-kn-pill`, `data-kn-placeholder` and `data-kn-content-group` describe existing parts. Optional metadata `kind="author|date|category"` becomes `data-kn-meta-kind` for the gallery configurator; arbitrary metadata needs no kind.
 
-Visitor Filters uses `variant="filters|search"`; `.kn-visitor-filter-panel`, `select`, `search`, `input` and `submit` name its panel parts. `data-kn-enhanced` hides only the filter panel’s fallback submit control. Shared `.kn-search-box`, `.kn-search-row` and `.kn-search-links` come from Search Panel; header aliases remain for compatibility with its approved appearance.
+Visitor Filters uses `variant="filters|search"`; `.kn-visitor-filter-panel`, `select`, `search`, `input` and `submit` name its panel parts. A panel whose controls carry `data-kn-match` and that has no search field hides its submit control (2026-11-10). Shared `.kn-search-box`, `.kn-search-row` and `.kn-search-links` come from Search Panel; header aliases remain for compatibility with its approved appearance.
 
 Consent adds `.kn-consent-actions`, `.kn-consent-settings-header`, `.kn-consent-settings-actions`, `.kn-consent-category-label`, `.kn-consent-category-content`, `.kn-consent-always`, `.kn-consent-close`, `.kn-consent-reopen`, `.kn-switch` and `.kn-switch-track`. Props `policyHref`, `policyLabel`, `maxAgeDays` (182), `reopenButton` (true) and `reopenLabel` identify the policy, expiry and persistent control. `categories[].services[]` contains `name`, `provider`, `thirdParty`, `purpose`, `storage` and `data`. `purpose` must include any onward sharing. `data-kn-max-age-days` supplies retention to the runtime; `data-kn-consent-reopen` relates the persistent Button to its banner. Stored `timestamp` is the choice’s epoch milliseconds, beside `version` and `choices`. Existing consent actions/events and Embed’s shared API remain unchanged. `--kn-consent-height` reserves body/scroll space only on narrow windows.
 
@@ -560,7 +560,7 @@ Consent adds `.kn-consent-actions`, `.kn-consent-settings-header`, `.kn-consent-
 
 ***Specified* with the HTML contract for the directive list Konzilo defines (directives.md); the assistant's choices, 2026-11-10.** They follow the class grammar above, add no generated token, Surface kind or design-file key, and use the existing context, type, space, radius, duration and shadow roles.
 
-- **Classes:** `.kn-section` with `media`, `picture`, `badges`, `head` and `body` parts, on a Band; `.kn-hero-logo`, a part of Hero; `.kn-heading-group-subheadline`, a part of Heading Group; `.kn-fine-print`; `.kn-fact-box` with `label` and `heading`; `.kn-description-list` and `.kn-value-list`, each with an `item` part, and `.kn-value-list-value`; `.kn-logos` with `label` and `list`; `.kn-actions` holding `.kn-action`, with `.kn-action-label`; `.kn-cards`, a series on a Card Grid, with `.kn-cards-nav` and `.kn-cards-label` for one that leads on; `.kn-card-symbol`, a part of Card; `.kn-timeline` with `item` and `heading`; `.kn-reasons` holding `.kn-reason`, with `.kn-reason-heading`; `.kn-post-list` and `.kn-featured`; `.kn-tabs` with `label`, `list`, `tab`, `panel`, `text` and `parts`; `.kn-choice` with `label`, `answers`, `answer` and `panel`; `.kn-article-opening`, on a Hero, `.kn-article-body`, on a Band, `.kn-article-meta` with `date`, `byline` and `category`, and `.kn-question`.
+- **Classes:** `.kn-section` with `media`, `picture`, `badges`, `head` and `body` parts, on a Band; `.kn-hero-logo`, a part of Hero; `.kn-heading-group-subheadline`, a part of Heading Group; `.kn-fine-print`; `.kn-fact-box` with `label` and `heading`; `.kn-description-list` and `.kn-value-list`, each with an `item` part, and `.kn-value-list-value`; `.kn-logos` with `label` and `list`; `.kn-actions` holding `.kn-action`, with `.kn-action-label`; `.kn-cards`, a series on a Card Grid, with `.kn-cards-nav` and `.kn-cards-label` for one that leads on; `.kn-card-symbol`, a part of Card; `.kn-timeline` with `item` and `heading`; `.kn-reasons` holding `.kn-reason`, with `.kn-reason-heading`; `.kn-post-list` and `.kn-featured`; `.kn-tabs` with `label`, `item` (a `<details>`), `tab` (its `<summary>`), `panel`, `text` and `parts`; `.kn-choice` with `label`, `item` (a `<details>`), `answer` (its `<summary>`) and `panel`; `.kn-article-opening`, on a Hero, `.kn-article-body`, on a Band, `.kn-article-meta` with `date`, `byline` and `category`, and `.kn-question`.
 - **Words:** `.kn-tabs-parts` holds a tab's components after its text, a word chosen over `components`, since every part of the page is one. `.kn-actions` and `.kn-action` name what the reader can do next, not a look, so a design may draw an action as a button or a link; Link Group stays for sites outside Konzilo.
 
 | Attribute | What it is |
@@ -577,9 +577,7 @@ Consent adds `.kn-consent-actions`, `.kn-consent-settings-header`, `.kn-consent-
 | `data-kn-symbol="item\|heading"` | On `.kn-cards`: the pictures are symbols, by the card or by its heading. |
 | `data-kn-questions` | On `.kn-accordion`: every item's heading is a question. |
 | `data-kn-presentation="cards\|featured\|filtered"` | On `.kn-post-list`: the presentation a site declares to the core, as Content Loop's attribute names its own. |
-| `data-kn-follow` | On `.kn-toc`: a following menu, which marks the section being read with `aria-current="true"`. |
-| `data-kn-sticky="true"` | On `.kn-section-head`, written by `section.js`: the head fits the window and may stay in view. On an Aside Block it remains the requested option. |
-| `data-kn-enhanced` | On `.kn-tabs` and `.kn-choice`, written by their runtimes, as on Header and Visitor Filters. |
+| `data-kn-follow` | On `.kn-toc`: a following menu, on a rail. Nothing marks the section being read, neither a script (2026-11-10) nor Chromium's scroll markers (2026-11-11). |
 
 | Export of `@kntnt/konzilo-design/directives` | What it is |
 |---|---|
@@ -592,4 +590,4 @@ Consent adds `.kn-consent-actions`, `.kn-consent-settings-header`, `.kn-consent-
 | `surfaceOf` | The Surface of a part the design puts on a plate: `link-card`, `action-card`, `behind-card`, `fact-box`, `choice-answer` or `choice-panel`, given its ground. |
 | `iconHtml` | An Icon's markup, as Icon writes it. |
 
-The runtimes are `section.js` (`setupSections`), `tabs.js` (`setupTabs`), `choice.js` (`setupChoices`), both of which export `PREVIEW_EVENT`, `konzilo-preview-show`, the event a Konzilo live preview sends from a selected block, and `table-of-contents.js`, which adds `setupFollowingMenus` and its pure `currentStop` beside `contentsTree`. The counter styles are `kn-<numbering>`, such as `kn-lower-latin`, with the punctuation's forms beside them. The icons `instagram` and `brand-x` join `icons.js`; `brand-x` keeps `x`, the close mark, as it is.
+No directive has a runtime. ***Removed* 2026-11-10, with their runtimes, replaced by `<details name>` and CSS:** `section.js` (`setupSections`, `headFits`, `STICKY_HEADS`), `tabs.js` (`setupTabs`, `tabMove`), `choice.js` (`setupChoices`), with `PREVIEW_EVENT` (`konzilo-preview-show`), the parts `.kn-tabs-list` and `.kn-choice-answers`, the tab's `role`, `aria-selected`, `aria-controls` and `tabindex`, the answer's `aria-expanded` and `aria-controls`, `data-kn-enhanced` on `.kn-tabs` and `.kn-choice`, and `data-kn-sticky` on `.kn-section-head`; `data-kn-sticky="true"` stays on an Aside Block as the option it requests. `form.js` (`setupForms`, `fieldMessage`) is removed too; `describedBy` moved to `ids.js`. `table-of-contents.js` holds only the build-time `contentsTree`; its `setupFollowingMenus` and `currentStop` are removed (2026-11-10). The counter styles are `kn-<numbering>`, such as `kn-lower-latin`, with the punctuation's forms beside them. The icons `instagram` and `brand-x` join `icons.js`; `brand-x` keeps `x`, the close mark, as it is.

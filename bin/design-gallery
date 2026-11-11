@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Builds the live component gallery and opens it.
 set -euo pipefail
-source "$(dirname "$(realpath "${BASH_SOURCE[0]}")")/lib/design-file.sh"
+source "$(dirname "$(realpath "${BASH_SOURCE[0]}")")/../src/cli/design-file.sh"
 
 npm --prefix "$root" run --silent gallery
 open "$root/gallery/dist/index.html"

@@ -66,7 +66,9 @@ export function solveRole(recipe, palette, target, ratio, polarity) {
 // One rule from light mode to dark mode (owner, 2026-11-05): the step each kind's background stands on in each mode,
 // and its family. The page is white in light and 950 in dark. Light bands mirror, 100 in light being 900 in dark. Dark
 // bands keep their step, but in dark mode are never darker than 800: the page and the light bands have 950 and 900.
-const LIGHT_BAND = Object.freeze({ light: 100, dark: 900 });
+// A light band's muted text is grey in both modes, as it is in light mode, so that in dark mode it is not the colour of
+// the links and the accent (owner, 2026-11-10).
+const LIGHT_BAND = Object.freeze({ light: 100, dark: 900, mutedFamily: 'gray' });
 const STANDS = Object.freeze({
   page: { family: 'gray', light: 'white', dark: 950 },
   raised: { family: 'gray', ...LIGHT_BAND },
@@ -108,7 +110,7 @@ function recipesFor(kind, mode, palette) {
   const fill = (step) => ['white', 'black'].includes(step) ? step : ref(family, step);
   return { polarity, recipes: {
     background: fill(picture ? picture.alternate : stands[mode]), 'background-alt': fill(row.alternate), 'background-hover': fill(row.hover), text: dark ? 'white' : 'gray-900',
-    'text-muted': dark ? ref(lines, row.muted) : 'gray-600',
+    'text-muted': dark ? ref(stands.mutedFamily ?? lines, row.muted) : 'gray-600',
     border: ref(lines, row.border),
     'border-strong': ref(lines, dark ? 400 : 500), link: ref('primary', dark ? 300 : 800),
     accent: ref(kind.startsWith('status-') ? family : accent, dark ? 300 : 600), focus: ref(accent, dark ? 300 : 600),

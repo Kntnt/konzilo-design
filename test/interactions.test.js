@@ -7,11 +7,11 @@ import { transform } from '@astrojs/compiler-rs';
 import { experimental_AstroContainer } from 'astro/container';
 import { parse } from 'ultrahtml';
 import { querySelector as one, querySelectorAll as all } from 'ultrahtml/selector';
-import { normaliseText, matchItem, filterItems, paginate, parseState, serialiseState, paginationStops, pageAddress, isPrimaryClick } from '../src/components/visitor-filters.js';
+import { normaliseText, matchItem, filterItems, paginate, parseState, serialiseState, paginationStops, pageAddress } from '../src/components/visitor-filters.js';
 import { recogniseEmbed, embedProviders } from '../src/components/embed-providers.js';
-import { framePlan, embedState, localPreview } from '../src/components/embed.js';
+import { framePlan, embedState, localPreview, isPrimaryClick } from '../src/components/embed.js';
 import { parseStored, mergeChoice } from '../src/components/consent.js';
-import { describedBy, fieldMessage } from '../src/components/form.js';
+import { describedBy } from '../src/components/ids.js';
 import { excerptHtml } from '../src/components/content-loop.js';
 import { consentCategories, consentTexts } from '../gallery/src/interaction-samples.ts';
 
@@ -145,10 +145,7 @@ test('consent rejects stale versions and malformed choices, keeps required categ
   for (const raw of [null, '', '{bad', '[]', '{}', '{"version":"2","choices":[]}', '{"version":"2","choices":{"analytics":"yes"}}']) assert.equal(parseStored(raw, '2', categories), null);
 });
 
-test('validation decisions use native messages and description ids are joined once', () => {
-  assert.equal(fieldMessage({ validity: { valid: false }, validationMessage: 'A native message' }), 'A native message');
-  assert.equal(fieldMessage({ validity: { valid: true }, validationMessage: 'Old error' }), '');
-  assert.equal(fieldMessage({ willValidate: false, validity: { valid: false }, validationMessage: 'Disabled' }), '');
+test('description ids are joined once, and excerpts admit only marks', () => {
   assert.equal(describedBy('help', undefined, 'error', 'help'), 'help error');
   assert.equal(describedBy(undefined, ''), undefined);
   assert.equal(excerptHtml('<mark>café</mark> <img src=x onerror=evil()>'), '<mark>café</mark> &lt;img src=x onerror=evil()&gt;');
@@ -168,7 +165,7 @@ test('Content Loop renders linked semantic rows, document metadata, video trigge
   assert.equal(one(tree, '[data-kn-embed-overlay]').name, 'a');
   assert.equal(one(tree, 'mark').children[0].value, 'Garden');
   assert.equal(all(tree, 'img').length, 1);
-  assert.deepEqual(JSON.parse(one(tree, '[data-kn-item]').attributes['data-kn-filter'].replaceAll('&quot;', '"')), { topic: ['notes'] });
+  assert.equal(one(tree, '[data-kn-item]').attributes['data-kn-filter'], undefined, 'no script reads an item\'s values; filteredBy gives its keys (visitor-filters.test.js)');
   assert.ok('hidden' in one(tree, '.kn-content-loop-empty').attributes);
   assert.equal(textOf(one(parse(await render('ContentLoop', { items: [], empty: 'Nothing here yet.' })), '.kn-content-loop-empty')), 'Nothing here yet.');
   const cards = parse(await render('ContentLoop', { items: [{ title: 'A card', href: '/note/' }], columns: 2, surface: 'brand', type: 'heading-4' }));
@@ -178,19 +175,19 @@ test('Content Loop renders linked semantic rows, document metadata, video trigge
   await assert.rejects(render('ContentLoop', { items: [{ title: 'Bad', kind: 'video', href: 'https://example.invalid/player' }] }), /Unrecognised/);
 });
 
-test('Visitor Filters are labelled GET controls with shared select, pressed pills, polite count and honest pager links', async () => {
-  const tree = parse(await render('VisitorFilters', { for: 'notes', search: { label: 'Find notes' }, toggles: [{ name: 'topic', label: 'Topic', values: ['walks'], options: [{ value: 'walks', label: 'Walks' }] }], select: { name: 'year', label: 'Year', options: [{ value: '', label: 'All years' }] }, pageSize: 3, total: 10 }));
-  const form = one(tree, 'form'); assert.equal(form.attributes.role, 'search'); assert.equal(form.attributes.method, 'get'); assert.equal(form.attributes['data-kn-for'], 'notes');
+test('Visitor Filters are labelled GET controls with a shared select, checkbox pills, a plain count and honest pager links', async () => {
+  const tree = parse(await render('VisitorFilters', { for: 'notes', search: { label: 'Find notes' }, toggles: [{ name: 'topic', label: 'Topic', values: ['walks'], options: [{ value: 'walks', label: 'Walks' }] }], select: { name: 'year', label: 'Year', options: [{ value: '', label: 'All years' }] }, total: 10 }));
+  const form = one(tree, 'form'); assert.equal(form.attributes.role, 'search'); assert.equal(form.attributes.method, 'get');
   const search = one(form, 'input[type="search"]'); assert.equal(one(form, `label[for="${search.attributes.id}"]`).children[0].value, 'Find notes');
-  assert.equal(one(form, 'button.kn-pill').attributes['aria-pressed'], 'true');
-  assert.equal(one(form, 'button.kn-pill').attributes.type, 'submit');
+  assert.ok('checked' in one(form, '.kn-pill input[type="checkbox"]').attributes);
   assert.equal(one(form, 'select').attributes.class, 'kn-field-control');
-  assert.equal(one(form, '[data-kn-result-count]').attributes['aria-live'], 'polite');
-  assert.ok(all(form, 'nav a').every((link) => 'href' in link.attributes));
+  assert.equal(one(form, `label[for="${one(form, 'select').attributes.id}"]`).children[0].value, 'Year');
+  assert.equal(one(form, '.kn-visitor-filter-count').attributes['aria-live'], undefined);
   assert.equal((await render('Pagination', { page: 1, pages: 1 })).trim(), '');
   await assert.rejects(render('VisitorFilters', { for: 'notes', toggles: [{ name: 'constructor', label: 'Bad', options: [] }] }), /stable keys/);
   const pager = parse(await render('Pagination', { page: 8, pages: 20, base: '/notes/', filters: { year: ['2026'] } }));
   assert.equal(one(pager, '[aria-current="page"]').attributes.href.replaceAll('&amp;', '&'), '/notes/?year=2026&page=8');
+  assert.ok(all(pager, 'a').every((link) => 'href' in link.attributes));
   assert.equal(all(pager, '[aria-hidden="true"]').length, 2);
   assert.match(textOf(one(pager, 'nav')), /Previous.*Next/);
 });

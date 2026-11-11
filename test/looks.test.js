@@ -268,7 +268,7 @@ test('the catalogue, with its Reading Area, scrolls no phone sideways', { timeou
     const page = await browser.newPage({ viewport: { width, height: 844 } });
     try {
       await page.goto(`${tool.url}/catalogue.html`);
-      await page.waitForSelector('.kn-reading-area-measure', { state: 'attached' });
+      await page.waitForSelector('.kn-reading-area', { state: 'attached' });
       const overflow = await page.evaluate(() => {
         scrollTo(9999, 0);
         return { scrolled: scrollX, beyond: document.documentElement.scrollWidth - document.documentElement.clientWidth };

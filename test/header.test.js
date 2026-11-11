@@ -1,6 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { arrangementGroups, givingWay, GIVING_WAY_ORDER, autohideDecision, appearanceDecision } from '../src/components/header.js';
+import { parse } from 'ultrahtml';
+import { querySelectorAll as all, querySelector as one } from 'ultrahtml/selector';
+import { arrangementGroups, givingWaySteps, GIVING_WAY_ORDER } from '../src/components/header.js';
+import { render } from './helpers/render.js';
 
 test('arrangements fix group and document order, omitting absent items', () => {
   const all = Object.fromEntries(['links', 'menu', 'search', 'language', 'cta'].map((key) => [key, true]));
@@ -11,43 +14,78 @@ test('arrangements fix group and document order, omitting absent items', () => {
   assert.throws(() => arrangementGroups('D'));
 });
 
-test('giving way uses the required order even with unordered measured candidates', () => {
-  const steps = GIVING_WAY_ORDER.map((name, i) => ({ name, width: 900 - i * 100 }));
-  assert.deepEqual(givingWay({ available: 1000, width: 1000, steps }), { collapsed: [], scale: 1 });
-  for (let i = 0; i < 7; i++) assert.deepEqual(givingWay({ available: 900 - i * 100, width: 1000, steps: [...steps].reverse() }).collapsed, GIVING_WAY_ORDER.slice(0, i + 1));
+test('giving way keeps the required order and leaves out steps with nothing to take', () => {
+  const everything = { slogan: true, logo: true, name: true, links: true, word: true, language: true, cta: true, search: true };
+  assert.deepEqual(givingWaySteps(everything), GIVING_WAY_ORDER);
+  assert.deepEqual(givingWaySteps({ ...everything, logo: false }), GIVING_WAY_ORDER.filter((step) => step !== 'name'), 'a name without a logo never goes');
+  assert.deepEqual(givingWaySteps({ name: true, logo: true, cta: true }), ['name', 'cta']);
+  assert.deepEqual(givingWaySteps(), []);
 });
 
-test('giving way skips absent steps and steps that save no width, and never removes a name without a logo', () => {
-  const measured = [{ name: 'slogan', width: 1000 }, { name: 'links', width: 700 }, { name: 'word', width: 650 }, { name: 'language', width: 650 }, { name: 'cta', width: 500 }, { name: 'search', width: 450 }];
-  assert.deepEqual(givingWay({ available: 550, width: 1000, steps: measured }), { collapsed: ['links', 'word', 'cta'], scale: 1 });
-  assert.deepEqual(givingWay({ available: 320, width: 1000, steps: measured, identityWidth: 250 }), { collapsed: ['links', 'word', 'cta', 'search'], scale: 0.48 });
-  assert.equal(givingWay({ available: 320, width: 600, identityWidth: 500 }).scale, 0.44);
+const identity = { label: 'Example', href: '/', name: 'Example', slogan: 'Slogan', logo: { light: '/light.svg', dark: '/dark.svg' } };
+const menu = [{ label: 'One', href: '/one' }, { label: 'Two', href: '/two', children: [{ label: 'Two A', href: '/two/a' }] }];
+const everything = { identity, menu, linkMenu: true, menuButton: { word: 'Menu' }, languages: [{ label: 'English', code: 'en', href: '/', current: true }, { label: 'Svenska', code: 'sv', href: '/sv/' }], search: { action: '/search/' }, cta: { label: 'Contact', href: '/contact/' } };
+
+test('a header writes its bar once, with the giving-way steps it can take for its script to measure', async () => {
+  const tree = parse(await render('Header', everything));
+  const header = one(tree, '.kn-header');
+  assert.equal(header.attributes['data-kn-steps'], GIVING_WAY_ORDER.join(' '));
+  assert.ok(!('data-kn-step' in header.attributes), 'no step is written: without the script the bar shows its narrowest');
+  assert.equal(all(tree, '.kn-header-row').length, 1);
+  assert.equal(all(tree, '.kn-header-identity').length, 1);
+  assert.equal(all(tree, '.kn-header-link-menu').length, 1);
+  assert.equal(all(tree, '[inert], .kn-header-copy, .kn-header-probe, .kn-header-slack').length, 0, 'no hidden copy of the bar');
+  const row = one(tree, '.kn-header-row');
+  assert.ok(one(row, 'dialog.kn-megamenu') && one(row, 'dialog.kn-header-search-overlay'), 'the panels lie in the row');
+  // The giving-way script inline, as the header's last child but the polyfill loaders, so it runs before the page paints.
+  const scripts = all(tree, 'script[data-kn-header-fit]');
+  assert.equal(scripts.length, 1);
+  assert.ok(!('src' in scripts[0].attributes) && !('type' in scripts[0].attributes), 'a classic inline script');
+  const code = scripts[0].children.map((node) => node.value).join('');
+  assert.match(code, /^\(\(\) => \{/, 'wrapped, so two headers on a page share no global names');
+  assert.match(code, /window\.knHeaderFit \?\?= setup\(\)/, 'and set up once');
+  assert.match(code, /document\.currentScript\?\.closest\('\.kn-header\[data-kn-steps\]'\)/, 'each fitting its own header');
+  assert.doesNotMatch(code, /^\s*\/\//m, 'without its comments');
+  const children = header.children.filter((node) => node.type === 1);
+  assert.equal(children.find((node) => node.name === 'script').attributes['data-kn-header-fit'] !== undefined, true);
+  const plain = parse(await render('Header', { identity: { label: 'Name', href: '/', name: 'Name' } }));
+  assert.equal(one(plain, '.kn-header').attributes['data-kn-steps'], '', 'a name without a logo never goes, and nothing else is there');
 });
 
-test('autohide ignores jitter, accumulates small changes, and shows on the first meaningful upward movement', () => {
-  let state = { away: false, anchor: 100 };
-  state = autohideDecision({ y: 103, height: 64, ...state });
-  assert.deepEqual(state, { away: false, anchor: 100 });
-  state = autohideDecision({ y: 105, height: 64, ...state });
-  assert.deepEqual(state, { away: true, anchor: 105 });
-  assert.deepEqual(autohideDecision({ y: 103, height: 64, ...state }), state);
-  assert.deepEqual(autohideDecision({ y: 101, height: 64, ...state }), { away: false, anchor: 101 });
+test('the panels open with no script: dialogs by the invoker command, the languages by a popover', async () => {
+  const tree = parse(await render('Header', everything));
+  const row = one(tree, '.kn-header-row');
+  const menuButton = one(row, '[data-kn-trigger="menu"]');
+  const search = one(row, '[data-kn-trigger="search"]');
+  for (const trigger of [menuButton, search]) {
+    assert.equal(trigger.name, 'button');
+    assert.equal(trigger.attributes.command, 'show-modal');
+    assert.equal(trigger.attributes['aria-haspopup'], 'dialog');
+    assert.equal(trigger.attributes.commandfor, trigger.attributes['aria-controls']);
+    const dialog = one(tree, `#${trigger.attributes.commandfor}`);
+    assert.equal(dialog.name, 'dialog');
+    assert.equal(dialog.attributes.closedby, 'any');
+    assert.ok(!('aria-expanded' in trigger.attributes), 'no state written that the browser does not keep');
+  }
+  assert.ok('autofocus' in one(tree, '.kn-header-search-overlay input[name="q"]').attributes);
+  assert.equal(one(tree, '.kn-header-search-dismiss').attributes.command, 'close');
+  const globe = one(row, '[data-kn-trigger="language"]');
+  assert.equal(one(tree, `#${globe.attributes.popovertarget}`).attributes.popover, 'auto');
+  const cta = await render('Header', { ...everything, cta: { label: 'Write to us', dialog: 'contact' } });
+  assert.match(cta, /<button[^>]*commandfor="contact"[^>]*command="show-modal"[^>]*class="[^"]*kn-header-cta/);
 });
 
-test('the top, open panels and keyboard keep the header visible; mouse focus is not an input', () => {
-  const base = { y: 200, height: 64, anchor: 100, away: true };
-  for (const change of [{ y: 0 }, { panelOpen: true }, { keyboard: true }, { sticky: false }, { autohide: false }]) assert.equal(autohideDecision({ ...base, ...change }).away, false);
-  assert.equal(autohideDecision({ y: 63, height: 64, anchor: 0 }).away, false);
-  assert.equal(autohideDecision(base).away, true);
-});
-
-test('an under header changes at T unless it is going to slide away; the change waits until hidden', () => {
-  const base = { under: true, y: 24, autohide: true, clear: true };
-  assert.deepEqual(appearanceDecision(base), { transparent: true, clear: true });
-  assert.deepEqual(appearanceDecision({ ...base, hidden: true }), { transparent: false, clear: false });
-  assert.deepEqual(appearanceDecision({ ...base, blocked: true }), { transparent: false, clear: false });
-  assert.deepEqual(appearanceDecision({ ...base, autohide: false }), { transparent: false, clear: false });
-  assert.deepEqual(appearanceDecision({ ...base, y: 23, clear: false }), { transparent: true, clear: true });
-  assert.deepEqual(appearanceDecision({ ...base, y: 200, clear: false }), { transparent: false, clear: false });
-  assert.equal(appearanceDecision({ ...base, under: false }).transparent, false);
+test('only a sticky header loads a polyfill, and only one that slides away loads the scroll-state one', async () => {
+  const scripts = async (props) => all(parse(await render('Header', { ...everything, ...props })), 'script').map((script) => script.attributes['data-kn-polyfill']);
+  const polyfills = async (props) => (await scripts(props)).filter(Boolean);
+  assert.deepEqual(await polyfills({}), []);
+  assert.deepEqual(await polyfills({ autohide: true }), [], 'a flow header neither sticks nor slides away');
+  assert.deepEqual(await polyfills({ attachment: 'sticky' }), ['scroll-timeline']);
+  assert.deepEqual(await polyfills({ attachment: 'sticky', autohide: true }), ['scroll-timeline', 'scroll-state']);
+  const loader = await render('Header', { ...everything, attachment: 'sticky', autohide: true });
+  assert.match(loader, /if \(!CSS\.supports\('animation-timeline: scroll\(\)'\)\) import\(src\);/);
+  assert.match(loader, /if \(!CSS\.supports\('container-type: scroll-state'\)\) import\(src\);/);
+  const flow = parse(await render('Header', { ...everything, start: 'under', autohide: true }));
+  assert.equal(one(flow, '.kn-header').attributes['data-kn-start'], 'below', 'page start and sliding away are a sticky header\'s only');
+  assert.equal(one(flow, '.kn-header').attributes['data-kn-autohide'], 'false');
 });

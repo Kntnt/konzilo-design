@@ -718,59 +718,58 @@
     </header>
     <div class="kn-section-body kn-body-text">
       <div class="kn-post-list" data-kn-presentation="filtered">
-        <form class="kn-visitor-filters" role="search" method="get" action="" data-kn-for="posts-1" data-kn-page-size="0" data-kn-count-text="Showing {count} articles">
+        <form class="kn-visitor-filters" role="search" method="get" action="">
           <div class="kn-visitor-filter-panel">
             <fieldset class="kn-visitor-filter-group"><legend>Topic</legend>
               <div class="kn-visitor-filter-toggles">
-                <button class="kn-pill" type="submit" name="topic" value="planning" aria-pressed="false" data-kn-filter-name="topic">Planning</button>
-                <button class="kn-pill" type="submit" name="topic" value="costs" aria-pressed="false" data-kn-filter-name="topic">Costs</button>
-                <button class="kn-pill" type="submit" name="topic" value="tools" aria-pressed="false" data-kn-filter-name="topic">Tools</button>
-                <button class="kn-pill" type="submit" name="topic" value="people" aria-pressed="false" data-kn-filter-name="topic">People</button>
+                <label class="kn-pill"><input type="checkbox" name="topic" value="planning" aria-controls="posts-1" data-kn-match="1-1">Planning</label>
+                <label class="kn-pill"><input type="checkbox" name="topic" value="costs" aria-controls="posts-1" data-kn-match="1-2">Costs</label>
+                <label class="kn-pill"><input type="checkbox" name="topic" value="tools" aria-controls="posts-1" data-kn-match="1-3">Tools</label>
+                <label class="kn-pill"><input type="checkbox" name="topic" value="people" aria-controls="posts-1" data-kn-match="1-4">People</label>
               </div>
             </fieldset>
             <button class="kn-button kn-visitor-filter-submit" type="submit" data-kn-variant="outline">Show</button>
           </div>
-          <p class="kn-visitor-filter-count" role="status" aria-live="polite" data-kn-result-count data-kn-type="small">Showing 7 articles</p>
-          <div data-kn-pagination-host></div>
+          <p class="kn-visitor-filter-count" data-kn-type="small">Showing 7 articles</p>
         </form>
         <div class="kn-card-grid kn-cards" id="posts-1">
-      <article class="kn-card" data-kn-surface="raised" data-kn-item data-kn-filter='{"topic":["planning","costs"]}'>
+      <article class="kn-card" data-kn-surface="raised" data-kn-item data-kn-matches="1-1 1-2">
         <img class="kn-card-picture" src="picture-1.svg" alt="A picture for post 1">
         <p class="kn-card-eyebrow" data-kn-type="label">Planning</p>
         <h3 class="kn-card-heading" data-kn-type="heading-5"><a class="kn-card-link" href="#post-1">Plan the first week</a></h3>
         <p class="kn-card-text" data-kn-type="small">A short teaser text that says what the post holds.</p>
       </article>
-      <article class="kn-card" data-kn-surface="raised" data-kn-item data-kn-filter='{"topic":["planning"]}'>
+      <article class="kn-card" data-kn-surface="raised" data-kn-item data-kn-matches="1-1">
         <img class="kn-card-picture" src="picture-2.svg" alt="A picture for post 2">
         <p class="kn-card-eyebrow" data-kn-type="label">Costs</p>
         <h3 class="kn-card-heading" data-kn-type="heading-5"><a class="kn-card-link" href="#post-2">What a visit costs</a></h3>
         <p class="kn-card-text" data-kn-type="small">A short teaser text that says what the post holds.</p>
       </article>
-      <article class="kn-card" data-kn-surface="raised" data-kn-item data-kn-filter='{"topic":["tools"]}'>
+      <article class="kn-card" data-kn-surface="raised" data-kn-item data-kn-matches="1-3">
         <img class="kn-card-picture" src="picture-3.svg" alt="A picture for post 3">
         <p class="kn-card-eyebrow" data-kn-type="label">Tools</p>
         <h3 class="kn-card-heading" data-kn-type="heading-5"><a class="kn-card-link" href="#post-3">Tools we rely on</a></h3>
         <p class="kn-card-text" data-kn-type="small">A short teaser text that says what the post holds.</p>
       </article>
-      <article class="kn-card" data-kn-surface="raised" data-kn-item data-kn-filter='{"topic":["costs","people"]}'>
+      <article class="kn-card" data-kn-surface="raised" data-kn-item data-kn-matches="1-2 1-4">
         <img class="kn-card-picture" src="picture-4.svg" alt="A picture for post 4">
         <p class="kn-card-eyebrow" data-kn-type="label">People</p>
         <h3 class="kn-card-heading" data-kn-type="heading-5"><a class="kn-card-link" href="#post-4">Who does what</a></h3>
         <p class="kn-card-text" data-kn-type="small">A short teaser text that says what the post holds.</p>
       </article>
-      <article class="kn-card" data-kn-surface="raised" data-kn-item data-kn-filter='{"topic":["planning","tools"]}'>
+      <article class="kn-card" data-kn-surface="raised" data-kn-item data-kn-matches="1-1 1-3">
         <img class="kn-card-picture" src="picture-1.svg" alt="A picture for post 5">
         <p class="kn-card-eyebrow" data-kn-type="label">Gardens</p>
         <h3 class="kn-card-heading" data-kn-type="heading-5"><a class="kn-card-link" href="#post-5">Looking after a garden</a></h3>
         <p class="kn-card-text" data-kn-type="small">A short teaser text that says what the post holds.</p>
       </article>
-      <article class="kn-card" data-kn-surface="raised" data-kn-item data-kn-filter='{"topic":["people"]}'>
+      <article class="kn-card" data-kn-surface="raised" data-kn-item data-kn-matches="1-4">
         <img class="kn-card-picture" src="picture-2.svg" alt="A picture for post 6">
         <p class="kn-card-eyebrow" data-kn-type="label">Planning</p>
         <h3 class="kn-card-heading" data-kn-type="heading-5"><a class="kn-card-link" href="#post-6">A day at work</a></h3>
         <p class="kn-card-text" data-kn-type="small">A short teaser text that says what the post holds.</p>
       </article>
-      <article class="kn-card" data-kn-surface="raised" data-kn-item data-kn-filter='{"topic":["planning"]}'>
+      <article class="kn-card" data-kn-surface="raised" data-kn-item data-kn-matches="1-1">
         <img class="kn-card-picture" src="picture-3.svg" alt="A picture for post 7">
         <p class="kn-card-eyebrow" data-kn-type="label">Costs</p>
         <h3 class="kn-card-heading" data-kn-type="heading-5"><a class="kn-card-link" href="#post-7">Our checklist</a></h3>

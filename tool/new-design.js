@@ -30,4 +30,4 @@ export async function newDesign() {
   };
 }
 
-export { backupPath, backUp } from '../bin/lib/backup.js';
+export { backupPath, backUp } from '../src/cli/backup.js';

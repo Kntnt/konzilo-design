@@ -4,7 +4,7 @@ import CoreForm from './CoreForm.astro';
 import QuestionAccordion from './QuestionAccordion.astro';
 import { surfaceOf } from '../../../src/directives/index.js';
 import { landscape } from '../samples.js';
-// :::accordion of questions and of topics, :::tabs, :::choice and :::toc, each with its runtime's behaviour.
+// :::accordion of questions and of topics, :::tabs, :::choice and :::toc, in HTML and CSS alone.
 const questions = [
   { heading: 'How long does a first visit take?', html: '<p>About an hour, with time for questions at the end.</p><ul><li>Coffee is on the house.</li><li>The door opens at nine.</li></ul>' },
   { heading: 'Can I bring someone along, such as a colleague who has never been here before?', html: '<p>Yes. Tell us how many you will be, so that there are chairs enough.</p>' },
@@ -24,50 +24,59 @@ const stops = [['directive-toc-first', 'Before you start'], ['directive-toc-seco
   <QuestionAccordion items={topics} />
 </Section>
 <Section id="directive-tabs" surface="raised" heading="56 / Tabs">
-  <div class="kn-tabs">
+  <div class="kn-tabs" role="group" aria-labelledby="directive-tabs-1">
     <div class="kn-tabs-label" id="directive-tabs-1"><p data-kn-type="label">Our plans</p></div>
-    <div class="kn-tabs-list" role="tablist" aria-labelledby="directive-tabs-1">
-      {tabs.map((tab, index) => <button class="kn-tabs-tab" type="button" role="tab" id={`directive-tabs-1-tab-${index + 1}`} aria-controls={`directive-tabs-1-panel-${index + 1}`} aria-selected={String(index === 0)} tabindex={index === 0 ? undefined : '-1'}>{tab}</button>)}
-    </div>
-    <div class="kn-tabs-panel" role="tabpanel" id="directive-tabs-1-panel-1" aria-labelledby="directive-tabs-1-tab-1" tabindex="0">
-      <div class="kn-tabs-text">
-        <hgroup class="kn-heading-group">
-          <p class="kn-heading-group-eyebrow" data-kn-type="label">For a few people</p>
-          <h3 class="kn-heading-group-heading">The small plan</h3>
-        </hgroup>
-        <p>The small plan suits a team of a few people who meet now and then and want their notes in one place.</p>
-        <img src={landscape} alt="Invented hills seen from the studio">
+    <details class="kn-tabs-item" name="directive-tabs-1" open>
+      <summary class="kn-tabs-tab">{tabs[0]}</summary>
+      <div class="kn-tabs-panel">
+        <div class="kn-tabs-text">
+          <hgroup class="kn-heading-group">
+            <p class="kn-heading-group-eyebrow" data-kn-type="label">For a few people</p>
+            <h3 class="kn-heading-group-heading">The small plan</h3>
+          </hgroup>
+          <p>The small plan suits a team of a few people who meet now and then and want their notes in one place.</p>
+          <img src={landscape} alt="Invented hills seen from the studio">
+        </div>
+        <div class="kn-tabs-parts">
+          <QuestionAccordion items={[{ heading: 'Notes', html: '<p>As many as you like.</p>' }, { heading: 'Calendar', html: '<p>One for the team.</p>' }]} level={4} />
+        </div>
       </div>
-      <div class="kn-tabs-parts">
-        <QuestionAccordion items={[{ heading: 'Notes', html: '<p>As many as you like.</p>' }, { heading: 'Calendar', html: '<p>One for the team.</p>' }]} level={4} />
+    </details>
+    <details class="kn-tabs-item" name="directive-tabs-1">
+      <summary class="kn-tabs-tab">{tabs[1]}</summary>
+      <div class="kn-tabs-panel">
+        <p>The large plan adds rooms for every group, and <a href="#directive-tabs">a link</a> back up. Its panel holds text only, so it stands in order in one column.</p>
+        <h3 id="directive-large-details">More about it</h3>
+        <p>It keeps a year of history.</p>
       </div>
-    </div>
-    <div class="kn-tabs-panel" role="tabpanel" id="directive-tabs-1-panel-2" aria-labelledby="directive-tabs-1-tab-2" tabindex="0">
-      <p>The large plan adds rooms for every group, and <a href="#directive-tabs">a link</a> back up. Its panel holds text only, so it stands in order in one column.</p>
-      <h3 id="directive-large-details">More about it</h3>
-      <p>It keeps a year of history.</p>
-    </div>
-    <div class="kn-tabs-panel" role="tabpanel" id="directive-tabs-1-panel-3" aria-labelledby="directive-tabs-1-tab-3" tabindex="0">
-      <p>Write to us, and we will make a plan for you.</p>
-    </div>
+    </details>
+    <details class="kn-tabs-item" name="directive-tabs-1">
+      <summary class="kn-tabs-tab">{tabs[2]}</summary>
+      <div class="kn-tabs-panel">
+        <p>Write to us, and we will make a plan for you.</p>
+      </div>
+    </details>
   </div>
 </Section>
 <Section id="directive-choice" surface={ground}>
-  <div class="kn-choice">
+  <div class="kn-choice" role="group" aria-labelledby="directive-choice-1">
     <div class="kn-choice-label" id="directive-choice-1"><p>57 / Choice · Have you visited the studio before?</p></div>
-    <div class="kn-choice-answers" role="group" aria-labelledby="directive-choice-1">
-      {['Yes', 'No, not yet'].map((answer, index) => <button class="kn-choice-answer" type="button" aria-expanded="false" aria-controls={`directive-choice-1-answer-${index + 1}`} data-kn-surface={surfaceOf('choice-answer', ground)}>{answer}</button>)}
-    </div>
-    <div class="kn-choice-panel" id="directive-choice-1-answer-1" data-kn-surface={surfaceOf('choice-panel', ground)}>
-      <h3>Welcome back</h3>
-      <p>Give us the address you used, and we will send a link to your notes.</p>
-      <CoreForm id="sign-in" label="Sign in" send="Send me a link" fields={[{ name: 'email', label: 'Email', type: 'email', required: true }]} />
-    </div>
-    <div class="kn-choice-panel" id="directive-choice-1-answer-2"><CoreForm id="join" label="Join" send="Join" fields={[{ name: 'name', label: 'Name', required: true }, { name: 'email', label: 'Email', type: 'email', required: true }]} /></div>
+    <details class="kn-choice-item" name="directive-choice-1">
+      <summary class="kn-choice-answer" data-kn-surface={surfaceOf('choice-answer', ground)}>Yes</summary>
+      <div class="kn-choice-panel" data-kn-surface={surfaceOf('choice-panel', ground)}>
+        <h3>Welcome back</h3>
+        <p>Give us the address you used, and we will send a link to your notes.</p>
+        <CoreForm id="sign-in" label="Sign in" send="Send me a link" fields={[{ name: 'email', label: 'Email', type: 'email', required: true }]} />
+      </div>
+    </details>
+    <details class="kn-choice-item" name="directive-choice-1">
+      <summary class="kn-choice-answer" data-kn-surface={surfaceOf('choice-answer', ground)}>No, not yet</summary>
+      <div class="kn-choice-panel"><CoreForm id="join" label="Join" send="Join" fields={[{ name: 'name', label: 'Name', required: true }, { name: 'email', label: 'Email', type: 'email', required: true }]} /></div>
+    </details>
   </div>
 </Section>
 <Section id="directive-toc" heading="58 / Table of Contents · toc" deck="A following menu beside the items, marking the one being read.">
-  <div class="kn-reading-area" data-kn-side="start" data-kn-stack="before" data-kn-columns="1">
+  <div class="kn-reading-area" data-kn-side="start" data-kn-stack="before">
     <div class="kn-reading-area-aside">
       <aside class="kn-aside-block" data-kn-sticky="true">
         <nav class="kn-toc" aria-labelledby="directive-toc-1" data-kn-type="small" data-kn-follow>

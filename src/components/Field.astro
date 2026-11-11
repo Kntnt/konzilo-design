@@ -1,8 +1,7 @@
 ---
 import type { HTMLAttributes } from 'astro/types';
 import type { FieldOption } from './interaction-types';
-import { nextId } from './ids.js';
-import { describedBy } from './form.js';
+import { describedBy, nextId } from './ids.js';
 import Icon from './Icon.astro';
 interface Props extends Omit<HTMLAttributes<'input'>, 'type' | 'value'> {
   name: string; label: string;

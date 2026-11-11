@@ -3,7 +3,7 @@
 # describing a design system to an agent) with the logos, fonts and icons it names; with -o out.md, DESIGN.md alone.
 # Usage: design-md <design-file> [-o out.zip|out.md]
 set -euo pipefail
-source "$(dirname "$(realpath "${BASH_SOURCE[0]}")")/lib/design-file.sh"
+source "$(dirname "$(realpath "${BASH_SOURCE[0]}")")/../src/cli/design-file.sh"
 
 need_file "$@"
 exec node "$konzilo" design-md "$@"

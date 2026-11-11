@@ -1,7 +1,12 @@
 @layer kn-components {
   .kn-footer { container-type: inline-size; position: relative; z-index: 0; font-size: var(--kn-type-small-size); line-height: var(--kn-type-small-line-height); }
-  .kn-footer[data-kn-effective-attachment="reveal"] { position: fixed; inset-block-end: 0; inset-inline: 0; }
-  .kn-footer[data-kn-top-line] { border-block-start: 1px solid var(--kn-border); }
+  /* At the edge of the screen: while the footer fits in the window, a footer exactly as tall included, it lies still
+     at the window's bottom edge, under the page, which scrolls off it. footer-fit.js says whether it fits, as
+     data-kn-fit; without it, or before it has run, or where the footer is taller than the window, the footer stands
+     in the flow at the page's end (the owner, 2026-11-11). Keyboard focus in it puts it back in the flow, where the
+     browser shows what has focus. */
+  .kn-footer[data-kn-attachment="reveal"][data-kn-fit="true"] { position: sticky; inset-block-end: 0; }
+  .kn-footer[data-kn-attachment="reveal"][data-kn-fit="true"]:has(:focus-visible) { position: relative; }
 
   /* A band is a grid on the content area's rail, with its background running edge to edge. B's content
      track is as wide as its widest content box, so a hairline over column B alone can stop at the content. */
@@ -79,6 +84,6 @@
     .kn-footer-rule, .kn-footer-vertical-rule { display: none; }
   }
   @media print {
-    .kn-footer[data-kn-effective-attachment] { position: static; }
+    .kn-footer[data-kn-attachment] { position: static; }
   }
 }

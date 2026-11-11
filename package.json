@@ -1,7 +1,18 @@
 {
   "name": "@kntnt/konzilo-design",
-  "version": "0.2.0",
+  "version": "0.1.0",
+  "description": "A design system generator with a visual tool: from a few inputs, a checked design system for any website, with a presentation, CSS, components and a DESIGN.md export.",
   "private": true,
+  "license": "AGPL-3.0-or-later",
+  "author": "Kntnt Sweden AB",
+  "homepage": "https://github.com/Kntnt/konzilo-design#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Kntnt/konzilo-design.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Kntnt/konzilo-design/issues"
+  },
   "type": "module",
   "engines": {
     "node": ">=22"
@@ -16,7 +27,8 @@
   },
   "files": [
     "bin/konzilo-design.js",
-    "bin/lib/backup.js",
+    "SITE-EXCEPTION.md",
+    "src/cli/backup.js",
     "docs/spec/konzilo.md",
     "docs/spec/names.md",
     "schema",

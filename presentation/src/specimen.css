@@ -255,7 +255,7 @@ body[data-specimen='catalogue'] .kn-card-grid:has(> [data-report-only]) { grid-t
   :root { --sample-screen: 216vw; }
 }
 .kn-page { --kn-hero-screen: calc(var(--sample-screen) - var(--kn-header-height)); }
-.kn-page[data-kn-header-start="under"] { --kn-hero-screen: var(--sample-screen); }
+.kn-page:has(> .kn-header[data-kn-attachment="sticky"][data-kn-start="under"]) { --kn-hero-screen: var(--sample-screen); }
 .hero-screen {
   --kn-hero-screen: var(--sample-screen);
   block-size: var(--sample-screen);

@@ -1,11 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { querySelectorAll, matches } from 'ultrahtml/selector';
-import { setupVisitorFilters } from '../src/components/visitor-filters.js';
 import { setupConsent, hasConsent, setConsent, openConsentSettings } from '../src/components/consent.js';
 import { mountEmbed, setupEmbeds } from '../src/components/embed.js';
 import { setupContentControls } from '../gallery/src/content-controls.js';
-import { setupForms } from '../src/components/form.js';
 
 // Measured DOM surfaces exercise the browser controllers without a server,
 // browser installation, network, profile, or files outside the repository.
@@ -168,53 +166,6 @@ test('delegated overlay clicks preserve modified navigation, use a modal, remove
   } finally { dispose?.(); disposeConsent?.(); f.restore(); }
 });
 
-function listFixture(f, id = 'notes', name = 'topic', size = 2) {
-  const loop = f.element('div', { class: 'kn-content-loop', id });
-  const rows = ['Café by the river', 'River walk', 'Garden notebook', 'A second river note', 'One more garden'].map((text, i) => f.element('li', { 'data-kn-item': '', 'data-kn-text': text, 'data-kn-filter': JSON.stringify({ [name]: [i % 2 ? 'walks' : 'notes'] }) }, loop));
-  const empty = f.element('p', { class: 'kn-content-loop-empty', hidden: '' }, loop);
-  const form = f.element('form', { class: 'kn-visitor-filters', 'data-kn-for': id, 'data-kn-page-size': String(size), 'data-kn-count-text': '{count} of {total}', 'data-kn-pagination-label': 'Results pages', 'data-kn-previous': 'Previous', 'data-kn-next': 'Next', 'data-kn-page-label': 'Page' });
-  const search = f.element('input', { type: 'search', name: 'q' }, form);
-  const toggle = f.element('button', { name, value: 'notes', 'data-kn-filter-name': name, 'aria-pressed': 'false' }, form);
-  const status = f.element('p', { 'data-kn-result-count': '' }, form), host = f.element('div', { 'data-kn-pagination-host': '' }, form);
-  return { form, loop, rows, empty, search, toggle, status, host };
-}
-
-test('client filters read a linked query, paginate real nodes, reset on input, preserve independent filters and tolerate refused history', () => {
-  const f = environment(); let dispose;
-  try {
-    const list = listFixture(f), cards = listFixture(f, 'cards', 'card-topic', 0);
-    f.win.location.search = '?q=river&page=2&card-topic=notes';
-    dispose = setupVisitorFilters();
-    assert.equal(list.search.value, 'river'); assert.equal(list.rows.filter((row) => !row.hidden).length, 1); assert.equal(list.status.textContent, '3 of 5');
-    assert.equal(cards.toggle.getAttribute('aria-pressed'), 'true');
-    list.search.value = 'cafe'; list.form.fire('input', { target: list.search }); assert.equal(list.rows.filter((row) => !row.hidden).length, 1);
-    assert.match(f.win.location.search, /card-topic=notes/); assert.doesNotMatch(f.win.location.search, /page=/);
-    list.search.value = 'missing'; list.form.fire('input', { target: list.search }); assert.equal(list.empty.hidden, false); assert.equal(list.rows.filter((row) => !row.hidden).length, 0);
-    f.win.history.replaceState = () => { throw new Error('restricted'); };
-    list.search.value = 'garden'; assert.doesNotThrow(() => list.form.fire('input', { target: list.search })); assert.equal(list.rows.filter((row) => !row.hidden).length, 2); assert.equal(list.search.value, 'garden');
-    f.win.location.search = '?q=river&page=1'; f.win.fire('popstate'); assert.equal(list.search.value, 'river'); assert.equal(list.rows.filter((row) => !row.hidden).length, 2);
-    assert.equal(list.loop.parentElement.children[list.loop.parentElement.children.indexOf(list.loop) + 1], list.host, 'the pager follows its list');
-    const next = list.host.querySelector('[data-kn-page="2"]'); list.host.fire('click', { target: next, button: 0 }); assert.equal(f.doc.scrolledTo, list.loop, 'a new page starts at the top of the list'); assert.equal(list.rows.filter((row) => !row.hidden).length, 1); assert.equal(f.doc.activeElement.getAttribute('aria-current'), 'page');
-  } finally { dispose?.(); f.restore(); }
-});
-
-test('form enhancement writes native messages on blur and submit, focuses first invalid control, and lets valid submissions continue', () => {
-  const f = environment(); let dispose;
-  try {
-    const form = f.element('form', { class: 'kn-form' }); form.noValidate = false;
-    const field = f.element('div', { class: 'kn-field' }, form), input = f.element('input', { type: 'email' }, field);
-    const error = f.element('p', { class: 'kn-field-error', hidden: '' }, field), text = f.element('span', { 'data-kn-error-text': '' }, error);
-    dispose = setupForms(); assert.equal(form.noValidate, true);
-    input.validity.valid = false; input.validationMessage = 'Enter a valid email address.';
-    form.fire('focusout', { target: input }); assert.equal(error.hidden, false); assert.equal(text.textContent, input.validationMessage); assert.equal(input.getAttribute('aria-invalid'), 'true');
-    assert.equal(form.fire('submit').defaultPrevented, true); assert.equal(f.doc.activeElement, input);
-    input.validity.valid = true; form.fire('focusout', { target: input }); assert.equal(error.hidden, true); assert.equal(input.getAttribute('aria-invalid'), null);
-    assert.equal(form.fire('submit').defaultPrevented, false);
-    dispose(); dispose = null; assert.equal(form.noValidate, false);
-  } finally { dispose?.(); f.restore(); }
-});
-
-
 test('refusing stores only necessary consent; reopen works after choices and expiry asks again', () => {
   const f = environment(); let dispose;
   try {
@@ -232,21 +183,6 @@ test('refusing stores only necessary consent; reopen works after choices and exp
     stored.timestamp -= 183 * 86400000; f.storage.set('kn-test-consent', JSON.stringify(stored));
     f.win.fire('storage', { key: 'kn-test-consent' }); assert.equal(banner.hidden, false); assert.equal(reopen.hidden, true);
     assert.equal(hasConsent('external-media'), false); assert.equal(hasConsent('necessary'), true);
-  } finally { dispose?.(); f.restore(); }
-});
-
-test('filter enhancement hides submit, keeps a visible year label only for visible rows, and restores on disposal', () => {
-  const f = environment(); let dispose;
-  try {
-    const list = listFixture(f);
-    const groups = ['2026', '2025'].map((year) => f.element('li', { 'data-kn-content-group': year }, list.loop));
-    list.rows.forEach((row, i) => { row.dataset.knGroup = i < 2 ? '2026' : '2025'; });
-    dispose = setupVisitorFilters(); assert.ok(list.form.hasAttribute('data-kn-enhanced'));
-    assert.equal(groups[0].hidden, false); assert.equal(groups[1].hidden, true);
-    list.search.value = 'garden'; list.form.fire('input', { target: list.search });
-    assert.equal(groups[0].hidden, true); assert.equal(groups[1].hidden, false);
-    list.search.value = 'no matches'; list.form.fire('input', { target: list.search }); assert.ok(groups.every((node) => node.hidden));
-    dispose(); dispose = null; assert.ok(!list.form.hasAttribute('data-kn-enhanced')); assert.ok(groups.every((node) => !node.hidden));
   } finally { dispose?.(); f.restore(); }
 });
 

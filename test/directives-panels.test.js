@@ -1,14 +1,12 @@
 // Package D of the directives (docs/spec/directives.md): accordion, tabs, choice, toc, an article's following menu
-// and a fact box. Their facts and decisions in Node, and their markup, stylesheet and runtimes in every engine
-// Playwright has here, with script and without.
+// and a fact box. Their facts and decisions in Node, and their markup and stylesheet in every engine Playwright has
+// here, with script and without: none of them runs one (docs/spec/principles.md).
 import test, { after, before } from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { chromium, firefox, webkit } from 'playwright-core';
 import { allQuestions, panelParts } from '../src/directives/index.js';
-import { tabMove } from '../src/components/tabs.js';
-import { currentStop } from '../src/components/table-of-contents.js';
 import { derive, defaultInputs } from '../src/generator/index.js';
 import { coreCss } from '../src/css/index.js';
 import { componentsCss } from '../src/css/components.js';
@@ -28,203 +26,171 @@ test('a tab\'s panel is text and then components, both there, or it keeps its or
   for (const kinds of [['t', 't'], ['c', 'c'], ['c', 't'], ['t', 'c', 't'], []]) assert.equal(panelParts(blocks(...kinds)), null, kinds.join(''));
 });
 
-test('the arrow keys move along the tabs, wrapping and in the direction the text runs, and Home and End to the ends', () => {
-  assert.equal(tabMove('ArrowRight', 0, 3), 1);
-  assert.equal(tabMove('ArrowRight', 2, 3), 0);
-  assert.equal(tabMove('ArrowLeft', 0, 3), 2);
-  assert.equal(tabMove('ArrowLeft', 0, 3, true), 1);
-  assert.equal(tabMove('ArrowRight', 0, 3, true), 2);
-  assert.equal(tabMove('Home', 2, 3), 0);
-  assert.equal(tabMove('End', 0, 3), 2);
-  assert.equal(tabMove('ArrowDown', 0, 3), null);
-  assert.equal(tabMove('Enter', 0, 3), null);
-});
-
-test('the current stop is the last past the reading line, the first before any has, and none without a box', () => {
-  assert.equal(currentStop([100, 400, 900], 80), 0);
-  assert.equal(currentStop([-300, 79, 900], 80), 1);
-  assert.equal(currentStop([-900, -400, 80], 80), 2);
-  assert.equal(currentStop([null, 200, null], 80), 1);
-  assert.equal(currentStop([-500, null, 300], 80), 0);
-  assert.equal(currentStop([null, null], 80), -1);
-  assert.equal(currentStop([], 80), -1);
-});
-
 const BROWSERS = Object.entries({ chromium, firefox, webkit }).filter(([, type]) => existsSync(type.executablePath()));
-const source = (name) => readFile(new URL(`../src/components/${name}.js`, import.meta.url), 'utf8');
-let styles, fixture, runtimes;
+let styles, fixture;
 const browsers = [];
 before(async () => {
   styles = `${coreCss(derive(defaultInputs()))}${await componentsCss()}`;
   fixture = await readFile(new URL('fixtures/directives-panels.html', import.meta.url), 'utf8');
-  // One module each, with the scheduler a runtime imports standing before it.
-  const schedule = await source('schedule');
-  const bare = async (name) => (await source(name)).replace(/^import .*$/m, '');
-  runtimes = [
-    `${await source('tabs')}\nsetupTabs();`,
-    `${await source('choice')}\nsetupChoices();`,
-    `${schedule}\n${await bare('table-of-contents')}\nsetupFollowingMenus();`,
-    `${schedule}\n${await bare('reading-area')}\nsetupReadingAreas();`,
-  ];
   for (const [name, type] of BROWSERS) browsers.push([name, await type.launch()]);
 }, { timeout: 120000 });
 after(() => Promise.all(browsers.map(([, browser]) => browser.close())));
 
-async function open(browser, { width = 1280, height = 800, text = 16, script = true, run = true, dir = 'ltr' } = {}) {
+async function open(browser, { width = 1280, height = 800, text = 16, script = true, dir = 'ltr' } = {}) {
   const context = await browser.newContext({ viewport: { width, height }, javaScriptEnabled: script });
   const tab = await context.newPage();
   await tab.setContent(`<!doctype html><html lang="en" dir="${dir}" style="font-size: ${text}px"><head><style>${styles}</style></head><body data-kn-surface="page">${fixture}<div style="block-size: 100vh"></div></body></html>`);
-  if (script && run) await start(tab);
   return { tab, close: () => context.close() };
 }
-async function start(tab) {
-  for (const content of runtimes) await tab.addScriptTag({ type: 'module', content });
-  await tab.waitForSelector('.kn-tabs[data-kn-enhanced]', { state: 'attached' });
-  await tab.waitForSelector('.kn-toc a[aria-current]', { state: 'attached' });
-}
-const shown = (tab, selector) => tab.$$eval(selector, (elements) => elements.map((element) => element.getClientRects().length > 0));
+const shown = (tab, selector) => tab.$$eval(selector, (elements) => elements.map((element) => element.checkVisibility()));
+const opened = (tab, selector) => tab.$$eval(selector, (items) => items.map((item) => item.open));
+const tabs = '#plans .kn-tabs-item', answers = '#start .kn-choice-item';
 
-test('before the runtimes run only the first tab shows and no answer\'s panel, so nothing below moves when they do', { timeout: 120000 }, async () => {
+test('tabs and a choice need no script: the first tab open and no answer, and the page is the same without script', { timeout: 120000 }, async () => {
   for (const [name, browser] of browsers) {
-    const { tab, close } = await open(browser, { run: false });
-    assert.deepEqual(await shown(tab, '.kn-tabs-panel'), [true, false, false], name);
-    assert.deepEqual(await shown(tab, '.kn-choice-panel'), [false, false], name);
-    const below = () => tab.$eval('#guide', (element) => element.getBoundingClientRect().top + scrollY);
-    const was = await below();
-    await start(tab);
-    assert.equal(await below(), was, `${name}: the band after the tabs and the choice stays put`);
-    assert.deepEqual(await tab.$$eval('.kn-tabs-panel', (panels) => panels.map((panel) => panel.hidden)), [false, true, true], name);
-    assert.deepEqual(await tab.$$eval('.kn-choice-panel', (panels) => panels.map((panel) => panel.hidden)), [true, true], name);
-    await close();
-  }
-});
-
-test('tabs follow the ARIA pattern: a click or a key selects, with a roving tabindex, logical in right-to-left', { timeout: 120000 }, async () => {
-  const state = (tab) => tab.evaluate(() => ({
-    selected: [...document.querySelectorAll('.kn-tabs-tab')].findIndex((button) => button.getAttribute('aria-selected') === 'true'),
-    focused: [...document.querySelectorAll('.kn-tabs-tab')].indexOf(document.activeElement),
-    stops: [...document.querySelectorAll('.kn-tabs-tab')].map((button) => button.tabIndex),
-    shown: [...document.querySelectorAll('.kn-tabs-panel')].map((panel) => panel.getClientRects().length > 0),
-  }));
-  for (const [name, browser] of browsers) {
-    const { tab, close } = await open(browser);
-    await tab.focus('#tabs-1-tab-1');
-    await tab.keyboard.press('ArrowRight');
-    assert.deepEqual(await state(tab), { selected: 1, focused: 1, stops: [-1, 0, -1], shown: [false, true, false] }, name);
-    await tab.keyboard.press('End');
-    assert.deepEqual((await state(tab)).selected, 2, name);
-    await tab.keyboard.press('ArrowRight');
-    assert.deepEqual((await state(tab)).selected, 0, `${name}: wraps`);
-    await tab.keyboard.press('ArrowLeft');
-    assert.deepEqual((await state(tab)).selected, 2, name);
-    await tab.keyboard.press('Home');
-    assert.deepEqual(await state(tab), { selected: 0, focused: 0, stops: [0, -1, -1], shown: [true, false, false] }, name);
-    await tab.click('#tabs-1-tab-2');
-    assert.deepEqual((await state(tab)).shown, [false, true, false], `${name}: a click`);
-    // A link to something in a panel not shown shows that panel.
-    await tab.click('#tabs-1-tab-1');
-    await tab.evaluate(() => { location.hash = '#large-details'; });
-    await tab.waitForFunction(() => document.querySelector('#tabs-1-tab-2').getAttribute('aria-selected') === 'true');
-    await close();
-    const rtl = await open(browser, { dir: 'rtl' });
-    await rtl.tab.focus('#tabs-1-tab-1');
-    await rtl.tab.keyboard.press('ArrowLeft');
-    assert.equal((await state(rtl.tab)).selected, 1, `${name}: in right-to-left the left arrow goes on`);
-    await rtl.close();
-  }
-});
-
-test('a choice has no answer chosen beforehand, and a click shows that answer\'s panel alone and keeps it', { timeout: 120000 }, async () => {
-  const state = (tab) => tab.evaluate(() => ({
-    expanded: [...document.querySelectorAll('.kn-choice-answer')].map((answer) => answer.getAttribute('aria-expanded')),
-    shown: [...document.querySelectorAll('.kn-choice-panel')].map((panel) => panel.getClientRects().length > 0),
-  }));
-  for (const [name, browser] of browsers) {
-    const { tab, close } = await open(browser);
-    assert.deepEqual(await state(tab), { expanded: ['false', 'false'], shown: [false, false] }, name);
-    await tab.click('.kn-choice-answer >> nth=1');
-    assert.deepEqual(await state(tab), { expanded: ['false', 'true'], shown: [false, true] }, name);
-    await tab.click('.kn-choice-answer >> nth=1');
-    assert.deepEqual(await state(tab), { expanded: ['false', 'true'], shown: [false, true] }, `${name}: kept`);
-    await tab.click('.kn-choice-answer >> nth=0');
-    assert.deepEqual(await state(tab), { expanded: ['true', 'false'], shown: [true, false] }, name);
-    await close();
-  }
-});
-
-test('a live preview\'s konzilo-preview-show opens the tab and the answer that hold the block, and moves nothing else', { timeout: 120000 }, async () => {
-  const show = (tab, selector) => tab.evaluate((selector) => {
-    const block = document.querySelector(selector);
-    block.setAttribute('data-konzilo-block', '2.1');
-    const scrolled = scrollY;
-    block.dispatchEvent(new CustomEvent('konzilo-preview-show', { bubbles: true }));
-    return scrollY === scrolled;
-  }, selector);
-  const state = (tab) => tab.evaluate(() => ({
-    tab: [...document.querySelectorAll('.kn-tabs-tab')].findIndex((button) => button.getAttribute('aria-selected') === 'true'),
-    answers: [...document.querySelectorAll('.kn-choice-answer')].map((answer) => answer.getAttribute('aria-expanded')),
-  }));
-  for (const [name, browser] of browsers) {
-    const { tab, close } = await open(browser);
-    assert.equal(await show(tab, '#large-details'), true, `${name}: the preview, not the runtime, scrolls`);
-    assert.deepEqual(await state(tab), { tab: 1, answers: ['false', 'false'] }, `${name}: a block in the second tab`);
-    await show(tab, '#konzilo-form-join');
-    assert.deepEqual(await state(tab), { tab: 1, answers: ['false', 'true'] }, `${name}: a block in the second answer`);
-    await show(tab, '#choice-1-answer-1 h3');
-    assert.deepEqual(await state(tab), { tab: 1, answers: ['true', 'false'] }, `${name}: a block in the first answer`);
-    await show(tab, '#questions .kn-accordion');
-    assert.deepEqual(await state(tab), { tab: 1, answers: ['true', 'false'] }, `${name}: a block outside them changes nothing`);
-    await close();
-  }
-});
-
-test('the tabs and choice runtimes listen on the document only where their components are', { timeout: 120000 }, async () => {
-  const [, browser] = browsers[0];
-  const context = await browser.newContext();
-  const tab = await context.newPage();
-  const capture = (sources) => tab.evaluate(async (sources) => {
-    const seen = [];
-    const add = EventTarget.prototype.addEventListener;
-    EventTarget.prototype.addEventListener = function (type, ...rest) { seen.push(type); return add.call(this, type, ...rest); };
-    for (const source of sources) await import(`data:text/javascript,${encodeURIComponent(`${source}\n// ${Math.random()}`)}`);
-    EventTarget.prototype.addEventListener = add;
-    return seen;
-  }, sources);
-  await tab.setContent('<!doctype html><html lang="en"><body><p>Nothing to enhance.</p></body></html>');
-  assert.deepEqual(await capture([runtimes[0], runtimes[1]]), []);
-  // The same capture sees the listener where there is something to enhance.
-  await tab.setContent(`<!doctype html><html lang="en"><body>${fixture}</body></html>`);
-  assert.equal((await capture([runtimes[0], runtimes[1]])).filter((type) => type === 'konzilo-preview-show').length, 2);
-  await context.close();
-});
-
-test('the following menu marks the stop last past the reading line, a fact box among them, and only colours change', { timeout: 120000 }, async () => {
-  const current = (tab) => tab.$eval('.kn-article-body .kn-toc', (menu) => menu.querySelector('a[aria-current="true"]')?.getAttribute('href'));
-  for (const [name, browser] of browsers) {
-    const { tab, close } = await open(browser, { width: 1440, height: 900 });
-    assert.equal(await current(tab), '#a-crosshead', `${name}: the first before any has passed`);
-    const box = await tab.$eval('.kn-article-body .kn-toc', (menu) => menu.getBoundingClientRect().height);
-    for (const [target, expected] of [['#in-short', '#in-short'], ['#another-crosshead', '#another-crosshead'], ['#a-crosshead', '#a-crosshead']]) {
-      await tab.click(`.kn-article-body .kn-toc a[href="${target}"]`);
-      await tab.waitForFunction((href) => document.querySelector(`.kn-article-body .kn-toc a[href="${href}"]`).getAttribute('aria-current') === 'true', expected);
-      assert.equal(await tab.$$eval('.kn-article-body .kn-toc a[aria-current]', (links) => links.length), 1, name);
+    const pages = [];
+    for (const script of [true, false]) {
+      const { tab, close } = await open(browser, { script });
+      pages.push(await tab.evaluate(() => ({
+        tabs: [...document.querySelectorAll('.kn-tabs-panel')].map((panel) => panel.checkVisibility()),
+        answers: [...document.querySelectorAll('.kn-choice-panel')].map((panel) => panel.checkVisibility()),
+        below: document.querySelector('#guide').getBoundingClientRect().top + scrollY,
+      })));
+      await close();
     }
-    assert.equal(await tab.$eval('.kn-article-body .kn-toc', (menu) => menu.getBoundingClientRect().height), box, `${name}: the menu keeps its height`);
+    assert.deepEqual(pages[0], { ...pages[0], tabs: [true, false, false], answers: [false, false] }, name);
+    assert.deepEqual(pages[1], pages[0], `${name}: nothing moves without script`);
+  }
+});
+
+test('tabs stand in a row over the open panel; a click or Enter opens one and closes the others, and a click on the open tab keeps it', { timeout: 120000 }, async () => {
+  const geometry = (tab) => tab.evaluate(() => {
+    const summaries = [...document.querySelectorAll('#plans .kn-tabs-tab')].map((summary) => summary.getBoundingClientRect());
+    const panel = [...document.querySelectorAll('#plans .kn-tabs-panel')].find((element) => element.checkVisibility()).getBoundingClientRect();
+    return { row: summaries.every((box) => Math.abs(box.top - summaries[0].top) < 1), below: summaries.every((box) => box.bottom <= panel.top + 0.5), order: summaries.map((box) => Math.round(box.left)) };
+  });
+  for (const [name, browser] of browsers) for (const script of [true, false]) {
+    const label = `${name}${script ? '' : ' without script'}`;
+    const { tab, close } = await open(browser, { script });
+    let found = await geometry(tab);
+    assert.equal(found.row && found.below, true, `${label}: ${JSON.stringify(found)}`);
+    assert.ok(found.order[0] < found.order[1] && found.order[1] < found.order[2], label);
+    await tab.click('#plans .kn-tabs-tab >> nth=1');
+    assert.deepEqual(await opened(tab, tabs), [false, true, false], label);
+    assert.deepEqual(await shown(tab, '#plans .kn-tabs-panel'), [false, true, false], label);
+    assert.equal((await geometry(tab)).below, true, label);
+    await tab.click('#plans .kn-tabs-tab >> nth=1', { force: true });
+    assert.deepEqual(await opened(tab, tabs), [false, true, false], `${label}: a click on the open tab keeps it`);
+    await tab.focus('#plans .kn-tabs-tab >> nth=2');
+    await tab.keyboard.press('Enter');
+    assert.deepEqual(await opened(tab, tabs), [false, false, true], `${label}: Enter`);
+    await close();
+  }
+  for (const [name, browser] of browsers) {
+    const { tab, close } = await open(browser, { dir: 'rtl' });
+    const { order } = await geometry(tab);
+    assert.ok(order[0] > order[1] && order[1] > order[2], `${name}: in right-to-left the row runs from the right`);
     await close();
   }
 });
 
-test('without script nothing is lost: every panel shows under its tab\'s or its answer\'s name', { timeout: 120000 }, async () => {
+test('Tab reaches every tab, each followed by what its open panel holds, and the tabs are buttons that say whether they are open', { timeout: 120000 }, async () => {
   for (const [name, browser] of browsers) {
-    const { tab, close } = await open(browser, { script: false });
+    const { tab, close } = await open(browser);
+    await tab.focus('#plans .kn-tabs-tab >> nth=0');
+    const seen = [];
+    for (let i = 0; i < 8; i++) {
+      seen.push(await tab.evaluate(() => document.activeElement.matches('.kn-tabs-tab') ? `tab ${[...document.querySelectorAll('#plans .kn-tabs-tab')].indexOf(document.activeElement)}` : document.activeElement.closest('.kn-tabs-panel') ? 'panel' : 'after'));
+      await tab.keyboard.press('Tab');
+    }
+    const order = seen.filter((stop, i) => stop !== seen[i - 1]);
+    assert.deepEqual(order.slice(0, 4), ['tab 0', 'panel', 'tab 1', 'tab 2'], `${name}: ${seen.join(', ')}`);
+    if (name === 'chromium') {
+      // What a screen reader is told, from the browser's own accessibility tree.
+      const session = await tab.context().newCDPSession(tab);
+      const { nodes } = await session.send('Accessibility.getFullAXTree');
+      const state = (label) => nodes.filter((node) => node.name?.value === label && !node.ignored).map((node) => [node.role.value, node.properties?.find((property) => property.name === 'expanded')?.value.value]);
+      const found = [state('Small'), state('Large'), state('Yes')].map((list) => list.find(([, expanded]) => expanded !== undefined));
+      assert.ok(found.every(([role]) => role.startsWith('DisclosureTriangle')), `${name}: ${JSON.stringify(found)}`);
+      assert.deepEqual(found.map(([, expanded]) => expanded), [true, false, false], name);
+    }
+    await close();
+  }
+});
+
+test('a tab\'s text and its components stand in two columns where both fit, and above one another where not', { timeout: 120000 }, async () => {
+  for (const [name, browser] of browsers) for (const [width, beside] of [[1280, true], [390, false]]) {
+    const { tab, close } = await open(browser, { width });
+    const found = await tab.evaluate(() => {
+      const text = document.querySelector('#plans .kn-tabs-text').getBoundingClientRect(), parts = document.querySelector('#plans .kn-tabs-parts').getBoundingClientRect();
+      return text.top < parts.bottom && parts.top < text.bottom && text.right <= parts.left;
+    });
+    assert.equal(found, beside, `${name} at ${width}`);
+    await close();
+  }
+});
+
+test('a choice has no answer open beforehand, and a click opens that answer\'s panel under the answers alone and keeps it', { timeout: 120000 }, async () => {
+  for (const [name, browser] of browsers) for (const script of [true, false]) {
+    const label = `${name}${script ? '' : ' without script'}`;
+    const { tab, close } = await open(browser, { script });
+    assert.deepEqual(await opened(tab, answers), [false, false], label);
+    await tab.click('#start .kn-choice-answer >> nth=1');
+    assert.deepEqual(await shown(tab, '#start .kn-choice-panel'), [false, true], label);
+    const placed = await tab.evaluate(() => {
+      const [a, b] = [...document.querySelectorAll('#start .kn-choice-answer')].map((answer) => answer.getBoundingClientRect());
+      const panel = document.querySelectorAll('#start .kn-choice-panel')[1].getBoundingClientRect();
+      return { beside: Math.abs(a.top - b.top) < 1, under: b.bottom <= panel.top + 0.5, across: panel.left <= a.left + 0.5 && panel.right >= b.right - 0.5 };
+    });
+    assert.deepEqual(placed, { beside: true, under: true, across: true }, label);
+    await tab.click('#start .kn-choice-answer >> nth=1', { force: true });
+    assert.deepEqual(await opened(tab, answers), [false, true], `${label}: kept`);
+    await tab.click('#start .kn-choice-answer >> nth=0');
+    assert.deepEqual(await opened(tab, answers), [true, false], label);
+    await close();
+  }
+});
+
+test('a link to something in a closed panel opens it, and a live preview\'s own opening of a <details> shows its panel alone', { timeout: 120000 }, async () => {
+  for (const [name, browser] of browsers) {
+    const { tab, close } = await open(browser);
+    await tab.evaluate(() => { location.hash = '#large-details'; });
+    await tab.waitForFunction(() => document.querySelectorAll('#plans .kn-tabs-item')[1].open);
+    assert.deepEqual(await opened(tab, tabs), [false, true, false], `${name}: the browser opens what holds a link's target`);
+    // The core opens the <details> that holds a selected block itself (directives.md, Behaviour in a live preview).
+    await tab.evaluate(() => { document.querySelector('#konzilo-form-join').closest('details').open = true; });
+    assert.deepEqual(await shown(tab, '#start .kn-choice-panel'), [false, true], name);
+    await tab.evaluate(() => { document.querySelector('#start .kn-choice-panel h3').closest('details').open = true; });
+    assert.deepEqual(await opened(tab, answers), [true, false], `${name}: the other answer closes`);
+    await close();
+  }
+});
+
+test('on paper every panel shows, each under its tab\'s or its answer\'s name', { timeout: 120000 }, async () => {
+  for (const [name, browser] of browsers) {
+    const { tab, close } = await open(browser);
+    await tab.emulateMedia({ media: 'print' });
     assert.deepEqual(await shown(tab, '.kn-tabs-panel'), [true, true, true], name);
     assert.deepEqual(await shown(tab, '.kn-choice-panel'), [true, true], name);
-    const order = await tab.evaluate(() => {
-      const top = (selector) => document.querySelector(selector).getBoundingClientRect().top;
-      return [top('#tabs-1-tab-1') < top('#tabs-1-panel-1'), top('#tabs-1-panel-1') < top('#tabs-1-tab-2'), top('#tabs-1-tab-2') < top('#tabs-1-panel-2'), top('#tabs-1-panel-2') < top('#tabs-1-tab-3'),
-        top('[aria-controls="choice-1-answer-1"]') < top('#choice-1-answer-1'), top('#choice-1-answer-1') < top('[aria-controls="choice-1-answer-2"]'), top('[aria-controls="choice-1-answer-2"]') < top('#choice-1-answer-2')];
-    });
-    assert.deepEqual(order, order.map(() => true), name);
+    const order = await tab.evaluate(() => [...document.querySelectorAll('.kn-tabs-item, .kn-choice-item')].every((item) => item.querySelector('summary').getBoundingClientRect().bottom <= item.querySelector(':scope > div').getBoundingClientRect().top + 0.5));
+    assert.equal(order, true, name);
+    await close();
+  }
+});
+
+test('the following menu runs no script and marks nothing, in every engine alike', { timeout: 120000 }, async () => {
+  const marked = (tab) => tab.$$eval('.kn-article-body .kn-toc a', (links) => links.filter((link) => getComputedStyle(link).borderInlineStartColor !== 'rgba(0, 0, 0, 0)').map((link) => link.getAttribute('href')));
+  for (const [name, browser] of browsers) {
+    // The page's other runtimes run, as on a site; none of them is the menu's.
+    const { tab, close } = await open(browser, { width: 1440, height: 900 });
+    const box = await tab.$eval('.kn-article-body .kn-toc', (menu) => menu.getBoundingClientRect().height);
+    // Chromium's scroll markers could mark the section being read, and no other engine's, so they are not used.
+    assert.equal(await tab.$eval('.kn-article-body .kn-toc', (menu) => getComputedStyle(menu).scrollTargetGroup ?? 'none'), 'none', name);
+    await tab.click('.kn-article-body .kn-toc a[href="#another-crosshead"]');
+    await tab.waitForTimeout(300);
+    assert.deepEqual(await marked(tab), [], `${name}: no mark, and nothing in its place`);
+    assert.equal(await tab.$$eval('.kn-toc [aria-current]', (links) => links.length), 0, `${name}: nothing writes aria-current`);
+    assert.equal(await tab.$eval('.kn-article-body .kn-toc', (menu) => menu.getBoundingClientRect().height), box, `${name}: the menu keeps its height`);
     await close();
   }
 });
