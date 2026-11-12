@@ -511,6 +511,6 @@ From this package: the design file, `fromDesign`, `konzilo.css`, the fonts and l
 Of its own, since nothing here does it yet:
 
 - Its languages, in the shape Header takes, from the core's `languageSwitcher()` (`{ url, name, current, language }`). Only the menu has an adapter so far, and the trail the few lines above.
-- The look of any presentation of its own, and its `searchPage` and `termPage`, whose list a term's page draws with `Filtered`. The template's List, Cards and TermPage write classes of the template's, whose styles went with `src/styles`, so they stand unstyled until the site replaces them.
-- `bodyClass`, which the core does not take yet, so a template writes the wrapper around a body itself.
+- The look of any presentation of its own. The template's List, Cards, TermPage and SearchPage write classes of the template's, whose styles went with `src/styles`, so they stand unstyled until the site replaces them, as The templates above do.
+- `bodyClass`, which the core does not take yet, so a template places `PageBody` or `ArticleBody` around a body, or for a body without directives the wrapper above.
 - A restart of Astro's dev server after a change to the design, which it does not watch.
