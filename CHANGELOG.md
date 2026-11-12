@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- A Content Loop in body text keeps its own links, as a Card does: its titles are no longer drawn as body links, underlined in the link colour.
+
 ## [0.3.0] – 2026-11-11
 
 ### Added

@@ -4,7 +4,8 @@
   .kn-content-body { display: grid; align-content: start; gap: 0.6em; min-inline-size: 0; overflow-wrap: anywhere; }
   .kn-content-body > * { margin: 0; }
   .kn-content-heading { text-wrap: balance; }
-  .kn-content-link { color: var(--kn-text); text-decoration: none; text-underline-offset: 0.18em; }
+  /* Two classes, so a loop in body text keeps its own link, as a card does: `.kn-body-text a` outweighs one class. */
+  :is(.kn-content-card, .kn-content-row) .kn-content-link { color: var(--kn-text); text-decoration: none; text-underline-offset: 0.18em; }
   :is(.kn-content-card, .kn-content-row):is(:hover, :focus-within) .kn-content-link { color: var(--kn-link); text-decoration: underline; }
   .kn-content-card[data-kn-surface]:is(:hover, :focus-within) { box-shadow: var(--kn-shadow-box-lifted); }
   .kn-content-card:has(> .kn-content-picture:not([hidden])) { border-block-start: 0; padding-block-start: 0; }
