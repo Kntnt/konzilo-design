@@ -273,7 +273,7 @@ A value may be a link, such as `tel:`, kept as written.
 </div>
 ```
 
-**Read from content.** *(CSS)* The logos stand in a band under their label (owner, 2026-11-10). At the top level, the list stands in a section of its own (The body of a page). A logo is almost twice as high on a wide screen as it was, 4.5rem, and 2.5rem in the narrowest window, between them following the window as space does, at most four times as wide as high (the owner's wish, 2026-11-12; the measures are the assistant's).
+**Read from content.** *(CSS)* The logos stand in a band under their label (owner, 2026-11-10). At the top level, the list stands in a section of its own (The body of a page). A logo is almost twice as high on a wide screen as it was, 4.5rem, and 2.5rem in the narrowest window, between them following the window as space does, at most four times as wide as high (the owner's wish, 2026-11-12; the measures are the assistant's). A section that holds nothing but a logos list stands as far from the band before it as from the band after it (the owner, 2026-11-12): beside a band of its own colour it takes the band space on that side, where a run of bands would leave only its smaller space, `:is(X + L)` and `L:has(+ X)` for each Surface X, since a strip of logos under its small label does not read as a section's start; after a Hero of its colour, which keeps its end space, it adds none of its own.
 
 **Behaviour.** None. **Component.** New: Logos.
 

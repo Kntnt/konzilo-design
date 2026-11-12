@@ -13,4 +13,77 @@
   .kn-logos-list :is(img, svg) { display: block; inline-size: auto; block-size: var(--kn-logo-height); max-inline-size: min(4 * var(--kn-logo-height), 100%); object-fit: contain; }
   .kn-logos-list a { display: block; max-inline-size: 100%; border-radius: var(--kn-radius-control); }
 
+  /* A band of logos alone stands apart from the bands on either side, the same space above its logos as below them,
+     however its neighbours' colours fall (the owner, 2026-11-12): a strip of logos under a small label does not read as
+     the start of a section, so the smaller space of a run of bands made it look as if it belonged to the cards above.
+     Where a band of its colour stands before or after it, the run's smaller space between them gives way to the band
+     space, which the logos' band holds on that side; a Hero before it keeps its own end space instead. */
+  :is(
+    .kn-band:not([data-kn-surface]):not(.kn-hero) + .kn-band:not([data-kn-surface]).kn-section:has(> .kn-band-content > .kn-section-body:only-child > .kn-logos:only-child),
+    .kn-band[data-kn-surface="page"]:not(.kn-hero) + .kn-band[data-kn-surface="page"].kn-section:has(> .kn-band-content > .kn-section-body:only-child > .kn-logos:only-child),
+    .kn-band[data-kn-surface="raised"]:not(.kn-hero) + .kn-band[data-kn-surface="raised"].kn-section:has(> .kn-band-content > .kn-section-body:only-child > .kn-logos:only-child),
+    .kn-band[data-kn-surface="tint"]:not(.kn-hero) + .kn-band[data-kn-surface="tint"].kn-section:has(> .kn-band-content > .kn-section-body:only-child > .kn-logos:only-child),
+    .kn-band[data-kn-surface="tint-secondary"]:not(.kn-hero) + .kn-band[data-kn-surface="tint-secondary"].kn-section:has(> .kn-band-content > .kn-section-body:only-child > .kn-logos:only-child),
+    .kn-band[data-kn-surface="tint-tertiary"]:not(.kn-hero) + .kn-band[data-kn-surface="tint-tertiary"].kn-section:has(> .kn-band-content > .kn-section-body:only-child > .kn-logos:only-child),
+    .kn-band[data-kn-surface="brand"]:not(.kn-hero) + .kn-band[data-kn-surface="brand"].kn-section:has(> .kn-band-content > .kn-section-body:only-child > .kn-logos:only-child),
+    .kn-band[data-kn-surface="inverse"]:not(.kn-hero) + .kn-band[data-kn-surface="inverse"].kn-section:has(> .kn-band-content > .kn-section-body:only-child > .kn-logos:only-child),
+    .kn-band[data-kn-surface="accent"]:not(.kn-hero) + .kn-band[data-kn-surface="accent"].kn-section:has(> .kn-band-content > .kn-section-body:only-child > .kn-logos:only-child),
+    .kn-band[data-kn-surface="picture-light"]:not(.kn-hero) + .kn-band[data-kn-surface="picture-light"].kn-section:has(> .kn-band-content > .kn-section-body:only-child > .kn-logos:only-child),
+    .kn-band[data-kn-surface="picture-dark"]:not(.kn-hero) + .kn-band[data-kn-surface="picture-dark"].kn-section:has(> .kn-band-content > .kn-section-body:only-child > .kn-logos:only-child),
+    .kn-band[data-kn-surface="status-info"]:not(.kn-hero) + .kn-band[data-kn-surface="status-info"].kn-section:has(> .kn-band-content > .kn-section-body:only-child > .kn-logos:only-child),
+    .kn-band[data-kn-surface="status-success"]:not(.kn-hero) + .kn-band[data-kn-surface="status-success"].kn-section:has(> .kn-band-content > .kn-section-body:only-child > .kn-logos:only-child),
+    .kn-band[data-kn-surface="status-warning"]:not(.kn-hero) + .kn-band[data-kn-surface="status-warning"].kn-section:has(> .kn-band-content > .kn-section-body:only-child > .kn-logos:only-child),
+    .kn-band[data-kn-surface="status-error"]:not(.kn-hero) + .kn-band[data-kn-surface="status-error"].kn-section:has(> .kn-band-content > .kn-section-body:only-child > .kn-logos:only-child)
+  ) { padding-block-start: var(--kn-space-band); }
+  :is(
+    .kn-hero:not([data-kn-surface]) + .kn-band:not([data-kn-surface]).kn-section:has(> .kn-band-content > .kn-section-body:only-child > .kn-logos:only-child),
+    .kn-hero[data-kn-surface="page"] + .kn-band[data-kn-surface="page"].kn-section:has(> .kn-band-content > .kn-section-body:only-child > .kn-logos:only-child),
+    .kn-hero[data-kn-surface="raised"] + .kn-band[data-kn-surface="raised"].kn-section:has(> .kn-band-content > .kn-section-body:only-child > .kn-logos:only-child),
+    .kn-hero[data-kn-surface="tint"] + .kn-band[data-kn-surface="tint"].kn-section:has(> .kn-band-content > .kn-section-body:only-child > .kn-logos:only-child),
+    .kn-hero[data-kn-surface="tint-secondary"] + .kn-band[data-kn-surface="tint-secondary"].kn-section:has(> .kn-band-content > .kn-section-body:only-child > .kn-logos:only-child),
+    .kn-hero[data-kn-surface="tint-tertiary"] + .kn-band[data-kn-surface="tint-tertiary"].kn-section:has(> .kn-band-content > .kn-section-body:only-child > .kn-logos:only-child),
+    .kn-hero[data-kn-surface="brand"] + .kn-band[data-kn-surface="brand"].kn-section:has(> .kn-band-content > .kn-section-body:only-child > .kn-logos:only-child),
+    .kn-hero[data-kn-surface="inverse"] + .kn-band[data-kn-surface="inverse"].kn-section:has(> .kn-band-content > .kn-section-body:only-child > .kn-logos:only-child),
+    .kn-hero[data-kn-surface="accent"] + .kn-band[data-kn-surface="accent"].kn-section:has(> .kn-band-content > .kn-section-body:only-child > .kn-logos:only-child),
+    .kn-hero[data-kn-surface="picture-light"] + .kn-band[data-kn-surface="picture-light"].kn-section:has(> .kn-band-content > .kn-section-body:only-child > .kn-logos:only-child),
+    .kn-hero[data-kn-surface="picture-dark"] + .kn-band[data-kn-surface="picture-dark"].kn-section:has(> .kn-band-content > .kn-section-body:only-child > .kn-logos:only-child),
+    .kn-hero[data-kn-surface="status-info"] + .kn-band[data-kn-surface="status-info"].kn-section:has(> .kn-band-content > .kn-section-body:only-child > .kn-logos:only-child),
+    .kn-hero[data-kn-surface="status-success"] + .kn-band[data-kn-surface="status-success"].kn-section:has(> .kn-band-content > .kn-section-body:only-child > .kn-logos:only-child),
+    .kn-hero[data-kn-surface="status-warning"] + .kn-band[data-kn-surface="status-warning"].kn-section:has(> .kn-band-content > .kn-section-body:only-child > .kn-logos:only-child),
+    .kn-hero[data-kn-surface="status-error"] + .kn-band[data-kn-surface="status-error"].kn-section:has(> .kn-band-content > .kn-section-body:only-child > .kn-logos:only-child)
+  ) { padding-block-start: 0; }
+  :is(
+    .kn-band:not([data-kn-surface]).kn-section:has(> .kn-band-content > .kn-section-body:only-child > .kn-logos:only-child):has(+ .kn-band:not([data-kn-surface])),
+    .kn-band[data-kn-surface="page"].kn-section:has(> .kn-band-content > .kn-section-body:only-child > .kn-logos:only-child):has(+ .kn-band[data-kn-surface="page"]),
+    .kn-band[data-kn-surface="raised"].kn-section:has(> .kn-band-content > .kn-section-body:only-child > .kn-logos:only-child):has(+ .kn-band[data-kn-surface="raised"]),
+    .kn-band[data-kn-surface="tint"].kn-section:has(> .kn-band-content > .kn-section-body:only-child > .kn-logos:only-child):has(+ .kn-band[data-kn-surface="tint"]),
+    .kn-band[data-kn-surface="tint-secondary"].kn-section:has(> .kn-band-content > .kn-section-body:only-child > .kn-logos:only-child):has(+ .kn-band[data-kn-surface="tint-secondary"]),
+    .kn-band[data-kn-surface="tint-tertiary"].kn-section:has(> .kn-band-content > .kn-section-body:only-child > .kn-logos:only-child):has(+ .kn-band[data-kn-surface="tint-tertiary"]),
+    .kn-band[data-kn-surface="brand"].kn-section:has(> .kn-band-content > .kn-section-body:only-child > .kn-logos:only-child):has(+ .kn-band[data-kn-surface="brand"]),
+    .kn-band[data-kn-surface="inverse"].kn-section:has(> .kn-band-content > .kn-section-body:only-child > .kn-logos:only-child):has(+ .kn-band[data-kn-surface="inverse"]),
+    .kn-band[data-kn-surface="accent"].kn-section:has(> .kn-band-content > .kn-section-body:only-child > .kn-logos:only-child):has(+ .kn-band[data-kn-surface="accent"]),
+    .kn-band[data-kn-surface="picture-light"].kn-section:has(> .kn-band-content > .kn-section-body:only-child > .kn-logos:only-child):has(+ .kn-band[data-kn-surface="picture-light"]),
+    .kn-band[data-kn-surface="picture-dark"].kn-section:has(> .kn-band-content > .kn-section-body:only-child > .kn-logos:only-child):has(+ .kn-band[data-kn-surface="picture-dark"]),
+    .kn-band[data-kn-surface="status-info"].kn-section:has(> .kn-band-content > .kn-section-body:only-child > .kn-logos:only-child):has(+ .kn-band[data-kn-surface="status-info"]),
+    .kn-band[data-kn-surface="status-success"].kn-section:has(> .kn-band-content > .kn-section-body:only-child > .kn-logos:only-child):has(+ .kn-band[data-kn-surface="status-success"]),
+    .kn-band[data-kn-surface="status-warning"].kn-section:has(> .kn-band-content > .kn-section-body:only-child > .kn-logos:only-child):has(+ .kn-band[data-kn-surface="status-warning"]),
+    .kn-band[data-kn-surface="status-error"].kn-section:has(> .kn-band-content > .kn-section-body:only-child > .kn-logos:only-child):has(+ .kn-band[data-kn-surface="status-error"])
+  ) { padding-block-end: var(--kn-space-band); }
+  :is(
+    .kn-band:not([data-kn-surface]).kn-section:has(> .kn-band-content > .kn-section-body:only-child > .kn-logos:only-child) + .kn-band:not([data-kn-surface]),
+    .kn-band[data-kn-surface="page"].kn-section:has(> .kn-band-content > .kn-section-body:only-child > .kn-logos:only-child) + .kn-band[data-kn-surface="page"],
+    .kn-band[data-kn-surface="raised"].kn-section:has(> .kn-band-content > .kn-section-body:only-child > .kn-logos:only-child) + .kn-band[data-kn-surface="raised"],
+    .kn-band[data-kn-surface="tint"].kn-section:has(> .kn-band-content > .kn-section-body:only-child > .kn-logos:only-child) + .kn-band[data-kn-surface="tint"],
+    .kn-band[data-kn-surface="tint-secondary"].kn-section:has(> .kn-band-content > .kn-section-body:only-child > .kn-logos:only-child) + .kn-band[data-kn-surface="tint-secondary"],
+    .kn-band[data-kn-surface="tint-tertiary"].kn-section:has(> .kn-band-content > .kn-section-body:only-child > .kn-logos:only-child) + .kn-band[data-kn-surface="tint-tertiary"],
+    .kn-band[data-kn-surface="brand"].kn-section:has(> .kn-band-content > .kn-section-body:only-child > .kn-logos:only-child) + .kn-band[data-kn-surface="brand"],
+    .kn-band[data-kn-surface="inverse"].kn-section:has(> .kn-band-content > .kn-section-body:only-child > .kn-logos:only-child) + .kn-band[data-kn-surface="inverse"],
+    .kn-band[data-kn-surface="accent"].kn-section:has(> .kn-band-content > .kn-section-body:only-child > .kn-logos:only-child) + .kn-band[data-kn-surface="accent"],
+    .kn-band[data-kn-surface="picture-light"].kn-section:has(> .kn-band-content > .kn-section-body:only-child > .kn-logos:only-child) + .kn-band[data-kn-surface="picture-light"],
+    .kn-band[data-kn-surface="picture-dark"].kn-section:has(> .kn-band-content > .kn-section-body:only-child > .kn-logos:only-child) + .kn-band[data-kn-surface="picture-dark"],
+    .kn-band[data-kn-surface="status-info"].kn-section:has(> .kn-band-content > .kn-section-body:only-child > .kn-logos:only-child) + .kn-band[data-kn-surface="status-info"],
+    .kn-band[data-kn-surface="status-success"].kn-section:has(> .kn-band-content > .kn-section-body:only-child > .kn-logos:only-child) + .kn-band[data-kn-surface="status-success"],
+    .kn-band[data-kn-surface="status-warning"].kn-section:has(> .kn-band-content > .kn-section-body:only-child > .kn-logos:only-child) + .kn-band[data-kn-surface="status-warning"],
+    .kn-band[data-kn-surface="status-error"].kn-section:has(> .kn-band-content > .kn-section-body:only-child > .kn-logos:only-child) + .kn-band[data-kn-surface="status-error"]
+  ) { padding-block-start: 0; }
 }

@@ -232,6 +232,32 @@ test('logos are 2.5rem high in the narrowest window and almost twice that on a w
   }
 });
 
+test('a band of logos alone stands as far from the band before it as from the band after it, however their colours fall', { timeout: 120000 }, async () => {
+  const band = (surface, inner) => `<section class="kn-band kn-section"${surface ? ` data-kn-surface="${surface}"` : ''}><div class="kn-band-content">${inner}</div></section>`;
+  const head = (words) => `<header class="kn-section-head"><hgroup class="kn-heading-group"><h2 class="kn-heading-group-heading" data-kn-type="heading-2">${words}</h2></hgroup></header>`;
+  const cards = band(undefined, `${head('Before')}<div class="kn-section-body kn-body-text"><div class="kn-card-grid kn-cards"><article class="kn-card" data-kn-surface="raised"><h3 class="kn-card-heading" data-kn-type="heading-5">A card</h3></article></div></div>`);
+  const logos = band(undefined, '<div class="kn-section-body kn-body-text"><div class="kn-logos"><p class="kn-logos-label" data-kn-type="label">Trusted by</p><ul class="kn-logos-list" role="list"><li><img src="logo-wide.svg" alt="A name"></li></ul></div></div>');
+  const after = (surface) => band(surface, `${head('After')}<div class="kn-section-body kn-body-text"><p>Words.</p></div>`);
+  for (const [name, browser] of browsers) for (const [title, page] of [['joined above', `${cards}${logos}${after('tint')}`], ['joined below', `${after('tint')}${logos}${after()}`], ['joined on both sides', `${cards}${logos}${after()}`]]) {
+    const tab = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+    await tab.route('**/*', (route) => {
+      const file = new URL(route.request().url()).pathname.slice(1);
+      return LOGOS[file] ? route.fulfill({ contentType: 'image/svg+xml', body: LOGOS[file] }) : route.fulfill({ contentType: 'text/html', body: `<!doctype html><html lang="en"><head><style>${styles}</style></head><body data-kn-surface="page"><div class="kn-page"><main>${page}</main></div></body></html>` });
+    });
+    await tab.goto('http://lists.test/');
+    const [above, below] = await tab.evaluate(() => {
+      const [before, logos, next] = document.querySelectorAll('main > .kn-band');
+      const content = (band) => band.querySelector('.kn-band-content').getBoundingClientRect();
+      // From the content before to the logos, and from the logos to the band after or its content where it joins.
+      const end = next.hasAttribute('data-kn-surface') === logos.hasAttribute('data-kn-surface') ? content(next).top : next.getBoundingClientRect().top;
+      const start = before.hasAttribute('data-kn-surface') === logos.hasAttribute('data-kn-surface') ? content(before).bottom : before.getBoundingClientRect().bottom;
+      return [content(logos).top - start, end - content(logos).bottom];
+    });
+    assert.ok(above > 40 && Math.abs(above - below) < 1, `${name}, ${title}: ${above}px above the logos and ${below}px below them`);
+    await tab.close();
+  }
+});
+
 test('actions: the main one filled, the others outlined, a service as its icon, and a lone main one after a series as more of it', { timeout: 120000 }, async () => {
   for (const [name, browser] of browsers) for (const surface of [undefined, 'accent']) {
     const tab = await open(browser, { surface });

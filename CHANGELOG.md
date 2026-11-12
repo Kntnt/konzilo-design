@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The arrow of a card that leads on stays still under the pointer, as a word such as "Read more" would.
 - A table of contents in the Aside has no rule above it, and its label stands level with the text beside it.
 - Logos are almost twice as large on a wide screen, 4.5rem high where they were 2.5rem, and keep 2.5rem in the narrowest window, so a phone still shows them two to a row.
+- A band of logos alone stands as far from the band before it as from the band after it, also where a band beside it has its colour, which used to leave the logos close under the cards above them.
 - Less padding round the text in a card and every other plate: the plate space is step 4 of the space scale, 25–30px at the default density, where it shared step 6, 40–50px, with the column gap. The gaps are unchanged. Open a design in the tool, or run `konzilo-design resolve`, to take the new value.
 
 ### Fixed
