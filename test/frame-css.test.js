@@ -37,6 +37,7 @@ async function pages() {
     '/slides.html': await page({ attachment: 'sticky', start: 'under', autohide: true }),
     '/translucent.html': await page({ attachment: 'sticky', start: 'under', autohide: true, translucent: true }),
     '/translucent-below.html': await page({ attachment: 'sticky', translucent: true }),
+    '/slides-below.html': await page({ attachment: 'sticky', autohide: true, translucent: true }),
     '/reveal.html': await page({ attachment: 'sticky' }, { attachment: 'reveal' }),
     // An inline logo, whose width is known as it is parsed; an image's is known only once it has loaded.
     '/painted.html': (await page({ identity: { ...identity, logo: { svg: '<svg viewBox="0 0 36 36" width="36" height="36"><circle cx="18" cy="18" r="16" fill="currentColor"/></svg>' } } })).replace('</head>', `<script>window.steps=[];(function look(){var h=document.querySelector('.kn-header');steps.push(h?(h.dataset.knStep||'narrow'):'no header');if(steps.length<120)requestAnimationFrame(look)})();</script></head>`),
@@ -206,6 +207,46 @@ test('an open megamenu makes a header over the page\'s start opaque, and it is c
   }
   const [first, ...rest] = Object.values(seen);
   for (const other of rest) assert.deepEqual(other, first, 'every engine looks the same');
+});
+
+test('a header at the window\'s edge that slides away keeps its panels under its bar, on a wide window and a phone, in every engine', { timeout: 240000 }, async () => {
+  // The owner's header after his review of 2026-11-12: attached to the window's edge, the page below it, sliding away,
+  // translucent. Its megamenu and search box open under the bar it came back with, keep it while open, and leave it
+  // where it was when they close; then it slides away again on the way down.
+  const files = await pages();
+  for (const [name, type] of ENGINES) for (const width of [1280, 390]) {
+    const { browser, tab } = await open(type, files);
+    try {
+      await tab.setViewportSize({ width, height: 700 });
+      await tab.goto(`${ORIGIN}/slides-below.html`);
+      await tab.waitForTimeout(300);
+      // The pointer within the window, which a phone's is narrower than the others' tests.
+      const scroll = async (_, by) => { await tab.mouse.move(width / 2, 400); await tab.mouse.wheel(0, by); await tab.waitForTimeout(700); };
+      await scroll(tab, 600);
+      assert.ok((await look(tab)).top < 0, `${name} at ${width}: away on the way down`);
+      await scroll(tab, -40);
+      assert.equal((await look(tab)).top, 0, `${name} at ${width}: back on the way up`);
+      for (const [trigger, panel] of [['menu', '.kn-megamenu'], ['search', '.kn-header-search-overlay']]) {
+        const button = await tab.$(`.kn-header-row [data-kn-trigger="${trigger}"]`);
+        if (!(await button.isVisible())) continue;
+        const box = await button.boundingBox();
+        await tab.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+        await tab.waitForTimeout(400);
+        const [bar, opened] = await tab.evaluate((selector) => [document.querySelector('.kn-header-bar').getBoundingClientRect().bottom, document.querySelector(selector).getBoundingClientRect().top], panel);
+        assert.ok(Math.abs(bar - opened) <= 1, `${name} at ${width}: the ${trigger} opens under the bar, at ${opened} under ${bar}`);
+        await tab.mouse.move(width / 2, 400);
+        await tab.mouse.wheel(0, 300);
+        await tab.waitForTimeout(500);
+        assert.equal((await look(tab)).top, 0, `${name} at ${width}: the open ${trigger} keeps the header`);
+        await tab.keyboard.press('Escape');
+        await tab.waitForTimeout(400);
+        assert.equal((await look(tab)).top, 0, `${name} at ${width}: and leaves it where it was as it closes`);
+      }
+      await tab.evaluate(() => document.activeElement?.blur());
+      await scroll(tab, 400);
+      assert.ok((await look(tab)).top < 0, `${name} at ${width}: away again on the way down`);
+    } finally { await browser.close(); }
+  }
 });
 
 test('a translucent header shows a hint of the page through its bar and its panels, blurred, and stays clear over the page\'s start, in every engine', { timeout: 240000 }, async () => {
