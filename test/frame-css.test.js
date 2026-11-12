@@ -720,12 +720,12 @@ test('column B\'s text stands at the end where the design says so, its rows of l
 });
 
 test('a link in a line of the footer\'s text is underlined without the pointer, on every Surface a band may take, while its rows of links are not, in every engine', { timeout: 240000 }, async () => {
-  // A fault of 0.5.0, found on a site whose lower band, on `inverse`, ended "This site demonstrates" a link: the link was
+  // A fault of 0.5.0, found on a site whose lower band, on `inverse`, ended in a line with a link in it: the link was
   // the text colour and underlined only under the pointer, beside muted words, about 2:1 from them where a link told
   // apart by colour alone needs 3:1 and a further cue. A link in running text is now underlined at rest, its line thicker
   // under the pointer, as in body text; a row of links, which holds nothing else, stays as it was.
   const surfaces = ['page', 'raised', 'tint', 'brand', 'inverse'];
-  const text = '<p class="kn-footer-muted">Registered office: Sampleton<br>This site demonstrates <a href="#k" data-running>a made-up product</a>.</p>';
+  const text = '<p class="kn-footer-muted">Registered office: Sampleton<br>Made with <a href="#k" data-running>a made-up product</a>.</p>';
   const props = (surface) => ({
     upper: { surface, cells: { a1: { content: text }, b2: { links: [{ label: 'About', href: '#about' }] } } },
     lower: { surface, cells: { a1: { text: 'Street 1' }, b1: { content: `<address>Street 1, <a href="mailto:a@example.com" data-running>a@example.com</a></address>` }, a2: { links: [{ label: 'Privacy', href: '#privacy' }] } } },
