@@ -285,6 +285,14 @@ Each role is a recipe over the ramps (a ramp and step, or white or black).
   | dark | 975 | 850 | 800 | 300 | 800 |
   | both | `picture-light` | white | 200 | grey 600 | 200 |
   | both | `picture-dark` | black | 800 | 300 | 800 |
+- **A translucent background** (2026-11-12, for the owner's hint of the page through the header; header.md): every
+  Surface but a picture's stores `translucent`, the least opacity, in hundredths and at least `TRANSLUCENT_LEAST`, 0.85, at
+  which each of `TRANSLUCENT_ROLES`, text, muted text, link, strong border, focus and button background, holds its target
+  over its background laid on black and on white, composited in encoded sRGB as a picture's scrim is
+  (`translucentOpacity`). The emitter writes it as `--kn-background-translucent`, the background's colour at that opacity
+  in each mode, working it out from the roles where a file resolved before it has none, and `checkContrast` refuses a
+  stored value that is not the one its roles give. For the page in light mode it is 0.88 for every design, set by grey 600's
+  muted text; in dark mode 0.85.
 - **Rank tints:** `tint-secondary` and `tint-tertiary` exist only when that
   brand colour does (`kindsFor(palette)`); each is the tint recipe on its own
   colour's ramp, following the mode.

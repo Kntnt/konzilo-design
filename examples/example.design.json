@@ -137,7 +137,8 @@
             "box": "none",
             "box-lifted": "none"
           },
-          "frame-color": "#222222"
+          "frame-color": "#222222",
+          "translucent": 0.88
         },
         "dark": {
           "polarity": "dark",
@@ -188,7 +189,8 @@
             "box": "none",
             "box-lifted": "none"
           },
-          "frame-color": "#ffffff"
+          "frame-color": "#ffffff",
+          "translucent": 0.85
         }
       },
       "raised": {
@@ -241,7 +243,8 @@
             "box": "none",
             "box-lifted": "none"
           },
-          "frame-color": "#222222"
+          "frame-color": "#222222",
+          "translucent": 0.93
         },
         "dark": {
           "polarity": "dark",
@@ -292,7 +295,8 @@
             "box": "none",
             "box-lifted": "none"
           },
-          "frame-color": "#ffffff"
+          "frame-color": "#ffffff",
+          "translucent": 0.9
         }
       },
       "tint": {
@@ -345,7 +349,8 @@
             "box": "none",
             "box-lifted": "none"
           },
-          "frame-color": "#222222"
+          "frame-color": "#222222",
+          "translucent": 0.93
         },
         "dark": {
           "polarity": "dark",
@@ -396,7 +401,8 @@
             "box": "none",
             "box-lifted": "none"
           },
-          "frame-color": "#ffffff"
+          "frame-color": "#ffffff",
+          "translucent": 0.89
         }
       },
       "brand": {
@@ -449,7 +455,8 @@
             "box": "none",
             "box-lifted": "none"
           },
-          "frame-color": "#ffffff"
+          "frame-color": "#ffffff",
+          "translucent": 0.96
         },
         "dark": {
           "polarity": "dark",
@@ -500,7 +507,8 @@
             "box": "none",
             "box-lifted": "none"
           },
-          "frame-color": "#ffffff"
+          "frame-color": "#ffffff",
+          "translucent": 0.96
         }
       },
       "inverse": {
@@ -553,7 +561,8 @@
             "box": "none",
             "box-lifted": "none"
           },
-          "frame-color": "#ffffff"
+          "frame-color": "#ffffff",
+          "translucent": 0.85
         },
         "dark": {
           "polarity": "dark",
@@ -604,7 +613,8 @@
             "box": "none",
             "box-lifted": "none"
           },
-          "frame-color": "#ffffff"
+          "frame-color": "#ffffff",
+          "translucent": 0.97
         }
       },
       "accent": {
@@ -686,7 +696,8 @@
             "box": "none",
             "box-lifted": "none"
           },
-          "frame-color": "#ffffff"
+          "frame-color": "#ffffff",
+          "translucent": 0.91
         },
         "dark": {
           "polarity": "dark",
@@ -766,7 +777,8 @@
             "box": "none",
             "box-lifted": "none"
           },
-          "frame-color": "#ffffff"
+          "frame-color": "#ffffff",
+          "translucent": 0.91
         }
       },
       "picture-light": {
@@ -1191,7 +1203,8 @@
             "box": "none",
             "box-lifted": "none"
           },
-          "frame-color": "#222222"
+          "frame-color": "#222222",
+          "translucent": 0.93
         },
         "dark": {
           "polarity": "dark",
@@ -1242,7 +1255,8 @@
             "box": "none",
             "box-lifted": "none"
           },
-          "frame-color": "#ffffff"
+          "frame-color": "#ffffff",
+          "translucent": 0.9
         }
       },
       "status-success": {
@@ -1295,7 +1309,8 @@
             "box": "none",
             "box-lifted": "none"
           },
-          "frame-color": "#222222"
+          "frame-color": "#222222",
+          "translucent": 0.93
         },
         "dark": {
           "polarity": "dark",
@@ -1346,7 +1361,8 @@
             "box": "none",
             "box-lifted": "none"
           },
-          "frame-color": "#ffffff"
+          "frame-color": "#ffffff",
+          "translucent": 0.89
         }
       },
       "status-warning": {
@@ -1399,7 +1415,8 @@
             "box": "none",
             "box-lifted": "none"
           },
-          "frame-color": "#222222"
+          "frame-color": "#222222",
+          "translucent": 0.93
         },
         "dark": {
           "polarity": "dark",
@@ -1450,7 +1467,8 @@
             "box": "none",
             "box-lifted": "none"
           },
-          "frame-color": "#ffffff"
+          "frame-color": "#ffffff",
+          "translucent": 0.94
         }
       },
       "status-error": {
@@ -1503,7 +1521,8 @@
             "box": "none",
             "box-lifted": "none"
           },
-          "frame-color": "#222222"
+          "frame-color": "#222222",
+          "translucent": 0.92
         },
         "dark": {
           "polarity": "dark",
@@ -1554,7 +1573,8 @@
             "box": "none",
             "box-lifted": "none"
           },
-          "frame-color": "#ffffff"
+          "frame-color": "#ffffff",
+          "translucent": 0.9
         }
       }
     },
@@ -1810,6 +1830,7 @@
       "start": "below",
       "autohide": false,
       "surface": "page",
+      "translucent": false,
       "identity": "logo",
       "brand-axis": "row",
       "slogan-place": "beside",

@@ -102,6 +102,8 @@ test('the header props follow the settings', () => {
   const flow = headerProps({ ...header, attachment: 'flow', start: 'under', autohide: true }, project);
   assert.equal(flow.start, 'below', 'only a sticky header has a page under it');
   assert.equal(flow.autohide, false);
+  // A hint of the page through the header (the owner, 2026-11-12): off unless the design says so.
+  assert.deepEqual([props.translucent, headerProps({ ...header, translucent: true }, project).translucent], [false, true]);
   assert.deepEqual(pageProps({ shadow: true, 'edge-line': false, 'fill-light': '#fff' }), { shadow: true, edgeLine: false, fillLight: '#fff', fillDark: undefined });
 });
 

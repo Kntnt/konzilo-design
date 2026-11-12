@@ -219,3 +219,32 @@ test('the CSS carries every rank tint present, and only those', async () => {
   assert.ok(css.includes('[data-kn-surface="tint-secondary"]'));
   assert.ok(!css.includes('[data-kn-surface="tint-tertiary"]'));
 });
+
+test('a translucent layer\'s opacity is the least at which every role it draws holds over any page, and at least a hint', async () => {
+  const { TRANSLUCENT_LEAST, TRANSLUCENT_ROLES, translucentOpacity, pictureContrast } = await import('../src/generator/index.js');
+  const holds = (surface, opacity) => TRANSLUCENT_ROLES.every((role) => ['#000000', '#ffffff'].every((image) => pictureContrast(surface.roles[role], { color: surface.roles.background, opacity }, image) >= ROLE_TARGETS[role]));
+  for (const colors of [{ primary: '#168b83' }, { primary: '#fff066' }, { primary: '#101016', secondary: '#c76532' }, { primary: '#0b2f6b' }]) {
+    const { resolved } = await design({ 'brand-colors': colors });
+    for (const [kind, modes] of Object.entries(resolved.surfaces)) for (const mode of MODES) {
+      const surface = modes[mode];
+      if (kind.startsWith('picture-')) { assert.equal(surface.translucent, undefined, `${kind}: a picture has its scrim`); continue; }
+      assert.equal(surface.translucent, translucentOpacity(surface), `${kind}/${mode}: stored as computed`);
+      assert.ok(surface.translucent >= TRANSLUCENT_LEAST && surface.translucent <= 1, `${kind}/${mode}`);
+      assert.ok(holds(surface, surface.translucent), `${kind}/${mode}: every role holds at ${surface.translucent}`);
+      if (surface.translucent > TRANSLUCENT_LEAST) assert.ok(!holds(surface, Math.round(surface.translucent * 100 - 1) / 100), `${kind}/${mode}: and no less`);
+    }
+  }
+  // The page in light mode: grey 600's muted text sets it, the same for every design.
+  const { resolved } = await design();
+  assert.equal(resolved.surfaces.page.light.translucent, 0.88);
+  // Each Surface's CSS gives it as a colour, and an edited opacity is refused.
+  const file = await design();
+  assert.match(await emitCss(file), /--kn-background-translucent: light-dark\(rgb\(255 255 255 \/ 0\.88\), rgb\(\d+ \d+ \d+ \/ 0\.85\)\);/);
+  file.resolved.surfaces.page.light.translucent = 0.86;
+  assert.throws(() => checkContrast(file.resolved), /translucent/);
+  // A file resolved before the opacity was stored gets it from its roles.
+  const older = await design();
+  for (const modes of Object.values(older.resolved.surfaces)) for (const mode of MODES) delete modes[mode].translucent;
+  validateDesignFile(older);
+  assert.match(await emitCss(older), /--kn-background-translucent: light-dark\(rgb\(255 255 255 \/ 0\.88\)/);
+});

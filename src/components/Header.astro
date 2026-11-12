@@ -16,12 +16,12 @@ import Megamenu from './Megamenu.astro';
 import SkipLink from './SkipLink.astro';
 interface Props extends HTMLAttributes<'header'> {
   identity: Identity; arrangement?: 'A' | 'B' | 'C'; attachment?: 'flow' | 'sticky';
-  start?: 'below' | 'under'; autohide?: boolean; surface?: 'page' | 'brand';
+  start?: 'below' | 'under'; autohide?: boolean; surface?: 'page' | 'brand'; translucent?: boolean;
   menu?: MenuItem[]; linkMenu?: boolean; menuButton?: MenuButton | false;
   languages?: Language[]; search?: Search; cta?: Cta; level?: Level; numbered?: boolean;
   menuAbove?: boolean; menuBelow?: boolean; skipTo?: string;
 }
-const { identity, arrangement = 'A', attachment = 'flow', start = 'below', autohide = false, surface = 'page', menu = [], linkMenu = false, menuButton = false, languages = [], search, cta, level = 2, numbered = false, menuAbove = true, menuBelow = true, skipTo = '#content', id = nextId('kn-header'), class: className, ...attributes } = Astro.props;
+const { identity, arrangement = 'A', attachment = 'flow', start = 'below', autohide = false, surface = 'page', translucent = false, menu = [], linkMenu = false, menuButton = false, languages = [], search, cta, level = 2, numbered = false, menuAbove = true, menuBelow = true, skipTo = '#content', id = nextId('kn-header'), class: className, ...attributes } = Astro.props;
 // Page start and sliding away are a sticky header's only.
 const sticky = attachment === 'sticky';
 const slides = sticky && autohide;
@@ -39,7 +39,7 @@ const rowAbove = menuAbove && Astro.slots.has('menu-above');
 const rowBelow = menuBelow && Astro.slots.has('menu-below');
 const opens = (target?: string) => (target ? { commandfor: target, command: 'show-modal', 'aria-haspopup': 'dialog', 'aria-controls': target } : {});
 ---
-<header {...attributes} id={id} class:list={['kn-header', className]} data-kn-arrangement={arrangement} data-kn-attachment={attachment} data-kn-start={sticky ? start : 'below'} data-kn-autohide={String(slides)} data-kn-surface={surface} data-kn-steps={steps.join(' ')}>
+<header {...attributes} id={id} class:list={['kn-header', className]} data-kn-arrangement={arrangement} data-kn-attachment={attachment} data-kn-start={sticky ? start : 'below'} data-kn-autohide={String(slides)} data-kn-translucent={String(translucent)} data-kn-surface={surface} data-kn-steps={steps.join(' ')}>
   <SkipLink href={skipTo} />
   <div class="kn-header-bar"><div class="kn-header-inner">
     <div class="kn-header-row">

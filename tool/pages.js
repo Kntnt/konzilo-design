@@ -482,7 +482,10 @@ function headerPage(copy) {
         ${choice('Page start', 'inputs.header.start', [['below', 'Below the header'], ['under', 'Under the header']], `Under the header, the first band starts at the top of the window and the header is transparent until you scroll. ${onlySticky}`)}
         ${choice('Solid colour', 'inputs.header.surface', [['page', 'Page colour'], ['brand', 'Brand colour']], 'The colour of the bar, and after a little scrolling also of a header that starts transparent.')}
       </div>
-      ${flags([['header.autohide', 'Slides away', `Slides out of the window when you scroll down, and back when you scroll up. ${onlySticky}`]])}`)}
+      ${flags([
+        ['header.autohide', 'Slides away', `Slides out of the window when you scroll down, and back when you scroll up. ${onlySticky}`],
+        ['header.translucent', 'Translucent', 'The bar and the large menu let a hint of the page under them show through, blurred, as far as their text keeps its contrast over any page. A header that starts transparent stays clear at the top.'],
+      ])}`)}
     ${setting('Identity', `<div class="fields">
         ${choice('Brand', 'inputs.header.identity', [['logo', 'Logo'], ['name', 'Name'], ['both', 'Logo and name']], 'What the brand is, in the header and the footer alike. Without a logo the name is used whatever you choose.')}
         ${textField('Slogan', 'project.slogan', 'Optional words beside or under the brand, in the header only. They go first when space runs out.')}

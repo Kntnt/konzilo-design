@@ -98,6 +98,7 @@ function buildHeader(settings, project) {
   header.dataset.knStart = sticky ? settings.start : 'below';
   header.dataset.knAutohide = String(sticky && settings.autohide);
   header.dataset.knSurface = settings.surface;
+  header.dataset.knTranslucent = String(settings.translucent === true);
   identity(header, settings, project);
   // The template holds the sample menu, which a design's own takes the place of.
   if (project.menu?.length) menuIn(header, menuOf(project));

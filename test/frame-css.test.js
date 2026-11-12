@@ -35,6 +35,8 @@ async function pages() {
     '/flow.html': await page({}),
     '/under.html': await page({ attachment: 'sticky', start: 'under' }),
     '/slides.html': await page({ attachment: 'sticky', start: 'under', autohide: true }),
+    '/translucent.html': await page({ attachment: 'sticky', start: 'under', autohide: true, translucent: true }),
+    '/translucent-below.html': await page({ attachment: 'sticky', translucent: true }),
     '/reveal.html': await page({ attachment: 'sticky' }, { attachment: 'reveal' }),
     // An inline logo, whose width is known as it is parsed; an image's is known only once it has loaded.
     '/painted.html': (await page({ identity: { ...identity, logo: { svg: '<svg viewBox="0 0 36 36" width="36" height="36"><circle cx="18" cy="18" r="16" fill="currentColor"/></svg>' } } })).replace('</head>', `<script>window.steps=[];(function look(){var h=document.querySelector('.kn-header');steps.push(h?(h.dataset.knStep||'narrow'):'no header');if(steps.length<120)requestAnimationFrame(look)})();</script></head>`),
@@ -204,6 +206,45 @@ test('an open megamenu makes a header over the page\'s start opaque, and it is c
   }
   const [first, ...rest] = Object.values(seen);
   for (const other of rest) assert.deepEqual(other, first, 'every engine looks the same');
+});
+
+test('a translucent header shows a hint of the page through its bar and its panels, blurred, and stays clear over the page\'s start, in every engine', { timeout: 240000 }, async () => {
+  // The owner's hint of the page under the header and the megamenu (2026-11-12). Headless Firefox and WebKit paint no
+  // backdrop-filter, so the blur is read from the computed style; the colours are the generator's checked ones.
+  const files = await pages();
+  const glass = (tab, selector) => tab.$eval(selector, (element) => {
+    const style = getComputedStyle(element);
+    return { background: style.backgroundColor, blur: style.backdropFilter ?? style.webkitBackdropFilter, role: getComputedStyle(element).getPropertyValue('--kn-background-translucent').trim() };
+  });
+  const alpha = (colour) => Number(colour.match(/[\d.]+/g)[3] ?? 1);
+  for (const [name, type] of ENGINES) {
+    const { browser, tab } = await open(type, files);
+    try {
+      await tab.goto(`${ORIGIN}/translucent.html`);
+      await tab.waitForTimeout(300);
+      const top = await glass(tab, '.kn-header-bar');
+      assert.deepEqual([top.background, top.blur], ['rgba(0, 0, 0, 0)', 'none'], `${name}: clear over the page's start`);
+      await scroll(tab, 300);
+      await scroll(tab, -60);
+      const past = await glass(tab, '.kn-header-bar');
+      assert.ok(alpha(past.background) >= 0.85 && alpha(past.background) < 1, `${name}: a hint of the page through the bar, ${past.background}`);
+      assert.match(past.blur, /blur\(16px\)/, `${name}: blurred`);
+      await tab.click('.kn-header-row [data-kn-trigger="menu"]');
+      await tab.waitForTimeout(400);
+      const menu = await glass(tab, '.kn-megamenu');
+      assert.ok(alpha(menu.background) >= 0.85 && alpha(menu.background) < 1 && /blur\(16px\)/.test(menu.blur), `${name}: and through the megamenu, ${menu.background}`);
+      await tab.keyboard.press('Escape');
+      // Below the header, opaque at once, and the same in the page's Surface as the role says.
+      await tab.goto(`${ORIGIN}/translucent-below.html`);
+      await tab.waitForTimeout(300);
+      const below = await glass(tab, '.kn-header-bar');
+      assert.ok(alpha(below.background) < 1 && /blur/.test(below.blur), `${name}: translucent from the start where the page starts below it`);
+      await tab.goto(`${ORIGIN}/under.html`);
+      await scroll(tab, 300);
+      const opaque = await glass(tab, '.kn-header-bar');
+      assert.deepEqual([alpha(opaque.background), opaque.blur], [1, 'none'], `${name}: a header that is not translucent stays opaque`);
+    } finally { await browser.close(); }
+  }
 });
 
 test('the search box fades and blurs the whole window behind it, the header bar included, and closes by Esc and by a click outside it with its close button or without, in every engine', { timeout: 240000 }, async () => {

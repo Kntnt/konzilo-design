@@ -110,4 +110,7 @@ test('only a sticky header loads a polyfill, and only one that slides away loads
   const flow = parse(await render('Header', { ...everything, start: 'under', autohide: true }));
   assert.equal(one(flow, '.kn-header').attributes['data-kn-start'], 'below', 'page start and sliding away are a sticky header\'s only');
   assert.equal(one(flow, '.kn-header').attributes['data-kn-autohide'], 'false');
+  // A translucent header says so on itself, for its CSS (the owner, 2026-11-12).
+  assert.equal(one(flow, '.kn-header').attributes['data-kn-translucent'], 'false');
+  assert.equal(one(parse(await render('Header', { ...everything, translucent: true })), '.kn-header').attributes['data-kn-translucent'], 'true');
 });

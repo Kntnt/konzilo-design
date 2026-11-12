@@ -43,6 +43,7 @@ The eleven original roles are decided in plates.md point 3 and “Decided with t
 | `--button-background` | Filled button background on this Surface | Components, 2026-11-01 | Assistant's technical choice | Fixed polarity recipe; checked against its ground at 3:1. |
 | `--button-text` | Filled button text | Components, 2026-11-01 | Assistant's technical choice | Checked against normal and hover fills at 4.5:1. |
 | `--button-background-hover` | Filled button hover and active background | Components, 2026-11-01 | Assistant's technical choice | A checked state on the same role family. |
+| `--background-translucent` | The Surface's background as a translucent layer shows it: at the least opacity at which every role a layer draws on it holds over any page, at least 85% | The owner's hint of the page through the header, 2026-11-12 | The assistant's technical choice | A fill of the background family, as the alternate and hover fills are; the opacity is stored as `translucent` on each Surface's mode in `resolved.surfaces`, and the CSS writes the colour. |
 | `--polarity` | Generated `light` or `dark` marker for the Surface | plates.md §§3–4 | Proposed here | Uses the spec's exact concept, distinct from a requested mode. |
 | `data-kn-surface="<kind>"` | Recommended Surface-kind selector, e.g. `data-kn-surface="raised"` | plates.md §7; proposed here | Proposed here | One attribute expresses one complete context and makes the selected kind visible. |
 | `.kn-surface-<kind>` | Alternative class form, e.g. `.kn-surface-raised` | plates.md §7; proposed here | Proposed here | An ordinary class can redeclare the same roles; offered for the owner's choice. |
@@ -303,6 +304,7 @@ The reusable repository stores no actual presentation identity or project-specif
 | `inputs.header.identity` | What the brand is, in the header and the footer: `logo` (default), `name` or `both` | header.md, point 13 | *Decided* 2026-11-05 | The value's three words are what shows. |
 | `inputs.header.brand-axis` | How logo and name stand: `row` (default) or `column` | header.md, point 13 | *Decided* 2026-11-05 | Keeps the axis words of flex layout, as the attribute does. |
 | `inputs.header.slogan-place` | Where the slogan stands: `beside` (default) or `below` | header.md, point 13 | *Decided* 2026-11-05, replacing `brand-align`, `identity-axis` and `identity-align` | `place` is the word `inputs.hero.place` already uses for where something stands; the owner's own words for the two values. |
+| `inputs.header.translucent` | Whether the bar, where it is not clear, and its megamenu and language list let a hint of the page show through, blurred: `true` or `false` (default) | header.md, A hint of the page | *Decided* 2026-11-12 | An adjective for what the bar is, beside `autohide`; written as `data-kn-translucent`. |
 | `inputs.footer` | The footer's settings: attachment, how empty cells fill, its two bands and its lines | footer.md | *Built* 2026-11-05, replacing the models of 2026-11-03 | Named for the component they go to. |
 | `inputs.footer.attachment` | `flow` (default) or `reveal` | footer.md, Attachment | *Decided* 2026-10-31 | The spec's own two words; since 2026-11-11 the tool says "The footer is fixed to" "The end of the page" or "The bottom of the window", replacing "At the end of the page" and "At the edge of the screen" (footer.md, Attachment). |
 | `inputs.footer.fill` | How a cell fills where it could go either way: `column` (default) or `row` | footer.md | *Decided* 2026-11-05 | Names what the cell does, along the axis it does it. |
@@ -368,7 +370,8 @@ These proposed containers account for all derived families in tool.md point 5 an
 | `page`, `raised`, `tint`, `brand`, `inverse`, `accent`, `picture-light`, `picture-dark` | Keys under `resolved.surfaces`, one per kind | plates.md §4 | Working names from spec; decided kinds | Exactly the same kind values as the CSS selectors. |
 | `light`, `dark` | Mode keys under each kind | tool.md §5; plates.md §4 | Working names from spec; modes decided | Keeps mode selection separate from actual polarity. |
 | `background`, `background-alt`, `background-hover`, `text`, `text-muted`, `border`, `border-strong`, `link`, `accent`, `focus`, `info`, `success`, `warning`, `error`, `button-background`, `button-text`, `button-background-hover` | Context-role keys under each mode | plates.md §3; components, 2026-11-02 | Working names from spec; alternate fill decided with the components | Exact CSS role stems, with only `--` and the namespace omitted. |
-| `polarity` | Generated marker under each mode | plates.md §§3–4; proposed here | Proposed here | Exact word used by the CSS marker. |
+| `polarity` | Generated marker under each mode |
+| `translucent` | Under each mode of every Surface but a picture's: the least opacity, from 0.85, at which every role a translucent layer draws on its background holds over any page (2026-11-12) | header.md, A hint of the page | The assistant's technical choice | Optional, so a file resolved before it still reads; the CSS then works it out from the roles. `TRANSLUCENT_LEAST` and `TRANSLUCENT_ROLES` name its floor and the roles it holds, and `translucentOpacity` finds it. | plates.md §§3–4; proposed here | Proposed here | Exact word used by the CSS marker. |
 | `resolved.type` | Text-style recipes keyed by display, heading-1 through heading-6, lead, body, small, label, mono | tool.md §5; plates.md §3; proposed here | Proposed here | Exact style words used by CSS. |
 | `size`, `line-height`, `weight`, `letter-spacing` | Properties in each type recipe | tool.md §§2–3; proposed here | Proposed here | Same words as the corresponding global roles. |
 | `resolved.typefaces` | Resolved main, monospace, heading, display and label stacks, with optional heading-1; each ends in a generic family | tool.md §2 | *Built* 2026-11-02 | Keeps the typeface role words unchanged. |
@@ -470,6 +473,7 @@ The class grammar and selectors are shared by Astro and the plain HTML export.
 | `data-kn-arrangement="A|B|C"` | Fixed Header groups and document order. |
 | `data-kn-attachment="flow|sticky"` | Header attachment. |
 | `data-kn-start="below|under"`, `data-kn-autohide="true|false"` | Header start and sliding away; a flow header writes `below` and `false`. |
+| `data-kn-translucent="true|false"` | Whether the header shows a hint of the page through its bar and panels (2026-11-12). |
 | `data-kn-group="start|end"` | The Header group, in document order. |
 | `data-kn-axis="row|column"` on `.kn-brand` | How logo and name stand, in the header and in a footer. |
 | `data-kn-slogan-place="beside|below"` | Where the slogan stands, on `.kn-header-identity`. |

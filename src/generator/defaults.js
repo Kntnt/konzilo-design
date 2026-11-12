@@ -16,7 +16,7 @@ const defaults = {
   frame: { width: 0, color: 'default' },
   layout: { wide: 1200, narrow: 720 },
   header: {
-    arrangement: 'A', attachment: 'sticky', start: 'below', autohide: false, surface: 'page',
+    arrangement: 'A', attachment: 'sticky', start: 'below', autohide: false, surface: 'page', translucent: false,
     identity: 'logo', 'brand-axis': 'row', 'slogan-place': 'beside',
     'link-menu': true, 'menu-button': 'word', language: false, search: true, cta: true,
     numbered: false, 'menu-above': false, 'menu-below': false,

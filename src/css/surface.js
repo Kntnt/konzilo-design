@@ -1,4 +1,5 @@
-import { ROLES, frameFollows } from '../generator/surface.js';
+import { ROLES, frameFollows, translucentOpacity } from '../generator/surface.js';
+import { hexToRgb } from '../generator/color.js';
 
 // light-dark() answers to the element's own colour scheme, so it serves only a kind whose scheme follows the mode.
 const pair = (light, dark) => light === dark ? light : `light-dark(${light}, ${dark})`;
@@ -12,6 +13,13 @@ function shadowPair(light, dark, choose) {
   const inks = dark.match(/rgb\([^)]*\)/g) ?? [];
   let i = 0;
   return light.replace(/rgb\([^)]*\)/g, (ink) => choose(ink, inks[i++]));
+}
+
+// A Surface's background as a translucent layer shows it, at the least opacity at which its roles hold over any page
+// (generator.md, Surfaces). A file resolved before the opacity was stored gets it from its roles, which give the same.
+function translucent(surface) {
+  const [r, g, b] = hexToRgb(surface.roles.background).map((channel) => Math.round(channel * 255));
+  return `rgb(${r} ${g} ${b} / ${surface.translucent ?? translucentOpacity(surface)})`;
 }
 
 // A sticky header over the page's start is clear at the top (header.css): transparent, with the roles and mode of the
@@ -42,6 +50,7 @@ export function surfaceCss(surfaces) {
     for (const name of Object.keys(light.shadow)) lines.push(`  --kn-shadow-${name}: ${shadowPair(light.shadow[name], dark.shadow[name], choose)};`);
     lines.push(`  --kn-frame-color: ${choose(light['frame-color'], dark['frame-color'])};`);
     if (quiet) lines.push('  --kn-frame-ring: var(--kn-button-background-hover);');
+    if (!light.scrim) lines.push(`  --kn-background-translucent: ${choose(translucent(light), translucent(dark))};`);
     clear.push(`${firstBand(kind === 'page' ? ':is(:not([data-kn-surface]), [data-kn-surface="page"])' : `[data-kn-surface="${kind}"]`)} {\n${lines.join('\n')}\n}`);
     lines.push('  background: var(--kn-background);', '  color: var(--kn-text);');
     if (light.scrim) {

@@ -3,7 +3,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { derive } from '../src/generator/index.js';
-import { withDefaults, SYSTEM_SANS } from '../src/generator/defaults.js';
+import { defaultInputs, withDefaults, SYSTEM_SANS } from '../src/generator/defaults.js';
 import { GIVING_WAY_ORDER, arrangementGroups } from '../src/components/header.js';
 import { COMPONENT_GROUPS, NOT_COMPONENTS } from '../src/design-md/components.js';
 import { designMd } from '../src/design-md/index.js';
@@ -84,9 +84,13 @@ test('DESIGN.md describes every header arrangement, the chosen one, and the orde
     assert.deepEqual(steps, GIVING_WAY_ORDER.map((_, i) => i + 1));
     assert.match(body, /^1\. the slogan goes$/m);
     assert.match(body, /^7\. the search icon moves into the megamenu/m);
-    for (const words of ['always a globe icon', 'at least 4rem high, with 0.75rem', 'The logo is 2.25rem tall', '2.5rem square', 'a 1 px inset ring in `border`', 'only once page content has scrolled under it'])
+    for (const words of ['always a globe icon', 'at least 4rem high, with 0.75rem', 'The logo is 2.25rem tall', '2.5rem square', 'a 1 px inset ring in `border`', 'only once page content has scrolled under it', '**A hint of the page**'])
       assert.ok(body.includes(words), words);
+    assert.equal(body.includes('It is translucent:'), r.header.translucent === true, 'the design\'s own header says whether it is translucent');
   }
+  const translucent = defaultInputs();
+  translucent.header.translucent = true;
+  assert.match(exported(translucent).body, /It is translucent: where its bar is not clear, the bar shows its Surface's background at an opacity of 88% in light mode and 85% in dark mode/);
 });
 
 test('DESIGN.md maps each shadow to its use, with its dark-mode value and the Surfaces that keep the dark one', () => {

@@ -82,6 +82,7 @@ export function headerProps(settings, project, { menu = [], languages = [], sear
     start: sticky ? settings.start : 'below',
     autohide: sticky && settings.autohide,
     surface: settings.surface,
+    translucent: settings.translucent === true,
     menu,
     linkMenu: settings['link-menu'],
     menuButton: button,

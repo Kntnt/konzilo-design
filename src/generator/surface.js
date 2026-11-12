@@ -28,6 +28,24 @@ export function pictureContrast(foreground, scrim, image) {
   return (Math.max(fg, bg) + 0.05) / (Math.min(fg, bg) + 0.05);
 }
 
+// A translucent layer, such as a header bar the page shows through (the owner, 2026-11-12): its Surface's background at
+// this opacity, over whatever lies under it, blurred. The roles such a layer draws on its background must hold over any
+// page, from black to white, as a picture's roles hold over any picture: its words, muted words and links, its focus
+// ring, an unfilled button's ring and a filled button against it. And it is only ever a hint of what lies under it, so
+// it is at least TRANSLUCENT_LEAST opaque, where its roles would allow it more see-through.
+export const TRANSLUCENT_LEAST = 0.85;
+export const TRANSLUCENT_ROLES = Object.freeze(['text', 'text-muted', 'link', 'border-strong', 'focus', 'button-background']);
+// The least hundredth-opacity, from TRANSLUCENT_LEAST, at which every one of those roles holds over black and over white.
+// A picture Surface has a scrim of its own and none.
+export function translucentOpacity(surface) {
+  if (surface.scrim) return null;
+  for (let percent = Math.round(TRANSLUCENT_LEAST * 100); percent < 100; percent++) {
+    const scrim = { color: surface.roles.background, opacity: percent / 100 };
+    if (TRANSLUCENT_ROLES.every((role) => ['#000000', '#ffffff'].every((image) => pictureContrast(surface.roles[role], scrim, image) >= ROLE_TARGETS[role]))) return percent / 100;
+  }
+  return 1;
+}
+
 // Given its page, a band also gets the pair that holds it apart from that page in the same mode. The page cannot
 // differ from itself and a picture shows an image rather than a fill, so neither has that pair.
 export function surfacePairs(surface, page = surface) {
@@ -167,6 +185,7 @@ export function surfaces(settings, palette) {
     // Surface's own border role, so a plate's frame follows its kind and the mode (owner, 2026-11-11).
     const frame = settings.frame.color;
     surface['frame-color'] = frame === 'border' ? surface.roles.border : resolveColor(frame === 'default' ? settings.shadow.color : frame, context);
+    if (!surface.scrim) surface.translucent = translucentOpacity(surface);
     return [mode, surface];
   }))]));
 }
@@ -191,6 +210,8 @@ export function checkContrast(resolved) {
   const kinds = Object.keys(resolved.surfaces);
   if (Object.keys(resolved['contrast-check'].matrix).join() !== kinds.join()) throw new Error('Surface contrast check failed or stale: kinds differ');
   for (const kind of kinds) for (const mode of MODES) {
+    const surface = resolved.surfaces[kind][mode];
+    if (surface.translucent !== undefined && surface.translucent !== translucentOpacity(surface)) throw new Error(`Surface contrast check failed or stale: ${kind}/${mode}/translucent`);
     const stored = resolved['contrast-check'].matrix[kind][mode];
     const computed = actual.matrix[kind][mode];
     for (const role of new Set([...Object.keys(computed.pairs), ...Object.keys(stored.pairs)])) {

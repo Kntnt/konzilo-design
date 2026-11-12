@@ -349,13 +349,23 @@
     .kn-megamenu-columns { grid-template-columns: minmax(0, 1fr); }
     .kn-header .kn-header-search-overlay:modal { padding-block-start: 0.75rem; }
   }
+  /* ---------- A hint of the page through it ----------
+     With the design's `translucent` (the owner, 2026-11-12), the bar, where it is opaque, and the panels that hang from
+     it, the megamenu and the language list, show the page under them as a hint: their Surface's background at the least
+     opacity at which every role on it holds over any page, from black to white, and never under 85% (generator.md,
+     Surfaces), over the page blurred by 1rem, so what lies under it is sensed rather than read. Clear over the page's
+     start, the bar stays clear. */
+  @container not style(--kn-header-clear: 1) {
+    .kn-header[data-kn-translucent="true"] > .kn-header-bar { background: var(--kn-background-translucent); backdrop-filter: blur(1rem); }
+  }
+  .kn-header[data-kn-translucent="true"] :is(.kn-megamenu:modal, .kn-header-language-list:popover-open) { background: var(--kn-background-translucent); backdrop-filter: blur(1rem); }
   @media (prefers-reduced-motion: reduce) {
     .kn-header, .kn-header *, .kn-header-search-overlay::backdrop { transition: none; animation: none; }
   }
   @media print {
     :root:has(.kn-page > .kn-header[data-kn-attachment="sticky"]) { scroll-padding-block-start: 0; }
     .kn-header[data-kn-attachment][data-kn-start] { position: static; margin-block-end: 0; translate: none; }
-    .kn-header[data-kn-attachment] > .kn-header-bar { background: var(--kn-background); box-shadow: none; }
+    .kn-header[data-kn-attachment] > .kn-header-bar { background: var(--kn-background); box-shadow: none; backdrop-filter: none; }
     .kn-header :is(.kn-header-panel, .kn-header-control, .kn-header-link-menu, .kn-header-cta, .kn-skip-link) { display: none; }
     .kn-page:has(> .kn-header[data-kn-attachment="sticky"][data-kn-start="under"]) > .kn-page-main > .kn-band:first-child { padding-block-start: var(--kn-space-band); }
   }
