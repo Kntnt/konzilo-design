@@ -1049,7 +1049,7 @@ A teaser card is a link as a whole, so it takes `surfaceOf('link-card', ground)`
 </div>
 ```
 
-**Read from content.** *(CSS)* As cards: the number sets the columns. **Behaviour.** None. **Component.** New: Post List, of Card and Card Grid.
+**Read from content.** *(CSS)* As cards: the number sets the columns. The core's pager, `nav.konzilo-pager`, where the list has pages, stands a column gap under the cards, inside the list or right after it, as a section's body spaces its parts (fixed after 0.6.1; it stood at the component gap, close under the cards). **Behaviour.** None. **Component.** New: Post List, of Card and Card Grid.
 
 ### `presentation="featured"`
 

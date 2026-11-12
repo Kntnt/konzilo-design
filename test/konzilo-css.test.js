@@ -179,6 +179,30 @@ for (const [name, type] of BROWSERS) {
       }
     });
 
+    test('the pager stands a column gap under the cards of a post list, as a section\'s body spaces its parts', async () => {
+      const pager = fixture.match(/<nav class="konzilo-pager".*?<\/nav>/s)[0];
+      const cards = '<ul class="kn-card-grid kn-cards">' + '<li><article class="kn-card" data-kn-surface="raised"><h3 class="kn-card-heading">A post</h3></article></li>'.repeat(3) + '</ul>';
+      const body = `<section class="kn-band kn-section"><div class="kn-band-content"><div class="kn-section-body kn-body-text"><div class="kn-post-list" id="inside">${cards}${pager}</div><div class="kn-post-list" id="after">${cards}</div>${pager}<p id="next">After.</p></div></div></section>`;
+      const page = await pageFor(browser, { body });
+      const found = await page.evaluate(() => {
+        const probe = document.querySelector('.kn-section-body').appendChild(document.createElement('div'));
+        probe.style.inlineSize = 'var(--kn-space-column-gap)';
+        const column = probe.getBoundingClientRect().width;
+        probe.remove();
+        const box = (selector) => document.querySelector(selector).getBoundingClientRect();
+        return {
+          column,
+          inside: box('#inside > .konzilo-pager').top - box('#inside > .kn-cards').bottom,
+          end: box('#inside').bottom - box('#inside > .konzilo-pager').bottom,
+          after: box('#after + .konzilo-pager').top - box('#after').bottom,
+        };
+      });
+      assert.ok(Math.abs(found.inside - found.column) < 1, `${found.inside} under the cards, against a column gap of ${found.column}`);
+      assert.ok(Math.abs(found.end) < 1, 'the list ends with its pager');
+      assert.ok(Math.abs(found.after - found.column) < 1, `${found.after} after the list`);
+      await close(page);
+    });
+
     for (const mode of ['light', 'dark']) {
       test(`the button that opens a lightbox takes the design's focus ring, as every other control does, ${mode}`, async () => {
         const page = await pageFor(browser, { mode });

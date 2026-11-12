@@ -265,6 +265,10 @@
 
   /* The pager: as Pagination. */
   .konzilo-pager { margin-block: var(--kn-space-component-gap) 1em; }
+  /* Under the cards of a post list, as a presentation of this package's writes it, or after the list, the pager is a part
+     of its own, a column gap from them, as a section's body spaces its parts (directives.md, Space in the body). */
+  .kn-post-list > .konzilo-pager { margin-block: var(--kn-space-column-gap) 0; }
+  .kn-post-list + .konzilo-pager { margin-block-start: var(--kn-space-column-gap); }
   .konzilo-pager ul { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4em; margin: 0; padding: 0; list-style: none; }
   .konzilo-pager ul > li { margin: 0; }
   .konzilo-pager a, .konzilo-pager .konzilo-pager-gap { display: inline-flex; align-items: center; justify-content: center; min-inline-size: 2.75rem; min-block-size: 2.75rem; padding: 0.4em; }
