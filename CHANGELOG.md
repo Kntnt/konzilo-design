@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Eyebrows and the other labels are a step larger by default: three steps below body text, where they were five, 14px on a phone and 13px on a wide screen with the default scale. A design that has saved its own step keeps it.
 - An eyebrow stands closer to its heading than the heading stands to what follows it, in a heading group and in a card.
+- The footer's icon links are a little larger, 1.75rem, and stand twice as far apart, 1rem.
 - Less padding round the text in a card and every other plate: the plate space is step 4 of the space scale, 25–30px at the default density, where it shared step 6, 40–50px, with the column gap. The gaps are unchanged. Open a design in the tool, or run `konzilo-design resolve`, to take the new value.
 
 ### Fixed

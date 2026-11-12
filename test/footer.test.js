@@ -197,3 +197,11 @@ test('the layout is logical, so right-to-left mirrors it, and hairlines stop at 
   assert.match(css, /\[data-kn-column="B"\]\) \{ grid-column: bc-start \/ b-end; justify-content: flex-end; \}/);
   assert.match(css, /\.kn-footer-box \{[^}]*text-align: start/);
 });
+
+test('icon links are a little larger than a text icon and stand 1rem apart, each at least a finger\'s target', async () => {
+  // The owner found them a little small and too close (2026-11-12).
+  const css = await readFile(new URL('../src/components/footer.css', import.meta.url), 'utf8');
+  assert.match(css, /\.kn-footer-social \{[^}]*\bgap: 1rem;/);
+  assert.match(css, /\.kn-footer-social a \{[^}]*min-inline-size: 1\.75rem; min-block-size: 1\.75rem;/);
+  assert.match(css, /\.kn-footer-social \.kn-icon \{ inline-size: 1\.75rem; block-size: 1\.75rem; \}/);
+});

@@ -92,4 +92,6 @@ Two further points, taken with the owner one at a time (2026-10-31):
 
 **Settings in the design** (2026-11-05, replacing those of 2026-11-03): the design file's `footer` holds `attachment` (`flow`, the default, or `reveal`), `fill` (`column`, the default, or `row`), `upper` and `lower`, each with a `surface` and `cells` (`a1`, `b1`, `a2`, `b2`, all on by default), and the lines: `horizontal-rules`, `vertical-rule` and `rule-extent`. In the tool's preview, `footer-html.js` writes the same markup as `Footer.astro`, and a test holds the two together.
 
+**Icon links** (***decided* by the owner, 2026-11-12**, from a site built with the components: "Perhaps a little too small. Not much larger, but a little. [...] But the gap between them is too tight; it should be larger"): `.kn-footer-social` draws each icon 1.75rem, where it drew 1.5rem, a sixth larger, which keeps its line as light as the text's beside it, and stands them 1rem apart, where they stood 0.5rem, the room the links of a cell have between them. The sizes are the assistant's.
+
 **Related, already in the model:** the page's shadow on the footer (page.md, point 4), and the line above the footer, drawn only when the first band has the page's colour and the page casts no shadow.

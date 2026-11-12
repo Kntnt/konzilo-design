@@ -52,10 +52,11 @@
   .kn-footer-links li::before { content: "•"; display: inline-block; inline-size: var(--kn-footer-separator); text-align: center; color: var(--kn-text-muted); }
   .kn-footer a { color: var(--kn-text); text-decoration: underline; text-decoration-color: transparent; text-underline-offset: 0.22em; }
   .kn-footer a:is(:hover, [aria-current]) { text-decoration-color: currentColor; }
-  /* A row of icon links, such as social media. Each is at least the size a finger or pointer needs. */
-  .kn-footer-social { display: flex; flex-wrap: wrap; gap: 0.5rem; list-style: none; padding: 0; margin: 0; }
-  .kn-footer-social a { display: grid; place-items: center; min-inline-size: 1.5rem; min-block-size: 1.5rem; }
-  .kn-footer-social .kn-icon { inline-size: 1.5rem; block-size: 1.5rem; }
+  /* A row of icon links, such as social media. Each is at least the size a finger or pointer needs. The icons are a
+     little larger than a text icon and stand 1rem apart, so each reads as a link of its own (the owner, 2026-11-12). */
+  .kn-footer-social { display: flex; flex-wrap: wrap; gap: 1rem; list-style: none; padding: 0; margin: 0; }
+  .kn-footer-social a { display: grid; place-items: center; min-inline-size: 1.75rem; min-block-size: 1.75rem; }
+  .kn-footer-social .kn-icon { inline-size: 1.75rem; block-size: 1.75rem; }
 
   /* A very wide logo keeps its shape within the cell. */
   .kn-footer .kn-brand-logo :is(img, svg) { max-inline-size: 14rem; object-fit: contain; }
