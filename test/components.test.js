@@ -63,7 +63,7 @@ test('the plain HTML stylesheet flattens the component entry point and preserves
   assert.equal(execFileSync(process.execPath, [new URL('../bin/konzilo-design.js', import.meta.url).pathname, 'components-css'], { encoding: 'utf8' }), css);
 });
 
-test('every component has a typed wrapper; only the declared client entries, the footer\'s fit and the header\'s polyfill loaders', async () => {
+test('every component has a typed wrapper; only the declared client entries, the footer\'s fit and the header\'s and footer\'s polyfill loaders', async () => {
   const names = (await readdir(directory)).filter((name) => name.endsWith('.astro'));
   for (const name of names) {
     const source = await readFile(new URL(name, directory), 'utf8');
@@ -72,9 +72,12 @@ test('every component has a typed wrapper; only the declared client entries, the
     const entry = { 'ContentLoop.astro': 'embed', 'Embed.astro': 'embed', 'ConsentBanner.astro': 'consent' }[name];
     if (entry) assert.match(source, new RegExp(`<script>[\\s\\S]*${entry}\\.js`));
     else if (name === 'Footer.astro') {
-      // One script, only at the edge of the screen, fetched as a file of its own.
-      assert.deepEqual([...source.matchAll(/<script\b[^>]*>/g)].map(([tag]) => tag), ['<script is:inline type="module" src={footerFit} data-kn-footer-fit>']);
-      assert.match(source, /\{attachment === 'reveal' && <script /);
+      // Only at the edge of the screen: the scroll timelines' polyfill's loader, testing for its feature before it
+      // fetches, as the header's does (since 0.6.0, for the page's shadow over it), and one script fetched as a file of
+      // its own.
+      assert.deepEqual([...source.matchAll(/<script\b[^>]*>/g)].map(([tag]) => tag), ['<script is:inline data-kn-polyfill="scroll-timeline" define:vars={{ src: scrollTimelinePolyfill }}>', '<script is:inline type="module" src={footerFit} data-kn-footer-fit>']);
+      assert.match(source, /<script is:inline data-kn-polyfill="scroll-timeline"[^>]*>if \(!CSS\.supports\('animation-timeline: scroll\(\)'\)\) import\(src\);<\/script>/);
+      assert.equal([...source.matchAll(/\{attachment === 'reveal' && <script /g)].length, 2);
     }
     else if (name === 'Header.astro') {
       // The giving-way script, inline, and two loaders, each testing for its feature before it fetches.

@@ -6,6 +6,8 @@ import { layoutFooter } from '../../src/components/footer.js';
 // The preview can set its footer at the edge of the screen at any time, so it carries the script that says whether
 // the footer fits; it watches for that itself.
 import '../../src/components/footer-fit.js';
+// And where a browser lacks scroll timelines, their polyfill, which says whether the page still covers such a footer.
+import '../../src/components/scroll-timeline-polyfill.js';
 import { footerHtml } from '../../src/components/footer-html.js';
 import { footerProps, identityProps, menuOf } from './frame.js';
 import { search } from './samples.js';

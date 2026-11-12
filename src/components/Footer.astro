@@ -3,11 +3,13 @@ import type { HTMLAttributes } from 'astro/types';
 import type { FooterBandData, FooterCellName } from './frame-types';
 import { FOOTER_CELLS, layoutFooter } from './footer.js';
 import footerFit from './footer-fit.js?url&no-inline';
+import scrollTimelinePolyfill from './scroll-timeline-polyfill.js?url&no-inline';
 // Two bands of four cells, laid out here, with no script; the attachment is CSS (footer.css). What stands in a cell
 // comes from the site: as data, or in a slot named for the band and the cell, such as `upper-a1`. A cell the data
 // does not mention is filled if it has a slot. At the edge of the screen a small script says whether the footer fits
-// in the window, for the reveal (footer.md, Attachment); any other footer loads nothing. `bAlign` sets the text in column
-// B's boxes at their end on a wide screen, where the boxes stand.
+// in the window, for the reveal (footer.md, Attachment), and where a browser lacks scroll timelines, their polyfill
+// says whether the page still covers the footer, for its shadow; any other footer loads nothing. `bAlign` sets the
+// text in column B's boxes at their end on a wide screen, where the boxes stand.
 interface Props extends HTMLAttributes<'footer'> {
   upper?: FooterBandData; lower?: FooterBandData; fill?: 'column' | 'row';
   attachment?: 'flow' | 'reveal'; rules?: 'content' | 'full'; bAlign?: 'start' | 'end';
@@ -33,5 +35,6 @@ const headingOf = (level = 2) => `h${level}` as 'h1' | 'h2' | 'h3' | 'h4' | 'h5'
       </div>
     </div>; })}
   </div>)}
+  {attachment === 'reveal' && <script is:inline data-kn-polyfill="scroll-timeline" define:vars={{ src: scrollTimelinePolyfill }}>if (!CSS.supports('animation-timeline: scroll()')) import(src);</script>}
   {attachment === 'reveal' && <script is:inline type="module" src={footerFit} data-kn-footer-fit></script>}
 </footer>}

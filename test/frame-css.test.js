@@ -467,12 +467,15 @@ test('the page casts its shadow on the footer in the ink of the band it falls on
     return `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Ink</title><style>${css}</style></head><body>${body}</body></html>`;
   };
   const files = { '/brand.html': await page('brand'), '/inverse.html': await page('inverse'), '/raised.html': await page('raised') };
-  const ink = (value) => value.match(/rgba?\([^)]*\)/g);
+  // Each colour of a shadow, but those of the clear hairline at its head (since 0.6.0).
+  const ink = (value) => value.match(/rgba?\([^)]*\)/g).filter((colour) => !/^rgba\([^)]*,\s*0\)$/.test(colour));
   for (const [name, type] of ENGINES) {
     const { browser, tab } = await open(type, files);
     try {
       for (const [file, ground] of [['brand', 'brand'], ['inverse', 'inverse'], ['raised', 'page']]) {
         await tab.goto(`${ORIGIN}/${file}.html`);
+        // Where the polyfill says the page covers the footer, the shadow fades in over the feedback duration.
+        await tab.waitForTimeout(400);
         const [cast, band, own] = await tab.evaluate(() => [
           getComputedStyle(document.querySelector('.kn-page-main')).boxShadow,
           getComputedStyle(document.querySelector('.kn-footer-band')).getPropertyValue('--kn-shadow-page'),
@@ -494,6 +497,85 @@ test('the page casts its shadow on the footer in the ink of the band it falls on
   assert.match(coreCss(r), /\[data-kn-surface\]:has\(> footer > \[data-kn-surface="brand"\]:first-child\) > main \{\n  --kn-shadow-page: [^}]*rgb\(0 0 0 \//);
   assert.doesNotMatch(coreCss(r), /\[data-kn-surface="(raised|tint)"\]:first-child\) > main/);
   assert.doesNotMatch(coreCss(derive(defaultInputs())), /:has\(> footer/);
+});
+
+test('the page casts its shadow on a footer at the edge of the screen only while it covers part of it, and lies in one plane with it at the end, wide and on a phone, in every engine', { timeout: 300000 }, async () => {
+  // The owner, 2026-11-12: the footer's reveal mirrors the header. As the header casts its shadow only once the page
+  // slides under it, the page casts its shadow on the footer only while it lies over part of it; scrolled to the very
+  // end, the whole footer showing, page and footer lie in one plane, with no shadow, and scrolling back brings it back.
+  // What stands for the shadow, the page's edge line, does the same. A footer that does not fit is as before.
+  const css = async (strength) => coreCss(derive({ ...defaultInputs(), shadow: { ...defaultInputs().shadow, strength, hardness: 20 } })) + await componentsCss();
+  const [shadows, none] = [await css(50), await css(0)];
+  const doc = async (styles, { count = 8, last = 'tint', page = { shadow: true }, mode = 'light' } = {}) => {
+    const bands = [];
+    for (let i = 0; i < count; i++) bands.push(await render('Band', { surface: i === count - 1 ? last : undefined, id: `b${i}` }, { default: `<h2>Band ${i}</h2><p>Some words in band ${i}.</p>` }));
+    const body = await render('Page', page, { header: await render('Header', { ...header, attachment: 'sticky', autohide: true }), default: bands.join(''), footer: await render('Footer', { ...footer, attachment: 'reveal' }) });
+    return `<!doctype html><html lang="en" data-kn-mode="${mode}"><head><meta charset="utf-8"><title>Edge</title><style>${styles}</style></head><body>${body}</body></html>`;
+  };
+  const files = {
+    '/shadow.html': await doc(shadows),
+    '/dark.html': await doc(shadows, { mode: 'dark' }),
+    '/line.html': await doc(none, { page: { edgeLine: true } }),
+    // The page's last band of the footer's first band's colour, and no shadow or line chosen: the edge needs one.
+    '/same.html': await doc(shadows, { last: 'brand', page: {} }),
+    '/short.html': await doc(shadows, { count: 1 }),
+  };
+  // What the page's main draws at its foot: a shadow that shows, and a hairline, a shadow of 1px offset with no blur.
+  const edge = (tab) => tab.evaluate(() => {
+    const main = getComputedStyle(document.querySelector('.kn-page-main'));
+    const parts = main.boxShadow === 'none' ? [] : main.boxShadow.split(/,(?![^(]*\))/).map((part) => part.trim()).filter((part) => !/rgba\([^)]*,\s*0\)/.test(part));
+    const line = parts.filter((part) => /\b0px 1px 0px 0px$/.test(part.replace(/^rgba?\([^)]*\)\s*/, '')));
+    return { shadow: parts.length > line.length, line: line.length > 0 || main.borderBlockEndStyle === 'solid', fit: document.querySelector('.kn-footer').dataset.knFit, transition: [main.transitionProperty, main.transitionDuration, main.transitionTimingFunction] };
+  });
+  for (const [name, type] of ENGINES) for (const width of [1280, 390]) {
+    const { browser, tab } = await open(type, files);
+    try {
+      await tab.setViewportSize({ width, height: 800 });
+      const to = async (left) => {
+        const target = await tab.evaluate((short) => document.documentElement.scrollHeight - innerHeight - short, left);
+        await tab.mouse.move(width / 2, 400);
+        for (let step = 0; step < 40; step++) {
+          const gap = target - await tab.evaluate(() => scrollY);
+          if (Math.abs(gap) < 1) break;
+          await tab.mouse.wheel(0, Math.sign(gap) * Math.min(400, Math.abs(gap)));
+          await tab.waitForTimeout(60);
+        }
+        await tab.waitForTimeout(600);
+        return edge(tab);
+      };
+      for (const [file, covered, end] of [['shadow', { shadow: true, line: false }, { shadow: false, line: false }], ['dark', { shadow: true, line: true }, { shadow: false, line: false }], ['line', { shadow: false, line: true }, { shadow: false, line: false }], ['same', { shadow: true, line: false }, { shadow: false, line: true }]]) {
+        const what = `${name} at ${width}px, ${file}`;
+        await tab.goto(`${ORIGIN}/${file}.html`);
+        await tab.waitForTimeout(300);
+        const ending = await to(120);
+        assert.equal(ending.fit, 'true', `${what}: the footer fits`);
+        assert.deepEqual({ shadow: ending.shadow, line: ending.line }, covered, `${what}: a little short of the end, the page over the footer, ${JSON.stringify(ending)}`);
+        const atEnd = await to(0);
+        assert.deepEqual({ shadow: atEnd.shadow, line: atEnd.line }, end, `${what}: at the very end, one plane, ${JSON.stringify(atEnd)} ${await tab.evaluate(() => getComputedStyle(document.querySelector(".kn-page-main")).boxShadow)}`);
+        assert.deepEqual({ shadow: (await to(60)).shadow, line: (await edge(tab)).line }, covered, `${what}: back up, over the footer again`);
+        // The change goes over the feedback duration with the standard easing, as the header's colours change.
+        const [property, duration, easing] = ending.transition;
+        const [feedback, standard] = await tab.evaluate(() => { const probe = document.body.appendChild(document.createElement('i')); probe.style.transition = 'opacity var(--kn-duration-feedback) var(--kn-easing-standard)'; const style = getComputedStyle(probe); const found = [style.transitionDuration, style.transitionTimingFunction]; probe.remove(); return found; });
+        assert.deepEqual([property, duration, easing], ['box-shadow', feedback, standard], what);
+      }
+      // A page with no room to scroll is at its end: the whole footer shows, and no shadow.
+      await tab.goto(`${ORIGIN}/short.html`);
+      await tab.waitForTimeout(400);
+      assert.deepEqual(await edge(tab).then(({ shadow, line }) => ({ shadow, line })), { shadow: false, line: false }, `${name} at ${width}px: a short page`);
+      // A footer taller than the window follows the page, as before: the page's shadow at its edge whatever the scroll.
+      await tab.setViewportSize({ width, height: 200 });
+      await tab.goto(`${ORIGIN}/shadow.html`);
+      await tab.waitForTimeout(300);
+      const flow = await to(0);
+      assert.deepEqual([flow.fit, flow.shadow], ['false', true], `${name} at ${width}px: a footer that does not fit`);
+      // Where the visitor asks for reduced motion, the change is at once.
+      await tab.emulateMedia({ reducedMotion: 'reduce' });
+      await tab.setViewportSize({ width, height: 800 });
+      await tab.goto(`${ORIGIN}/shadow.html`);
+      assert.match((await edge(tab)).transition[1], /^0s$/, `${name} at ${width}px: reduced motion`);
+      await tab.emulateMedia({ reducedMotion: 'no-preference' });
+    } finally { await browser.close(); }
+  }
 });
 
 test('on a phone the upper band stacks column by column and the lower band row by row, in document order, and the wide footer lies as before, in every engine', { timeout: 240000 }, async () => {
