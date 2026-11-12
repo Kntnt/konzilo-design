@@ -186,6 +186,10 @@ test('the following menu runs no script and marks nothing, in every engine alike
     const box = await tab.$eval('.kn-article-body .kn-toc', (menu) => menu.getBoundingClientRect().height);
     // Chromium's scroll markers could mark the section being read, and no other engine's, so they are not used.
     assert.equal(await tab.$eval('.kn-article-body .kn-toc', (menu) => getComputedStyle(menu).scrollTargetGroup ?? 'none'), 'none', name);
+    // No rule above it, and its label level with the text beside it (the owner, 2026-11-12).
+    const block = await tab.$eval('.kn-article-body .kn-aside-block', (aside) => ({ line: getComputedStyle(aside).borderBlockStartWidth, top: aside.querySelector('.kn-toc-label').getBoundingClientRect().top, text: aside.closest('.kn-reading-area').querySelector('.kn-reading-area-flow > :first-child').getBoundingClientRect().top }));
+    assert.equal(block.line, '0px', `${name}: no rule above the menu`);
+    assert.ok(Math.abs(block.top - block.text) < 8, `${name}: the menu's label stands level with the text, ${block.top} and ${block.text}`);
     await tab.click('.kn-article-body .kn-toc a[href="#another-crosshead"]');
     await tab.waitForTimeout(300);
     assert.deepEqual(await marked(tab), [], `${name}: no mark, and nothing in its place`);

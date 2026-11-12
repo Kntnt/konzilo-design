@@ -535,7 +535,7 @@ The symbol is the image as the reader writes it: an `<img>`, or an inline `<svg>
 
 The intro is the menu's label; without one, the `<nav>` takes an `aria-label` in the site's language.
 
-**Read from content.** *(CSS)* As Reading Area and Table of Contents. `data-kn-side="start"` puts the menu before the text.
+**Read from content.** *(CSS)* As Reading Area and Table of Contents. `data-kn-side="start"` puts the menu before the text. An Aside Block that begins with a table of contents has no rule above it, so the menu's label stands level with the text (the owner, 2026-11-12).
 
 **Behaviour.** No script (the owner's principle, 2026-11-10). The menu stands on a rail along its links and stays in view as Reading Area keeps its Aside, and nothing marks the section being read. ***Removed* by the owner, 2026-11-11, under his rule that a site behaves the same in Gecko, WebKit and Chromium:** the assistant's choice of 2026-11-10, `scroll-target-group: auto` on `.kn-toc[data-kn-follow]`, by which a browser with CSS scroll markers marked the link whose section was being read with `:target-current`, drawn as the rail's accent; only Chromium had them (Firefox 157 and Safari 27.2 had neither).
 

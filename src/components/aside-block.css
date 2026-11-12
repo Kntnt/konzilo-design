@@ -1,6 +1,9 @@
 @layer kn-components {
   .kn-aside-block { padding-block-start: var(--kn-space-component-gap); border-block-start: 1px solid var(--kn-border); overflow-wrap: anywhere; }
   .kn-aside-block[data-kn-surface] { padding: var(--kn-space-plate); border: 0; border-radius: var(--kn-radius-card); }
+  /* A table of contents has no rule above it (the owner, 2026-11-12): its label heads it and its links stand on a rail of
+     their own, so it begins level with the text beside it. */
+  .kn-aside-block:not([data-kn-surface]):has(> .kn-toc:first-child) { padding-block-start: 0; border-block-start: 0; }
   .kn-aside-block > :first-child { margin-block-start: 0; }
   .kn-aside-block > :last-child { margin-block-end: 0; }
 }
