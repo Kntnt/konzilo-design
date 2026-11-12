@@ -224,7 +224,7 @@ Header controls both header elevations; box controls both box elevations; panel
 and page control their own. Target switches are independent of strength. With a
 default colour on a dark Surface, it uses black with an opacity boost of three
 before hardness interpolation. Explicit colours retain their colour and opacity.
-Each Surface supplies its polarity and text colour (see Surfaces).
+Each Surface supplies its polarity and text colour (see Surfaces). The page's shadow on the footer falls on the footer's first band, so it takes that band's ink (2026-11-12): for each Surface whose `page` shadow differs from the page's, the emitter writes it on the page's main where that Surface is the footer's first band, `[data-kn-surface]:has(> footer > [data-kn-surface="brand"]:first-child) > main`, naming no class as the clear header's rules do; with no shadow, or on a light band, it writes nothing.
 
 Shadow colour choices are `default` (text), `primary`, `secondary`, `tertiary`,
 `gray` (grey step 500), `black`, or an explicit hex colour. An absent brand rank

@@ -26,6 +26,11 @@ function translucent(surface) {
 // page's first band, which these rules give it while its page sets --kn-header-clear. Like the rest of the core they
 // name no class: the page is the parent of the header, the only element with a page start, and of the main.
 const firstBand = (test) => `[data-kn-surface]:has(> main > :first-child${test}) > [data-kn-start="under"]`;
+// The page casts its shadow on the footer in the ink of what it falls on, the footer's first band, as every shadow on a
+// dark plate is black at three times the opacity (tool.md, point 2): in the page's own ink it hardly shows on a dark
+// footer. Only a kind whose ink differs from the page's needs a rule. Like the rules above they name no class: the page
+// is the parent of its main and of the footer, whose first child is its first band.
+const footerGround = (kind) => `[data-kn-surface]:has(> footer > [data-kn-surface="${kind}"]:first-child) > main`;
 
 export function surfaceCss(surfaces) {
   // With the quiet edge a plate's frame is its own border role. A filled button is a small plate on the Surface, whose
@@ -69,6 +74,13 @@ export function surfaceCss(surfaces) {
       );
     }
     blocks.push(`${selector} {\n${lines.join('\n')}\n}`);
+  }
+  const page = surfaces.page;
+  for (const kind of Object.keys(surfaces)) {
+    const { light, dark } = surfaces[kind];
+    if (kind === 'page' || (light.shadow.page === page.light.shadow.page && dark.shadow.page === page.dark.shadow.page)) continue;
+    const choose = light.polarity === dark.polarity ? switched : pair;
+    blocks.push(`${footerGround(kind)} {\n  --kn-shadow-page: ${shadowPair(light.shadow.page, dark.shadow.page, choose)};\n}`);
   }
   blocks.push(`@container style(--kn-header-clear: 1) {\n${clear.join('\n\n')}\n}`);
   return blocks.join('\n\n');

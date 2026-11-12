@@ -12,6 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Where the line across the tabs stands, `tabs.rule-place`: under the row of tabs, as before and by default, or above it, the open tab marked on the line, so that a tab reads as a value under it does, a line, a label and the content, and tabs over a value list no longer stack two lines. The tool sets it on its Text page, whose preview now shows tabs over values, as the presentation's Text page does. The tabs' HTML is unchanged: the generated CSS carries the choice, and a design file resolved before keeps its tabs as they were.
 - How the text in the footer's right column is aligned, `footer.b-align`: at the start, as before and by default, or at the end, where the column's boxes stand, so that its lines end with its links. A row of links there wraps from the end, with no separator at a line's end. On a phone, where the cells stack at the start, the text stands at the start too. The tool sets it on its Footer page, under Text. A site gives it to Footer as `bAlign`, which `footerFromDesign` does.
 
+### Fixed
+
+- The page's shadow on the footer shows on a dark footer: it is inked for the band it falls on, black at three times the opacity on a dark band, as every shadow on a dark plate is. It was inked for the page, and hardly showed on the default footer's dark upper band, at the end of the page or revealed under it.
+
 ## [0.4.0] – 2026-11-12
 
 ### Added

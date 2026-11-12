@@ -104,6 +104,8 @@ test('DESIGN.md maps each shadow to its use, with its dark-mode value and the Su
   assert.match(body, /\*\*header\*\*, the header, once page content has scrolled under it/);
   assert.match(body, /\*\*box-lifted\*\*, a linked card on a Surface, while hovered or focused/);
   assert.match(body, /also hold in light mode on `brand`, `inverse`, `accent`/);
+  // The page's shadow over the footer takes the ink of the band it falls on (footer.md, 2026-11-12).
+  assert.match(body, /The page's shadow over the footer follows what it falls on instead, the footer's first band/);
   assert.match(hard.body, /The values are the same in both modes and on every Surface/, 'a chosen shadow colour holds everywhere');
   assert.match(hard.body, /\*\*header\*\*, [^\n]*: none\./, 'a target that casts no shadow says so');
 });

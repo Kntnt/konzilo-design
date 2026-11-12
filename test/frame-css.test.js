@@ -410,6 +410,49 @@ test('a footer at the edge of the screen lies under the page while it fits in th
   }
 });
 
+test('the page casts its shadow on the footer in the ink of the band it falls on, so it shows on a dark footer too, in every engine', { timeout: 240000 }, async () => {
+  // A shadow on a dark plate is black at three times the opacity (tool.md, point 2); in the page's own ink it hardly
+  // showed on the default footer's dark band. Found with a footer at the window's edge under the page's shadow and a
+  // header that sticks, slides away and is translucent (the assistant, 2026-11-12).
+  const inputs = { ...defaultInputs(), shadow: { ...defaultInputs().shadow, strength: 50, hardness: 20 } };
+  const r = derive(inputs);
+  const css = coreCss(r) + await componentsCss();
+  const page = async (surface) => {
+    const bands = [];
+    for (let i = 0; i < 6; i++) bands.push(await render('Band', { surface: i % 2 ? 'tint' : undefined, id: `b${i}` }, { default: `<h2>Band ${i}</h2><p>Some words in band ${i}.</p>` }));
+    const body = await render('Page', { shadow: true }, { header: await render('Header', { ...header, attachment: 'sticky', autohide: true, translucent: true }), default: bands.join(''), footer: await render('Footer', { ...footer, upper: { ...footer.upper, surface }, attachment: 'reveal' }) });
+    return `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Ink</title><style>${css}</style></head><body>${body}</body></html>`;
+  };
+  const files = { '/brand.html': await page('brand'), '/inverse.html': await page('inverse'), '/raised.html': await page('raised') };
+  const ink = (value) => value.match(/rgba?\([^)]*\)/g);
+  for (const [name, type] of ENGINES) {
+    const { browser, tab } = await open(type, files);
+    try {
+      for (const [file, ground] of [['brand', 'brand'], ['inverse', 'inverse'], ['raised', 'page']]) {
+        await tab.goto(`${ORIGIN}/${file}.html`);
+        const [cast, band, own] = await tab.evaluate(() => [
+          getComputedStyle(document.querySelector('.kn-page-main')).boxShadow,
+          getComputedStyle(document.querySelector('.kn-footer-band')).getPropertyValue('--kn-shadow-page'),
+          getComputedStyle(document.querySelector('.kn-page')).getPropertyValue('--kn-shadow-page'),
+        ]);
+        const want = ground === 'page' ? own : band;
+        assert.notEqual(cast, 'none', `${name}, ${file}`);
+        // Each shadow's colour, as the engine writes it, compared as numbers.
+        const numbers = (value) => ink(value).map((colour) => colour.match(/[\d.]+/g).map(Number));
+        const probe = await tab.evaluate((value) => { const node = document.body.appendChild(document.createElement('i')); node.style.boxShadow = value; const found = getComputedStyle(node).boxShadow; node.remove(); return found; }, want);
+        assert.deepEqual(numbers(cast), numbers(probe), `${name}, a footer on ${file}: the page's shadow in ${ground}'s ink, ${cast}`);
+      }
+      // On a dark band it is black, on a light one the page's own text colour.
+      await tab.goto(`${ORIGIN}/brand.html`);
+      assert.match(await tab.evaluate(() => getComputedStyle(document.querySelector('.kn-page-main')).boxShadow), /^rgba\(0, 0, 0, /, name);
+    } finally { await browser.close(); }
+  }
+  // Only a band whose ink differs from the page's needs a rule, and with no shadow there is none.
+  assert.match(coreCss(r), /\[data-kn-surface\]:has\(> footer > \[data-kn-surface="brand"\]:first-child\) > main \{\n  --kn-shadow-page: [^}]*rgb\(0 0 0 \//);
+  assert.doesNotMatch(coreCss(r), /\[data-kn-surface="(raised|tint)"\]:first-child\) > main/);
+  assert.doesNotMatch(coreCss(derive(defaultInputs())), /:has\(> footer/);
+});
+
 test('on a phone the upper band stacks column by column and the lower band row by row, in document order, and the wide footer lies as before, in every engine', { timeout: 240000 }, async () => {
   // Every combination of cells under both fills, each written twice: as the footer writes it now, and with its cells
   // in the old order, column by column. Wide, the two must lie alike to the pixel; narrow, the lower band stacks row by

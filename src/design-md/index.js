@@ -370,7 +370,7 @@ function elevationSection({ inputs, resolved: r, project }) {
   };
   const levels = Object.keys(light).map((level) => `- **${level}**, ${USE[level] || 'a layer of its own'}: ${light[level] === 'none' ? 'none' : `\`${light[level]}\``}${same || light[level] === 'none' ? '' : `; in dark mode \`${dark[level]}\``}.`).join('\n');
   const darkWords = same ? 'The values are the same in both modes and on every Surface.'
-    : `A shadow follows the Surface of what casts it. The dark-mode values, black at about three times the opacity, also hold in light mode on ${list(always.map((kind) => `\`${kind}\``)) || 'the Surfaces dark in both modes'}, which are dark in both modes. A shadow never turns light.`;
+    : `A shadow follows the Surface of what casts it. The dark-mode values, black at about three times the opacity, also hold in light mode on ${list(always.map((kind) => `\`${kind}\``)) || 'the Surfaces dark in both modes'}, which are dark in both modes. The page's shadow over the footer follows what it falls on instead, the footer's first band: on a band dark in light mode it takes the dark values in light mode too, or it would hardly show. A shadow never turns light.`;
   return `## Elevation & Depth
 ${why(project.explanations?.shadow)}
 There are three layers, from the top: the header with the panels it opens, the page, and the footer. The upper layer casts the shadow on the lower, never the reverse, and only where something lies under it.
