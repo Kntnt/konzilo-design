@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.0] – 2026-11-13
+
 ### Added
 
 - A site gives the header's own words in its language: Header's `words`, which `headerProps` takes as `words`, names the menu, the large menu's navigation and the bar's link menu, the magnifier, the search button, the search box's heading and its close button, the languages and the globe, and the link that skips to the content. Each one a site leaves out is the English one, so nothing changes for a site that gives none. They were fixed in English, which no site could replace. A menu button that shows a word of its own is named by it, where it was named "Menu" whatever it showed.
