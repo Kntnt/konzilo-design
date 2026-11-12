@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.0] – 2026-11-12
+
 ### Changed
 
 - The page casts its shadow on a footer at the edge of the screen only while it covers part of it, as the header casts its shadow only once the page lies under it. Scrolled to the very end, where the whole footer shows, page and footer lie in one plane, with no shadow; scrolling back up brings the shadow back, over the feedback duration, or at once for reduced motion. The page's edge line, in a design without shadows, does the same, and a hairline still parts page and footer where they are of one colour. A footer that does not fit the window is as before. Firefox, which lacks scroll timelines, gets the header's polyfill for it.
