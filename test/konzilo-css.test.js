@@ -150,6 +150,25 @@ for (const [name, type] of BROWSERS) {
     after(() => browser.close());
 
     for (const mode of ['light', 'dark']) {
+      test(`the button that opens a lightbox takes the design's focus ring, as every other control does, ${mode}`, async () => {
+        const page = await pageFor(browser, { mode });
+        const found = await page.evaluate(() => {
+          const button = document.querySelector('figure > button.konzilo-lightbox-open');
+          // The design's focus colour where the button stands, as a link focused beside it shows it.
+          const probe = button.parentElement.insertAdjacentElement('afterend', document.createElement('a'));
+          probe.href = '#probe';
+          probe.textContent = 'a link';
+          button.focus();
+          const style = getComputedStyle(button);
+          const ring = { visible: button.matches(':focus-visible'), color: style.outlineColor, style: style.outlineStyle };
+          probe.focus();
+          return { ring, focus: getComputedStyle(probe).outlineColor };
+        });
+        assert.equal(found.ring.visible, true);
+        assert.equal(found.ring.style, 'solid');
+        assert.equal(found.ring.color, found.focus, 'the ring is the design\'s focus colour, not the text\'s');
+      });
+
       test(`a lightbox keeps its own margins and sizes inside body text, and its words stay readable, ${mode}`, async () => {
         const page = await pageFor(browser, { mode });
         const measured = await page.evaluate(() => {

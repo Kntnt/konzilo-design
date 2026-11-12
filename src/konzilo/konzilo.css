@@ -282,6 +282,10 @@
   /* The lightbox stands inside the body's wrapper. The core's modal.css makes it work: it has no layer, so it beats every
      rule here on what it names, which is the margins and padding of its list, items, figure, words and image, and the
      colour and size of its words. This takes back what it does not name, on a near-black overlay in both modes. */
+  /* The button round an image, which opens it: modal.css rings it in its own text colour when focused, the browser's
+     button text, black on a dark Surface too. Its colour is nothing else, for it holds only the image, so it is the
+     design's focus colour, and the ring with it. */
+  button.konzilo-lightbox-open { color: var(--kn-focus); }
   dialog.konzilo-lightbox a { color: inherit; }
   dialog.konzilo-lightbox a:focus-visible { outline-color: currentColor; }
   dialog.konzilo-lightbox code { background: none; color: inherit; }
