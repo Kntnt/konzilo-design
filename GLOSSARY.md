@@ -174,6 +174,8 @@ The names in code, the custom properties, classes, attributes and design-file ke
 
 **Page context**: What a page's template gives the directives' components and the post lists' presentations once, before its body, with `designPage(Astro, …)`: the design, the post's title, the trail's levels, the site's own words and the page's count of ids, none of which the core hands a component. _Avoid_: props, globals.
 
+**Page part**: A component a site's template places around a body, which no directive gives and the core does not draw: a page's bands and title band, an article's opening, body and "Read more", and a term's opening (`docs/spec/directives.md`, The page parts). _Avoid_: template, which is the site's own.
+
 **Post-list presentation**: How a post list is drawn, `cards`, `featured` or `filtered`: a component a site registers and declares in its site description, which the core hands the list's posts. _Avoid_: presentation, alone, which is the client's ZIP.
 
 **Following menu**: A table of contents that stays beside the text as the page scrolls, as an article's "In this article". It marks no section as the one being read, so it is the same in every browser. _Avoid_: scroll-spy.

@@ -280,6 +280,7 @@ import { render } from 'astro:content';
 import Body from '@kntnt/konzilo/astro/Body.astro';
 import { breadcrumbs } from '@kntnt/konzilo/astro/breadcrumbs';
 import { designPage } from '@kntnt/konzilo-design/design-props';
+import PageBody from '@kntnt/konzilo-design/page-parts/PageBody.astro';
 import design from '../../design/site.design.json';
 
 const { entry: page, page: number } = Astro.props;
@@ -294,7 +295,7 @@ designPage(Astro, {
 });
 ---
 <Site entry={page} page={number}>
-  <Body post={page} page={number}><Content /></Body>
+  <PageBody><Body post={page} page={number}><Content /></Body></PageBody>
 </Site>
 ```
 
@@ -304,7 +305,165 @@ designPage(Astro, {
 <Filtered posts={posts} pager={pager} empty={empty} options={{ filters: 'category topics search' }} settled={{ taxonomy: 'category', term: term.id }} />
 ```
 
-A page's body is its bands, heroes and sections, so a body of directives stands in Page's `main` with nothing around it. A run of loose blocks at the top of a body, and the title and trail of a page without a hero, are the template's to write (directives.md, The body of a page).
+A page's body is its bands, heroes and sections, so a body of directives stands in Page's `main` with nothing around it but `PageBody`, which puts a run of loose blocks at its top in a section and the title band first where it opens with no hero (directives.md, The body of a page; The templates, below).
+
+### The templates
+
+A template places the package's page parts (directives.md, The page parts) and writes nothing of its own where a part exists, and gives the page's context first. `Site` is the layout above. The lines every example shares stand here once, and each example leaves them out:
+
+```astro
+import { render, getEntries } from 'astro:content';
+import Body from '@kntnt/konzilo/astro/Body.astro';
+import { breadcrumbs } from '@kntnt/konzilo/astro/breadcrumbs';
+import { designPage } from '@kntnt/konzilo-design/design-props';
+import design from '../../design/site.design.json';
+import Site from '../layouts/Site.astro';
+const base = import.meta.env.BASE_URL;
+```
+
+**A page**, `src/pages/[...page].astro`: its body as bands, its title band first where it has no hero, and the cookie declaration, on the cookie policy alone, in a section after the body.
+
+```astro
+---
+import CookieDeclaration from '@kntnt/konzilo/astro/CookieDeclaration.astro';
+import { entryPages } from '@kntnt/konzilo/astro/languages';
+import PageBody from '@kntnt/konzilo-design/page-parts/PageBody.astro';
+
+export function getStaticPaths() { return entryPages('pages', 'page'); }
+const { entry: page, page: number } = Astro.props;
+const { Content } = await render(page);
+designPage(Astro, { design, title: page.data.title, breadcrumbs: await breadcrumbs(page, Astro.url), search: `${base}search/` });
+---
+<Site entry={page} page={number}>
+  <PageBody>
+    <Body post={page} page={number}><Content /></Body>
+    <CookieDeclaration />
+  </PageBody>
+</Site>
+```
+
+**An article**, `src/pages/[...article].astro`: its opening from its fields and the core's meta line, its topics linked to their pages, its body with the following menu, and the related posts.
+
+```astro
+---
+import { metaLine } from '@kntnt/konzilo/astro/helpers';
+import { entryPages } from '@kntnt/konzilo/astro/languages';
+import { relatedPosts } from '@kntnt/konzilo/astro/post-lists';
+import ArticleOpening from '@kntnt/konzilo-design/page-parts/ArticleOpening.astro';
+import ArticleBody from '@kntnt/konzilo-design/page-parts/ArticleBody.astro';
+import ReadMore from '@kntnt/konzilo-design/page-parts/ReadMore.astro';
+
+export function getStaticPaths() { return entryPages('articles', 'article'); }
+const { entry: article, page } = Astro.props;
+const { Content } = await render(article);
+designPage(Astro, { design, title: article.data.headline, breadcrumbs: await breadcrumbs(article, Astro.url) });
+// Each topic with the address of its page, by the topics taxonomy's address in the site description.
+const topics = (await getEntries(article.data.topics)).map((topic) => ({ name: topic.data.name, url: `${base}topic/${topic.id}/` }));
+---
+<Site entry={article} page={page}>
+  <ArticleOpening entry={article} metaLine={await metaLine(article, Astro.url)} topics={topics} />
+  <ArticleBody><Body post={article} page={page}><Content /></Body></ArticleBody>
+  <ReadMore posts={await relatedPosts(article)} more={{ label: 'More articles', href: `${base}articles/` }} surface="raised" />
+</Site>
+```
+
+- `metaLine()`'s pieces are the line the core writes by the type's format, each author linked to their page where authors have pages; a type without a format has none, and the opening then has its topics alone. `authorsOf()` gives the same authors for a template that writes a byline of its own elsewhere.
+- The category over the headline is the article's eyebrow where it has one, else its category's name, which `ArticleOpening` reads itself.
+- `ReadMore` writes nothing where `relatedPosts()` finds none.
+
+**A type of the site's own**, made like an article, such as a case study with a customer and facts: the same parts, its own eyebrow, its facts as the body's Aside in place of the following menu, and its own words for "Read more".
+
+```astro
+---
+import AsideBlock from '@kntnt/konzilo-design/components/AsideBlock.astro';
+import { entryPages } from '@kntnt/konzilo/astro/languages';
+import { relatedPosts } from '@kntnt/konzilo/astro/post-lists';
+import ArticleOpening from '@kntnt/konzilo-design/page-parts/ArticleOpening.astro';
+import ArticleBody from '@kntnt/konzilo-design/page-parts/ArticleBody.astro';
+import ReadMore from '@kntnt/konzilo-design/page-parts/ReadMore.astro';
+
+export function getStaticPaths() { return entryPages('caseStudies', 'case-study'); }
+const { entry: study, page } = Astro.props;
+const { Content } = await render(study);
+designPage(Astro, { design, title: study.data.headline, breadcrumbs: await breadcrumbs(study, Astro.url) });
+const facts = [['Customer', study.data.customer], ['Location', study.data.location]].filter(([, value]) => value);
+---
+<Site entry={study} page={page}>
+  <ArticleOpening entry={study} eyebrow={study.data.customer} />
+  <ArticleBody>
+    <Body post={study} page={page}><Content /></Body>
+    <AsideBlock slot="aside" heading="The project" surface="raised">
+      <dl class="kn-value-list">{facts.map(([label, value]) => <div class="kn-value-list-item"><dt data-kn-type="small">{label}</dt><dd class="kn-value-list-value">{value}</dd></div>)}</dl>
+    </AsideBlock>
+  </ArticleBody>
+  <ReadMore posts={await relatedPosts(study)} heading="More case studies" more={{ label: 'All case studies', href: `${base}customers/` }} surface="raised" />
+</Site>
+```
+
+A type with no picture, such as a vacancy, gives `ArticleOpening` a `surface` for its band, and its facts and actions in the slot `after`, under its meta line.
+
+**A term's page**, the `termPage` the integration puts at each taxonomy's address: the term's opening, then its posts as a filtered list in a section of their own, the row it settles left out.
+
+```astro
+---
+import { termPages } from '@kntnt/konzilo/astro/post-lists';
+import Filtered from '@kntnt/konzilo-design/presentations/Filtered.astro';
+import PageBody from '@kntnt/konzilo-design/page-parts/PageBody.astro';
+import TermOpening from '@kntnt/konzilo-design/page-parts/TermOpening.astro';
+
+export async function getStaticPaths({ routePattern }) { return termPages(routePattern); }
+const { term, page, posts, pager, empty } = Astro.props;
+const taxonomy = { categories: 'category', topics: 'topics', authors: 'authors' }[term.collection];
+designPage(Astro, { design, title: term.data.name, breadcrumbs: await breadcrumbs(term, Astro.url), search: `${base}search/`, types: { articles: { name: 'article', label: 'Article', plural: 'Articles' } } });
+---
+<Site entry={term} page={page}>
+  <TermOpening term={term} surface="tint" />
+  <PageBody title={false}>
+    <Filtered posts={posts} pager={pager} empty={empty} options={{ filters: 'category topics search' }} settled={{ taxonomy, term: term.id }} />
+  </PageBody>
+</Site>
+```
+
+**The search page**, the `searchPage`: its title band, then the core's search in a Reading Area in a section.
+
+```astro
+---
+import Search from '@kntnt/konzilo/astro/Search.astro';
+import { pageTexts } from '@kntnt/konzilo/astro/languages';
+import ReadingArea from '@kntnt/konzilo-design/components/ReadingArea.astro';
+import PageBody from '@kntnt/konzilo-design/page-parts/PageBody.astro';
+import TitleBand from '@kntnt/konzilo-design/page-parts/TitleBand.astro';
+
+const { title } = pageTexts(Astro.url).search;
+designPage(Astro, { design, title, breadcrumbs: await breadcrumbs(null, Astro.url, { title }) });
+---
+<Site title={title}>
+  <TitleBand />
+  <PageBody title={false}><ReadingArea side="end"><Search /></ReadingArea></PageBody>
+</Site>
+```
+
+**The 404 page**, `src/pages/404.astro`: the page an Admin chose as the 404 page, its title band and its body, or the core's own words where none is chosen.
+
+```astro
+---
+import { pageLanguage, pageTexts, startPage } from '@kntnt/konzilo/astro/languages';
+import { notFoundPage } from '@kntnt/konzilo/astro/site-settings';
+import PageBody from '@kntnt/konzilo-design/page-parts/PageBody.astro';
+
+const plain = pageTexts(Astro.url).notFound;
+const page = await notFoundPage(Astro.url);
+const Content = page ? (await render(page)).Content : null;
+designPage(Astro, { design, title: page?.data.title ?? plain.title });
+---
+<Site title={page?.data.title ?? plain.title}>
+  <PageBody>
+    {Content ? <Body post={page}><Content /></Body> : <><p>{plain.text}</p><p><a href={startPage(pageLanguage(Astro.url))}>{plain.start}</a></p></>}
+  </PageBody>
+</Site>
+```
+
+The 404 page has no trail, since it stands at no address of its own; its body is drawn through `Body`, so that its directives are drawn as anywhere.
 
 ### A body without directives
 
@@ -347,12 +506,11 @@ const trail = rest.map(({ name, href }, at) => (at === rest.length - 1 ? { label
 
 ## What a site needs
 
-From this package: the design file, `fromDesign`, `konzilo.css`, the fonts and logos commands, the frame's components, `design-props`, with `menuProps` for its menus, `logoAddresses` for its logos and `designPage` for its templates, and the directives' components, declarations and checks and the presentations `cards`, `featured` and `filtered` (The directives and the presentations, above).
+From this package: the design file, `fromDesign`, `konzilo.css`, the fonts and logos commands, the frame's components, `design-props`, with `menuProps` for its menus, `logoAddresses` for its logos and `designPage` for its templates, the directives' components, declarations and checks, the presentations `cards`, `featured` and `filtered` (The directives and the presentations, above), and the page parts its templates place (The templates, above).
 
 Of its own, since nothing here does it yet:
 
 - Its languages, in the shape Header takes, from the core's `languageSwitcher()` (`{ url, name, current, language }`). Only the menu has an adapter so far, and the trail the few lines above.
-- Its templates' parts: an article's opening, body and "Read more", a term's opening, and the title and trail of a page without a hero, whose HTML directives.md gives, and the section around a run of loose blocks at the top of a body.
 - The look of any presentation of its own, and its `searchPage` and `termPage`, whose list a term's page draws with `Filtered`. The template's List, Cards and TermPage write classes of the template's, whose styles went with `src/styles`, so they stand unstyled until the site replaces them.
 - `bodyClass`, which the core does not take yet, so a template writes the wrapper around a body itself.
 - A restart of Astro's dev server after a change to the design, which it does not watch.

@@ -163,7 +163,9 @@ konzilo({ ...await fromDesign('./design/site.design.json'), /* … */ })
 ```
 
 The package also draws Konzilo's content directives and its post lists: a site registers its
-components and presentations, and takes their declarations and checks into its site description.
+components and presentations, and takes their declarations and checks into its site description. Its
+templates place the package's page parts around a body: a page's bands and title, an article's
+opening, body and related posts, and a term's opening.
 
 ```js
 konzilo({ ...await fromDesign('./design/site.design.json'), directives: { ...DESIGN_DIRECTIVES }, presentations: { ...DESIGN_PRESENTATIONS } })

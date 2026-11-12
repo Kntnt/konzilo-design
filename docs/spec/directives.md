@@ -141,11 +141,32 @@ Records the HTML contract between the directive list Konzilo defines and this de
 | `cards` | With `type="navigation"`, a heading that is not one link, or another link in the card; with `symbol`, a card without a picture; a numbering in `markers` with `picture` or `symbol` |
 | every directive but `section` | A post list, a form or a site's own component, until the core can draw one inside a part drawn from its tree |
 
+## The page parts
+
+***Built* 2026-11-13** (the assistant's technical choices): what a site's templates place around a body, which the core does not draw and no directive gives, so that a template places parts of this package's and writes nothing of its own where a part exists. Each is an Astro component of `@kntnt/konzilo-design/page-parts/<Name>.astro`, which reads the page's context (The components) and takes what a template has in hand from the core.
+
+| Part | What a template gives it | What it draws |
+|---|---|---|
+| `PageBody` | The body, as its slot: `<Body post page><Content /></Body>`, and anything after it | The body as bands (The body of a page): each hero and section as it is, a run of other blocks at the top in a section of its own, the title band first where the body opens with no hero (`title={false}` leaves it out), and the page's H1 under the hero where the design puts it there |
+| `TitleBand` | `title`, the page's context's by default; `eyebrow`, `deck`, `surface`, and `trail={false}` to leave the trail out | A page's title and trail, as a section's head of its own |
+| `TermOpening` | `term`, the term's entry as the core's `termPages()` hands a term's page it; `taxonomy`, read from its collection by default; `eyebrow`; `surface` | A term's opening: its taxonomy's word over its name, the page's H1, and its description as the deck |
+| `ArticleOpening` | `entry`, the post's entry; `metaLine`, the core's `metaLine()` pieces; `topics`, each `{ name, url }`; `eyebrow`, the category's name by default; `surface`; the slot `after` | An article's opening (An article, The opening) |
+| `ArticleBody` | The body, as its slot; `label`; `menu={false}`; the slot `aside` | An article's body and its following menu (An article, The body and its following menu) |
+| `ReadMore` | `posts`, as the core's `relatedPosts()` gives them; `heading`; `more`, `{ label, href }`; `surface` | "Read more" (An article, "Read more"), nothing without posts |
+
+**Drawn from what the core drew.** `PageBody` and `ArticleBody` take the body as the core's `Body` drew it, so a post list, a form and a picture with its lightbox stand in them as anywhere. Each reads the elements at the top of that HTML and writes them again only where the design adds to them: a class and a text type on the head of a section it makes, `kn-question` on an interview's question. The live preview's marks stay on every block.
+
+**A run of loose blocks** at the top of a body is read by the section's rules (`section`, above) from what the core drew: a figure of one image is a picture, whose lightbox's dialog it leaves out of the media; an eyebrow's label, an `h2`, a plain paragraph, actions, a form and a choice are what they are in the tree. So a run of a heading and paragraphs, as a legal page is written, has its head beside them as rule 5 reads it, as if the editor had written `:::section` around it.
+
+**The H1 under the hero** (components.md, The H1, the trail and the hero's heading): where the design's `inputs.hero.h1` is `below`, the hero draws its heading as a paragraph and no trail, and `PageBody` gives the band after the hero the trail first in its head and its heading as the `h1`, with the H1's look; where that band has no heading, a title band stands between them. An article's opening draws its headline as the H1 whatever the design's `h1`, since no band after it holds a heading (the assistant's choice, 2026-11-13).
+
+**A term's page** shows its posts with `Filtered` (`::post-list`, `presentation="filtered"`), in a body of its own: `PageBody` puts the list in a section, under the term's opening.
+
 ## The body of a page
 
-A post's body is a sequence of bands (page.md, point 3): heroes and sections. A run of blocks at the top level outside a hero or a section is written as a section without a Surface, as if the editor had put `:::section` around it, so a list of logos alone at the top stands in a band of its own. The page's template writes that section around such a run; the package's components draw only the directives, so a component at the top of a body stands as it is until the template wraps it (a part of the templates' work order to come).
+A post's body is a sequence of bands (page.md, point 3): heroes and sections. A run of blocks at the top level outside a hero or a section is written as a section without a Surface, as if the editor had put `:::section` around it, so a list of logos alone at the top stands in a band of its own. `PageBody` writes that section around such a run, reading it by the section's rules (The page parts).
 
-**A page without a hero** (components.md, The H1, the trail and the hero's heading) has its trail and its title as the H1 in a section's head of its own, first, which the page's template writes:
+**A page without a hero** (components.md, The H1, the trail and the hero's heading) has its trail and its title as the H1 in a section's head of its own, first, which `TitleBand` writes and `PageBody` puts first:
 
 ```html
 <section class="kn-band kn-section">
@@ -194,7 +215,7 @@ No directive has a runtime (2026-11-10): a site's layout imports no script for a
 - The first paragraph is the deck. The last picture is the hero's picture, in `.kn-hero-media`; a picture before the text is a logo, `.kn-hero-logo`, first after the trail, at its own proportions, at most 4rem high and 16rem wide, as a section's badges are at most 4rem high and 8rem wide (the assistant's choice, 2026-11-10). ***Decided* by the owner (2026-11-11):** 4rem is a largest height, not a set one, so a small raster logo is never drawn past its own size and blurred; an SVG, whose `src` ends in `.svg` or which is an SVG data address, is drawn 4rem high, since one with only a `viewBox` has no size of its own. Everything else follows the heading group in the order written.
 - Where the design's `inputs.hero.picture` is `none` and the hero holds a picture, it stands at `end`, Hero's default side, since content the editor chose is never dropped.
 - `surface` takes `page` (no attribute), `raised`, `inverse`, `tint`, `brand` or `accent`. Left out, the hero stands on the design's own, `inputs.hero.surface`, as `resolved.hero.surface` holds it, which `none` leaves without a Surface. *(Changed 2026-11-12, the assistant's choice: the directive's default was `raised`, which overrode the design's choice on every page; with no default, a page departs from the design only where its editor writes a Surface.)*
-- The page's title comes from the page's context, since a hero's body holds no heading: the post's title is its H1 (the core's content format: a body's headings are at levels 2 to 6). A hero whose page gives no title stops the build. Where the design puts the H1 below the hero, the next section's heading is the H1, which needs the page's template to know the next band, a part of the templates' work order to come.
+- The page's title comes from the page's context, since a hero's body holds no heading: the post's title is its H1 (the core's content format: a body's headings are at levels 2 to 6). A hero whose page gives no title stops the build. Where the design puts the H1 below the hero, the hero draws no trail, and `PageBody` gives the band after it the trail and the H1 (The page parts).
 
 **Markdown.**
 
@@ -1123,7 +1144,7 @@ A teaser card is a link as a whole, so it takes `surfaceOf('link-card', ground)`
 
 ## An article
 
-An article's page is laid out by its fields, not by directives: an opening, the body with its following menu, and "Read more". The site writes it all.
+An article's page is laid out by its fields, not by directives: an opening, the body with its following menu, and "Read more". The page parts `ArticleOpening`, `ArticleBody` and `ReadMore` write them, from what the template has from the core (The page parts), and a type of the site's own made like an article takes them too.
 
 ### The opening
 
