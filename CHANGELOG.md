@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- With the line above the tabs, an open tab on a later line of a row that wraps is marked as itself. Its bar lay at the foot of the tab above it and read as that tab's underline; now every line of the row hangs from a hairline of its own across the whole width, the bar on it, and the lines stand 0.5em apart, under either choice of the line, so an open tab's bar is plainly nearer its own label. A row of one line looks as before.
+
 ## [0.5.0] – 2026-11-12
 
 ### Added

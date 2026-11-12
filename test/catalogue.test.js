@@ -163,7 +163,7 @@ test('the Text page sets where the line across the tabs stands, and the preview 
   try {
     await turnTo(page, 'text');
     const line = (end) => end.locator('[data-component="tabs"] .kn-tabs').evaluate((tabs) => ({
-      above: getComputedStyle(tabs, '::before').borderTopWidth,
+      above: getComputedStyle(tabs.querySelector('.kn-tabs-tab'), '::before').borderTopWidth,
       panel: getComputedStyle([...tabs.querySelectorAll('.kn-tabs-panel')].find((panel) => panel.checkVisibility())).borderTopWidth,
     }));
     for (const end of ends) {
@@ -172,13 +172,13 @@ test('the Text page sets where the line across the tabs stands, and the preview 
     }
     await page.locator('[data-path="inputs.tabs.rule-place"]').selectOption('above');
     for (const end of ends) {
-      await end.waitForFunction(() => getComputedStyle(document.querySelector('[data-component="tabs"] .kn-tabs'), '::before').borderTopWidth === '1px');
+      await end.waitForFunction(() => getComputedStyle(document.querySelector('[data-component="tabs"] .kn-tabs-tab'), '::before').borderTopWidth === '1px');
       assert.deepEqual(await line(end), { above: '1px', panel: '0px' });
     }
     await page.waitForFunction(() => document.getElementById('status-text').textContent === 'Saved');
     assert.deepEqual(JSON.parse(await readFile(tool.path, 'utf8')).inputs.tabs, { 'rule-place': 'above' }, 'saved in the design file');
     await page.locator('#undo').click();
-    for (const end of ends) await end.waitForFunction(() => getComputedStyle(document.querySelector('[data-component="tabs"] .kn-tabs'), '::before').borderTopWidth === '0px');
+    for (const end of ends) await end.waitForFunction(() => getComputedStyle(document.querySelector('[data-component="tabs"] .kn-tabs-tab'), '::before').borderTopWidth === '0px');
     await page.waitForFunction(() => document.getElementById('status-text').textContent === 'Saved');
     assert.deepEqual(errors, []);
   } finally {

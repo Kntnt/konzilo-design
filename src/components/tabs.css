@@ -49,30 +49,43 @@
   .kn-tabs-text, .kn-tabs-parts { min-inline-size: 0; }
 
   /* As tabs: the summaries stand in a row that wraps, and the open panel takes the whole line under it. Each <details>
-     gives way to its summary and its ::details-content, which then stand in the row as the component's own. */
+     gives way to its summary and its ::details-content, which then stand in the row as the component's own. The lines
+     of a row that wraps stand apart by the room under the label, so that the open tab's bar, at the edge of its tab
+     where the rule is, lies nearer its own label than the label of the tab beside it on the next line (a fault of 0.5.0
+     with the rule above, below); the label and the panel give that room back, so a row of one line is as before. */
   @supports selector(::details-content) {
-    .kn-tabs { display: flex; flex-wrap: wrap; align-items: end; column-gap: 0.25em; }
-    .kn-tabs-label { flex-basis: 100%; }
+    .kn-tabs { --kn-tabs-line-gap: 0.5em; display: flex; flex-wrap: wrap; align-items: end; gap: var(--kn-tabs-line-gap) 0.25em; }
+    .kn-tabs-label { flex-basis: 100%; margin-block-end: 0; }
     .kn-tabs-item { display: contents; }
     .kn-tabs-tab { flex: 0 1 auto; }
-    .kn-tabs-item::details-content { order: 1; flex-basis: 100%; min-inline-size: 0; }
+    .kn-tabs-item::details-content { order: 1; flex-basis: 100%; min-inline-size: 0; margin-block-start: calc(-1 * var(--kn-tabs-line-gap)); }
     .kn-tabs-item:not([open])::details-content { display: none; }
   }
   /* The rule above the tabs, where the design puts it there (`tabs.rule-place`, the owner, 2026-11-12): the rule across
      the whole width stands over the row of tabs, the open tab's bar lies on it, and the panel follows the tabs with no
      rule of its own. A tab is then drawn as a value under it is, a rule, a label and the content, and the rule still says
      that all under it belongs to the tabs. Each tab hangs from the rule, its corners round at its foot and its fill under
-     the pointer starting at the rule, which it leaves whole. A tab reaches over the rule by half its bar and half the
-     hairline, so the bar's middle lies on the hairline's: the hairline's half is 0.03125rem, half a pixel at the default
-     text size, and at a larger one the bar's middle stays within half a pixel of the hairline's, which is not seen. A row
-     of tabs that wraps has the rule over its first line, as a rule below stands under the last. */
+     the pointer starting at the rule's foot, --kn-tabs-mark-over down, half its bar and half the hairline, so the rule
+     stays whole. The hairline runs through the bar's middle: its half is 0.03125rem, half a pixel at the default text
+     size, and at a larger one the two middles stay within half a pixel, which is not seen.
+     A row of tabs that wraps hangs each of its lines from a rule of its own, the lines apart by the room between them,
+     so that an open tab on a later line has its bar on its own line: where the rule ran over the first line alone, the
+     bar lay at the foot of the tab above it and read as that tab's underline (a fault of 0.5.0). So each tab draws the
+     rule at its head, across the whole width and under every tab, and the tabs of a line draw it alike. The rule is
+     placed absolutely in the tabs, from the tab's content box's top, where it starts, back over its padding and bar. */
   @container style(--kn-tabs-rule-place: above) {
     @supports selector(::details-content) {
-      .kn-tabs { --kn-tabs-mark-over: calc(0.1875rem / 2 + 0.03125rem); align-items: start; }
-      .kn-tabs::before { content: ""; flex-basis: 100%; border-block-start: 1px solid var(--kn-border); }
-      .kn-tabs-label { order: -1; }
+      .kn-tabs { --kn-tabs-mark-over: calc(0.1875rem / 2 + 0.03125rem); position: relative; isolation: isolate; align-items: start; }
+      .kn-tabs-tab::before {
+        content: "";
+        position: absolute;
+        z-index: -1;
+        inset-inline: 0;
+        align-self: start;
+        margin-block-start: calc(0.1875rem / 2 - 0.03125rem - 0.55em - 0.1875rem);
+        border-block-start: 1px solid var(--kn-border);
+      }
       .kn-tabs-tab {
-        margin-block-start: calc(-1 * var(--kn-tabs-mark-over));
         border-block-start: 0.1875rem solid transparent;
         border-block-end: 0;
         border-start-start-radius: 0;
@@ -99,9 +112,10 @@
   /* On paper every panel shows, each under its tab's name. */
   @media print {
     .kn-tabs { display: block; }
-    .kn-tabs::before { content: none; }
+    .kn-tabs-tab::before { content: none; }
     .kn-tabs-item { display: block; }
-    .kn-tabs-item::details-content, .kn-tabs-item:not([open])::details-content { display: block; content-visibility: visible; }
+    .kn-tabs-label { margin-block-end: 0.5em; }
+    .kn-tabs-item::details-content, .kn-tabs-item:not([open])::details-content { display: block; content-visibility: visible; margin-block-start: 0; }
     .kn-tabs-tab { padding: 0; min-block-size: 0; border: 0; color: var(--kn-text); }
     .kn-tabs-item + .kn-tabs-item { margin-block-start: var(--kn-space-component-gap); }
     .kn-tabs-panel { padding-block-start: 0.5em; border: 0; }
