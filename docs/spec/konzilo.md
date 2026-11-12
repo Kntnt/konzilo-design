@@ -58,7 +58,7 @@ It returns only these two:
   4. `./design/fonts/fonts.css`, the design's typefaces, where it uses any of the library's
 - `tokens`: `{ colors: { primary: '--kn-theme-primary', base: '--kn-theme-base' } }`. The core reads a token from `:root` or `html`, outside any conditional rule, and its `opaqueColor()` cannot read `light-dark()`, so `coreCss` writes these two as literals: the primary brand seed exactly, and the light page colour.
 
-It does not return `presentations`, since a site registers its own, or `bodyClass`, which does not exist yet.
+It does not return `directives` or `presentations`, which a site spreads from `DESIGN_DIRECTIVES` and `DESIGN_PRESENTATIONS` beside its own and takes only as its description declares them, or `bodyClass`, which does not exist yet.
 
 ## `konzilo.css`
 

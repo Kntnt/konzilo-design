@@ -29,7 +29,7 @@ Precedence over any conflicting skill, README, or other doc unless the user over
 - `docs/spec/tool.md` — read when working on the design tool, inputs, presentation, exports or design file consumption.
 - `docs/spec/names.md` — read when naming a token, role, Surface kind, width or design-file key, or writing CSS that uses them.
 - `docs/spec/konzilo.md` — read when working on how a Konzilo site consumes this package: `fromDesign`, `konzilo.css`, `design-props`, the design file's format, the fonts and logos commands or the tarball.
-- `docs/spec/directives.md` — read when working on the HTML a site writes for Konzilo's directives, the parts and runtimes they need, or how the design reads a section's layout.
+- `docs/spec/directives.md` — read when working on Konzilo's directives: their HTML, the components that draw it, their declarations and checks, the post lists' presentations, or how the design reads a section's layout.
 - `docs/generator.md` — read when changing the generator, design-file schema, CSS emitter or CLI.
 - `gallery/` — live Astro component gallery; `npm run gallery` builds a self-contained `gallery/dist/index.html`.
 - `tool/README.md` — read when running or changing the local design tool, controls, saves or presentation command.
