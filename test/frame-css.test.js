@@ -594,6 +594,55 @@ test('column B\'s text stands at the end where the design says so, its rows of l
   }
 });
 
+test('a link in a line of the footer\'s text is underlined without the pointer, on every Surface a band may take, while its rows of links are not, in every engine', { timeout: 240000 }, async () => {
+  // A fault of 0.5.0, found on a site whose lower band, on `inverse`, ended "This site demonstrates" a link: the link was
+  // the text colour and underlined only under the pointer, beside muted words, about 2:1 from them where a link told
+  // apart by colour alone needs 3:1 and a further cue. A link in running text is now underlined at rest, its line thicker
+  // under the pointer, as in body text; a row of links, which holds nothing else, stays as it was.
+  const surfaces = ['page', 'raised', 'tint', 'brand', 'inverse'];
+  const text = '<p class="kn-footer-muted">Registered office: Sampleton<br>This site demonstrates <a href="#k" data-running>a made-up product</a>.</p>';
+  const props = (surface) => ({
+    upper: { surface, cells: { a1: { content: text }, b2: { links: [{ label: 'About', href: '#about' }] } } },
+    lower: { surface, cells: { a1: { text: 'Street 1' }, b1: { content: `<address>Street 1, <a href="mailto:a@example.com" data-running>a@example.com</a></address>` }, a2: { links: [{ label: 'Privacy', href: '#privacy' }] } } },
+  });
+  const css = coreCss(derive(defaultInputs())) + await componentsCss();
+  const files = {};
+  for (const surface of surfaces) for (const mode of ['light', 'dark']) files[`/${surface}-${mode}.html`] = `<!doctype html><html lang="en" data-kn-mode="${mode}"><head><meta charset="utf-8"><title>Links</title><style>${css}</style></head><body data-kn-surface="page">${footerHtml(layoutFooter(props(surface)), props(surface))}</body></html>`;
+  const read = (tab) => tab.evaluate(() => {
+    const luminance = (colour) => { const [r, g, b] = colour.match(/[\d.]+/g).slice(0, 3).map((v) => { v /= 255; return v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }); return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
+    const contrast = (one, other) => { const [a, b] = [luminance(one), luminance(other)].sort((x, y) => y - x); return (a + 0.05) / (b + 0.05); };
+    const look = (link) => {
+      const style = getComputedStyle(link);
+      const ground = getComputedStyle(link.closest('.kn-footer-band')).backgroundColor;
+      return { line: style.textDecorationLine, colour: style.color, under: style.textDecorationColor, thickness: style.textDecorationThickness, contrast: contrast(style.color, ground) };
+    };
+    return { running: [...document.querySelectorAll('[data-running]')].map(look), rows: [...document.querySelectorAll('.kn-footer-links a')].map(look) };
+  });
+  for (const [name, type] of ENGINES) {
+    const { browser, tab } = await open(type, files);
+    try {
+      for (const surface of surfaces) for (const mode of ['light', 'dark']) {
+        const what = `${name}, a footer on ${surface}, ${mode}`;
+        await tab.goto(`${ORIGIN}/${surface}-${mode}.html`);
+        const found = await read(tab);
+        assert.equal(found.running.length, 2, what);
+        for (const link of found.running) {
+          assert.ok(link.line.includes('underline') && link.under === link.colour, `${what}: a link in running text is underlined in its own colour at rest, ${JSON.stringify(link)}`);
+          assert.ok(link.contrast >= 4.5, `${what}: and its colour, and so its line, stands from the band, ${JSON.stringify(link)}`);
+        }
+        for (const link of found.rows) assert.equal(link.under, 'rgba(0, 0, 0, 0)', `${what}: a row of links keeps its line for the pointer`);
+        // Under the pointer the line grows thicker, a further cue.
+        const rest = found.running[0].thickness;
+        await tab.hover('[data-running] >> nth=0');
+        await tab.waitForTimeout(200);
+        const hover = (await read(tab)).running[0].thickness;
+        assert.ok(parseFloat(hover) > parseFloat(rest), `${what}: thicker under the pointer, ${rest} to ${hover}`);
+        await tab.mouse.move(0, 0);
+      }
+    } finally { await browser.close(); }
+  }
+});
+
 test('the bar gives way in order as the window narrows, never overflows, and comes back as it widens, in every engine', { timeout: 240000 }, async () => {
   const files = await pages();
   const order = ['slogan', 'name', 'links', 'word', 'language', 'cta', 'search'];

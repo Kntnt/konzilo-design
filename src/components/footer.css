@@ -52,6 +52,12 @@
   .kn-footer-links li::before { content: "•"; display: inline-block; inline-size: var(--kn-footer-separator); text-align: center; color: var(--kn-text-muted); }
   .kn-footer a { color: var(--kn-text); text-decoration: underline; text-decoration-color: transparent; text-underline-offset: 0.22em; }
   .kn-footer a:is(:hover, [aria-current]) { text-decoration-color: currentColor; }
+  /* A link in a line of text, a paragraph's or an address's, stands among words that are no links: it is underlined at
+     rest, in its own colour, and the line grows thicker under the pointer, as in body text, so it is told from the
+     words round it without the pointer on whatever Surface its band has, where colour alone told it from muted words at
+     about 2:1 (a fault of 0.5.0). A row of links, which holds links alone, keeps its line for the pointer. */
+  .kn-footer :is(p, address) a { text-decoration-color: currentColor; text-decoration-thickness: 0.06em; }
+  .kn-footer :is(p, address) a:hover { text-decoration-thickness: 0.12em; }
   /* A row of icon links, such as social media. Each is at least the size a finger or pointer needs. The icons are a
      little larger than a text icon and stand 1rem apart, so each reads as a link of its own (the owner, 2026-11-12). */
   .kn-footer-social { display: flex; flex-wrap: wrap; gap: 1rem; list-style: none; padding: 0; margin: 0; }

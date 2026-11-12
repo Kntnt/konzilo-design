@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - With the line above the tabs, an open tab on a later line of a row that wraps is marked as itself. Its bar lay at the foot of the tab above it and read as that tab's underline; now every line of the row hangs from a hairline of its own across the whole width, the bar on it, and the lines stand 0.5em apart, under either choice of the line, so an open tab's bar is plainly nearer its own label. A row of one line looks as before.
+- A link in a line of the footer's text, such as "This site demonstrates" a link, is underlined without the pointer, and its line grows thicker under it, as in body text, so it can be told from the words round it on every Surface a footer band may take. It was told from muted words by colour alone. The footer's rows of links are as before.
 
 ## [0.5.0] – 2026-11-12
 
