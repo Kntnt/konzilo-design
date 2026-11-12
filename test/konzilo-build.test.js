@@ -1,6 +1,7 @@
-// A Konzilo site built by the real core with this package's directives and presentations, as docs/spec/konzilo.md tells
-// a site to take them: the packed tarball installed, its components registered by DESIGN_DIRECTIVES and
-// DESIGN_PRESENTATIONS, its declarations and checks named in the site description, and designPage() in the templates.
+// A Konzilo site built by the real core with this package's directives, presentations and page parts, as
+// docs/spec/konzilo.md tells a site to take them: the packed tarball installed, its components registered by
+// DESIGN_DIRECTIVES and DESIGN_PRESENTATIONS, its declarations and checks named in the site description, and templates
+// of every kind, a page, an article, a term's page, the search page and the 404 page, as konzilo.md's own.
 //
 // Opt-in, since it needs the core and its dependencies: set KONZILO_CORE to a checkout of the core whose packages are
 // installed, as `KONZILO_CORE=~/Projects/konzilo node --test test/konzilo-build.test.js`. Nothing here imports the core:
@@ -30,9 +31,10 @@ const description = {
   componentChecks: '@kntnt/konzilo-design/directives/checks',
   types: {
     page: { collection: 'pages', hierarchical: true, address: '/pages/{path}/', elements: ELEMENTS },
-    article: { collection: 'articles', address: '/articles/{slug}/', elements: ['paragraph', 'heading', 'list'] },
+    article: { collection: 'articles', address: '/articles/{slug}/', elements: ['paragraph', 'heading', 'list', 'aside'] },
   },
-  taxonomies: { category: { address: '/category/{slug}/' } },
+  taxonomies: { category: { address: '/category/{slug}/' }, topics: { address: '/topic/{slug}/' } },
+  search: { address: '/search/' },
   presentations: {
     cards: { label: 'Cards' },
     featured: { label: 'Featured' },
@@ -44,10 +46,38 @@ const description = {
 
 const PICTURE = 'garden-898a545757.webp';
 const page = (title, body) => `---\ntitle: "${title}"\ndate: 2026-10-01T08:00:00Z\nmodified: 2026-10-01T08:00:00Z\n---\n\n${body}\n`;
-const article = (slug, { headline, category, topics, day }) => [`content/articles/${slug}.md`, [
+const article = (slug, { headline, category, topics, day, body = `Words on ${slug}.` }) => [`content/articles/${slug}.md`, [
   '---', `title: "${headline}"`, `date: 2026-10-${day}T08:00:00Z`, `modified: 2026-10-${day}T08:00:00Z`,
   `image: {"src":"../media/${PICTURE}","alt":"A bed of ${slug}"}`, `headline: "${headline}"`, `standfirst: "All about ${slug}."`,
-  'authors: ["a-writer"]', `category: ["${category}"]`, `topics: ${JSON.stringify(topics)}`, '---', '', `Words on ${slug}.`, ''].join('\n')];
+  'authors: ["a-writer"]', `category: ["${category}"]`, `topics: ${JSON.stringify(topics)}`, '---', '', body, ''].join('\n')];
+
+// An article's body: a lede, crossheads, an interview's question and a fact box with an anchor.
+const SOIL = md`The lede.
+
+## <a id="what-lies-below"></a>What lies below
+
+**What did you find?**
+
+That the soil was dry.
+
+:::aside{anchor="in-short"}
+
+### In short
+
+- Water early.
+
+:::
+
+## Planting
+
+Words on planting.`;
+
+// A page with no hero, as a legal page is written: its blocks loose at the top.
+const LEGAL = md`## What we keep
+
+What you write in a form, for ninety days.
+
+What you do not, we do not keep.`;
 
 const GARDEN = md`::::hero
 
@@ -256,6 +286,7 @@ before(() => {
     `    directives: { ...DESIGN_DIRECTIVES, form: '${CORE}/astro/Form.astro' },`,
     '    presentations: { ...DESIGN_PRESENTATIONS },',
     "    termPage: './src/components/TermPage.astro',",
+    "    searchPage: './src/components/SearchPage.astro',",
     '  })],',
     "  markdown: { shikiConfig: { theme: 'css-variables' } },",
     '  devToolbar: { enabled: false },',
@@ -271,6 +302,7 @@ before(() => {
     `import { breadcrumbs } from '${CORE}/astro/breadcrumbs';`,
     `import { entryPages } from '${CORE}/astro/languages';`,
     "import { designPage } from '@kntnt/konzilo-design/design-props';",
+    "import PageBody from '@kntnt/konzilo-design/page-parts/PageBody.astro';",
     "import design from '../../design/site.design.json';",
     "import '@kntnt/konzilo-design/components.css';",
     '',
@@ -279,27 +311,100 @@ before(() => {
     'const { Content } = await render(entry);',
     "designPage(Astro, { design, title: entry.data.title, breadcrumbs: await breadcrumbs(entry, Astro.url), search: '/search/' });",
     '---',
-    '<html lang="en"><head><meta charset="utf-8"><title>{entry.data.title}</title></head><body><main><Body post={entry} page={page}><Content /></Body></main></body></html>',
+    '<html lang="en"><head><meta charset="utf-8"><title>{entry.data.title}</title></head><body><main><PageBody><Body post={entry} page={page}><Content /></Body></PageBody></main></body></html>',
+    '',
+  ].join('\n'));
+  write('src/pages/articles/[...article].astro', [
+    '---',
+    "import { getEntries, render } from 'astro:content';",
+    `import Body from '${CORE}/astro/Body.astro';`,
+    `import { breadcrumbs } from '${CORE}/astro/breadcrumbs';`,
+    `import { metaLine } from '${CORE}/astro/helpers';`,
+    `import { relatedPosts } from '${CORE}/astro/post-lists';`,
+    "import ArticleOpening from '@kntnt/konzilo-design/page-parts/ArticleOpening.astro';",
+    "import ArticleBody from '@kntnt/konzilo-design/page-parts/ArticleBody.astro';",
+    "import ReadMore from '@kntnt/konzilo-design/page-parts/ReadMore.astro';",
+    "import { designPage } from '@kntnt/konzilo-design/design-props';",
+    "import { getCollection } from 'astro:content';",
+    "import design from '../../../design/site.design.json';",
+    "import '@kntnt/konzilo-design/components.css';",
+    '',
+    "export async function getStaticPaths() { return (await getCollection('articles')).map((entry) => ({ params: { article: entry.id }, props: { entry } })); }",
+    'const { entry } = Astro.props;',
+    'const { Content } = await render(entry);',
+    "designPage(Astro, { design, title: entry.data.headline, breadcrumbs: await breadcrumbs(entry, Astro.url) });",
+    "const topics = (await getEntries(entry.data.topics)).map((topic) => ({ name: topic.data.name, url: `/topic/${topic.id}/` }));",
+    '---',
+    "<html lang=\"en\"><head><meta charset=\"utf-8\"><title>{entry.data.headline}</title></head><body><main><ArticleOpening entry={entry} metaLine={await metaLine(entry, Astro.url)} topics={topics} /><ArticleBody><Body post={entry}><Content /></Body></ArticleBody><ReadMore posts={await relatedPosts(entry)} more={{ label: 'More articles', href: '/articles/' }} surface=\"raised\" /></main></body></html>",
+    '',
+  ].join('\n'));
+  write('src/components/SearchPage.astro', [
+    '---',
+    `import Search from '${CORE}/astro/Search.astro';`,
+    `import { breadcrumbs } from '${CORE}/astro/breadcrumbs';`,
+    "import TitleBand from '@kntnt/konzilo-design/page-parts/TitleBand.astro';",
+    "import PageBody from '@kntnt/konzilo-design/page-parts/PageBody.astro';",
+    "import ReadingArea from '@kntnt/konzilo-design/components/ReadingArea.astro';",
+    "import { designPage } from '@kntnt/konzilo-design/design-props';",
+    "import design from '../../design/site.design.json';",
+    "import '@kntnt/konzilo-design/components.css';",
+    '',
+    "designPage(Astro, { design, title: 'Search', breadcrumbs: await breadcrumbs(null, Astro.url, { title: 'Search' }) });",
+    '---',
+    '<html lang="en"><head><meta charset="utf-8"><title>Search</title></head><body><main><TitleBand /><PageBody title={false}><ReadingArea side="end"><Search /></ReadingArea></PageBody></main></body></html>',
+    '',
+  ].join('\n'));
+  write('src/pages/404.astro', [
+    '---',
+    "import { render } from 'astro:content';",
+    `import Body from '${CORE}/astro/Body.astro';`,
+    `import { notFoundPage } from '${CORE}/astro/site-settings';`,
+    "import PageBody from '@kntnt/konzilo-design/page-parts/PageBody.astro';",
+    "import { designPage } from '@kntnt/konzilo-design/design-props';",
+    "import design from '../../design/site.design.json';",
+    "import '@kntnt/konzilo-design/components.css';",
+    '',
+    'const page = await notFoundPage(Astro.url);',
+    'const { Content } = await render(page);',
+    'designPage(Astro, { design, title: page.data.title });',
+    '---',
+    '<html lang="en"><head><meta charset="utf-8"><title>{page.data.title}</title></head><body><main><PageBody><Body post={page}><Content /></Body></PageBody></main></body></html>',
     '',
   ].join('\n'));
   write('src/components/TermPage.astro', [
     '---',
     `import { termPages } from '${CORE}/astro/post-lists';`,
+    `import { breadcrumbs } from '${CORE}/astro/breadcrumbs';`,
     "import Filtered from '@kntnt/konzilo-design/presentations/Filtered.astro';",
+    "import TermOpening from '@kntnt/konzilo-design/page-parts/TermOpening.astro';",
+    "import PageBody from '@kntnt/konzilo-design/page-parts/PageBody.astro';",
     "import { designPage } from '@kntnt/konzilo-design/design-props';",
     "import design from '../../design/site.design.json';",
     "import '@kntnt/konzilo-design/components.css';",
     '',
     'export async function getStaticPaths({ routePattern }) { return termPages(routePattern); }',
     'const { term, posts, pager, empty } = Astro.props;',
-    "designPage(Astro, { design, title: term.data.name, search: '/search/', types: { articles: { name: 'article', plural: 'Articles' } } });",
+    "const taxonomy = { categories: 'category', topics: 'topics' }[term.collection];",
+    "designPage(Astro, { design, title: term.data.name, breadcrumbs: await breadcrumbs(term, Astro.url), search: '/search/', types: { articles: { name: 'article', label: 'Article', plural: 'Articles' } } });",
     '---',
-    "<html lang=\"en\"><head><meta charset=\"utf-8\"><title>{term.data.name}</title></head><body><main><section class=\"kn-band kn-section\"><div class=\"kn-band-content\"><div class=\"kn-section-body kn-body-text\"><Filtered posts={posts} pager={pager} empty={empty} options={{ filters: 'category topics search' }} settled={{ taxonomy: 'category', term: term.id }} /></div></div></section></main></body></html>",
+    "<html lang=\"en\"><head><meta charset=\"utf-8\"><title>{term.data.name}</title></head><body><main><TermOpening term={term} surface=\"tint\" /><PageBody title={false}><Filtered posts={posts} pager={pager} empty={empty} options={{ filters: 'category topics search' }} settled={{ taxonomy, term: term.id }} /></PageBody></main></body></html>",
     '',
   ].join('\n'));
   mkdirSync(join(site, 'content/media'), { recursive: true });
   copyFileSync(join(core, 'site-template/demo-content/media/every-element-898a545757.webp'), join(site, 'content/media', PICTURE));
   write('content/pages/garden.md', page('Planning a garden', GARDEN));
+  write('content/pages/legal.md', page('What we keep about you', LEGAL));
+  write('content/not-found.md', '---\ntitle: "This page is not here"\n---\n\nTry the [start page](/pages/garden/).\n');
+  // The core's own demo settings, which hold every group the core asks for, with the articles' meta line in a format of the
+  // owner's sentence and the pictures they name.
+  const settings = JSON.parse(readFileSync(join(core, 'site-template/demo-content/settings.json'), 'utf8'));
+  settings.metaLine.types.article.format = 'By {authors} • Published {date} in {category}';
+  // Less what this site has none of: a canvas, a setting of the demo's own, and feeds.
+  for (const group of Object.values(settings)) if (group?.types) delete group.types.canvas;
+  delete settings.footerText;
+  delete settings.feeds;
+  write('content/settings.json', JSON.stringify(settings));
+  for (const media of [settings.logo?.src, settings.icon?.src].filter(Boolean)) copyFileSync(join(core, 'site-template/demo-content', media), join(site, 'content', media));
   write('content/pages/garden/questions.md', page('Questions on a garden', QUESTIONS));
   write('content/pages/garden/tools.md', page('Tools for a garden', md`::::hero
 
@@ -309,7 +414,7 @@ Words.
 
 ::::`));
   for (const [path, text] of [
-    article('soil', { headline: 'Know your soil', category: 'guides', topics: ['soil'], day: '05' }),
+    article('soil', { headline: 'Know your soil', category: 'guides', topics: ['soil'], day: '05', body: SOIL }),
     article('tools', { headline: 'The right tools', category: 'guides', topics: ['tools', 'soil'], day: '04' }),
     article('water', { headline: 'Water early', category: 'news', topics: ['water'], day: '03' }),
     article('seeds', { headline: 'Seeds that last', category: 'news', topics: ['soil'], day: '02' }),
@@ -340,7 +445,7 @@ function build(out, environment = {}) {
 }
 const main = (html) => /<main>([\s\S]*)<\/main>/.exec(html)[1];
 
-test('a site built by the core draws every directive with the package\'s components, a section\'s post lists and form in its body', { skip: why ?? false, timeout: 600000 }, async () => {
+test('a site built by the core draws every directive with the package\'s components, a section\'s post lists and form in its body, and every template its page parts', { skip: why ?? false, timeout: 600000 }, async () => {
   const built = await build('dist');
   assert.equal(built.status, 0, built.output);
   assert.doesNotMatch(built.output, /@kntnt\/konzilo-design:/, 'no part warns');
@@ -374,8 +479,22 @@ test('a site built by the core draws every directive with the package\'s compone
   for (const part of ['<aside class="kn-fact-box" id="in-short" data-kn-surface="tint">', '<div class="kn-accordion" data-kn-accordion-mode="single" data-kn-questions>', '<div class="kn-choice" role="group" aria-labelledby="choice-1">', '<nav class="kn-toc" aria-labelledby="toc-1"', '<ol class="kn-timeline" data-kn-numbering="decimal" data-kn-punctuation="period">', '<div class="kn-logos"><p class="kn-logos-label" id="logos-1" data-kn-type="label">Trusted by</p>']) {
     assert.ok(questions.includes(part), part);
   }
+  // The page parts, each in a template of its kind (konzilo.md, The templates). A page with no hero: its title band, then
+  // its loose blocks as a section, the heading beside its paragraphs.
+  assert.match(main(built.page('pages/legal')), /^<section class="kn-band kn-section"><div class="kn-band-content"><header class="kn-section-head"><hgroup class="kn-heading-group"><h1 class="kn-heading-group-heading" data-kn-type="heading-1">What we keep about you<\/h1><\/hgroup><\/header><\/div><\/section>\s*<section class="kn-band kn-section"><div class="kn-band-content"><header class="kn-section-head"><hgroup class="kn-heading-group"><h2 class="kn-heading-group-heading" id="what-we-keep" data-kn-type="heading-2">What we keep<\/h2><\/hgroup><\/header><div class="kn-section-body kn-body-text"><p>What you write in a form/);
+  // An article: its opening with the core's meta line, its body with its following menu and question, and Read more.
+  const soil = main(built.page('articles/soil'));
+  assert.match(soil, /^<section class="kn-band kn-hero kn-article-opening" data-kn-surface="picture-dark"[^>]*><div class="kn-band-content kn-hero-content"><div class="kn-hero-text"><hgroup class="kn-heading-group"><p class="kn-heading-group-eyebrow" data-kn-type="label">Guides<\/p><h1 class="kn-heading-group-heading" data-kn-type="heading-1">Know your soil<\/h1><p class="kn-heading-group-deck" data-kn-type="lead">All about soil\.<\/p><\/hgroup><p class="kn-article-meta" data-kn-type="small"><span class="kn-article-line">By <span class="kn-article-byline">A\. Writer<\/span> • Published <time class="kn-article-date" datetime="2026-10-05T08:00:00\.000Z">5 October 2026<\/time> in <a class="kn-article-category" href="\/category\/guides\/">Guides<\/a><\/span><span class="kn-article-topics"><a class="kn-pill" href="\/topic\/soil\/">Soil<\/a><\/span><\/p>/);
+  assert.match(soil, /<ol role="list"><li><a href="#what-lies-below">What lies below<\/a><\/li><li><a href="#in-short">In short<\/a><\/li><li><a href="#planting">Planting<\/a><\/li><\/ol>/);
+  assert.match(soil, /<p class="kn-question"><strong>What did you find\?<\/strong><\/p>/);
+  assert.match(soil, /<section class="kn-band kn-section" data-kn-surface="raised">.*<h2 class="kn-heading-group-heading" data-kn-type="heading-2">Read more<\/h2>.*<article class="kn-card" data-kn-surface="page">.*href="\/articles\/tools\/".*<a class="kn-action" href="\/articles\/" data-kn-main>More articles<\/a>/s);
+  // The search page: its title band, then the core's search in a Reading Area in a section.
+  assert.match(main(built.page('search')), /^<section class="kn-band kn-section"><div class="kn-band-content"><header class="kn-section-head"><nav class="kn-breadcrumbs".*<h1 class="kn-heading-group-heading" data-kn-type="heading-1">Search<\/h1>.*<section class="kn-band kn-section"><div class="kn-band-content"><div class="kn-section-body kn-body-text"><div class="kn-reading-area" data-kn-side="end" data-kn-stack="before"><div class="kn-reading-area-flow"><div class="konzilo-search"/s);
+  // The 404 page: the chosen page's title as its H1 and its body as a section.
+  assert.match(main(readFileSync(join(site, 'dist/404.html'), 'utf8')), /<h1 class="kn-heading-group-heading" data-kn-type="heading-1">This page is not here<\/h1>.*<div class="kn-section-body kn-body-text"><p>Try the <a href="\/pages\/garden\/">start page<\/a>\.<\/p>/s);
   // A term's page calls the presentation itself, the row it settles left out and kept with a search.
   const term = main(built.page('category/guides'));
+  assert.match(term, /^<section class="kn-band kn-section" data-kn-surface="tint"><div class="kn-band-content"><header class="kn-section-head"><nav class="kn-breadcrumbs".*<p class="kn-heading-group-eyebrow" data-kn-type="label">Category<\/p><h1 class="kn-heading-group-heading" data-kn-type="heading-1">Guides<\/h1><p class="kn-heading-group-deck" data-kn-type="lead">On guides\.<\/p>/s);
   assert.match(term, /<div class="kn-section-body kn-body-text"><div class="kn-post-list" data-kn-presentation="filtered"><form class="kn-visitor-filters" role="search" method="get" action="\/search\/"><input type="hidden" name="type" value="article"><input type="hidden" name="category" value="guides"><div class="kn-visitor-filter-panel"><fieldset class="kn-visitor-filter-group"><legend>Topic<\/legend>/);
 });
 
