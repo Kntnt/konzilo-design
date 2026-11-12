@@ -199,13 +199,14 @@ export const TYPEFACES = [
   {lines},
 ];
 
-const familyOf = (stack) => stack.split(',')[0].trim().replace(/^["']|["']$/g, '');
-// The shipped typeface a stack names, if any.
-export const faceOf = (stack) => TYPEFACES.find(({{ family }}) => family === familyOf(stack || ''));
+// A stack's first family, without quotes and in lower case, since CSS matches a family's name in any case.
+export const familyOf = (stack) => stack.split(',')[0].trim().replace(/^["']|["']$/g, '').toLowerCase();
+// The shipped typeface a stack names, if any, in any case.
+export const faceOf = (stack) => TYPEFACES.find(({{ family }}) => family.toLowerCase() === familyOf(stack || ''));
 // The shipped typefaces a design's resolved stacks name.
 export const shippedIn = (stacks) => {{
   const names = new Set(Object.values(stacks).map(familyOf));
-  return TYPEFACES.filter(({{ family }}) => names.has(family));
+  return TYPEFACES.filter(({{ family }}) => names.has(family.toLowerCase()));
 }};
 """)
     def rules(subset_of, base):

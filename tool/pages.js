@@ -1,6 +1,6 @@
 // The document: the presentation's pages, with their controls in place. Every control is written
 // once and stays in the page, so changing a value never rebuilds what is being dragged.
-import { SYSTEM_SANS, SYSTEM_MONOSPACE } from '/src/generator/defaults.js';
+import { SYSTEM_SANS, SYSTEM_MONOSPACE, SYSTEM_SERIF } from '/src/generator/defaults.js';
 import { TYPEFACES, CATEGORIES } from '/src/fonts/catalog.js';
 import { scales, LINE, COMMON_WIDTHS, lineShare, menuText, ownText } from './logic.js';
 import { menu as sampleMenu, footer as sampleFooter } from '/presentation/src/samples.js';
@@ -263,7 +263,7 @@ function faceChoices(role) {
   }).join('');
   const system = role === 'monospace'
     ? option(SYSTEM_MONOSPACE, 'System monospace')
-    : option(SYSTEM_SANS, 'System sans-serif') + option('Georgia, serif', 'System serif');
+    : option(SYSTEM_SANS, 'System sans-serif') + option(SYSTEM_SERIF, 'System serif');
   return `${FOLLOWS[role].map(([value, name]) => option(value, name)).join('')}${groups}<optgroup label="On this computer">${system}${option('other', 'Other…')}</optgroup>`;
 }
 function faceRow(role, name, help) {

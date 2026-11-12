@@ -1,5 +1,7 @@
 export const SYSTEM_SANS = 'system-ui, sans-serif';
 export const SYSTEM_MONOSPACE = 'ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace';
+// The serif the tool offers among a computer's own typefaces.
+export const SYSTEM_SERIF = 'Georgia, serif';
 
 const defaults = {
   'brand-colors': { primary: '#168b83' },

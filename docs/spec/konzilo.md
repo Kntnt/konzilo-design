@@ -108,7 +108,7 @@ What the Header writes for the browser (the assistant's choices, 2026-11-10):
 
 ## Fonts and the tarball
 
-`konzilo-design fonts <file> [-o <folder>]` copies the typefaces the design uses, upright and italic, into the folder, `fonts` beside the design file by default. Beside them go their licences, which must travel with them, and `fonts.css` with their `@font-face` rules in relative addresses. It removes a font of the library's that the design no longer uses, and nothing else. It runs from this repository, where the fonts are.
+`konzilo-design fonts <file> [-o <folder>]` copies the typefaces the design uses, upright and italic, into the folder, `fonts` beside the design file by default. Beside them go their licences, which must travel with them, and `fonts.css` with their `@font-face` rules in relative addresses. A typeface is found by its name in any case, as CSS finds a family. It removes a font of the library's that the design no longer uses, and nothing else, unless the design names a family the library does not ship and a computer does not have of itself, other than CSS's generic families and the tool's system typefaces: that may be a typeface's name misread, so it says so, with the library's typeface it may have meant, and removes nothing. It runs from this repository, where the fonts are.
 
 `package.json` `files` makes `npm pack` hold what a site needs: the generator and schema, the CSS, the components, `konzilo`, the command and the font catalogue. It leaves out the fonts, the tool, the presentation, the gallery and the tests, so `tool`, `presentation`, `design-md` and `fonts` say plainly there that they run from the repository. `private: true` stays, and does not stop `npm pack`. `exports` holds only what the tarball holds.
 

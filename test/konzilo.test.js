@@ -12,7 +12,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { parse, walk } from 'css-tree';
 import { DESIGN_FORMAT, checkFormat, defaultInputs, derive, resolve, validateDesignFile, withFormat } from '../src/generator/index.js';
 import { coreCss, emitCss } from '../src/css/index.js';
-import { shippedIn } from '../src/fonts/catalog.js';
+import { faceOf, shippedIn } from '../src/fonts/catalog.js';
 import { fromDesign } from '../src/konzilo/index.js';
 import { copyFonts } from '../src/konzilo/fonts.js';
 import { writeLogos } from '../src/konzilo/logos.js';
@@ -229,6 +229,39 @@ test('the fonts folder follows the design: a typeface no longer used goes, and w
   await writeFile(path, JSON.stringify({ format: DESIGN_FORMAT, inputs: plain, project: {}, resolved: await resolve(plain) }));
   assert.match(execFileSync(process.execPath, [cli, 'fonts', path, '-o', folder], { encoding: 'utf8' }), /no typeface of the library/);
   assert.deepEqual(await readdir(folder), ['own-face.woff2']);
+});
+
+test('the fonts command takes a typeface named in any case, and for a family the library does not ship says so and removes nothing', async () => {
+  const root = await site(typefaces({ main: 'mona sans', monospace: 'RED HAT MONO' }));
+  const path = join(root, 'design/site.design.json');
+  const folder = join(root, 'design/fonts');
+  const copied = await copyFonts(path, folder);
+  assert.deepEqual([copied.families, copied.unshipped], [['Mona Sans', 'Red Hat Mono'], []]);
+  const names = ['LICENSE-mona-sans.txt', 'LICENSE-red-hat-mono.txt', 'MonaSans-Italic-VF.woff2', 'MonaSans-VF.woff2', 'RedHatMono-Italic-VF.woff2', 'RedHatMono-VF.woff2', 'fonts.css'];
+  assert.deepEqual((await readdir(folder)).sort(), names);
+  assert.ok(await fromDesign('./design/site.design.json', { root }), 'CSS matches a family in any case, so the site has its fonts');
+
+  const rewrite = async (over) => {
+    const inputs = typefaces(over);
+    await writeFile(path, JSON.stringify({ format: DESIGN_FORMAT, inputs, project: {}, resolved: await resolve(inputs) }));
+    return spawnSync(process.execPath, [cli, 'fonts', path, '-o', folder], { encoding: 'utf8' });
+  };
+  const misread = await rewrite({ main: 'MonaSans' });
+  assert.equal(misread.status, 0);
+  assert.equal(misread.stdout, 'This design uses no typeface of the library, so there is nothing to copy.\n');
+  assert.equal(misread.stderr, `MonaSans is not a typeface the library ships, so no font file is copied for it. If it is Mona Sans, correct its name in the design, resolve the design and run fonts again.\nSince that may be a typeface's name misread, no font already in ${folder} was removed.\n`);
+  assert.deepEqual((await readdir(folder)).sort(), names, 'nothing went');
+
+  const own = await rewrite({ main: 'Helvetica Neue, Arial, sans-serif', heading: 'Lora' });
+  assert.match(own.stdout, /^Lora: 2 font files/);
+  assert.match(own.stderr, /^Helvetica Neue is not a typeface the library ships, so no font file is copied for it, and a visitor sees it only where it is installed\.\n/);
+  assert.deepEqual((await readdir(folder)).sort(), ['LICENSE-lora.txt', ...names.slice(0, -1), 'Lora-Italic-VF.woff2', 'Lora-VF.woff2', 'fonts.css'].sort());
+  assert.deepEqual([...(await readFile(join(folder, 'fonts.css'), 'utf8')).matchAll(/font-family: "([^"]+)"/g)].map((match) => match[1]), ['Lora', 'Lora'], 'the stylesheet holds what the design uses');
+
+  // A computer's own families are no typeface misread: what the design no longer uses goes.
+  const system = await rewrite({ main: 'Georgia, serif', monospace: 'ui-monospace, monospace' });
+  assert.equal(system.stderr, '');
+  assert.deepEqual(await readdir(folder), []);
 });
 
 test('the fonts command refuses a stale design, a missing format, and a stylesheet it did not write', async () => {
@@ -624,4 +657,7 @@ test('the tarball holds what a site needs, and no fonts, tool or presentation, a
 test('the typefaces a design uses are read from its resolved stacks, so fromDesign needs no font in the package', () => {
   const faces = shippedIn(derive(typefaces({ main: 'Mona Sans', monospace: 'Red Hat Mono' })).typefaces);
   assert.deepEqual(faces.map(({ family }) => family), ['Mona Sans', 'Red Hat Mono']);
+  assert.deepEqual(shippedIn(derive(typefaces({ main: 'mona sans', monospace: '"RED HAT MONO"' })).typefaces).map(({ family }) => family), ['Mona Sans', 'Red Hat Mono'], 'in any case, as CSS matches a family');
+  assert.equal(faceOf('MONA SANS, system-ui, sans-serif').family, 'Mona Sans');
+  assert.equal(faceOf('MonaSans, system-ui, sans-serif'), undefined);
 });

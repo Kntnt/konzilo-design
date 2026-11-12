@@ -65,8 +65,12 @@ try {
   } else if (command === 'fonts') {
     if (!path || !(args.length === 0 || (args.length === 2 && args[0] === '-o'))) throw new Error(usage);
     const { copyFonts } = await import('../src/konzilo/fonts.js');
-    const { folder, families, files } = await copyFonts(path, args[1] ?? join(dirname(path), 'fonts'));
+    const { folder, families, files, unshipped } = await copyFonts(path, args[1] ?? join(dirname(path), 'fonts'));
     process.stdout.write(families.length ? `${families.join(', ')}: ${files.length} font files in ${folder}.\n` : 'This design uses no typeface of the library, so there is nothing to copy.\n');
+    for (const { name, meant } of unshipped) {
+      process.stderr.write(`${name} is not a typeface the library ships, so no font file is copied for it${meant ? `. If it is ${meant}, correct its name in the design, resolve the design and run fonts again` : ', and a visitor sees it only where it is installed'}.\n`);
+    }
+    if (unshipped.length) process.stderr.write(`Since that may be a typeface's name misread, no font already in ${folder} was removed.\n`);
   } else if (command === 'logos') {
     if (!path || !(args.length === 0 || (args.length === 2 && args[0] === '-o'))) throw new Error(usage);
     const { writeLogos, DEFAULT_FOLDER } = await import('../src/konzilo/logos.js');
