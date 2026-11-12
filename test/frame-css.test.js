@@ -125,6 +125,49 @@ test('a header that slides away does so on the way down and comes back on the wa
   }
 });
 
+test('nothing of a header that has slid away shows, its shadow included, and it comes back with its shadow, on a wide window and a phone, in every engine', { timeout: 240000 }, async () => {
+  // A fault of 0.5.0, found on a site whose header slides away and casts a shadow: the header moved out of the window by
+  // its own height, but its shadow reaches below it, and a grey band a few pixels deep stayed at the window's top.
+  const inputs = defaultInputs();
+  inputs.shadow.strength = 60;
+  const css = coreCss(derive(inputs)) + await componentsCss();
+  const bands = [];
+  for (let i = 0; i < 10; i++) bands.push(await render('Band', { id: `b${i}` }, { default: `<h2>Band ${i}</h2><p>Some words in band ${i}.</p>` }));
+  const files = {};
+  for (const [file, start] of [['below', 'below'], ['under', 'under']]) for (const mode of ['light', 'dark']) {
+    const body = await render('Page', { shadow: true }, { header: await render('Header', { ...header, attachment: 'sticky', start, autohide: true }), default: bands.join(''), footer: await render('Footer', footer) });
+    files[`/${file}-${mode}.html`] = `<!doctype html><html lang="en" data-kn-mode="${mode}"><head><meta charset="utf-8"><title>Away</title><style>${css}</style></head><body>${body}</body></html>`;
+  }
+  // The window's top rows over the side margin, where the page has nothing but its own colour: the most any pixel there
+  // differs from the page's colour further down the same margin.
+  const fringe = async (tab) => {
+    const { width, pixels, channels } = decodePng(await tab.screenshot({ clip: { x: 0, y: 0, width: 12, height: 300 } }));
+    const ground = [...pixels.subarray(299 * width * channels, 299 * width * channels + 3)];
+    let most = 0;
+    for (let i = 0; i < 24 * width * channels; i += channels) for (let c = 0; c < 3; c++) most = Math.max(most, Math.abs(pixels[i + c] - ground[c]));
+    return most;
+  };
+  for (const [name, type] of ENGINES) for (const width of [1280, 390]) {
+    const { browser, tab } = await open(type, files);
+    try {
+      await tab.setViewportSize({ width, height: 700 });
+      const scroll = async (by) => { await tab.mouse.move(width / 2, 400); await tab.mouse.wheel(0, by); await tab.waitForTimeout(700); };
+      for (const file of ['below', 'under']) for (const mode of ['light', 'dark']) {
+        const what = `${name} at ${width}px, ${file}, ${mode}`;
+        await tab.goto(`${ORIGIN}/${file}-${mode}.html`);
+        await tab.waitForTimeout(300);
+        await scroll(900);
+        assert.ok((await look(tab)).top < 0, `${what}: away`);
+        assert.ok(await fringe(tab) <= 2, `${what}: nothing of it shows at the window's top, ${await fringe(tab)}`);
+        await scroll(-40);
+        const back = await tab.evaluate(() => getComputedStyle(document.querySelector('.kn-header-bar')).boxShadow);
+        assert.equal((await look(tab)).top, 0, `${what}: back`);
+        assert.notEqual(back, 'none', `${what}: back with its shadow`);
+      }
+    } finally { await browser.close(); }
+  }
+});
+
 test('the panels open, close and give focus back by pointer and keyboard, under the bar, with script and without, in every engine', { timeout: 240000 }, async () => {
   const files = await pages();
   for (const [name, type] of ENGINES) {

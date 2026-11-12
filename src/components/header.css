@@ -147,12 +147,16 @@
      Scrolled down past its own height, it slides up out of the window, unless a panel is open or the keyboard is in
      it. Under the page's start it stays clear on its way down and while away, and comes back opaque, the change made
      while it is out of sight. The root scroller answers which way it was last scrolled: a scroll-state query, or
-     where a browser lacks one, data-kn-scrolled from the polyfill, read by the parallel rules. */
+     where a browser lacks one, data-kn-scrolled from the polyfill, read by the parallel rules. Nothing of a header
+     that has slid away shows: it moves up by its own height, which its shadow reaches below, so its shadow fades as it
+     slides, and is gone once it is away (a fault of 0.5.0). On the way back it has its shadow at once, as it had. */
   :root:has(.kn-page > .kn-header[data-kn-autohide="true"]) { container: kn-scroller / scroll-state; }
+  .kn-header[data-kn-autohide="true"] { --kn-header-away-transition: background-color var(--kn-duration-feedback) var(--kn-easing-standard), color var(--kn-duration-feedback) var(--kn-easing-standard), box-shadow var(--kn-duration-movement) var(--kn-easing-standard); }
   @container kn-scroller scroll-state(scrolled: block-end) {
     .kn-page:has(> .kn-header[data-kn-start="under"][data-kn-autohide="true"]):not(:has(> .kn-header :is(:modal, :popover-open, :focus-visible))) { --kn-header-clear: 1; }
     @container style(--kn-header-beyond: 1) {
       .kn-header[data-kn-autohide="true"]:not(:has(:modal, :popover-open, :focus-visible)) { translate: 0 -100%; }
+      .kn-header[data-kn-autohide="true"]:not(:has(:modal, :popover-open, :focus-visible)) > .kn-header-bar { box-shadow: none; transition: var(--kn-header-away-transition); }
       .kn-page:has(> .kn-header[data-kn-autohide="true"]):not(:has(> .kn-header :is(:modal, :popover-open, :focus-visible))) > .kn-page-main { --kn-header-visible-height: 0rem; }
     }
   }
@@ -164,6 +168,7 @@
   :root[data-kn-scrolled="block-end"] .kn-page:has(> .kn-header[data-kn-start="under"][data-kn-autohide="true"]):not(:has(> .kn-header :is(:modal, :popover-open, :focus-visible))) { --kn-header-clear: 1; }
   @container style(--kn-header-beyond: 1) {
     :root[data-kn-scrolled="block-end"] .kn-header[data-kn-autohide="true"]:not(:has(:modal, :popover-open, :focus-visible)) { translate: 0 -100%; }
+    :root[data-kn-scrolled="block-end"] .kn-header[data-kn-autohide="true"]:not(:has(:modal, :popover-open, :focus-visible)) > .kn-header-bar { box-shadow: none; transition: var(--kn-header-away-transition); }
     :root[data-kn-scrolled="block-end"] .kn-page:has(> .kn-header[data-kn-autohide="true"]):not(:has(> .kn-header :is(:modal, :popover-open, :focus-visible))) > .kn-page-main { --kn-header-visible-height: 0rem; }
     :root[data-kn-scrolled="block-start"] .kn-header[data-kn-autohide="true"] > .kn-header-bar { transition-duration: 0s; }
   }
