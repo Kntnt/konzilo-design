@@ -647,8 +647,16 @@ DESCRIPTIONS.set('Pagination', 'Moves through a long list, page by page.');
 DESCRIPTIONS.set('Link', 'A link in running text, with a look of its own for the pointer over it and the keyboard on it.');
 DESCRIPTIONS.set('Field', 'One field of a form, with its label, help and error, in each state it has a look for.');
 const sectionList = (page) => `<dl class="component-list">${CATALOGUE[page].map((section) => `<div><dt class="ui">${escapeHtml(sectionName(section))}</dt><dd>${section.components.map((name) => escapeHtml(DESCRIPTIONS.get(name) ?? '')).join(' ')}</dd></div>`).join('')}</dl>`;
+// What a component page sets in the design, besides its variants, and the note that says so: on Text, where the tabs'
+// line stands, which every tabs of the site follows (the owner, 2026-11-12).
+const COMPONENT_SETTINGS = {
+  text: [' Where the line across the tabs stands is the design\'s own, the same for every tabs, and is set below.', () => setting('Tabs', `<div class="fields">
+      ${choice('The line across the tabs', 'inputs.tabs.rule-place', [['below', 'Under the tabs'], ['above', 'Above the tabs']], 'Under the tabs, the line runs over the open panel, and the open tab is marked just above it. Above the tabs, it runs over them, the open tab is marked on it, and a tab reads like a value under it: a line, a label, the content. Every tabs on the site follows it.')}
+    </div>`)],
+};
 const componentPage = (id) => (copy) => `${head(id, copy, id === 'buttons' ? { text: copy['buttons.tool-lead'] } : {})}
-    <p class="component-note ui">The preview shows the real components, each with its variants side by side and named. A site chooses among the variants each time it uses a component, so none of them is set here.</p>
+    <p class="component-note ui">The preview shows the real components, each with its variants side by side and named. A site chooses among the variants each time it uses a component, so none of them is set here.${COMPONENT_SETTINGS[id]?.[0] ?? ''}</p>
+    ${COMPONENT_SETTINGS[id]?.[1]() ?? ''}
     ${setting('On this page', sectionList(id))}
     ${next(id, copy)}`;
 

@@ -144,7 +144,8 @@ test('DESIGN.md gives the motion and every component\'s look in one place, and t
     const { resolved: r, front, body } = exported(inputs);
     assert.ok(body.includes(`take ${r.duration.feedback}ms`) && body.includes(`take ${r.duration.movement}ms`) && body.includes(`\`${r.easing.standard}\``));
     for (const [, items] of COMPONENT_GROUPS)
-      for (const [name, job, recipe] of items) {
+      for (const [name, job, given] of items) {
+        const recipe = typeof given === 'function' ? given(r) : given;
         assert.ok(body.includes(`\n- **${name}:** ${job}`), `${name} is listed with its job`);
         assert.ok(recipe ? body.includes(`- **${name}:** ${job} ${recipe}\n`) : new RegExp(`- \\*\\*${name}:\\*\\* [^\n]*Its recipe is under [^\n]+ above\\.\n`).test(body), `${name} has its look, or says where it is`);
       }
@@ -318,4 +319,10 @@ test('DESIGN.md draws the directives\' components by recipe: sections, series, q
   assert.doesNotMatch(body, /none of these: [^\n]*\b(tabs|timeline)\b/, 'tabs and a timeline are components now');
   assert.match(body, /^- `brand-instagram`: /m);
   assert.match(body, /^- `brand-x`: /m);
+  // Where the line across the tabs stands is the design's (the owner, 2026-11-12), and the recipe gives that one alone.
+  assert.match(body, /over a 1 px `border` hairline at the top of the open panel/);
+  assert.doesNotMatch(body, /hairline runs across the whole width between the label and the tabs/);
+  const above = exported({ ...DESIGNS[0], tabs: { 'rule-place': 'above' } }).body;
+  assert.match(above, /A 1 px `border` hairline runs across the whole width between the label and the tabs[^\n]*bar at its head whose middle lies on the hairline's[^\n]*The open panel follows the tabs half the component gap below, with no line of its own\./);
+  assert.doesNotMatch(above, /hairline at the top of the open panel/);
 });

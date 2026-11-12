@@ -19,6 +19,7 @@ export const CATALOGUE = {
     { components: ['Quotation'], specimens: [['quotation']] },
     { components: ['Callout'], specimens: [['callout-more']] },
     { components: ['Table'], specimens: [['table', 'Plain rows · On the page colour'], ['table-more', 'Alternating rows · On the brand colour']] },
+    { components: ['Tabs'], specimens: [['tabs']] },
   ],
   buttons: [
     { components: ['Button and Link Group'], specimens: [['buttons'], ['button-default']] },

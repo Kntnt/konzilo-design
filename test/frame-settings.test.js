@@ -5,6 +5,7 @@ import { withDefaults } from '../src/generator/defaults.js';
 import { footerFromDesign, layoutFooter } from '../src/components/footer.js';
 import { breadcrumbProps, footerContent, footerProps, headerProps, heroProps, identityProps, pageProps } from '../presentation/src/frame.js';
 import { designMd } from '../src/design-md/index.js';
+import { coreCss } from '../src/css/index.js';
 
 const inputs = (more = {}) => ({ 'brand-colors': { primary: '#168b83' }, ...more });
 const settings = (more = {}) => withDefaults(inputs(more));
@@ -175,6 +176,22 @@ test('a design says how its breadcrumbs show', () => {
   assert.match(words({ narrow: 'fit' }), /On a phone \(a window of 40rem or less\) it keeps to one line and to its end[^\n]*an ellipsis \(…\) at the start edge[^\n]*with no script[^\n]*keyboard focus, the whole trail shows/);
   assert.match(words({}), /On a phone the whole trail wraps\./);
   assert.match(words({ show: false }), /Breadcrumb Navigation:\*\* none/);
+});
+
+// Where the line across the tabs stands (the owner, 2026-11-12): the design's, and written by the core, since a site
+// writes the tabs' HTML itself.
+test('a design says where the line across its tabs stands, and the core CSS carries it', () => {
+  assert.deepEqual(defaultInputs().tabs, { 'rule-place': 'below' });
+  assert.deepEqual(derive(inputs()).tabs, { 'rule-place': 'below' }, 'below unless told otherwise, as before');
+  const above = derive(inputs({ tabs: { 'rule-place': 'above' } }));
+  assert.deepEqual(above.tabs, { 'rule-place': 'above' });
+  assert.throws(() => validateInputs(inputs({ tabs: { 'rule-place': 'middle' } })), /unsupported value/);
+  assert.throws(() => validateInputs(inputs({ tabs: { rule: 'above' } })), /unknown property rule/);
+  assert.match(coreCss(above), /^  --kn-tabs-rule-place: above;$/m);
+  assert.match(coreCss(derive(inputs())), /^  --kn-tabs-rule-place: below;$/m);
+  // A file resolved before the choice existed has no tabs, and its tabs keep the line below.
+  const { tabs, ...before } = above;
+  assert.match(coreCss(before), /^  --kn-tabs-rule-place: below;$/m);
 });
 
 test('a design says how its hero opens a page', () => {

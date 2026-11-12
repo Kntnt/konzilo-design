@@ -1895,6 +1895,9 @@
       "type": "heading-1",
       "h1": "hero"
     },
+    "tabs": {
+      "rule-place": "below"
+    },
     "layout": {
       "wide": 1200,
       "side-margin": {

@@ -109,6 +109,25 @@ export const rows = [
   ['Implementation', 'Agreed milestones', '48'],
   ['Support', 'Monthly review', '8'],
 ];
+// Tabs over values, as a page puts a tab's text beside the facts it gives, so the line across the tabs meets the
+// values' own lines.
+export const plans = [
+  {
+    tab: 'A project',
+    text: 'We plan the work with you, carry it out and hand it over, with a fixed price agreed before we start.',
+    values: [['Start', 'Within two weeks'], ['Length', 'Six to ten weeks']],
+  },
+  {
+    tab: 'An agreement',
+    text: 'We take care of the work as it comes, month by month, and you pay for the time it takes.',
+    values: [['Start', 'The next month'], ['Notice', 'Three months']],
+  },
+  {
+    tab: 'A workshop',
+    text: 'One day together, to find what matters most, and a short plan to take it on.',
+    values: [['Length', 'One day'], ['Group', 'Up to twelve']],
+  },
+];
 export const questions = [
   {
     question: 'How do we begin?',

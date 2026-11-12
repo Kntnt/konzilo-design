@@ -75,6 +75,9 @@ export function coreCss(r) {
   }
   // One column, unless a media query below finds room for two (readingColumns).
   put('reading-columns', 1);
+  // Where the tabs' rule stands, which tabs.css reads by a style query: a site writes the tabs' HTML, so the design's
+  // choice reaches it here, and a file resolved before the choice existed has it below, as before.
+  put('tabs-rule-place', r.tabs?.['rule-place'] ?? 'below');
   for (const [name, value] of Object.entries(r.duration)) put(`duration-${name}`, `${value}ms`);
   put('easing-standard', r.easing.standard);
   // Literals, for a consumer that cannot read light-dark(): the primary seed exactly, and the page in light mode.

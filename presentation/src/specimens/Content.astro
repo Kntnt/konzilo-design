@@ -3,7 +3,7 @@ import Table from '../../../src/components/Table.astro';
 import Accordion from '../../../src/components/Accordion.astro';
 import Quotation from '../../../src/components/Quotation.astro';
 import Callout from '../../../src/components/Callout.astro';
-import { columns, rows, questions } from '../samples.js';
+import { columns, rows, questions, plans } from '../samples.js';
 const { id, catalogue } = Astro.props;
 // The design tool's catalogue names each variant it shows.
 const STATUSES = { info: 'Info', success: 'Success', warning: 'Warning', error: 'Error' };
@@ -78,5 +78,29 @@ const STYLES = { filled: 'Filled', outlined: 'Outlined' };
         ) : callout;
       }),
     )}
+  </div>
+)}
+{id === 'tabs' && (
+  <div class="sample-stack">
+    <div class="kn-body-text">
+      <div class="kn-tabs" role="group" aria-labelledby="specimen-tabs-label">
+        <div class="kn-tabs-label" id="specimen-tabs-label"><p data-kn-type="label">Ways to work with us</p></div>
+        {plans.map((plan, index) => (
+          <details class="kn-tabs-item" name="specimen-tabs" open={index === 0}>
+            <summary class="kn-tabs-tab">{plan.tab}</summary>
+            <div class="kn-tabs-panel">
+              <div class="kn-tabs-text"><p>{plan.text}</p></div>
+              <div class="kn-tabs-parts">
+                <dl class="kn-value-list">
+                  {plan.values.map(([label, value]) => (
+                    <div class="kn-value-list-item"><dt data-kn-type="small">{label}</dt><dd class="kn-value-list-value">{value}</dd></div>
+                  ))}
+                </dl>
+              </div>
+            </div>
+          </details>
+        ))}
+      </div>
+    </div>
   </div>
 )}

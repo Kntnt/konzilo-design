@@ -7,7 +7,7 @@ export const componentPages = [
   ['breadcrumbs', ['Breadcrumb Navigation'], ['breadcrumbs'], []],
   ['opening', ['Hero'], ['hero'], []],
   ['sections', ['Band', 'Text and Image', 'CTA Band', 'Key Figures'], ['band', 'text-image', 'cta-band'], ['text-image-start']],
-  ['text', ['Body Text', 'Heading Group', 'Reading Area', 'Table of Contents', 'Accordion', 'Quotation', 'Callout', 'Table'], ['body-text', 'reading-area', 'accordion', 'quotation', 'callout', 'table'], ['callout-more', 'accordion-more', 'table-more']],
+  ['text', ['Body Text', 'Heading Group', 'Reading Area', 'Table of Contents', 'Accordion', 'Quotation', 'Callout', 'Table', 'Tabs'], ['body-text', 'reading-area', 'accordion', 'quotation', 'callout', 'table', 'tabs'], ['callout-more', 'accordion-more', 'table-more']],
   ['buttons', ['Button and Link Group', 'Link', 'Icon'], ['button-default', 'icon'], ['buttons', 'links']],
   ['cards', ['Card', 'Content Card and Content Row', 'Card Grid'], ['card', 'card-person', 'content-card'], ['card-unplated', 'card-grid']],
   ['media', ['Figure', 'Video Player', 'Embed'], ['figure', 'embed'], []],

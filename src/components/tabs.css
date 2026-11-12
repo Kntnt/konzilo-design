@@ -58,6 +58,33 @@
     .kn-tabs-item::details-content { order: 1; flex-basis: 100%; min-inline-size: 0; }
     .kn-tabs-item:not([open])::details-content { display: none; }
   }
+  /* The rule above the tabs, where the design puts it there (`tabs.rule-place`, the owner, 2026-11-12): the rule across
+     the whole width stands over the row of tabs, the open tab's bar lies on it, and the panel follows the tabs with no
+     rule of its own. A tab is then drawn as a value under it is, a rule, a label and the content, and the rule still says
+     that all under it belongs to the tabs. Each tab hangs from the rule, its corners round at its foot and its fill under
+     the pointer starting at the rule, which it leaves whole. A tab reaches over the rule by half its bar and half the
+     hairline, so the bar's middle lies on the hairline's: the hairline's half is 0.03125rem, half a pixel at the default
+     text size, and at a larger one the bar's middle stays within half a pixel of the hairline's, which is not seen. A row
+     of tabs that wraps has the rule over its first line, as a rule below stands under the last. */
+  @container style(--kn-tabs-rule-place: above) {
+    @supports selector(::details-content) {
+      .kn-tabs { --kn-tabs-mark-over: calc(0.1875rem / 2 + 0.03125rem); align-items: start; }
+      .kn-tabs::before { content: ""; flex-basis: 100%; border-block-start: 1px solid var(--kn-border); }
+      .kn-tabs-label { order: -1; }
+      .kn-tabs-tab {
+        margin-block-start: calc(-1 * var(--kn-tabs-mark-over));
+        border-block-start: 0.1875rem solid transparent;
+        border-block-end: 0;
+        border-start-start-radius: 0;
+        border-start-end-radius: 0;
+        border-end-start-radius: var(--kn-radius-control);
+        border-end-end-radius: var(--kn-radius-control);
+      }
+      .kn-tabs-tab:hover { background: linear-gradient(var(--kn-background-alt), var(--kn-background-alt)) 0 var(--kn-tabs-mark-over) / 100% 100% no-repeat border-box; }
+      .kn-tabs-item[open] > .kn-tabs-tab { border-block-start-color: var(--kn-accent); background: none; }
+      .kn-tabs-panel { padding-block-start: calc(var(--kn-space-component-gap) / 2); border-block-start: 0; }
+    }
+  }
   /* As an accordion, where tabs cannot be laid out: each summary over its own panel. */
   @supports not selector(::details-content) {
     .kn-tabs-tab { list-style: revert; display: list-item; }
@@ -65,10 +92,14 @@
   }
   @media (forced-colors: active) {
     .kn-tabs-item[open] > .kn-tabs-tab { border-block-end-color: currentColor; }
+    @container style(--kn-tabs-rule-place: above) {
+      .kn-tabs-item[open] > .kn-tabs-tab { border-block-start-color: currentColor; }
+    }
   }
   /* On paper every panel shows, each under its tab's name. */
   @media print {
     .kn-tabs { display: block; }
+    .kn-tabs::before { content: none; }
     .kn-tabs-item { display: block; }
     .kn-tabs-item::details-content, .kn-tabs-item:not([open])::details-content { display: block; content-visibility: visible; }
     .kn-tabs-tab { padding: 0; min-block-size: 0; border: 0; color: var(--kn-text); }

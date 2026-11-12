@@ -260,6 +260,9 @@
         "hero": {
           "$ref": "#/$defs/hero-settings"
         },
+        "tabs": {
+          "$ref": "#/$defs/tabs-settings"
+        },
         "brand-colors": {
           "type": "object",
           "properties": {
@@ -1067,6 +1070,9 @@
         },
         "hero": {
           "$ref": "#/$defs/hero-settings"
+        },
+        "tabs": {
+          "$ref": "#/$defs/tabs-settings"
         },
         "type-scale": {
           "type": "object",
@@ -3495,6 +3501,22 @@
           ]
         }
       },
+      "additionalProperties": false
+    },
+    "tabs-settings": {
+      "type": "object",
+      "description": "The design's choices for every tabs (docs/spec/directives.md, `tabs`). Absent in a file resolved before 0.5.0, which then draws the rule below the tabs.",
+      "properties": {
+        "rule-place": {
+          "type": "string",
+          "description": "Where the rule across the whole width stands: below the row of tabs, over the open panel, or above it, the open tab marked on it.",
+          "enum": [
+            "below",
+            "above"
+          ]
+        }
+      },
+      "required": [],
       "additionalProperties": false
     }
   }

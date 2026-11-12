@@ -27,19 +27,21 @@ test('a tab\'s panel is text and then components, both there, or it keeps its or
 });
 
 const BROWSERS = Object.entries({ chromium, firefox, webkit }).filter(([, type]) => existsSync(type.executablePath()));
-let styles, fixture;
+let styles, above, fixture;
 const browsers = [];
 before(async () => {
   styles = `${coreCss(derive(defaultInputs()))}${await componentsCss()}`;
+  // The same with the line across the tabs above them (the owner, 2026-11-12).
+  above = `${coreCss(derive({ ...defaultInputs(), tabs: { 'rule-place': 'above' } }))}${await componentsCss()}`;
   fixture = await readFile(new URL('fixtures/directives-panels.html', import.meta.url), 'utf8');
   for (const [name, type] of BROWSERS) browsers.push([name, await type.launch()]);
 }, { timeout: 120000 });
 after(() => Promise.all(browsers.map(([, browser]) => browser.close())));
 
-async function open(browser, { width = 1280, height = 800, text = 16, script = true, dir = 'ltr' } = {}) {
+async function open(browser, { width = 1280, height = 800, text = 16, script = true, dir = 'ltr', css = styles, mode = 'light' } = {}) {
   const context = await browser.newContext({ viewport: { width, height }, javaScriptEnabled: script });
   const tab = await context.newPage();
-  await tab.setContent(`<!doctype html><html lang="en" dir="${dir}" style="font-size: ${text}px"><head><style>${styles}</style></head><body data-kn-surface="page">${fixture}<div style="block-size: 100vh"></div></body></html>`);
+  await tab.setContent(`<!doctype html><html lang="en" dir="${dir}" data-kn-mode="${mode}" style="font-size: ${text}px"><head><style>${css}</style></head><body data-kn-surface="page">${fixture}<div style="block-size: 100vh"></div></body></html>`);
   return { tab, close: () => context.close() };
 }
 const shown = (tab, selector) => tab.$$eval(selector, (elements) => elements.map((element) => element.checkVisibility()));
@@ -90,6 +92,87 @@ test('tabs stand in a row over the open panel; a click or Enter opens one and cl
     const { tab, close } = await open(browser, { dir: 'rtl' });
     const { order } = await geometry(tab);
     assert.ok(order[0] > order[1] && order[1] > order[2], `${name}: in right-to-left the row runs from the right`);
+    await close();
+  }
+});
+
+// Where the line across the tabs stands is the design's (the owner, 2026-11-12): below the row, over the open panel, or
+// above it, between the label and the tabs, the open tab's bar lying on it, centred on the hairline, and the panel with
+// no line of its own. The HTML is the same; the core's --kn-tabs-rule-place says which.
+const lineGeometry = (tab) => tab.evaluate(() => {
+  const tabs = document.querySelector('#plans .kn-tabs');
+  const rule = getComputedStyle(tabs, '::before');
+  const label = tabs.querySelector('.kn-tabs-label');
+  const summaries = [...tabs.querySelectorAll('.kn-tabs-tab')];
+  const open = summaries.find((summary) => summary.parentElement.open);
+  const panel = open.parentElement.querySelector('.kn-tabs-panel');
+  const probe = tabs.appendChild(Object.assign(document.createElement('i'), { style: 'display: none; border-top: 1px solid var(--kn-border); color: var(--kn-accent)' }));
+  const found = {
+    line: rule.content !== 'none' && rule.content !== 'normal' ? { width: rule.borderTopWidth, color: rule.borderTopColor, top: label.getBoundingClientRect().bottom + parseFloat(getComputedStyle(label).marginBlockEnd) } : null,
+    border: getComputedStyle(probe).borderTopColor,
+    accent: getComputedStyle(probe).color,
+    bar: { top: open.getBoundingClientRect().top, start: getComputedStyle(open).borderTopWidth, startColor: getComputedStyle(open).borderTopColor, end: getComputedStyle(open).borderBottomWidth, endColor: getComputedStyle(open).borderBottomColor },
+    tops: summaries.map((summary) => summary.getBoundingClientRect().top),
+    bottoms: summaries.map((summary) => summary.getBoundingClientRect().bottom),
+    panel: { top: panel.getBoundingClientRect().top, line: getComputedStyle(panel).borderTopWidth },
+    label: label.getBoundingClientRect().bottom,
+  };
+  probe.remove();
+  return found;
+});
+
+test('the line across the tabs stands below them by default, and above them where the design says so, the open tab marked on it, in a row that wraps too, in every engine', { timeout: 120000 }, async () => {
+  for (const [name, browser] of browsers) {
+    let { tab, close } = await open(browser);
+    let found = await lineGeometry(tab);
+    assert.equal(found.line, null, `${name}: no line above the tabs by default`);
+    assert.equal(found.panel.line, '1px', `${name}: the line over the open panel`);
+    assert.ok(found.bar.end !== '0px' && found.bar.endColor === found.accent, `${name}: the open tab's bar at its foot`);
+    await close();
+
+    for (const [width, text, mode] of [[1280, 16, 'light'], [320, 24, 'light'], [390, 16, 'dark']]) {
+      const label = `${name} at ${width} px, ${text} px text, ${mode}`;
+      ({ tab, close } = await open(browser, { css: above, width, text, mode }));
+      for (const nth of [0, 2]) {
+        // The bar takes its colour over the feedback duration.
+        if (nth) { await tab.click(`#plans .kn-tabs-tab >> nth=${nth}`); await tab.waitForTimeout(300); }
+        found = await lineGeometry(tab);
+        assert.ok(found.line, `${label}: a line above the tabs`);
+        assert.deepEqual([found.line.width, found.line.color], ['1px', found.border], `${label}: a hairline in the Surface's border colour`);
+        assert.ok(found.line.top >= found.label - 0.5, `${label}: under the label`);
+        assert.equal(found.panel.line, '0px', `${label}: no line over the panel`);
+        assert.ok(found.panel.top >= Math.max(...found.bottoms) - 0.5, `${label}: the panel under every tab`);
+        // The open tab's bar is at its head, and the tabs of the row's first line hang from the line, each reaching over it
+        // by half its bar and half the hairline, so that the bar's middle lies on the hairline's: at another text size within
+        // half a pixel, since the hairline's half is in rem and a browser draws the bar in whole pixels.
+        assert.deepEqual([found.bar.end, found.bar.startColor], ['0px', found.accent], `${label}: the open tab's bar at its head, ${JSON.stringify(found)}`);
+        const first = Math.min(...found.tops);
+        assert.ok(found.tops.every((top) => top >= first - 0.5), label);
+        if (found.bar.top < first + 0.5) assert.ok(Math.abs(found.bar.top + parseFloat(found.bar.start) / 2 - (found.line.top + 0.5)) < (text === 16 ? 0.3 : 0.6), `${label}: the bar centred on the line, ${JSON.stringify(found)}`);
+      }
+      if (width === 320) assert.ok(new Set(found.tops.map(Math.round)).size > 1, `${label}: the row wraps`);
+      await close();
+    }
+
+    // Under the pointer a tab's fill starts at the line's foot and leaves the line whole.
+    ({ tab, close } = await open(browser, { css: above }));
+    await tab.hover('#plans .kn-tabs-tab >> nth=1');
+    await tab.waitForTimeout(300);
+    const fill = await tab.evaluate(() => {
+      const style = getComputedStyle(document.querySelectorAll('#plans .kn-tabs-tab')[1]);
+      return { image: style.backgroundImage.startsWith('linear-gradient'), origin: style.backgroundOrigin, y: style.backgroundPositionY, over: -parseFloat(style.marginTop) };
+    });
+    assert.deepEqual([fill.image, fill.origin], [true, 'border-box'], name);
+    assert.ok(fill.over > 0 && Math.abs(parseFloat(fill.y) - fill.over) < 0.01, `${name}: ${JSON.stringify(fill)}`);
+    // On paper no line stands above the tabs.
+    await tab.emulateMedia({ media: 'print' });
+    assert.equal((await lineGeometry(tab)).line, null, `${name}: none on paper`);
+    await close();
+
+    // Right to left, the row runs from the right under the line.
+    ({ tab, close } = await open(browser, { css: above, dir: 'rtl' }));
+    found = await lineGeometry(tab);
+    assert.ok(found.line && found.panel.line === '0px', `${name}: right to left`);
     await close();
   }
 });

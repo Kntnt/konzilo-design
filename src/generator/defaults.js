@@ -32,6 +32,7 @@ const defaults = {
   page: { shadow: false, 'edge-line': false },
   breadcrumbs: { show: true, separator: 'slash', home: 'word', current: true, narrow: 'trail' },
   hero: { picture: 'behind', surface: 'none', overlay: 'dark', height: 'two-thirds', place: 'bottom', align: 'start', type: 'heading-1', h1: 'hero' },
+  tabs: { 'rule-place': 'below' },
   'corner-profile': 25,
   'density-profile': 75,
 };

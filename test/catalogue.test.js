@@ -31,6 +31,7 @@ const SHOWS = {
     quotation: [[], { '.kn-quotation': 1, '.kn-accordion': 0 }],
     callout: [CALLOUTS, { '.kn-callout': 8, '.kn-callout[data-kn-style="outlined"]': 4, '.kn-callout[data-kn-variant="warning"]': 2 }],
     table: [['Plain rows · On the page colour', 'Alternating rows · On the brand colour'], { '.kn-table-scroll': 2, '.kn-table-scroll[data-kn-striped]': 1 }],
+    tabs: [[], { '.kn-tabs': 1, '.kn-tabs-tab': 3, '.kn-value-list': 1 }],
   },
   buttons: {
     'button-and-link-group': [[
@@ -120,7 +121,7 @@ test('each section holds one or two of its page\'s components, as the report lis
   assert.equal(cataloguePath('text'), '/catalogue/text.html');
 });
 
-test('every component page holds no control but its way on, opening a page aside, and lists the sections its preview shows', { timeout: 180000 }, async () => {
+test('every component page holds no control but its way on, and Text the tabs\' line, opening a page aside, and lists the sections its preview shows', { timeout: 180000 }, async () => {
   const { context, page, ends, errors, writes } = await openTool();
   try {
     const designBefore = await readFile(tool.path, 'utf8');
@@ -131,7 +132,12 @@ test('every component page holds no control but its way on, opening a page aside
       assert.deepEqual(listed, CATALOGUE[id].map(sectionName), id);
       const controls = await form.locator('input, select, textarea, button:not(.next), [data-path], [data-pick], [data-flag]').count();
       if (id === 'opening') assert.ok(controls > 0, 'the hero keeps its settings');
-      else {
+      else if (id === 'text') {
+        // Where the line across the tabs stands is the design's (the owner, 2026-11-12), and the one control here.
+        assert.equal(controls, 1, 'text has one control');
+        assert.deepEqual(await form.locator('[data-path="inputs.tabs.rule-place"] option').evaluateAll((options) => options.map((option) => option.value)), ['below', 'above']);
+        assert.match(await form.locator('.component-note').first().textContent(), /A site chooses among the variants each time it uses a component[^]*Where the line across the tabs stands is the design's own/);
+      } else {
         assert.equal(controls, 0, `${id} has no control`);
         assert.match(await form.locator('.component-note').first().textContent(), /each with its variants side by side and named\. A site chooses among the variants each time it uses a component/);
       }
@@ -146,6 +152,34 @@ test('every component page holds no control but its way on, opening a page aside
     assert.deepEqual(writes, [], 'turning the pages writes nothing');
     assert.equal(await readFile(tool.path, 'utf8'), designBefore);
     assert.equal(await page.locator('#undo').isDisabled(), true);
+    assert.deepEqual(errors, []);
+  } finally {
+    await context.close();
+  }
+});
+
+test('the Text page sets where the line across the tabs stands, and the preview follows it at once, at both ends', { timeout: 180000 }, async () => {
+  const { context, page, ends, errors } = await openTool();
+  try {
+    await turnTo(page, 'text');
+    const line = (end) => end.locator('[data-component="tabs"] .kn-tabs').evaluate((tabs) => ({
+      above: getComputedStyle(tabs, '::before').borderTopWidth,
+      panel: getComputedStyle([...tabs.querySelectorAll('.kn-tabs-panel')].find((panel) => panel.checkVisibility())).borderTopWidth,
+    }));
+    for (const end of ends) {
+      await end.waitForFunction((path) => location.pathname === path && document.readyState === 'complete', cataloguePath('text'));
+      assert.deepEqual(await line(end), { above: '0px', panel: '1px' }, 'below by default');
+    }
+    await page.locator('[data-path="inputs.tabs.rule-place"]').selectOption('above');
+    for (const end of ends) {
+      await end.waitForFunction(() => getComputedStyle(document.querySelector('[data-component="tabs"] .kn-tabs'), '::before').borderTopWidth === '1px');
+      assert.deepEqual(await line(end), { above: '1px', panel: '0px' });
+    }
+    await page.waitForFunction(() => document.getElementById('status-text').textContent === 'Saved');
+    assert.deepEqual(JSON.parse(await readFile(tool.path, 'utf8')).inputs.tabs, { 'rule-place': 'above' }, 'saved in the design file');
+    await page.locator('#undo').click();
+    for (const end of ends) await end.waitForFunction(() => getComputedStyle(document.querySelector('[data-component="tabs"] .kn-tabs'), '::before').borderTopWidth === '0px');
+    await page.waitForFunction(() => document.getElementById('status-text').textContent === 'Saved');
     assert.deepEqual(errors, []);
   } finally {
     await context.close();

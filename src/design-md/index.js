@@ -428,7 +428,10 @@ ${ICONS.tabler.map(([name, use]) => `- \`${name}\`: ${use}.`).join('\n')}`;
 
 function componentSection({ project, resolved, assets }) {
   const frameNames = { Header: 'Header', Footer: 'Footer', Hero: 'Hero', 'Breadcrumb Navigation': 'This design\'s frame' };
-  const entry = ([name, job, recipe]) => `- **${name}:** ${job}${recipe ? ` ${recipe}` : frameNames[name] ? ` Its recipe is under ${frameNames[name]} above.` : ''}`;
+  const entry = ([name, job, recipe]) => {
+    const look = typeof recipe === 'function' ? recipe(resolved) : recipe;
+    return `- **${name}:** ${job}${look ? ` ${look}` : frameNames[name] ? ` Its recipe is under ${frameNames[name]} above.` : ''}`;
+  };
   const groups = COMPONENT_GROUPS.map(([group, items]) => `### ${group}\n\n${items.map(entry).join('\n')}`).join('\n\n');
   return `## Components
 ${why(project.explanations?.components)}

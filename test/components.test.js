@@ -32,8 +32,9 @@ test('component CSS uses only logical properties, role reads and permitted drawi
     // Style queries only where something reads a switch no selector can: the Reading Area's columns, which the core
     // sets by a media query, and the page frame's scroll flags and edges (header.md and footer.md, How it is built).
     // A plate's roles never depend on one (plates.md, point 7). A card's rise under the pointer reads whether the design
-    // casts a box shadow (components.md, The owner's review of a site built with the components, 2026-11-12).
-    if (!['header.css', 'page.css'].includes(name)) assert.doesNotMatch(source.replace('@container style(--kn-reading-columns: 2)', '').replaceAll('@container not style(--kn-shadow-box: none)', ''), /\b(?:if|style)\(/, name);
+    // casts a box shadow (components.md, The owner's review of a site built with the components, 2026-11-12), and the tabs
+    // read where the design puts their line, which the core writes, since a site writes the tabs' HTML (the same day).
+    if (!['header.css', 'page.css'].includes(name)) assert.doesNotMatch(source.replace('@container style(--kn-reading-columns: 2)', '').replaceAll('@container not style(--kn-shadow-box: none)', '').replaceAll('@container style(--kn-tabs-rule-place: above)', ''), /\b(?:if|style)\(/, name);
     for (const [, role] of source.matchAll(/var\(\s*(--kn-[\w-]+)/g)) assert.ok(emitted.has(role) || shared.has(role) || local.has(role), `${name}: unknown role ${role}`);
     walk(ast, { visit: 'Declaration', enter(declaration) {
       assert.ok(!physical.test(declaration.property), `${name}: physical property ${declaration.property}`);
