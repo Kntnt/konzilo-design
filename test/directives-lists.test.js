@@ -222,6 +222,16 @@ test('terms stand beside their descriptions and above them when narrow; values s
   }
 });
 
+test('logos are 2.5rem high in the narrowest window and almost twice that on a wide screen', { timeout: 120000 }, async () => {
+  // The owner found them rather small, and asked for almost twice the size (2026-11-12).
+  for (const [name, browser] of browsers) for (const [width, height] of [[320, 40], [1440, 72]]) {
+    const tab = await open(browser, { width });
+    const heights = await tab.$$eval('.kn-logos-list img', (images) => images.map((image) => Math.round(image.getBoundingClientRect().height)));
+    assert.deepEqual([...new Set(heights)], [height], `${name} at ${width}`);
+    await tab.close();
+  }
+});
+
 test('actions: the main one filled, the others outlined, a service as its icon, and a lone main one after a series as more of it', { timeout: 120000 }, async () => {
   for (const [name, browser] of browsers) for (const surface of [undefined, 'accent']) {
     const tab = await open(browser, { surface });

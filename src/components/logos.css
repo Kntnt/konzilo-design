@@ -6,6 +6,11 @@
   .kn-logos-label { margin: 0; color: var(--kn-text-muted); }
   .kn-logos .kn-logos-list { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: var(--kn-space-component-gap) var(--kn-space-column-gap); margin: 0; padding: 0; list-style: none; }
   .kn-logos .kn-logos-list > li { display: flex; margin: 0; max-inline-size: 100%; }
-  .kn-logos-list :is(img, svg) { display: block; inline-size: auto; block-size: 2.5rem; max-inline-size: min(10rem, 100%); object-fit: contain; }
+  /* Almost twice the height they had, 2.5rem, on a wide screen, by the owner's wish (2026-11-12), so a logo reads as the
+     customer's mark and not as a footnote: 4.5rem. The height follows the window from 2.5rem in the narrowest, as space
+     does, so on a phone the logos still stand two to a row, and a long wordmark may be four times as wide as high. */
+  .kn-logos { --kn-logo-height: clamp(2.5rem, 1.9286rem + 2.8571vw, 4.5rem); }
+  .kn-logos-list :is(img, svg) { display: block; inline-size: auto; block-size: var(--kn-logo-height); max-inline-size: min(4 * var(--kn-logo-height), 100%); object-fit: contain; }
   .kn-logos-list a { display: block; max-inline-size: 100%; border-radius: var(--kn-radius-control); }
+
 }

@@ -273,7 +273,7 @@ A value may be a link, such as `tel:`, kept as written.
 </div>
 ```
 
-**Read from content.** *(CSS)* The logos stand in a band under their label (owner, 2026-11-10). At the top level, the list stands in a section of its own (The body of a page).
+**Read from content.** *(CSS)* The logos stand in a band under their label (owner, 2026-11-10). At the top level, the list stands in a section of its own (The body of a page). A logo is almost twice as high on a wide screen as it was, 4.5rem, and 2.5rem in the narrowest window, between them following the window as space does, at most four times as wide as high (the owner's wish, 2026-11-12; the measures are the assistant's).
 
 **Behaviour.** None. **Component.** New: Logos.
 

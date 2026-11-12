@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Every card that leads somewhere behaves alike under the pointer: its heading is underlined, and where it casts a shadow it rises 0.125rem as its shadow lifts. A card without a shadow keeps still, and so does every card where the visitor asks for reduced motion.
 - The arrow of a card that leads on stays still under the pointer, as a word such as "Read more" would.
 - A table of contents in the Aside has no rule above it, and its label stands level with the text beside it.
+- Logos are almost twice as large on a wide screen, 4.5rem high where they were 2.5rem, and keep 2.5rem in the narrowest window, so a phone still shows them two to a row.
 - Less padding round the text in a card and every other plate: the plate space is step 4 of the space scale, 25–30px at the default density, where it shared step 6, 40–50px, with the column gap. The gaps are unchanged. Open a design in the tool, or run `konzilo-design resolve`, to take the new value.
 
 ### Fixed
