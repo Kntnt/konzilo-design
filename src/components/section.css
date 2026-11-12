@@ -85,16 +85,8 @@
     text-align: center;
   }
 
-  /* Rule 6, the head centred: over reasons, over cards with neither picture nor symbol, or over exactly two cards. */
-  .kn-section > .kn-band-content:not(:has(> .kn-section-media)):not(:has(> .kn-section-body > :is(form, .kn-choice))):is(
-    :has(> .kn-section-head + .kn-section-body > .kn-reasons:not(:is(.kn-cards, .kn-cards-nav, .kn-timeline, .kn-reasons, .kn-post-list) ~ *)),
-    :has(> .kn-section-head + .kn-section-body > :is(.kn-cards, .kn-cards-nav, .kn-post-list):not(:is(.kn-cards, .kn-cards-nav, .kn-timeline, .kn-reasons, .kn-post-list) ~ *)):not(:has(> .kn-section-body > :is(.kn-cards, .kn-cards-nav, .kn-post-list):not(:is(.kn-cards, .kn-cards-nav, .kn-timeline, .kn-reasons, .kn-post-list) ~ *) :is(.kn-card-picture, .kn-card-symbol))),
-    :has(> .kn-section-head + .kn-section-body > .kn-cards:not(:is(.kn-cards, .kn-cards-nav, .kn-timeline, .kn-reasons, .kn-post-list) ~ *) > :nth-child(2):last-child),
-    :has(> .kn-section-head + .kn-section-body > :is(.kn-cards-nav, .kn-post-list):not(:is(.kn-cards, .kn-cards-nav, .kn-timeline, .kn-reasons, .kn-post-list) ~ *) > :is(.kn-cards, .kn-featured) > :nth-child(2):last-child)
-  ) {
-    --kn-section-align: center;
-    --kn-section-head-place: center;
-  }
+  /* Rule 6 centres no head: over a series a section's head keeps the start edge, as every other head does (the owner,
+     2026-11-13). It was centred over reasons, over cards with neither picture nor symbol, and over exactly two cards. */
 
   @media (width >= 48rem) {
     /* Rule 1: a picture first. It stands beside the head and the body, which stand in the middle of its height. */

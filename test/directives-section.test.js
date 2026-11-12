@@ -128,10 +128,11 @@ test('a section\'s layout follows the first of the six rules that matches, and s
     end: { beside: false, centred: true, deckBeside: false }, // 3: another form
     questions: { beside: true, centred: false, deckBeside: false }, // 4: a head and an accordion
     story: { beside: true, centred: false, deckBeside: false }, // 5: a head and paragraphs
-    reasons: { beside: false, centred: true, deckBeside: false }, // 6: reasons
-    pair: { beside: false, centred: true, deckBeside: false }, // 6: two cards
+    reasons: { beside: false, centred: false, deckBeside: false }, // 6: reasons, the head at the start (the owner, 2026-11-13)
+    pair: { beside: false, centred: false, deckBeside: false }, // 6: two cards, the head at the start
     plans: { beside: false, centred: false, deckBeside: true }, // 6: a long deck over six cards with pictures
     news: { beside: false, centred: false, deckBeside: false }, // 6: otherwise the head above
+    plain: { beside: false, centred: false, deckBeside: false }, // 6: three cards without pictures, the head at the start
     other: { beside: false, centred: false, deckBeside: false }, // anything else
   };
   for (const [name, browser] of browsers) {

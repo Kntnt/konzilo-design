@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A section's head over a series stands at the start edge, as every other head does: over reasons, over cards without pictures and over two cards it stood centred (the owner, 2026-11-13). The cards themselves, and a section whose form or choice centres it as a page's end, are as before.
+
 ## [0.8.0] – 2026-11-13
 
 ### Added
