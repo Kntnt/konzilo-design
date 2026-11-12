@@ -18,7 +18,7 @@ export function menuOf(project = {}) {
   const below = (items = []) => items.flatMap((item) => [link(item), ...below(item.items)]);
   return project.menu.map((item) => {
     const children = below(item.items);
-    return { label: item.label, href: anchor(item.label), ...(children.length && { children }) };
+    return { label: item.label, href: anchor(item.label), ...(item.description && { description: item.description }), ...(children.length && { children }) };
   });
 }
 export const identityProps = (settings, project) => frameIdentityProps(settings, project, { href: HOME });

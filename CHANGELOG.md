@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- An entry of the large menu with no entries under it stands as a link in a row after the columns, with its description under it, where it stood as a column of a heading and nothing else. An entry's own description shows under its heading too. The tool's preview and the presentation draw a design's own menu the same way.
 - A search box given an empty list of links, and an entry of the large menu given an empty list of entries under it, show nothing there. Each showed a stray 0.
 
 ## [0.8.0] – 2026-11-13

@@ -9,6 +9,8 @@ export const menu: MenuItem[] = [
   { label: 'Projects', href: '#notes', children: [{ label: 'Shared gardens', href: '#notes', description: 'Spaces for everyday encounters' }, { label: 'Open tables', href: '#notes', description: 'A place to exchange ideas' }] },
   { label: 'Notebook', href: '#notes', children: [{ label: 'Field notes', href: '#notes', description: 'Observations from familiar places' }, { label: 'Guides', href: '#notes', description: 'Small, practical starting points' }] },
   { label: 'Visit', href: '#contact', children: [{ label: 'Workshops', href: '#contact', description: 'Bring a question along' }, { label: 'Contact', href: '#contact', description: 'Start a conversation' }] },
+  // An entry with nothing under it stands in a row of links after the columns.
+  { label: 'Journal', href: '#notes', description: 'What we are reading this season' },
 ];
 export const languages: Language[] = [{ label: 'English', code: 'en', href: '#home', current: true }, { label: 'Svenska', code: 'sv', href: '#home' }, { label: 'Deutsch', code: 'de', href: '#home' }];
 export const search: Search = { action: '#search', links: [{ label: 'Workshops', href: '#notes' }, { label: 'Field notes', href: '#notes' }, { label: 'Contact', href: '#contact' }] };

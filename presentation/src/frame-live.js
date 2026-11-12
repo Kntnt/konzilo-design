@@ -54,20 +54,30 @@ function menuIn(header, menu) {
       return entry;
     }));
   }
+  // As Megamenu: an entry with entries under it heads a column, and one without stands in a row of links after them.
+  const columned = menu.filter((item) => item.children?.length);
+  const singles = menu.filter((item) => !item.children?.length && item.href);
   for (const columns of header.querySelectorAll('.kn-megamenu-columns')) {
     const pattern = columns.firstElementChild;
-    columns.style.setProperty('--kn-header-menu-columns', String(Math.min(6, menu.length)));
-    columns.replaceChildren(...menu.map((item, index) => {
+    columns.style.setProperty('--kn-header-menu-columns', String(Math.min(6, columned.length)));
+    columns.style.display = columned.length ? '' : 'none';
+    columns.replaceChildren(...columned.map((item, index) => {
       const column = pattern.cloneNode(true);
       const link = column.querySelector('.kn-megamenu-heading a');
       const number = link.querySelector('.kn-megamenu-number');
       linked(link, item);
       if (number) number.textContent = `${String(index + 1).padStart(2, '0')} /`;
       link.replaceChildren(...(number ? [number] : []), item.label);
+      column.querySelector(':scope > .kn-megamenu-description')?.remove();
+      if (item.description) {
+        const line = column.ownerDocument.createElement('p');
+        line.className = 'kn-megamenu-description';
+        line.textContent = item.description;
+        column.querySelector('.kn-megamenu-heading').after(line);
+      }
       const list = column.querySelector('ul');
       const child = list.firstElementChild;
-      if (!item.children?.length) list.remove();
-      else list.replaceChildren(...item.children.map((wanted) => {
+      list.replaceChildren(...item.children.map((wanted) => {
         const entry = child.cloneNode(true);
         const [words, description] = entry.querySelectorAll('a > span');
         linked(entry.querySelector('a'), wanted);
@@ -78,6 +88,22 @@ function menuIn(header, menu) {
       }));
       return column;
     }));
+    columns.parentElement.querySelector(':scope > .kn-megamenu-links')?.remove();
+    if (!singles.length) continue;
+    const document = columns.ownerDocument;
+    const row = document.createElement('ul');
+    row.className = 'kn-megamenu-links';
+    row.append(...singles.map((item) => {
+      const entry = document.createElement('li');
+      const link = entry.appendChild(document.createElement('a'));
+      linked(link, item);
+      const words = link.appendChild(document.createElement('span'));
+      words.dataset.knType = 'heading-6';
+      words.textContent = item.label;
+      if (item.description) Object.assign(link.appendChild(document.createElement('span')), { className: 'kn-megamenu-description', textContent: item.description });
+      return entry;
+    }));
+    columns.after(row);
   }
 }
 // An image set again is decoded again, and blinks, so the one already showing moves over to where it is wanted.

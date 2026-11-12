@@ -307,6 +307,11 @@
   .kn-megamenu-column ul { display: grid; gap: 0.875rem; list-style: none; margin: 0; padding: 0; }
   .kn-megamenu-column li a { display: grid; gap: 0.0625rem; }
   .kn-megamenu-description { font-size: 0.75em; color: var(--kn-text-muted); }
+  .kn-megamenu-heading + .kn-megamenu-description { margin-block: -0.5rem 0.875rem; }
+  /* The entries without entries under them: links in a row after the columns, each in the headings' type, its
+     description under it, wrapping as they need. */
+  .kn-megamenu-links { display: flex; flex-wrap: wrap; gap: 1rem 2rem; margin: 0; padding: 0; list-style: none; }
+  .kn-megamenu-links a { display: grid; gap: 0.0625rem; }
   .kn-megamenu-above { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; }
   .kn-megamenu-below { display: flex; flex-wrap: wrap; gap: 0.5rem 1.75rem; padding-block-start: 1.25rem; border-block-start: 1px solid var(--kn-border); font-size: var(--kn-type-small-size); color: var(--kn-text-muted); }
   /* The globe's list hangs under the globe, its end edge on the globe's, by the popover's own anchor. */

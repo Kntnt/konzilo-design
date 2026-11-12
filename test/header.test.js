@@ -128,10 +128,32 @@ test('an empty list of links writes nothing, in the search box and under an entr
   const box = one(tree, '.kn-header-search-box');
   assert.ok(!one(box, '.kn-header-search-links'));
   assert.doesNotMatch(text(box), /\b0\b/, 'no stray count in the search box');
-  const [first, second] = all(tree, '.kn-megamenu-column');
-  assert.doesNotMatch(text(first), /\b0\b/, 'no stray count under an entry with no children');
-  assert.ok(!one(first, 'ul'));
-  assert.ok(one(second, 'ul'));
+  const menu = one(tree, '.kn-megamenu');
+  assert.doesNotMatch(text(menu), /\b0\b/, 'no stray count under an entry with no children');
+  assert.ok(all(menu, 'ul').every((list) => all(list, 'li').length > 0), 'no empty list');
   const links = parse(await render('Header', { ...everything, search: { action: '/search/', links: [{ label: 'Opening hours', href: '/hours/' }] } }));
   assert.equal(all(links, '.kn-header-search-links a').length, 1, 'links where there are some');
+});
+
+test('in the large menu an entry without entries under it is a link in a row after the columns, and a description shows under its entry', async () => {
+  const items = [
+    { label: 'Home', href: '/' },
+    { label: 'Services', href: '/services/', description: 'What we do for you', children: [{ label: 'Planning', href: '/services/planning/', description: 'A plan for the year' }, { label: 'Pruning', href: '/services/pruning/' }] },
+    { label: 'Journal', href: '/journal/', description: 'What we are reading', children: [] },
+    { label: 'Visit', href: '/visit/', children: [{ label: 'Workshops', href: '/visit/workshops/' }] },
+    { label: 'Nowhere' },
+  ];
+  const tree = parse(await render('Header', { ...everything, menu: items, numbered: true }));
+  const menu = one(tree, '.kn-megamenu');
+  const columns = all(menu, '.kn-megamenu-column');
+  assert.deepEqual(columns.map((column) => text(one(column, '.kn-megamenu-heading a')).replace(/\s+/g, '')), ['01/Services', '02/Visit'], 'a column for each entry with entries under it, numbered among the columns');
+  assert.match(one(menu, '.kn-megamenu-columns').attributes.style, /--kn-header-menu-columns:\s*2/);
+  assert.equal(text(one(columns[0], 'p.kn-megamenu-description')), 'What we do for you');
+  assert.deepEqual(all(columns[0], 'li .kn-megamenu-description').map(text), ['A plan for the year']);
+  const row = all(menu, '.kn-megamenu-links a');
+  assert.deepEqual(row.map((link) => link.attributes.href), ['/', '/journal/'], 'the others stand in a row after the columns, an entry with no address left out');
+  assert.equal(text(one(row[1], '.kn-megamenu-description')), 'What we are reading');
+  const only = parse(await render('Header', { ...everything, menu: [{ label: 'Home', href: '/' }, { label: 'About', href: '/about/' }] }));
+  assert.ok(!one(only, '.kn-megamenu-columns'), 'no columns where no entry has entries under it');
+  assert.equal(all(only, '.kn-megamenu-links a').length, 2);
 });

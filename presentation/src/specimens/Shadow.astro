@@ -16,7 +16,7 @@ const { list } = context(project, resolved, ownPictures);
 // the first three of the menu shown with two links to a column and no descriptions, keeps the open panel low enough to
 // show the page under it, and the header's link menu shows the same three.
 const full = headerProps(resolved.header, project);
-const short = full.menu.slice(0, 3).map(({ linkMenu, ...item }) => ({ ...item, ...(item.children && { children: item.children.slice(0, 2).map(({ description, ...child }) => child) }) }));
+const short = full.menu.slice(0, 3).map(({ linkMenu, description, ...item }) => ({ ...item, ...(item.children && { children: item.children.slice(0, 2).map(({ description, ...child }) => child) }) }));
 const header = { ...full, menu: short };
 const SURFACES = ['raised', 'tint', 'brand'];
 ---

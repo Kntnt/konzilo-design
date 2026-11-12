@@ -229,6 +229,7 @@ test('the Start page takes the client\'s own menu and footer, saves them with un
       return columns.map((column) => column.querySelector('.kn-megamenu-heading').textContent.replace(/^\d+ \//, '')).join() === 'Lamps,Workshop'
         && columns[0].querySelector('.kn-megamenu-description')?.textContent === 'For the late hours'
         && columns[0].querySelectorAll('li').length === 2 && columns[1].querySelectorAll('li').length === 1
+        && !document.querySelector('.kn-page > .kn-header .kn-megamenu-links')
         && document.querySelector('dialog[data-kn-panel="menu"]').matches(':modal');
     });
     assert.equal(await page.evaluate(() => document.activeElement.dataset.own), 'menu', 'the large menu opening took no focus');
@@ -397,6 +398,7 @@ test('the presentation shows the client\'s menu and footer in the header, the fo
       return {
         links: words('.kn-header-link-menu a'),
         headings: words('.kn-megamenu-heading'),
+        row: words('.kn-megamenu-links a > span:first-child'),
         items: words('.kn-megamenu-column li > a > span:first-child'),
         descriptions: words('.kn-megamenu-description'),
         footer: cell('lower', 'a1') && {
@@ -419,7 +421,7 @@ test('the presentation shows the client\'s menu and footer in the header, the fo
       policies: ['Lamp care'],
       consent: sampleFooter.lower.b2,
     };
-    const ownMenu = { links: ['Lamps', 'Workshop', 'Öppettider'], headings: ['Lamps', 'Workshop', 'Öppettider'], items: ['Desk lamps', 'Floor lamps', 'Repairs', 'Rewiring'], descriptions: ['For the late hours', 'Old lamps made new'] };
+    const ownMenu = { links: ['Lamps', 'Workshop', 'Öppettider'], headings: ['Lamps', 'Workshop'], row: ['Öppettider'], items: ['Desk lamps', 'Floor lamps', 'Repairs', 'Rewiring'], descriptions: ['For the late hours', 'Old lamps made new'] };
 
     const header = await read(await specimen('header', 'header-a-menu'));
     assert.deepEqual({ ...header, footer: undefined }, { ...ownMenu, footer: undefined });
@@ -429,9 +431,10 @@ test('the presentation shows the client\'s menu and footer in the header, the fo
       assert.deepEqual(shown.links, ownMenu.links, id);
       assert.deepEqual(shown.footer, ownFooter, id);
     }
-    // The shadow scenes' short menu is the first three of the client's, two links to a column and no descriptions.
+    // The shadow scenes' short menu is the first three of the client's, two links to a column and no descriptions; an
+    // entry with none under it stands in the row after the columns.
     const scene = await read(await specimen('shadow', 'shadow-panel'));
-    assert.deepEqual([scene.links, scene.headings, scene.items, scene.descriptions], [ownMenu.links, ownMenu.headings, ownMenu.items, []]);
+    assert.deepEqual([scene.links, scene.headings, scene.row, scene.items, scene.descriptions], [ownMenu.links, ownMenu.headings, ownMenu.row, ownMenu.items, []]);
     assert.deepEqual((await read(await specimen('shadow', 'shadow-page'))).footer, ownFooter);
     assert.deepEqual(errors, []);
   } finally {
