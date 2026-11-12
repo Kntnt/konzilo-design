@@ -215,7 +215,8 @@ function hero(attrs, blocks, ctx) {
     style: behind ? `--kn-picture-image:url(${JSON.stringify(String(source))})` : undefined,
   }, tag('div', { class: 'kn-band-content kn-hero-content' },
     tag('div', { class: 'kn-hero-text' },
-      trail ? withMark(breadcrumbsHtml(ctx), markOf(trail)[BLOCK]) : '',
+      // Where the H1 stands under the hero, the trail stands before it there, which PageBody writes.
+      trail && !below ? withMark(breadcrumbsHtml(ctx), markOf(trail)[BLOCK]) : '',
       logo ? picture(logo, { class: 'kn-hero-logo', loading: 'eager' }) : '',
       group,
       renderBlocks(rest, band)),

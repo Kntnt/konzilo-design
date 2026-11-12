@@ -1,7 +1,8 @@
 // A scanner of HTML as Astro renders a body: what stands at its top, element by element, without a parser. The HTML is
 // Astro's own rendering, so a scan of its tags is enough: comments and the text of raw text elements are skipped, a void
 // element has no end, and an element ends at the end tag of its name that matches it. A section takes its body from its
-// slot with it (sections.js), and nothing else here needs one.
+// slot with it (render.js, bodyFromSlot()), and the page parts read a body the core drew with it (src/page-parts/parts.js).
+import { attributes } from './html.js';
 
 const VOID = new Set(['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'source', 'track', 'wbr']);
 const RAW = new Set(['script', 'style', 'textarea', 'title']);
@@ -104,3 +105,48 @@ export function topElements(html) {
     at = close.end;
   }
 }
+
+/**
+ * Every element in `html`, depth first, each with its place in `html` itself, as topElements() gives those at its top.
+ * The text of a raw text element is no element.
+ * @param {string} html
+ */
+export function allElements(html, offset = 0) {
+  const shift = (element) => ({
+    ...element,
+    start: element.start + offset,
+    end: element.end + offset,
+    open: { ...element.open, start: element.open.start + offset, end: element.open.end + offset, ...(element.open.textEnd === undefined ? {} : { textEnd: element.open.textEnd + offset }) },
+  });
+  return topElements(html).flatMap((element) => {
+    if (element.open.void || element.open.textEnd !== undefined) return [shift(element)];
+    const from = element.open.end;
+    return [shift(element), ...allElements(html.slice(from, endOf(html, element.open).start), offset + from)];
+  });
+}
+
+// An element's content, between its start tag and its end tag.
+export const innerHtml = (html, element) => html.slice(element.open.textEnd ?? element.open.end, endOf(html, element.open).start);
+
+/**
+ * An element written again from `html`, under another name or with attributes of the design's: `set` adds an
+ * attribute or replaces one in its place, a class given there standing before the element's own, and undefined
+ * removing one. The class stands first, as the design writes it.
+ * @param {string} html
+ * @param {object} element As topElements() or allElements() gives it.
+ * @param {{ name?: string, set?: Record<string, string | undefined> }} [change]
+ */
+export function retagged(html, element, { name = element.name, set = {} } = {}) {
+  const given = { ...element.attributes };
+  for (const [key, value] of Object.entries(set)) {
+    if (key === 'class' && value && given.class) given.class = `${value} ${given.class}`;
+    else given[key] = value;
+  }
+  const { class: classes, ...rest } = given;
+  const open = `<${name}${attributes({ class: classes, ...rest })}>`;
+  if (element.open.void) return open;
+  return `${open}${innerHtml(html, element)}</${name}>`;
+}
+
+// The text of a piece of HTML: its tags left out and its character references read, its white space collapsed.
+export const textOfHtml = (html) => decode(String(html ?? '').replace(/<[^>]*>/g, '')).replace(/\s+/g, ' ').trim();

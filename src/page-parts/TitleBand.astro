@@ -1,0 +1,10 @@
+---
+// The title and trail of a page without a hero, as a section's head of its own: the page's H1, from the page's context
+// (docs/spec/directives.md, The body of a page). PageBody puts one first in a body that opens with no hero; a template
+// places one itself where it writes no body, as the search page does.
+import { contextOf } from '../directives/render/context.js';
+import { titleBand } from './parts.js';
+
+const { title, eyebrow, deck, surface, trail = true } = Astro.props;
+---
+<Fragment set:html={titleBand(contextOf(Astro), { title, eyebrow, deck, surface, trail })} />

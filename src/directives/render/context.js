@@ -17,6 +17,9 @@ export const WORDS = Object.freeze({
   breadcrumb: 'Breadcrumb',
   // A table of contents' name, where its directive gives no label.
   contents: 'Contents',
+  // An article's following menu's label, and the heading over the posts related to it.
+  articleMenu: 'In this article',
+  readMore: 'Read more',
   // A filtered list's search row: the field's label and its button.
   search: 'Search',
   // A filtered list's button where it has no search row, which the stylesheet hides.

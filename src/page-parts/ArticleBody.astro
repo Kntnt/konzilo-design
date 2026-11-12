@@ -1,0 +1,17 @@
+---
+// An article's body (docs/spec/directives.md, An article, The body and its following menu), around what the core's Body
+// drew of it:
+//
+//   <ArticleBody><Body post={article} page={page}><Content /></Body></ArticleBody>
+//
+// A Reading Area, its flow the body, a paragraph of one strong alone marked as the interview's question, and its Aside
+// the following menu, whose stops are the crossheads and the fact boxes with an anchor. `label` is the menu's, the
+// page's context's word by default; `menu={false}` leaves it out; the slot `aside` holds an Aside of a type's own.
+import { contextOf } from '../directives/render/context.js';
+import { articleBody } from './parts.js';
+
+const { label, menu = true } = Astro.props;
+const html = (await Astro.slots.render('default')) ?? '';
+const aside = Astro.slots.has('aside') ? await Astro.slots.render('aside') : undefined;
+---
+<Fragment set:html={articleBody(html, contextOf(Astro), { label, menu, aside })} />

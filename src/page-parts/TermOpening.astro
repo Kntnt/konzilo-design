@@ -1,0 +1,10 @@
+---
+// A term's opening on its page (docs/spec/directives.md, A term's page): the trail, the taxonomy's word as its eyebrow,
+// the term's name as the page's H1 and its description as the deck. `term` is the term's entry, as the core's
+// termPages() hands a term's page it; `taxonomy` its taxonomy's name, read from the entry's collection by default.
+import { contextOf } from '../directives/render/context.js';
+import { termOpening } from './parts.js';
+
+const { term, taxonomy, eyebrow, surface } = Astro.props;
+---
+<Fragment set:html={termOpening(contextOf(Astro), { term, taxonomy, eyebrow, surface })} />

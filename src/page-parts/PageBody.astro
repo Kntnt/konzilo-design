@@ -1,0 +1,15 @@
+---
+// A post's body as the design's bands (docs/spec/directives.md, The body of a page), around what the core's Body drew:
+//
+//   <PageBody><Body post={entry} page={page}><Content /></Body></PageBody>
+//
+// Each hero and section stands as it is; a run of other blocks at the top stands in a section of its own; a body that
+// opens with no hero has the title band first, unless `title={false}`; and where the design puts the page's H1 under
+// the hero, the band after it holds the H1 and the trail.
+import { contextOf } from '../directives/render/context.js';
+import { pageBody } from './parts.js';
+
+const { title = true } = Astro.props;
+const html = (await Astro.slots.render('default')) ?? '';
+---
+<Fragment set:html={pageBody(html, contextOf(Astro), { title })} />

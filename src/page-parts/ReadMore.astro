@@ -1,0 +1,17 @@
+---
+// "Read more" under a post (docs/spec/directives.md, An article, "Read more"): its related posts as teaser cards under a
+// heading, and a lone main action to the rest; nothing where there are none.
+//
+//   <ReadMore posts={await relatedPosts(article)} more={{ label: 'More articles', href: '/articles/' }} surface="raised" />
+//
+// `posts` as the core's relatedPosts() gives them, each { entry, url }; `heading` the page's context's word by default.
+import { getEntry } from 'astro:content';
+import { getImage } from 'astro:assets';
+import { contextOf } from '../directives/render/context.js';
+import { teaserOf } from '../presentations/teasers.js';
+import { readMore } from './parts.js';
+
+const { posts = [], heading, more, surface } = Astro.props;
+const teasers = await Promise.all(posts.map((post) => teaserOf(post, { getEntry, getImage })));
+---
+<Fragment set:html={readMore(contextOf(Astro), { teasers, heading, more, surface })} />

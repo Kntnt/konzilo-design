@@ -1,0 +1,25 @@
+---
+// An article's opening (docs/spec/directives.md, An article, The opening), for an article and a type of the site's own
+// made like one: a Hero of its main image, its headline in up to three parts, its standfirst and its meta line.
+//
+//   <ArticleOpening entry={article} metaLine={await metaLine(article, Astro.url)} topics={topics} />
+//
+// `metaLine` is the core's metaLine() pieces; `topics` each `{ name, url }`, the address of its page where it has one;
+// `eyebrow` the label over the headline where the post has no eyebrow of its own, its category's name by default;
+// `surface` the hero's Surface where no picture stands behind it. The slot `after` holds what a type adds, such as
+// its facts and actions.
+import { getEntry } from 'astro:content';
+import { getImage } from 'astro:assets';
+import { contextOf } from '../directives/render/context.js';
+import { pictureOf } from '../presentations/teasers.js';
+import { articleOpening } from './parts.js';
+
+const { entry, metaLine = [], topics = [], eyebrow, surface } = Astro.props;
+const ctx = contextOf(Astro);
+const data = entry?.data ?? {};
+const [category] = Array.isArray(data.category) ? data.category : [];
+const label = eyebrow ?? (category ? (await getEntry(category))?.data?.name : undefined);
+const picture = await pictureOf(data.image, ctx.design.resolved.hero?.picture === 'behind' ? 'behind' : 'hero', getImage);
+const after = Astro.slots.has('after') ? await Astro.slots.render('after') : '';
+---
+<Fragment set:html={articleOpening(ctx, { data, eyebrow: label, picture, metaLine, topics, after, surface })} />

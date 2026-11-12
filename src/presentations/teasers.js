@@ -51,10 +51,14 @@ async function termName(reference, taxonomy, { list, getEntry }) {
 const PICTURES = Object.freeze({
   card: { widths: [400, 800, 1200], sizes: '(min-width: 64rem) 33vw, (min-width: 40rem) 50vw, 100vw' },
   featured: { widths: [600, 1200, 1800], sizes: '(min-width: 50rem) 66vw, 100vw' },
+  // A hero's picture beside its text, and one behind it, which fills the window's width.
+  hero: { widths: [800, 1200, 1600, 2400], sizes: '(min-width: 40rem) 50vw, 100vw' },
+  behind: { widths: [800, 1200, 1600, 2400], sizes: '100vw' },
 });
 
-// A teaser's picture as the attributes of its <img>: made by Astro's getImage() from the post's image, or as given.
-async function pictureOf(image, place, getImage) {
+// A post's picture as the attributes of its <img>, for a teaser or an opening (`place`): made by Astro's getImage() from
+// the post's image, or as given; null for none.
+export async function pictureOf(image, place, getImage) {
   if (!image?.src) return null;
   const alt = image.alt ?? '';
   if (typeof image.src === 'string' || !getImage) return { src: String(image.src?.src ?? image.src), alt };

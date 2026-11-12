@@ -531,7 +531,7 @@ test('the tarball holds what a site needs, and no fonts, tool or presentation, a
   await mkdir(folder);
   const [{ filename, size, files }] = JSON.parse(execFileSync('npm', ['pack', '--json', '--silent', '--pack-destination', folder], { cwd: repo, encoding: 'utf8' }));
   const held = files.map(({ path }) => path);
-  for (const needed of ['package.json', 'README.md', 'bin/konzilo-design.js', 'src/cli/backup.js', 'schema/design-file.schema.json', 'src/konzilo/index.js', 'src/konzilo/fonts.js', 'src/konzilo/logos.js', 'src/konzilo/konzilo.css', 'src/konzilo/body-styles.css', 'src/fonts/catalog.js', 'src/generator/index.js', 'src/css/index.js', 'src/components/index.css', 'src/components/Footer.astro', 'src/components/design-props.js', 'docs/spec/konzilo.md', 'docs/spec/names.md', 'src/directives/components.json', 'src/directives/checks.js', 'src/directives/render/render.js', 'src/directives/astro/Section.astro', 'src/presentations/Filtered.astro', 'src/presentations/teasers.js', 'src/konzilo/directives.js']) {
+  for (const needed of ['package.json', 'README.md', 'bin/konzilo-design.js', 'src/cli/backup.js', 'schema/design-file.schema.json', 'src/konzilo/index.js', 'src/konzilo/fonts.js', 'src/konzilo/logos.js', 'src/konzilo/konzilo.css', 'src/konzilo/body-styles.css', 'src/fonts/catalog.js', 'src/generator/index.js', 'src/css/index.js', 'src/components/index.css', 'src/components/Footer.astro', 'src/components/design-props.js', 'docs/spec/konzilo.md', 'docs/spec/names.md', 'src/directives/components.json', 'src/directives/checks.js', 'src/directives/render/render.js', 'src/directives/astro/Section.astro', 'src/presentations/Filtered.astro', 'src/presentations/teasers.js', 'src/konzilo/directives.js', 'src/page-parts/parts.js', 'src/page-parts/PageBody.astro']) {
     assert.ok(held.includes(needed), `the tarball lacks ${needed}`);
   }
   const unwanted = held.filter((path) => /\.(woff2?|ttf|otf|zip|webp)$/.test(path) || /^(tool|presentation|gallery|test|examples)\//.test(path) || path === 'DESIGN.md' || /\.design(\.bak)?\.json$/.test(path) || path === 'src/fonts/fonts.css');
@@ -601,6 +601,9 @@ test('the tarball holds what a site needs, and no fonts, tool or presentation, a
   const { DESIGN_COMPONENT_CHECKS, DESIGN_COMPONENTS_FROM, DESIGN_DIRECTIVES, DESIGN_PRESENTATIONS } = await import(pathToFileURL(require.resolve('@kntnt/konzilo-design/konzilo')).href);
   for (const specifier of [DESIGN_COMPONENTS_FROM, DESIGN_COMPONENT_CHECKS, ...Object.values(DESIGN_DIRECTIVES), ...Object.values(DESIGN_PRESENTATIONS)]) {
     assert.ok(require.resolve(specifier).startsWith(realpathSync(installed)), specifier);
+  }
+  for (const part of ['TitleBand', 'TermOpening', 'PageBody', 'ArticleOpening', 'ArticleBody', 'ReadMore']) {
+    assert.ok(require.resolve(`@kntnt/konzilo-design/page-parts/${part}.astro`).startsWith(realpathSync(installed)), part);
   }
   const { componentProblems } = await import(pathToFileURL(require.resolve(DESIGN_COMPONENT_CHECKS)).href);
   assert.deepEqual(componentProblems('section', {}, []), []);

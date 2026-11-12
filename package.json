@@ -39,6 +39,7 @@
     "src/fonts/catalog.js",
     "src/generator",
     "src/konzilo",
+    "src/page-parts",
     "src/presentations"
   ],
   "exports": {
@@ -51,6 +52,7 @@
     "./directives/checks": "./src/directives/checks.js",
     "./directives/*.astro": "./src/directives/astro/*.astro",
     "./presentations/*.astro": "./src/presentations/*.astro",
+    "./page-parts/*.astro": "./src/page-parts/*.astro",
     "./components/*": "./src/components/*",
     "./components.css": "./src/components/index.css",
     "./konzilo": "./src/konzilo/index.js",
