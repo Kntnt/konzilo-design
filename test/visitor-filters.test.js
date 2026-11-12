@@ -59,6 +59,9 @@ test('the markup: checkbox pills in a legend\'s group, keyed options, keyed item
   assert.equal(count.attributes.role, undefined, 'no live region: nothing changes it live');
   assert.equal(count.attributes['aria-live'], undefined);
   for (const gone of ['button.kn-pill', '[aria-pressed]', '[data-kn-pagination-host]', '[data-kn-result-count]', '[data-kn-filter-name]']) assert.equal(all(form, gone).length, 0, gone);
+  // What the list or the page settles goes with a search as hidden fields, first in the form.
+  const settled = parse(await render('VisitorFilters', { search: { label: 'Find notes' }, toggles: [topics], hidden: { type: 'note', category: 'walks' } }));
+  assert.deepEqual(one(settled, 'form').children.filter((node) => node.name === 'input').map((input) => [input.attributes.type, input.attributes.name, input.attributes.value]), [['hidden', 'type', 'note'], ['hidden', 'category', 'walks']]);
   // A server pages the list: the controls carry no key and apply only when the form is sent.
   const paged = parse(await render('VisitorFilters', { for: 'notes', toggles: [topics], instant: false }));
   assert.equal(all(paged, '[data-kn-match]').length + all(paged, '[aria-controls]').length, 0);

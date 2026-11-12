@@ -244,6 +244,36 @@ test('a lone main action after cards that lead on shows more of them, as after a
   }
 });
 
+test('a filtered list in rows: pills OR on a row and AND between rows, and a search row that sends the rows with it', { timeout: 120000 }, async () => {
+  // The owner's rows (2026-11-12): the category, the topics and search, each a row of its own.
+  for (const [name, browser] of browsers) for (const width of [1440, 390]) {
+    const tab = await page(browser, { width });
+    const shown = () => tab.$$eval('#posts-2 > .kn-card', (cards) => cards.map((card, i) => card.getClientRects().length ? i + 1 : 0).filter(Boolean));
+    assert.deepEqual(await shown(), [1, 2, 3, 4, 5], name);
+    await tab.check('#posts-rows input[value="guides"]');
+    assert.deepEqual(await shown(), [1, 3, 5], `${name}: guides`);
+    await tab.check('#posts-rows input[value="planning"]');
+    assert.deepEqual(await shown(), [1, 5], `${name}: guides, and planning`);
+    await tab.check('#posts-rows input[value="costs"]');
+    assert.deepEqual(await shown(), [1, 5], `${name}: guides, and planning or costs`);
+    await tab.check('#posts-rows input[value="news"]');
+    assert.deepEqual(await shown(), [1, 2, 4, 5], `${name}: guides or news, and planning or costs`);
+    // The search row: the field and the button that sends the form side by side, as high as each other.
+    const row = await tab.$eval('#posts-rows .kn-visitor-filter-panel', (panel) => {
+      const box = (selector) => panel.querySelector(selector).getBoundingClientRect();
+      const [field, button] = [box('.kn-field-control'), box('.kn-visitor-filter-submit')];
+      return { beside: button.left >= field.right, top: Math.round(field.top - button.top), height: Math.round(field.height - button.height), shown: button.height > 0 };
+    });
+    assert.deepEqual(row, { beside: true, top: 0, height: 0, shown: true }, `${name} at ${width}: the field and its button side by side`);
+    // A search sends the query with every checked pill and what the list settles.
+    await tab.fill('#posts-2-search', 'soil');
+    const [request] = await Promise.all([tab.waitForRequest('https://fixture.test/search/**'), tab.click('#posts-rows .kn-visitor-filter-submit')]);
+    const query = new URL(request.url()).searchParams;
+    assert.deepEqual([query.get('q'), query.get('type'), query.getAll('category'), query.getAll('topic')], ['soil', 'article', ['guides', 'news'], ['planning', 'costs']], name);
+    await tab.close();
+  }
+});
+
 test('a filtered post list filters by CSS alone: no "Show", pills that widen the result, and a count that steps aside', { timeout: 120000 }, async () => {
   for (const [name, browser] of browsers) {
     const tab = await page(browser);

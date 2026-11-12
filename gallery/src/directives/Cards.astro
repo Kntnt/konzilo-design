@@ -3,7 +3,7 @@ import Section from './Section.astro';
 import Card from './Card.astro';
 import { landscape } from '../samples.js';
 import { symbols } from '../directive-samples.js';
-import { markerAttributes } from '../../../src/directives/index.js';
+import { iconHtml, markerAttributes } from '../../../src/directives/index.js';
 // :::cards in each of its forms, steps and reasons, and the three presentations of ::post-list.
 const picture = (alt: string) => ({ src: landscape, alt });
 const counts = [1, 2, 3, 4, 5, 6, 7];
@@ -32,8 +32,11 @@ const steps = [
   { markers: 'A.', surface: 'tint', items: ['We talk', 'We plan', 'We build'] },
   { markers: '(i)', surface: 'brand', items: ['We talk', 'We plan', 'We build', 'We hand over', 'We follow up'] },
 ];
-// The pills' order, the topics with the most posts first; each pill's key is its place (directives.md, `filtered`).
+// The rows' order, the category's and then the topics', each with the terms with the most posts first; each pill's key is
+// its row's place and its own (directives.md, `filtered`).
+const postCategories = ['Planning', 'Costs', 'People', 'Tools'];
 const postTopics = ['planning', 'costs', 'people', 'tools'];
+const keysOf = ([category, , topics]: (typeof posts)[number]) => [`1-${postCategories.indexOf(category) + 1}`, ...postTopics.flatMap((topic, index) => (topics as readonly string[]).includes(topic) ? [`2-${index + 1}`] : [])].join(' ');
 ---
 {([undefined, 'brand'] as const).map((ground) => <Section id={ground ? undefined : 'directive-cards'} surface={ground} heading={`52 / Cards · Three kinds${ground ? ' on brand' : ''}`} deck="A link as a whole on its plate, an open card with a number and an address, and an action card among cards without.">
   <div class="kn-card-grid kn-cards">{kinds(ground).map((card) => <Card {...card} />)}</div>
@@ -88,21 +91,31 @@ const postTopics = ['planning', 'costs', 'people', 'tools'];
     <div class="kn-featured">{posts.slice(0, 5).map(([category, title], index) => <Card ground="tint" type={index === 0 ? 'heading-3' : 'heading-5'} picture={picture(`A picture for ${title.toLowerCase()}`)} eyebrow={category} heading={title} href="#directive-article" texts={[teaser]} />)}</div>
   </div>
 </Section>
-<Section heading="54 / Post List · filtered" deck="Topic pills over the cards; check one or more to show the posts with any of them, by CSS alone.">
+<Section heading="54 / Post List · filtered" deck="A row of categories, a row of topics and a search row over the cards: check pills to show the posts with any of a row's and one of every row's, by CSS alone; a search sends the rows with it.">
   <div class="kn-post-list" data-kn-presentation="filtered">
-    <form class="kn-visitor-filters" role="search" method="get" action="">
+    <form class="kn-visitor-filters" role="search" method="get" action="#directive-posts">
+      <input type="hidden" name="type" value="field-note">
       <div class="kn-visitor-filter-panel">
-        <fieldset class="kn-visitor-filter-group"><legend>Topic</legend>
+        <fieldset class="kn-visitor-filter-group"><legend>Category</legend>
           <div class="kn-visitor-filter-toggles">
-            {postTopics.map((topic, index) => <label class="kn-pill"><input type="checkbox" name="topic" value={topic} aria-controls="directive-posts-1" data-kn-match={`1-${index + 1}`} />{topic[0].toUpperCase() + topic.slice(1)}</label>)}
+            {postCategories.map((category, index) => <label class="kn-pill"><input type="checkbox" name="category" value={category.toLowerCase()} aria-controls="directive-posts-1" data-kn-match={`1-${index + 1}`} />{category}</label>)}
           </div>
         </fieldset>
-        <button class="kn-button kn-visitor-filter-submit" type="submit" data-kn-variant="outline">Show</button>
+        <fieldset class="kn-visitor-filter-group"><legend>Topic</legend>
+          <div class="kn-visitor-filter-toggles">
+            {postTopics.map((topic, index) => <label class="kn-pill"><input type="checkbox" name="topic" value={topic} aria-controls="directive-posts-1" data-kn-match={`2-${index + 1}`} />{topic[0].toUpperCase() + topic.slice(1)}</label>)}
+          </div>
+        </fieldset>
+        <div class="kn-field kn-visitor-filter-search">
+          <label class="kn-field-label" for="directive-posts-1-search">Search</label>
+          <div class="kn-visitor-filter-input"><Fragment set:html={iconHtml('search')} /><input class="kn-field-control" id="directive-posts-1-search" name="q" type="search" /></div>
+        </div>
+        <button class="kn-button kn-visitor-filter-submit" type="submit" data-kn-variant="outline">Search</button>
       </div>
       <p class="kn-visitor-filter-count" data-kn-type="small">Showing {posts.length} field notes</p>
     </form>
     <div class="kn-card-grid kn-cards" id="directive-posts-1">
-      {posts.map(([category, title, topics]) => <Card data-kn-item="" data-kn-matches={postTopics.flatMap((topic, index) => topics.includes(topic) ? [`1-${index + 1}`] : []).join(' ')} picture={picture(`A picture for ${title.toLowerCase()}`)} eyebrow={category} heading={title} href="#directive-article" texts={[teaser]} />)}
+      {posts.map((post) => <Card data-kn-item="" data-kn-matches={keysOf(post)} picture={picture(`A picture for ${post[1].toLowerCase()}`)} eyebrow={post[0]} heading={post[1]} href="#directive-article" texts={[teaser]} />)}
     </div>
   </div>
 </Section>

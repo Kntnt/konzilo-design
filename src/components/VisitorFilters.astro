@@ -12,11 +12,13 @@ interface Props extends HTMLAttributes<'form'> {
   toggles?: { name: string; label: string; options: FieldOption[]; values?: string[] }[];
   select?: { name: string; label: string; options: FieldOption[]; value?: string };
   instant?: boolean; submitLabel?: string; countText?: string; total?: number;
+  // What the list or the page already settles, sent with a search as hidden fields, such as { type: 'article' }.
+  hidden?: Record<string, string>;
 }
 // No script (docs/spec/principles.md). With `instant`, the default, the whole list is on the page, and the pills and the
 // select filter its items at once by CSS, through the keys Content Loop's `filteredBy` gives them. Without it the site's
 // server pages the list, and the controls apply only when the form is sent, as an ordinary GET form.
-const { for: target, variant = 'filters', heading = 'Search', level = 2, suggestions = [], search, toggles = [], select, instant = true, submitLabel = 'Search', countText = '{count} of {total} results', total = 0, action = '', id = nextId('kn-visitor-filters'), class: className, ...attributes } = Astro.props;
+const { for: target, variant = 'filters', heading = 'Search', level = 2, suggestions = [], search, toggles = [], select, instant = true, submitLabel = 'Search', countText = '{count} of {total} results', total = 0, hidden = {}, action = '', id = nextId('kn-visitor-filters'), class: className, ...attributes } = Astro.props;
 const Heading = `h${level}` as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
 const filterNames = [...toggles.map(({ name }) => name), ...(select ? [select.name] : [])];
 if (new Set(filterNames).size !== filterNames.length || filterNames.some((name) => !/^[a-z][a-z0-9-]*$/.test(name) || ['q', 'page', 'constructor', 'prototype'].includes(name))) throw new TypeError('Filter names must be distinct stable keys other than q and page');
@@ -25,6 +27,7 @@ const key = (name: string, value: string) => keys.get(name)?.get(value);
 const controls = target && instant ? target : undefined;
 ---
 <form {...attributes} id={id} class:list={['kn-visitor-filters', className]} role="search" method="get" action={action} data-kn-variant={variant}>
+  {Object.entries(hidden).map(([name, value]) => <input type="hidden" name={name} value={value} />)}
   {variant === 'search' ? <div class="kn-search-box" data-kn-surface="inverse">
     <div class="kn-search-main"><Heading data-kn-type="heading-5">{heading}</Heading>
     <div class="kn-search-row"><input data-kn-surface="page" type="search" name="q" value={search?.value} placeholder={search?.label ?? 'Search the site'} aria-label={search?.label ?? 'Search the site'} /><Button type="submit">{submitLabel}</Button></div></div>

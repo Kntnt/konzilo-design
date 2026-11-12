@@ -517,7 +517,9 @@ test('the directive chapters show every directive and variant as the contract wr
   for (const presentation of ['cards', 'featured', 'filtered']) assert.ok(has(tree, `.kn-post-list[data-kn-presentation="${presentation}"]`, '.kn-card-link'), presentation);
   const filtered = one(tree, '.kn-post-list[data-kn-presentation="filtered"]');
   assert.ok(all(filtered, '[data-kn-item][data-kn-matches]').length > 4);
-  assert.equal(all(filtered, '.kn-pill input[data-kn-match]').length, 4);
+  // A row of categories and one of topics, four pills each, and a search row that sends them with what the list settles.
+  assert.deepEqual(all(filtered, 'fieldset.kn-visitor-filter-group').map((row) => all(row, '.kn-pill input[data-kn-match]').map((pill) => pill.attributes['data-kn-match'][0]).join('')), ['1111', '2222']);
+  assert.ok(one(filtered, '.kn-visitor-filter-search input[name="q"]') && one(filtered, 'form > input[type="hidden"][name="type"]'));
   // Panels: questions, tabs, choice and toc.
   const questions = one(tree, '#directive-questions');
   assert.ok(all(questions, '.kn-accordion').some((accordion) => 'data-kn-questions' in accordion.attributes && one(accordion, 'details[name][open]')));

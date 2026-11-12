@@ -3,6 +3,17 @@
   /* Each filter has a row of its own: choices on one row widen the result, and each further row narrows it. */
   .kn-visitor-filter-panel { display: grid; gap: 1.25em; padding: 1.25em; border: 1px solid var(--kn-border); border-radius: var(--kn-radius-card); }
   .kn-visitor-filter-submit { justify-self: start; }
+  /* Search is a row of its own, the last: its field, up to 30rem wide, and the button that sends the form stand side by
+     side, and the button goes under the field where the panel is too narrow for both (the assistant's choice, 2026-11-12,
+     as the search box does). Pills and a select above it span the panel. */
+  .kn-visitor-filter-panel:has(> .kn-visitor-filter-search ~ .kn-visitor-filter-submit) { grid-template-columns: minmax(0, 30rem) auto minmax(0, 1fr); column-gap: 0.625rem; container-type: inline-size; }
+  .kn-visitor-filter-panel > * { grid-column: 1 / -1; }
+  .kn-visitor-filter-panel > .kn-visitor-filter-search:has(~ .kn-visitor-filter-submit) { grid-column: 1; }
+  .kn-visitor-filter-panel > .kn-visitor-filter-search ~ .kn-visitor-filter-submit { grid-column: 2; align-self: end; block-size: 2.75rem; }
+  .kn-visitor-filter-panel > .kn-visitor-filter-search:has(~ .kn-visitor-filter-submit) .kn-field-control { block-size: 2.75rem; padding-block: 0; }
+  @container (width <= 15rem) {
+    .kn-visitor-filter-panel > :is(.kn-visitor-filter-search:has(~ .kn-visitor-filter-submit), .kn-visitor-filter-search ~ .kn-visitor-filter-submit) { grid-column: 1 / -1; }
+  }
   .kn-visitor-filter-input { position: relative; }
   .kn-visitor-filter-input > .kn-icon { position: absolute; inset-inline-start: 0.75em; inset-block-start: 50%; translate: 0 -50%; pointer-events: none; color: var(--kn-text-muted); }
   .kn-visitor-filter-input > input { padding-inline-start: 2.25em; }

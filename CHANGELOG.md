@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- A filtered list of posts can have rows: a row of pills for each taxonomy it filters by, such as the category and the topics, and a search row, in a fixed order. Choices on one row widen the result and each further row narrows it. A search goes to the site's search page with the pills checked and what the list and the page settle, so a search after a choice searches within it. A row the page itself settles, such as the category on a category's page, is left out. `docs/spec/directives.md` has the HTML.
+- Visitor Filters takes `hidden`, fields a search sends with it, and draws the search field with its button beside it.
+
 ### Changed
 
 - Eyebrows and the other labels are a step larger by default: three steps below body text, where they were five, 14px on a phone and 13px on a wide screen with the default scale. A design that has saved its own step keeps it.

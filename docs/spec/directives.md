@@ -657,29 +657,48 @@ A teaser card is a link as a whole, so it takes `surfaceOf('link-card', ground)`
 
 ### `presentation="filtered"`
 
-**Markup.** Visitor Filters over the cards: one group of topic pills, each a post's topic, the topics with the most posts first, at most 24, and each card an item with the keys of its topics. A pill is a checkbox in its label; its key, `data-kn-match`, is `1-` and its place among the pills, from 1, and a card's `data-kn-matches` holds the keys of its topics, separated by spaces. `filterKeys` and `itemMatches` in `components/visitor-filters.js` give both at build.
+**Rows** (***decided* by the owner, 2026-11-12**, replacing one row of topics): Visitor Filters over the cards, in rows. Each taxonomy the list filters by is a row of pills, and search is a row of its own. Choices on one row are joined by OR and the rows by AND, so a topic chosen and then a search searches only within that topic. Which rows a list has is chosen where it is placed, from the taxonomies its posts' type takes and search; a site writes them in a fixed order, whatever order they were chosen in: the category, then the topics, then any other taxonomy of the site's in the order its description declares them, and search last (the order is the assistant's, from the owner's own example: Category, Topics, Search). A list placed with no rows chosen has one row of topics, as before. **A row the page settles is left out:** on a category's page the list has no category row, and on a topic's page no topic row; an author's page keeps them all, since authors are no row.
+
+**Markup.**
 
 ```html
 <div class="kn-post-list" data-kn-presentation="filtered">
-  <form class="kn-visitor-filters" role="search" method="get" action="">
+  <form class="kn-visitor-filters" role="search" method="get" action="/search/">
+    <input type="hidden" name="type" value="article">                     <!-- with a search row: what the list settles -->
+    <input type="hidden" name="category" value="guides">                  <!-- and what the page settles, on a term's page -->
     <div class="kn-visitor-filter-panel">
-      <fieldset class="kn-visitor-filter-group"><legend>Topic</legend>
+      <fieldset class="kn-visitor-filter-group"><legend>Category</legend>
         <div class="kn-visitor-filter-toggles">
-          <label class="kn-pill"><input type="checkbox" name="topic" value="planning" aria-controls="posts-1" data-kn-match="1-1">Planning</label>
-          <label class="kn-pill"><input type="checkbox" name="topic" value="costs" aria-controls="posts-1" data-kn-match="1-2">Costs</label>
+          <label class="kn-pill"><input type="checkbox" name="category" value="guides" aria-controls="posts-1" data-kn-match="1-1">Guides</label>
+          <label class="kn-pill"><input type="checkbox" name="category" value="news" aria-controls="posts-1" data-kn-match="1-2">News</label>
         </div>
       </fieldset>
-      <button class="kn-button kn-visitor-filter-submit" type="submit" data-kn-variant="outline">Show</button>
+      <fieldset class="kn-visitor-filter-group"><legend>Topic</legend>
+        <div class="kn-visitor-filter-toggles">
+          <label class="kn-pill"><input type="checkbox" name="topic" value="planning" aria-controls="posts-1" data-kn-match="2-1">Planning</label>
+          <label class="kn-pill"><input type="checkbox" name="topic" value="costs" aria-controls="posts-1" data-kn-match="2-2">Costs</label>
+        </div>
+      </fieldset>
+      <div class="kn-field kn-visitor-filter-search">
+        <label class="kn-field-label" for="posts-1-search">Search</label>
+        <div class="kn-visitor-filter-input"><svg class="kn-icon" …>…</svg><input class="kn-field-control" id="posts-1-search" name="q" type="search"></div>
+      </div>
+      <button class="kn-button kn-visitor-filter-submit" type="submit" data-kn-variant="outline">Search</button>
     </div>
     <p class="kn-visitor-filter-count" data-kn-type="small">Showing 12 articles</p>
   </form>
   <div class="kn-card-grid kn-cards" id="posts-1">
-    <article class="kn-card" data-kn-surface="raised" data-kn-item data-kn-matches="1-1 1-2">…</article>
+    <article class="kn-card" data-kn-surface="raised" data-kn-item data-kn-matches="1-1 2-1 2-2">…</article>
   </div>
 </div>
 ```
 
-**Read from content.** *(CSS)* The pills over the cards, as Visitor Filters draws them. **Behaviour.** None: no script (the owner's principle, 2026-11-10). With no pill checked every card shows; checking pills shows the cards with any of their topics, by CSS alone (components.md, Visitor Filters). A form of pills alone needs no "Show", so the stylesheet hides it. The count is the server's: it stands while no pill differs from how the page was sent and steps aside once one does, since nothing can count again; it is no live region. A screen-reader user hears each pill's state as a checkbox, and the cards that do not match are `display: none`, so they leave the accessibility tree and reading on finds only the matching cards. The columns stay those of all the cards while pills narrow them (cards.css). **Component.** Post List, with Visitor Filters. ***Superseded* (the assistant's choice, 2026-11-10):** the pills were submit buttons with `aria-pressed`, the form carried `data-kn-for`, `data-kn-page-size` and `data-kn-count-text`, the count was a polite live region, a pagination place followed it, and each card carried `data-kn-filter` as JSON, all for `visitor-filters.js`, which is gone; the Konzilo core writes the markup above instead.
+- **A row of pills** is a `fieldset.kn-visitor-filter-group` with its `legend`, the taxonomy's name in the site's language, and a `.kn-visitor-filter-toggles` of pills. A pill is a checkbox in its label, `name` the taxonomy's query key (`category`, `topic`, or a site's own taxonomy's) and `value` the term's slug, with `aria-controls` the list's `id`. Its terms are those of the posts listed, the terms with the most posts first, at most 24.
+- **Keys.** A pill's `data-kn-match` is `g-v`: `g` the row's place among the rows of pills, from 1, and `v` the term's place in its row, from 1. A card's `data-kn-matches` holds the keys of all its terms, in every row, separated by spaces. `filterKeys`, `filterGroups` and `itemMatches` in `components/visitor-filters.js` give both at build, with the rows of pills as `toggles` in their order. The stylesheet knows 3 rows of 24 (`FILTER_GROUPS`, `FILTER_VALUES`).
+- **The search row** is Visitor Filters' search field, `.kn-field.kn-visitor-filter-search`, its `label` the site's word for search and its field `name="q"`, last among the rows, followed by the submit button with the site's word for search. Without a search row the button is the same with the site's word for show, and the stylesheet hides it.
+- **Where a search goes.** With a search row, the form's `action` is the site's search page, and the form begins with a hidden field for what the list itself settles, the posts' type as `type`, and on a term's page one for the term the page settles, by its taxonomy's query key, so that a search from a category's page searches only within that category. Without a search row the form has no hidden field and `action=""`.
+
+**Read from content.** *(CSS)* The rows over the cards, as Visitor Filters draws them: each row of pills spans the panel, the field of the search row stands up to 30rem wide with the button beside it, as high as the field, and under it in a panel of 15rem or less. **Behaviour.** No script (the owner's principle, 2026-11-10). With no pill checked every card shows; pills checked on one row show the cards with any of them, and pills on another row narrow those to the cards with one of that row's too, by CSS alone (components.md, Visitor Filters). A search sends the form, as an ordinary GET form, to the site's search page with `q`, every checked pill and the hidden fields, which answers with the posts that match all of them; nothing filters the cards as the visitor types, which would need a script. A form of pills alone needs no "Show", so the stylesheet hides it. The count is the server's: it stands while no pill differs from how the page was sent and steps aside once one does, since nothing can count again; it is no live region. A screen-reader user hears each pill's state as a checkbox, and the cards that do not match are `display: none`, so they leave the accessibility tree and reading on finds only the matching cards. The columns stay those of all the cards while pills narrow them (cards.css). **Component.** Post List, with Visitor Filters, which takes `hidden` for the hidden fields. ***Superseded* (the assistant's choice, 2026-11-10):** the pills were submit buttons with `aria-pressed`, the form carried `data-kn-for`, `data-kn-page-size` and `data-kn-count-text`, the count was a polite live region, a pagination place followed it, and each card carried `data-kn-filter` as JSON, all for `visitor-filters.js`, which is gone; the Konzilo core writes the markup above instead.
 
 ## `::form`
 
@@ -783,6 +802,7 @@ An article's page is laid out by its fields, not by directives: an opening, the 
 
 - **A deck in a section with a choice.** The directive list says a paragraph is no deck where it leads to a form. The rule above also takes a choice, as the directive list's own build does, since a choice's answers usually hold forms; a section with a choice is centred as a page's end either way.
 - **The trail's last level.** The core hides it by a setting per type, and the design has `current`. The core's setting wins where it hides the level; elsewhere the design's holds.
-- **"All topics".** Visitor Filters shows every card when no pill is checked and lets several be checked, so `filtered` has no "All topics" pill and checking two topics shows the cards of either.
-- **More than 24 topics.** The stylesheet knows 24 keys a group (components.md, Visitor Filters), so `filtered` shows the 24 topics with the most posts. Whether a site with more wants another way in is open.
+- **"All topics".** Visitor Filters shows every card when no pill is checked and lets several be checked, so `filtered` has no "All" pill in any row, and checking two topics shows the cards of either.
+- **Which rows a filtered list has** (2026-11-12). The directive list has no attribute for them yet. The design proposes `filters`, the rows' names apart by spaces, from `category`, `topics`, a site's own taxonomy's name and `search`, such as `filters="category topics search"`; the core decides the name, and a site writes the rows in the fixed order above whatever order they are given in.
+- **More than 24 terms.** The stylesheet knows 24 keys a row (components.md, Visitor Filters), so a row of `filtered` shows the 24 terms with the most posts. Whether a site with more wants another way in is open.
 - **Captions in cards.** A picture in a card, a hero, a section's media or a logo band has no caption; the core's intake does not refuse one yet.
