@@ -3,12 +3,12 @@
 import test, { after, before } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync, spawnSync } from 'node:child_process';
-import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, realpathSync, statSync } from 'node:fs';
 import { mkdir, mkdtemp, readFile, readdir, rm, stat, utimes, writeFile } from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import { tmpdir } from 'node:os';
 import { extname, join, relative } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { parse, walk } from 'css-tree';
 import { DESIGN_FORMAT, checkFormat, defaultInputs, derive, resolve, validateDesignFile, withFormat } from '../src/generator/index.js';
 import { coreCss, emitCss } from '../src/css/index.js';
@@ -525,7 +525,7 @@ test('the tarball holds what a site needs, and no fonts, tool or presentation, a
   await mkdir(folder);
   const [{ filename, size, files }] = JSON.parse(execFileSync('npm', ['pack', '--json', '--silent', '--pack-destination', folder], { cwd: repo, encoding: 'utf8' }));
   const held = files.map(({ path }) => path);
-  for (const needed of ['package.json', 'README.md', 'bin/konzilo-design.js', 'src/cli/backup.js', 'schema/design-file.schema.json', 'src/konzilo/index.js', 'src/konzilo/fonts.js', 'src/konzilo/logos.js', 'src/konzilo/konzilo.css', 'src/konzilo/body-styles.css', 'src/fonts/catalog.js', 'src/generator/index.js', 'src/css/index.js', 'src/components/index.css', 'src/components/Footer.astro', 'src/components/design-props.js', 'docs/spec/konzilo.md', 'docs/spec/names.md']) {
+  for (const needed of ['package.json', 'README.md', 'bin/konzilo-design.js', 'src/cli/backup.js', 'schema/design-file.schema.json', 'src/konzilo/index.js', 'src/konzilo/fonts.js', 'src/konzilo/logos.js', 'src/konzilo/konzilo.css', 'src/konzilo/body-styles.css', 'src/fonts/catalog.js', 'src/generator/index.js', 'src/css/index.js', 'src/components/index.css', 'src/components/Footer.astro', 'src/components/design-props.js', 'docs/spec/konzilo.md', 'docs/spec/names.md', 'src/directives/components.json', 'src/directives/checks.js', 'src/directives/render/render.js', 'src/directives/astro/Section.astro', 'src/presentations/Filtered.astro', 'src/presentations/teasers.js', 'src/konzilo/directives.js']) {
     assert.ok(held.includes(needed), `the tarball lacks ${needed}`);
   }
   const unwanted = held.filter((path) => /\.(woff2?|ttf|otf|zip|webp)$/.test(path) || /^(tool|presentation|gallery|test|examples)\//.test(path) || path === 'DESIGN.md' || /\.design(\.bak)?\.json$/.test(path) || path === 'src/fonts/fonts.css');
@@ -591,6 +591,13 @@ test('the tarball holds what a site needs, and no fonts, tool or presentation, a
   assert.ok(existsSync(require.resolve('@kntnt/konzilo-design/components/Footer.astro')));
   assert.ok(existsSync(require.resolve('@kntnt/konzilo-design/components.css')));
   assert.throws(() => require.resolve('@kntnt/konzilo-design/fonts.css'), /not exported|ERR_PACKAGE_PATH_NOT_EXPORTED/);
+  // The directives' declarations, checks, components and presentations resolve there as a site names them.
+  const { DESIGN_COMPONENT_CHECKS, DESIGN_COMPONENTS_FROM, DESIGN_DIRECTIVES, DESIGN_PRESENTATIONS } = await import(pathToFileURL(require.resolve('@kntnt/konzilo-design/konzilo')).href);
+  for (const specifier of [DESIGN_COMPONENTS_FROM, DESIGN_COMPONENT_CHECKS, ...Object.values(DESIGN_DIRECTIVES), ...Object.values(DESIGN_PRESENTATIONS)]) {
+    assert.ok(require.resolve(specifier).startsWith(realpathSync(installed)), specifier);
+  }
+  const { componentProblems } = await import(pathToFileURL(require.resolve(DESIGN_COMPONENT_CHECKS)).href);
+  assert.deepEqual(componentProblems('section', {}, []), []);
 });
 
 test('the typefaces a design uses are read from its resolved stacks, so fromDesign needs no font in the package', () => {

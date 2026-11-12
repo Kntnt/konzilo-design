@@ -15,6 +15,8 @@ import { shippedIn } from '../fonts/catalog.js';
 import { FONT_CSS, filesOf } from './fonts.js';
 import { DEFAULT_FOLDER, logoFiles } from './logos.js';
 
+export { DESIGN_COMPONENT_CHECKS, DESIGN_COMPONENTS_FROM, DESIGN_DIRECTIVES, DESIGN_PRESENTATIONS } from './directives.js';
+
 const PACKAGE = '@kntnt/konzilo-design';
 const pathOf = (place) => (place instanceof URL ? fileURLToPath(place) : String(place));
 // The integration reads `./` or `../` from the site's root as a file there, and anything else as a package's stylesheet.
