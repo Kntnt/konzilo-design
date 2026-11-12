@@ -5,6 +5,8 @@ import { brandParts, footerBrand } from './brand.js';
 import { footerFromDesign } from './footer.js';
 
 export { footerBrand, footerFromDesign };
+// The page's context, which the design's directive components and presentations read (docs/spec/konzilo.md).
+export { designPage } from '../directives/render/context.js';
 
 const LOGO_TYPES = { 'image/svg+xml': 'svg', 'image/png': 'png', 'image/webp': 'webp', 'image/jpeg': 'jpg', 'image/gif': 'gif', 'image/avif': 'avif' };
 

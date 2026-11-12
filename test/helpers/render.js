@@ -4,9 +4,11 @@ import { rolldown } from 'rolldown';
 import { transform } from '@astrojs/compiler-rs';
 import { experimental_AstroContainer } from 'astro/container';
 const compiled = new Map();
-export async function render(name, props = {}, slots) {
+// `name` is a component of src/components, or a path below src with its folder, such as directives/astro/Hero; `locals`
+// is the page's Astro.locals.
+export async function render(name, props = {}, slots, { locals } = {}) {
   if (!compiled.has(name)) {
-    const entry = new URL(`../../src/components/${name}.astro`, import.meta.url);
+    const entry = new URL(name.includes('/') ? `../../src/${name}.astro` : `../../src/components/${name}.astro`, import.meta.url);
     const bundle = await rolldown({ input: 'virtual:component', logLevel: 'silent', treeshake: { manualPureFunctions: ['$$createMetadata'] }, plugins: [{
       name: 'interaction-components',
       resolveId(id, importer) {
@@ -29,7 +31,7 @@ export async function render(name, props = {}, slots) {
     compiled.set(name, (await import(`data:text/javascript;base64,${Buffer.from(code).toString('base64')}`)).default);
   }
   const container = await experimental_AstroContainer.create();
-  return container.renderToString(compiled.get(name), { props, slots });
+  return container.renderToString(compiled.get(name), { props, slots, ...(locals ? { locals } : {}) });
 }
 export const textOf = (node) => node?.value ?? node?.children?.map(textOf).join('') ?? '';
 

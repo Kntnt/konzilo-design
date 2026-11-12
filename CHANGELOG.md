@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- The directives as components a Konzilo site registers: `hero`, `section`, `aside`, `list`, `cards`, `accordion`, `tabs`, `toc`, `choice`, `eyebrow`, `small` and `breadcrumbs`, each an Astro component under `@kntnt/konzilo-design/directives/`. Each draws the HTML of `docs/spec/directives.md` from the tree the core hands it, keeping the marks of the core's live preview, the core's images with their sizes and the headings' ids, and gives each plate the Surface its ground asks for. A section draws its pictures and its head, and takes its body from what the core drew of it, post lists, forms and pictures with their lightbox among it, where an eyebrow before a heading joins it in a heading group. A card's picture and eyebrow may stand before its heading or after it. A list of contact addresses may break after an @ and before a full stop.
+- `designPage(Astro, { design, title, breadcrumbs })` in `design-props`, which a site's page template calls before its body, so that a hero shows the post's title, a trail its levels, and every part the site's own words and ids unique on the page. A component on a page whose template did not call it says so and stops the build.
+- `components.json` beside them, their declarations as the core takes a site's components: labels, forms, bodies and attributes, each attribute with its values or pattern and its refusal in an editor's words. A hero's Surface has no default: left out, it is the design's.
+
 ## [0.6.1] – 2026-11-12
 
 ### Fixed

@@ -62,6 +62,7 @@ The export for AI and the presentation carry the icons' licences with them.
 | [Astro](https://astro.build) (`astro`), by Fred K. Schott and Astro's contributors | Builds the component gallery, and runs the Astro components on a site that uses them | MIT |
 | [CSSTree](https://github.com/csstree/csstree) (`css-tree`), by Roman Dvornov | Reads the stylesheets in the tests | MIT |
 | [Playwright](https://playwright.dev) (`playwright-core`) | Runs the browser tests in Firefox, WebKit and Chromium | Apache-2.0 |
+| [Sätteri](https://github.com/bruits/satteri) (`satteri`) | Reads Markdown in the tests as the Konzilo core reads it, into the tree a directive's component is given | MIT |
 | [Node.js](https://nodejs.org) | Runs the generator, the design tool and the commands | MIT, with parts under licences of their own |
 
 Each of these stands on many more. `THIRD-PARTY.md` names them all.

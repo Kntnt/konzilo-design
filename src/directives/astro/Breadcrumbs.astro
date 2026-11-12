@@ -1,0 +1,9 @@
+---
+// The directive `breadcrumbs` (docs/spec/directives.md): the page's trail, from the levels the page's context holds,
+// with the design's settings. A Konzilo site registers it by DESIGN_DIRECTIVES of @kntnt/konzilo-design/konzilo.
+import { contextOf } from '../render/context.js';
+import { renderDirective } from '../render/render.js';
+
+const { 'data-konzilo-block': block } = Astro.props;
+---
+<Fragment set:html={renderDirective('breadcrumbs', {}, undefined, contextOf(Astro), { block })} />

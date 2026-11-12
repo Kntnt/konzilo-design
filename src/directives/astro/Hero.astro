@@ -1,0 +1,9 @@
+---
+// The directive `hero` (docs/spec/directives.md): An opening, the page's first band, drawn from its tree with the page's context. A Konzilo
+// site registers it by DESIGN_DIRECTIVES of @kntnt/konzilo-design/konzilo.
+import { contextOf } from '../render/context.js';
+import { renderDirective } from '../render/render.js';
+
+const { content, 'data-konzilo-block': block, ...attributes } = Astro.props;
+---
+<Fragment set:html={renderDirective('hero', attributes, content, contextOf(Astro), { block })} />

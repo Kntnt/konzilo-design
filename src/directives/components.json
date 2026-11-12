@@ -1,0 +1,149 @@
+{
+  "hero": {
+    "label": "Opening",
+    "form": "container",
+    "body": "blocks",
+    "attributes": {
+      "surface": {
+        "type": "string",
+        "label": "Surface",
+        "values": ["page", "raised", "inverse", "tint", "brand", "accent"],
+        "refusal": "An opening stands on page, raised, inverse, tint, brand or accent, not on {value}. Leave it out for the design's own."
+      }
+    }
+  },
+  "section": {
+    "label": "Section",
+    "form": "container",
+    "body": "blocks",
+    "attributes": {
+      "surface": {
+        "type": "string",
+        "label": "Surface",
+        "values": ["page", "raised", "inverse", "tint", "brand", "accent"],
+        "default": "page",
+        "refusal": "A section stands on page, raised, inverse, tint, brand or accent, not on {value}."
+      },
+      "anchor": {
+        "type": "string",
+        "label": "Anchor",
+        "pattern": "^[a-z0-9_-]+$",
+        "refusal": "A section's anchor is lowercase letters a to z, digits, hyphens and underscores, so {value} cannot be one."
+      }
+    }
+  },
+  "aside": {
+    "label": "Fact box",
+    "form": "container",
+    "body": "blocks",
+    "attributes": {
+      "anchor": {
+        "type": "string",
+        "label": "Anchor",
+        "pattern": "^[a-z0-9_-]+$",
+        "refusal": "A fact box's anchor is lowercase letters a to z, digits, hyphens and underscores, so {value} cannot be one."
+      }
+    }
+  },
+  "list": {
+    "label": "Styled list",
+    "form": "container",
+    "body": "blocks",
+    "attributes": {
+      "type": {
+        "type": "string",
+        "label": "Type",
+        "values": ["description", "values", "logos", "actions"],
+        "refusal": "A styled list is description, values, logos or actions, not {value}. Leave the type out for a list with the design's bullets or markers."
+      },
+      "markers": {
+        "type": "string",
+        "label": "Markers",
+        "pattern": "^(?:[v✓x✗]|\\((?:aa|[1aAiIα])(?:\\.(?:aa|[1aAiIα]))*\\)|(?:aa|[1aAiIα])(?:\\.(?:aa|[1aAiIα]))*[.)]?)?(?:/(?:[v✓x✗]|\\((?:aa|[1aAiIα])(?:\\.(?:aa|[1aAiIα]))*\\)|(?:aa|[1aAiIα])(?:\\.(?:aa|[1aAiIα]))*[.)]?)?)*$",
+        "refusal": "Markers are one value for each level, the levels apart by /: v or ✓ for a check, x or ✗ for a cross, or a numbering, 1, a, A, i, I, α or aa, with a full stop or a bracket after it, or in brackets, and dotted below the first level, such as 1./a) or 1/1.1. {value} is none of those."
+      }
+    }
+  },
+  "cards": {
+    "label": "Cards",
+    "form": "container",
+    "body": "blocks",
+    "attributes": {
+      "type": {
+        "type": "string",
+        "label": "Type",
+        "values": ["navigation"],
+        "refusal": "Cards are of the type navigation, or of none, not {value}."
+      },
+      "markers": {
+        "type": "string",
+        "label": "Markers",
+        "pattern": "^(?:[v✓x✗]|\\((?:aa|[1aAiIα])\\)|(?:aa|[1aAiIα])[.)]?)$",
+        "refusal": "Cards take one marker: v or ✓ for a check, x or ✗ for a cross, or a numbering, 1, a, A, i, I, α or aa, with a full stop or a bracket after it, or in brackets. {value} is none of those."
+      },
+      "picture": {
+        "type": "string",
+        "label": "Picture",
+        "values": ["behind"],
+        "refusal": "A card's picture stands behind its text, or above it where this is left out, not {value}."
+      },
+      "symbol": {
+        "type": "string",
+        "label": "Symbol",
+        "values": ["item", "heading"],
+        "refusal": "A card's symbol stands by the card, item, or in its heading, heading, not {value}."
+      }
+    }
+  },
+  "accordion": {
+    "label": "Accordion",
+    "form": "container",
+    "body": "blocks",
+    "attributes": {
+      "first": {
+        "type": "string",
+        "label": "First item",
+        "values": ["open", "closed"],
+        "default": "closed",
+        "refusal": "An accordion's first item is open or closed, not {value}."
+      },
+      "expand": {
+        "type": "string",
+        "label": "Open at once",
+        "values": ["one", "many"],
+        "default": "many",
+        "refusal": "An accordion opens one item at a time or many, not {value}."
+      }
+    }
+  },
+  "tabs": {
+    "label": "Tabs",
+    "form": "container",
+    "body": "blocks"
+  },
+  "toc": {
+    "label": "Table of contents",
+    "form": "container",
+    "body": "blocks"
+  },
+  "choice": {
+    "label": "Choice",
+    "form": "container",
+    "body": "blocks"
+  },
+  "eyebrow": {
+    "label": "Eyebrow",
+    "form": "leaf",
+    "body": "text"
+  },
+  "small": {
+    "label": "Small print",
+    "form": "leaf",
+    "body": "text"
+  },
+  "breadcrumbs": {
+    "label": "Breadcrumbs",
+    "form": "leaf",
+    "body": "none"
+  }
+}

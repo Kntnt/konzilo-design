@@ -1,0 +1,9 @@
+---
+// The directive `toc` (docs/spec/directives.md): A table of contents with its following menu, drawn from its tree with the page's context. A Konzilo
+// site registers it by DESIGN_DIRECTIVES of @kntnt/konzilo-design/konzilo.
+import { contextOf } from '../render/context.js';
+import { renderDirective } from '../render/render.js';
+
+const { content, 'data-konzilo-block': block, ...attributes } = Astro.props;
+---
+<Fragment set:html={renderDirective('toc', attributes, content, contextOf(Astro), { block })} />

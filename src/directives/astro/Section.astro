@@ -1,0 +1,11 @@
+---
+// The directive `section` (docs/spec/directives.md): a band, its pictures and head drawn from its tree with the page's
+// context, and its body taken from its slot, as the Konzilo core drew it there, post lists and forms among it. A Konzilo
+// site registers it by DESIGN_DIRECTIVES of @kntnt/konzilo-design/konzilo.
+import { contextOf } from '../render/context.js';
+import { renderDirective } from '../render/render.js';
+
+const { content, 'data-konzilo-block': block, ...attributes } = Astro.props;
+const body = (await Astro.slots.render('default')) ?? '';
+---
+<Fragment set:html={renderDirective('section', attributes, content, contextOf(Astro), { body, block })} />
