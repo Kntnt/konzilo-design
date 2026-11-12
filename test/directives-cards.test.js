@@ -269,7 +269,7 @@ test('a filtered list in rows: pills OR on a row and AND between rows, and a sea
     await tab.fill('#posts-2-search', 'soil');
     const [request] = await Promise.all([tab.waitForRequest('https://fixture.test/search/**'), tab.click('#posts-rows .kn-visitor-filter-submit')]);
     const query = new URL(request.url()).searchParams;
-    assert.deepEqual([query.get('q'), query.get('type'), query.getAll('category'), query.getAll('topic')], ['soil', 'article', ['guides', 'news'], ['planning', 'costs']], name);
+    assert.deepEqual([query.get('q'), query.get('type'), query.getAll('category'), query.getAll('topics')], ['soil', 'article', ['guides', 'news'], ['planning', 'costs']], name);
     await tab.close();
   }
 });

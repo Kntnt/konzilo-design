@@ -12,6 +12,8 @@ Records the HTML contract between the directive list Konzilo defines and this de
 - **Behaviour belongs to this design system:** tab switching, choosing an answer, one-open accordions, marking the section being read in the following menu, and a head that stays as the page scrolls. It is HTML and CSS, with no script wherever that is possible (principles.md, owner, 2026-11-10): tabs, a choice and an accordion are native `<details>`, and a head or an Aside Block stays by `position: sticky`.
 - **The owner's decisions on look**, made with the directive list, bind this design system and override earlier specs where they clash (Superseded, below).
 
+***Drawn by this package*** (the Konzilo core's ADR 0068, settled by the owner, 2026-11-10; built 2026-11-12): on a Konzilo site this package draws the HTML below itself, by components a site registers (The components, below), and the site writes it by hand only where it renders a directive without them, as a site outside Konzilo does.
+
 ***The assistant's choices, 2026-11-10:*** the following menu "In this article" marks the section being read, and fact boxes (`aside`) stand in the reading column, not in the Aside.
 
 ***Dropped* by the owner's principle (principles.md, HTML and CSS, not JavaScript), 2026-11-10:** marking the section being read was the assistant's choice and needed a script, so no script marks it now. Where a browser has CSS scroll markers it marks the section itself, as a progressive enhancement that costs nothing elsewhere (`toc`, below). Visitor Filters, for `filtered`, runs no script either (the assistant's choice, 2026-11-10).
@@ -65,8 +67,8 @@ Records the HTML contract between the directive list Konzilo defines and this de
 - **Ids** are unique on the page. The site makes them, and the form `<directive>-<n>` used below is only an example. An anchor made from a heading is the id the reader gave the heading, or one made from its text the same way.
 - **Body text.** `.kn-body-text` stands on a section's body, an accordion's content, as Accordion writes it, and an article's flow. Everything inside it, tabs, answers and cards included, takes Body Text's typography, and a part with a class of its own takes the part's look.
 - **`data-kn-type`** is given below for every part that is a single text element. The values are this file's, and this file may change them.
-- **No inline style and no `<style>`.** A site's content security policy may refuse them, and every reading here is in the stylesheet.
-- **No image in a stylesheet.** The core's policy refuses an image at a `data:` address (konzilo.md, Logos), so a mark the design draws is either drawn with borders and gradients, as `konzilo.css` draws a select's arrow, or written as an Icon with `iconHtml`.
+- **No inline style and no `<style>`.** A site's content security policy may refuse them, and every reading here is in the stylesheet. *The one exception* (the assistant's choice, 2026-11-12): a picture behind a hero is the band's `--kn-picture-image`, written in its `style` as Band writes it, since a picture is content and no stylesheet can know it; the core's policy allows it, as it allows every distinct `style` attribute of a release by its hash (its `content-security-policy.js`), and the picture is an image of the site's own, which `img-src 'self'` allows.
+- **No image in a stylesheet.** A site may turn the core's `data:` images off (`security.dataImages`, the core's ADR 0051), so a mark the design draws is either drawn with borders and gradients, as `konzilo.css` draws a select's arrow, or written as an Icon with `iconHtml`. *(Corrected 2026-11-12: this said the core's policy refuses an image at a `data:` address; it allows one unless the site says otherwise.)*
 - **The page's own Surface writes nothing.** `surface="page"`, the default of a section, writes no `data-kn-surface`, so the page's fill shows and adjoining bands join as page.md says.
 
 ### Superseded
@@ -75,9 +77,86 @@ Records the HTML contract between the directive list Konzilo defines and this de
 - **Accordion's FAQ** (components.md, Owner's component review): an accordion whose headings are all questions is drawn as questions and answers, a look of its own read from `data-kn-questions` (owner, 2026-11-10, via the directive list). `faq` on the Astro component still adds only structured data.
 - **Table of Contents' "no scroll-spy is added"** (components.md, Navigation): the following menu marked the section being read by a script (the assistant's choice, 2026-11-10, above), dropped the same day by the owner's principle. It stands again: no script is added, and only a browser's own scroll markers mark the section (`toc`). A Table of Contents without `data-kn-follow` stays as it was.
 
+## The components
+
+***Built* 2026-11-12** (the core's ADR 0060 and ADR 0068; the assistant's technical choices, recorded here): a Konzilo site draws the directives with this package's components, declares them with its declarations and checks them with its checks, and the core keeps its own plain rendering for a site without them.
+
+| What | Where | What it is |
+|---|---|---|
+| The components | `@kntnt/konzilo-design/directives/<Name>.astro`: `Hero`, `Section`, `Aside`, `List`, `Cards`, `Accordion`, `Tabs`, `Toc`, `Choice`, `Eyebrow`, `Small`, `Breadcrumbs` | One for each directive, registered by its name in `konzilo({ directives })` (`DESIGN_DIRECTIVES`, konzilo.md). Each takes its attributes, its tree and, in the live preview, its mark, and writes the HTML of this file. |
+| The renderer | `src/directives/render/` | Plain JavaScript with no dependency, which the components call: a directive's tree to its HTML, and a writer of the core's tree as HTML. |
+| The declarations | `@kntnt/konzilo-design/directives/components.json` | What a site description takes by `componentsFrom`: each directive's label, form, body and attributes, below. |
+| The checks | `@kntnt/konzilo-design/directives/checks` | `componentProblems(name, attributes, blocks)`, which the core's intake runs for a site that names it by `componentChecks`: what each directive may hold, below. |
+| The presentations | `@kntnt/konzilo-design/presentations/<Name>.astro`: `Cards`, `Featured`, `Filtered` | The post list's presentations `cards`, `featured` and `filtered` (`::post-list`, below), registered by name in `konzilo({ presentations })` (`DESIGN_PRESENTATIONS`). |
+| The page's context | `designPage(Astro, { design, title, breadcrumbs, … })` in `design-props` | What a component is not handed by the core, which a page's template gives once, before its body (konzilo.md, How a site takes its design). |
+
+**What the core hands a component** (the core's `docs/site-design.md`): its attributes as props, typed, those not written at their defaults; its body as a tree, a hast root in `content`, the package's own directives within it as the core's plain renderings holding their bodies; its body again as its default slot, rendered by the core, the site's components within it drawn by their components, post lists by their presentations, forms by the site's form and pictures with their lightbox; and in the live preview its block's mark, `data-konzilo-block`. Nothing else: no post, no title, no trail and no design, which the page's context holds.
+
+**Drawn from the tree.** Every component but the section draws all it holds from its tree: its items, the package's directives within them, each with the Surface of the plate or band around it (`surfaceOf(part, ground)`), and every other block as the core wrote it. What the core wrote stays:
+
+- **Marks.** Every element drawn for a block of the tree keeps the block's `data-konzilo-block`, a figure's on its image, and a list's on the list it becomes, its items' on its items. A level with no element of its own, such as a card, a tab's panel or a styled list around its Markdown list, is found by its first block, as the core's contract has it; a tab's and an answer's heading keep theirs on their `<summary>`. A component's own mark stands on each element at its top that holds none of its own, such as a series' grid beside its intro, so the core writes no wrapper (its ADR 0068).
+- **Pictures.** An image keeps the core's `src`, `srcset`, `sizes`, `width`, `height`, `loading` and `decoding`; a hero's pictures load at once. A picture in a part drawn from its tree has no lightbox, which the core adds only to what it draws.
+- **Ids.** A heading keeps the id the core gave it, which is unique in the body. A section's or a fact box's own `anchor` wins over its heading's id of the same name, which is left out. An id the design writes, such as a tabs' `name` and label, is `<directive>-<n>`, counted on the page.
+
+**What a component draws in a section's body finds its ground by CSS.** A part the core draws in a section's slot is drawn without knowing the band around it, since Astro renders a page's components in parallel and nothing passes from one to another, so it takes `surfaceOf(part)` as on the page; the plates find the band's Surface by CSS (plates.md).
+
+**A section takes its body from its slot** (the report's decision D1, settled by the orchestrator, 2026-11-12): it draws its media and its head from the tree, and its body is what its slot holds after them, as the core drew it there, so a post list, a form, a site's own component and a picture with its lightbox stand in a section's body as on any page. In the live preview the body begins at the first element marked as its first block, or as a block within that block; elsewhere the section counts the elements the core drew for its media and head: a figure and the lightbox's dialog after it for each picture, one element for an eyebrow, the heading and the deck, and what the package's own list draws for the actions. In the body, eyebrows right before a heading join it in a heading group, as `::eyebrow` says.
+
+**What only the core can draw** (until the core's issue #55): a part drawn from its tree cannot draw a post list, a form or a site's own component, which the tree holds only as the core's empty plain renderings. The checks refuse them anywhere but directly in a section, and the renderer leaves the plain rendering and warns where one stands all the same. *A choice's answer that holds a form*, which `choice` below promises, waits for it.
+
+**A page's context.** A component reads it from `Astro.locals`, where `designPage()` keeps it; a component on a page whose template did not call it stops the build, naming the call. It holds the design file, the post's title, which a hero shows as the page's H1, the trail's levels as the core's `breadcrumbs(entry, Astro.url)` gives them, the site's search page and its types for a filtered list, the site's own words over the package's British English, and the page's count of ids. Astro renders sibling components in parallel, so nothing passes from one component to another but that count.
+
+### The declarations
+
+`components.json` is their source, and a test holds this table to it. A site takes them whole and gives them labels of its own by language under `componentLabels`. Each attribute that takes listed values or a pattern refuses another value in an editor's words. A type's `elements` names a directive by its element.
+
+| Directive | Element | Form | Label | Attributes |
+|---|---|---|---|---|
+| `hero` | `hero` | container, blocks | Opening | `surface`: `page`, `raised`, `inverse`, `tint`, `brand` or `accent`, no default, the design's own where it is left out |
+| `section` | `section` | container, blocks | Section | `surface`: `page`, `raised`, `inverse`, `tint`, `brand` or `accent`, default `page`; `anchor`: the section's id, of lowercase letters `a` to `z`, digits, hyphens and underscores |
+| `aside` | `aside` | container, blocks | Fact box | `anchor`: the fact box's id, as a section's |
+| `list` | `list-directive` | container, blocks | Styled list | `type`: `description`, `values`, `logos` or `actions`, no default, a list with the design's bullets or markers where it is left out; `markers`: a value for each level, apart by `/` (List, below) |
+| `cards` | `cards` | container, blocks | Cards | `type`: `navigation`, no default; `markers`: one value, a sign or a numbering; `picture`: `behind`, no default; `symbol`: `item` or `heading`, no default |
+| `accordion` | `accordion` | container, blocks | Accordion | `first`: `open` or `closed`, default `closed`; `expand`: `one` or `many`, default `many` |
+| `tabs` | `tabs` | container, blocks | Tabs | none |
+| `toc` | `toc` | container, blocks | Table of contents | none |
+| `choice` | `choice` | container, blocks | Choice | none |
+| `eyebrow` | `eyebrow` | leaf, text | Eyebrow | none |
+| `small` | `small` | leaf, text | Small print | none |
+| `breadcrumbs` | `breadcrumbs` | leaf, none | Breadcrumbs | none |
+
+**Each is a directive of its own** (the assistant's choice, 2026-11-12): the list and its five forms, cards, accordion, tabs, a table of contents and a choice, as this file and the gallery have always named them, not `:::list{form="…"}`, which the core's ADR 0068, "the list … and its five forms", could also be read as. Only the list takes the element of another name, since the core's Markdown list is `list`.
+
+**The Markdown an editor writes** is given under each directive below. What holds for all: a container's fence is one colon longer than the longest inside it; an item of a form begins at its heading, `###` in a section with a heading and `##` in one without; a picture is a paragraph of its own, since pictures on adjacent lines are a gallery.
+
+### The checks
+
+`componentProblems()` says, in an editor's words, what would otherwise be dropped or drawn wrong, and the core's intake refuses the post for each reason. It reads the core's body model (the core's `src/format/body.js`), and passes a component of a site's own.
+
+| Directive | Refused |
+|---|---|
+| `hero` | A heading, which the post's title stands in for; a gallery; more than two pictures, a logo and its own |
+| `list` | Anything but exactly one Markdown list; with `type="actions"`, an item that is more than one link, in bold or not, and a second main action; with `values` or `description`, an item without its value or description under it; with `logos`, an item that is no picture or linked picture |
+| `cards`, `accordion`, `tabs`, `toc`, `choice` | No heading to begin an item at; a choice of one answer; in a table of contents, more than one paragraph before the first heading |
+| `cards` | With `type="navigation"`, a heading that is not one link, or another link in the card; with `symbol`, a card without a picture; a numbering in `markers` with `picture` or `symbol` |
+| every directive but `section` | A post list, a form or a site's own component, until the core can draw one inside a part drawn from its tree |
+
 ## The body of a page
 
-A post's body is a sequence of bands (page.md, point 3): heroes and sections. A run of blocks at the top level outside a hero or a section is written as a section without a Surface, as if the editor had put `:::section` around it, so a list of logos alone at the top stands in a band of its own.
+A post's body is a sequence of bands (page.md, point 3): heroes and sections. A run of blocks at the top level outside a hero or a section is written as a section without a Surface, as if the editor had put `:::section` around it, so a list of logos alone at the top stands in a band of its own. The page's template writes that section around such a run; the package's components draw only the directives, so a component at the top of a body stands as it is until the template wraps it (a part of the templates' work order to come).
+
+**A page without a hero** (components.md, The H1, the trail and the hero's heading) has its trail and its title as the H1 in a section's head of its own, first, which the page's template writes:
+
+```html
+<section class="kn-band kn-section">
+  <div class="kn-band-content">
+    <header class="kn-section-head">
+      <nav class="kn-breadcrumbs" …>…</nav>
+      <hgroup class="kn-heading-group"><h1 class="kn-heading-group-heading" data-kn-type="heading-1">The post's title</h1></hgroup>
+    </header>
+  </div>
+</section>
+```
 
 No directive has a runtime (2026-11-10): a site's layout imports no script for a body. `section.js`, `tabs.js`, `choice.js` and `reading-area.js` are gone, replaced by native `<details>` and CSS, as each part below says; a site that still calls their setups must drop those imports.
 
@@ -114,7 +193,37 @@ No directive has a runtime (2026-11-10): a site's layout imports no script for a
 - The heading is the post's title, as `h1`, or, where the design has `inputs.hero.h1` set to `below`, a paragraph in a `<div class="kn-heading-group">`, as Heading Group writes it (components.md, The H1, the trail and the hero's heading). `data-kn-type` is the design's `inputs.hero.type`.
 - The first paragraph is the deck. The last picture is the hero's picture, in `.kn-hero-media`; a picture before the text is a logo, `.kn-hero-logo`, first after the trail, at its own proportions, at most 4rem high and 16rem wide, as a section's badges are at most 4rem high and 8rem wide (the assistant's choice, 2026-11-10). ***Decided* by the owner (2026-11-11):** 4rem is a largest height, not a set one, so a small raster logo is never drawn past its own size and blurred; an SVG, whose `src` ends in `.svg` or which is an SVG data address, is drawn 4rem high, since one with only a `viewBox` has no size of its own. Everything else follows the heading group in the order written.
 - Where the design's `inputs.hero.picture` is `none` and the hero holds a picture, it stands at `end`, Hero's default side, since content the editor chose is never dropped.
-- `surface` takes `page` (no attribute), `raised` (the default), `inverse`, `tint`, `brand` or `accent`.
+- `surface` takes `page` (no attribute), `raised`, `inverse`, `tint`, `brand` or `accent`. Left out, the hero stands on the design's own, `inputs.hero.surface`, as `resolved.hero.surface` holds it, which `none` leaves without a Surface. *(Changed 2026-11-12, the assistant's choice: the directive's default was `raised`, which overrode the design's choice on every page; with no default, a page departs from the design only where its editor writes a Surface.)*
+- The page's title comes from the page's context, since a hero's body holds no heading: the post's title is its H1 (the core's content format: a body's headings are at levels 2 to 6). A hero whose page gives no title stops the build. Where the design puts the H1 below the hero, the next section's heading is the H1, which needs the page's template to know the next band, a part of the templates' work order to come.
+
+**Markdown.**
+
+```markdown
+::::hero{surface="tint"}
+
+::breadcrumbs
+
+![Example Gardens](../media/logo.svg)
+
+::eyebrow[A guide]
+
+Start small, and let the beds widen year by year.
+
+:::list{type="actions"}
+
+- **[Get started](/start/)**
+- [Read more](/more/)
+
+:::
+
+::small[Free for the first month.]
+
+![Raised beds in the spring](../media/beds.webp)
+
+::::
+```
+
+The trail first, where the page has one; a picture before the text is the logo; eyebrows; the first paragraph is the deck; actions and small print in the order written; the last picture is the hero's.
 
 **Read from content.** *(CSS)* Fine print right after the actions is a note under them. A hero without a picture has no `.kn-hero-media`, and its text takes the content width as Hero's choices say.
 
@@ -153,6 +262,46 @@ No directive has a runtime (2026-11-10): a site's layout imports no script for a
 3. **The deck** is the paragraph right after the heading. It is no deck where nothing but paragraphs follow the heading, or where a form or a choice stands among the section's own blocks, not nested in another part. A deck longer than `DECK_LINE` carries `data-kn-deck="long"`.
 4. **The body** is everything else, in the order written: other paragraphs, lists, forms, series, accordions, fine print. A form stands directly in the body, as the core writes it, so that a selector can find it.
 
+**Markdown.**
+
+```markdown
+:::::section{surface="tint" anchor="plans"}
+
+![A shed with tools](../media/shed.webp)
+
+![An award for our sheds](../media/award.svg)
+
+::eyebrow[Tools]
+
+## Everything in one shed
+
+The tools, the seeds and the soil, delivered at once.
+
+:::list{type="actions"}
+
+- **[See what is in it](/plans/)**
+
+:::
+
+Each shed holds what a garden of its size needs.
+
+::::cards
+
+### Small
+
+For a balcony.
+
+### Large
+
+For an acre.
+
+::::
+
+:::::
+```
+
+The section's pictures first, each a paragraph of its own: the first is its picture, the others its badges. Then any eyebrows, the `##` heading, the deck and the actions; everything after them is its body.
+
 **Space in the body** *(the assistant's choice, 2026-11-10; the directive list is silent)*: a part with a class of its own stands a column gap from what is next to it, whatever space it gives itself in other flows, so a description list, a value list and actions are spaced as cards are. A label written as a list's intro, `<p data-kn-type="label">`, stands at the component gap over its part, as the labels of Logos and of cards that lead on do. A heading group in the body, as a panel's eyebrow and heading, is spaced as a heading: room above it and a little under it, close to what it heads. Fine print stands at the component gap after a form or a choice, as their terms.
 
 **Read from content.** *(CSS, with the deck fact.)* The stylesheet reads the six rules of the directive list from the groups, the first that matches deciding. `C` below is `.kn-section > .kn-band-content`, and a series is `:is(.kn-cards, .kn-cards-nav, .kn-timeline, .kn-reasons, .kn-post-list)`: cards that lead on stand in their `<nav>`, so the nav stands for them in the body. *(Corrected 2026-11-10: the list lacked `.kn-cards-nav`, which `section.css` and `cards.css` already read.)*
@@ -186,7 +335,24 @@ On a narrow window everything beside stands above and below in document order. R
 </aside>
 ```
 
-**Read from content.** *(CSS)* Its eyebrow is a plain label, its heading small and a list in it in small type, with the design's bullets. In an article, a fact box with an `id` is a stop in the following menu, its heading the stop's name.
+**Markdown.**
+
+```markdown
+:::aside{anchor="in-short"}
+
+::eyebrow[In short]
+
+### Plant in spring
+
+- Water early.
+- Mulch the beds.
+
+:::
+```
+
+Its first heading is its heading, at any level; the eyebrow is its label.
+
+**Read from content.** *(CSS)* Its eyebrow is a plain label, its heading small and a list in it in small type, with the design's bullets. In an article, a fact box with an `id` is a stop in the following menu, its heading the stop's name. In a `toc`'s flow it is no stop, its anchor or not: the menu lists the items' headings, and the fact box's heading, inside it, begins no item (the assistant's choice, 2026-11-12).
 
 **Behaviour.** None of its own; where the browser marks the section being read (`toc`), it marks a fact box as a crosshead.
 
@@ -215,6 +381,17 @@ Each `:::list` holds one Markdown list. The intro and outro paragraphs stand bef
 - **A numbering** on a numbered level: `data-kn-numbering`, from the value's last part: `1` `decimal`, `a` `lower-latin`, `A` `upper-latin`, `i` `lower-roman`, `I` `upper-roman`, `α` `lower-greek`, `aa` `double-latin`. `data-kn-punctuation` is `period` for a trailing `.`, `parenthesis` for a trailing `)` and `brackets` for `(…)`, and absent for none. A dotted value, such as `1.1` or `A.1`, below the first level, adds `data-kn-dotted`: the number of the item above stands before the level's own, with a full stop between.
 - **A level without a value of its own** takes the nearest level above of its kind, a numbering for a numbered level and a sign for bullets, so `1/1.1` numbers a third level 2.1.1. A value of the other kind gives the level none, and an empty value gives it none of its own.
 
+**Markdown.**
+
+```markdown
+:::list{markers="1./a)"}
+
+1. Dig the bed
+   1. A spade's depth
+
+:::
+```
+
 **Read from content.** *(CSS)* `lower-latin`, `upper-latin` and `lower-greek` double after the last letter: y, z, aa, bb. `double-latin` counts aa, bb, …, zz, aaa. A list without `markers` has the design's bullets, in a card, a text block and a fact box too. A check or a cross is drawn before each item, without an image.
 
 **Behaviour.** None.
@@ -236,6 +413,19 @@ Each `:::list` holds one Markdown list. The intro and outro paragraphs stand bef
 </dl>
 ```
 
+**Markdown.** Each item is a term, and its sub-items its descriptions:
+
+```markdown
+:::list{type="description"}
+
+Words we use
+
+- A bed
+  - A plot of soil raised above the path.
+
+:::
+```
+
 **Read from content.** *(CSS)* The reader looks for the term, so it stands beside its descriptions, and above them on a narrow window. It looks like a heading but is none, since HTML allows no heading in a `<dt>`.
 
 **Behaviour.** None. **Component.** New: Description List.
@@ -253,7 +443,20 @@ Each `:::list` holds one Markdown list. The intro and outro paragraphs stand bef
 </dl>
 ```
 
-A value may be a link, such as `tel:`, kept as written.
+A value may be a link, such as `tel:`, kept as written. An address alone in a value, a `mailto:` link whose words are the address, may break after its `@` and before each full stop, `<wbr>`, as in a card (the assistant's choice, 2026-11-12, since a long address in a narrow column broke anywhere).
+
+**Markdown.** Each item is a label, and its one sub-item the value:
+
+```markdown
+:::list{type="values"}
+
+- Opening hours
+  - 8–17
+- Write to us
+  - [hello@gardens.example](mailto:hello@gardens.example)
+
+:::
+```
 
 **Read from content.** *(CSS)* The value is what the reader looks for, so it stands out; the pairs stand side by side where they fit.
 
@@ -271,6 +474,19 @@ A value may be a link, such as `tel:`, kept as written.
     <li><a href="…"><img src="…" alt="Another name"></a></li>
   </ul>
 </div>
+```
+
+**Markdown.**
+
+```markdown
+:::list{type="logos"}
+
+Trusted by
+
+- ![Example Seeds](../media/seeds.svg)
+- [![Example Tools](../media/tools.svg)](https://tools.example/)
+
+:::
 ```
 
 **Read from content.** *(CSS)* The logos stand in a band under their label (owner, 2026-11-10). At the top level, the list stands in a section of its own (The body of a page). A logo is almost twice as high on a wide screen as it was, 4.5rem, and 2.5rem in the narrowest window, between them following the window as space does, at most four times as wide as high (the owner's wish, 2026-11-12; the measures are the assistant's). A section that holds nothing but a logos list stands as far from the band before it as from the band after it (the owner, 2026-11-12): beside a band of its own colour it takes the band space on that side, where a run of bands would leave only its smaller space, `:is(X + L)` and `L:has(+ X)` for each Surface X, since a strip of logos under its small label does not read as a section's start; after a Hero of its colour, which keeps its end space, it adds none of its own.
@@ -291,6 +507,18 @@ A value may be a link, such as `tel:`, kept as written.
 
 - `data-kn-main` marks the bold link; at most one has it.
 - A link `serviceOf` knows carries `data-kn-service`, its icon from `iconHtml(icon)` and its text in `.kn-action-label`.
+
+**Markdown.** The main action is the link in bold, the strong around the link:
+
+```markdown
+:::list{type="actions"}
+
+- **[Get started](/start/)**
+- [Read more](/more/)
+- [LinkedIn](https://www.linkedin.com/company/example)
+
+:::
+```
 
 **Read from content.** *(CSS)*
 
@@ -345,7 +573,33 @@ A value may be a link, such as `tel:`, kept as written.
 - An item's picture is `.kn-card-picture`, first in the card; its eyebrows are `.kn-card-eyebrow`; its paragraphs `.kn-card-text`; lists, actions and the rest stand as written.
 - **A link as a whole:** where the heading holds a link and the card holds no other link, that link is `.kn-card-link` and the card takes `surfaceOf('link-card', ground)`.
 - **An action card:** a card that holds actions, in a series where some card holds none, takes `surfaceOf('action-card', ground)`.
-- **A number or an address:** a paragraph whose only content is one link, for which `contactOf(href, text)` gives a kind, carries it on the link as `data-kn-contact`.
+- **A number or an address:** a paragraph whose only content is one link, for which `contactOf(href, text)` gives a kind, carries it on the link as `data-kn-contact`; an address may break after its `@` and before each full stop, `<wbr>`.
+
+**Markdown.**
+
+```markdown
+::::cards
+
+Our plans
+
+### [A balcony](/plans/balcony/)
+
+![Pots on a balcony](../media/balcony.webp)
+
+::eyebrow[Small]
+
+Pots and a trough.
+
+### An office
+
+12 Example Street
+
+[+44 20 7946 0000](tel:+442079460000)
+
+::::
+```
+
+A card begins at its heading, and what stands before the first heading is the intro. **A card's picture and eyebrows are its own written right after its heading or right before it** (settled by the orchestrator, 2026-11-12): an editor may write them in the order the page shows them. A run of pictures and eyebrows at the end of one card, right before the next heading, is the next card's, unless it is all the card before it holds, or the next card has a picture or an eyebrow of its own after its heading. A heading that is a link, where the card holds no other link, makes the card a link as a whole.
 
 **Read from content.** *(CSS, with the contact fact and the Surfaces above.)*
 
@@ -370,6 +624,20 @@ A value may be a link, such as `tel:`, kept as written.
     <p>…</p>
   </li>
 </ol>
+```
+
+**Markdown.**
+
+```markdown
+:::cards{markers="1."}
+
+### We talk
+
+Over coffee, about your garden.
+
+### We plant
+
+:::
 ```
 
 **Read from content.** *(CSS)* The number stands as written, `markers="1"` 1, 2, 3 and `markers="A."` A., B., C.; the number of steps sets the columns as for cards.
@@ -414,6 +682,20 @@ With pictures, the series stays cards, `<div class="kn-card-grid kn-cards" data-
 
 Without an intro the `<nav>` has no label and no `aria-labelledby`.
 
+**Markdown.**
+
+```markdown
+:::cards{type="navigation"}
+
+Where next
+
+### [Our plans](/plans/)
+
+What each plan holds.
+
+:::
+```
+
 **Read from content.** As for cards. **Behaviour.** None. **Component.** Card's `link` variant in Card Grid.
 
 ### `picture="behind"`
@@ -447,7 +729,21 @@ Without an intro the `<nav>` has no label and no `aria-labelledby`.
 </div>
 ```
 
-The symbol is the image as the reader writes it: an `<img>`, or an inline `<svg>` where the core writes small SVG files into the page, which then follow the text's colour.
+The symbol is the image as the core writes it, an `<img>`, its alternative text empty, since it is decorative beside the heading that names the card. *(Corrected 2026-11-12: this said the core writes small SVG files inline, which then follow the text's colour; it writes every image as an `<img>`, so a symbol keeps its own colours, and the accent `cards.css` gives an inline `<svg>` reaches only one a page writes itself.)*
+
+**Markdown.** Each card's picture, before or after its heading, is its symbol:
+
+```markdown
+:::cards{symbol="item"}
+
+### Sowing
+
+![A seed](../media/seed.svg)
+
+When and how deep.
+
+:::
+```
 
 **Read from content.** *(CSS)* A symbol is shown whole, with its proportions, in a box the same on every card for its place, however large its file.
 
@@ -472,6 +768,22 @@ The symbol is the image as the reader writes it: an `<img>`, or an inline `<svg>
 - `first="open"` writes `open` on the first item; `closed` and none write it on no item.
 - `expand="one"` writes `data-kn-accordion-mode="single"` and one `name`, unique on the page, on every item; `many` and none write `multiple` and no `name`.
 - `data-kn-questions` where `allQuestions` holds for the items' headings.
+
+**Markdown.**
+
+```markdown
+:::accordion{first="open" expand="one"}
+
+### How long does it take?
+
+A season, from sowing to the first harvest.
+
+### What does it cost?
+
+Less than a dinner out.
+
+:::
+```
 
 **Read from content.** *(CSS, with the questions fact.)* An accordion of questions is drawn as questions and answers (owner, 2026-11-10).
 
@@ -503,6 +815,34 @@ The symbol is the image as the reader writes it: an `<img>`, or an inline `<svg>
 - Every `<details>` of one tabs carries the same `name`, unique on the page, so the browser keeps one open; the first carries `open`.
 - Without an intro there is no `.kn-tabs-label`, no `role` and no `aria-labelledby`.
 - Where `panelParts` gives a grouping, the panel's blocks stand in `.kn-tabs-text` and `.kn-tabs-parts`; otherwise they stand directly in `.kn-tabs-panel`, in order.
+- A tab's heading keeps its block's mark on its `<summary>`.
+
+**Markdown.** The intro is the tabs' label; a heading under a tab is written a level below the tab's, and raised:
+
+```markdown
+::::tabs
+
+Our plans
+
+### Small
+
+A balcony's worth of pots and seeds.
+
+#### What you get
+
+:::list{type="values"}
+
+- Pots
+  - Six
+
+:::
+
+### Large
+
+An acre, a shed and the tools for both.
+
+::::
+```
 
 **Read from content.** *(CSS)* Each `<details>` gives way to its summary and its `::details-content`: the summaries stand in a row that wraps, as tabs, and the open panel takes the whole line under them; in right-to-left the row runs from the right. A tab's text and its components stand in two columns (owner, 2026-11-10), where the panel has both groups; a panel of anything else keeps its order in one column. A browser without `::details-content` draws each summary over its own panel, as an accordion. In print every panel shows under its tab's name.
 
@@ -535,7 +875,27 @@ The symbol is the image as the reader writes it: an `<img>`, or an inline `<svg>
 </div>
 ```
 
-The intro is the menu's label; without one, the `<nav>` takes an `aria-label` in the site's language.
+The intro is the menu's label; without one, the `<nav>` takes an `aria-label` in the site's language, the page's context's word `contents`, "Contents" by default.
+
+**Markdown.**
+
+```markdown
+:::toc
+
+In depth
+
+### The first part
+
+Words on the first part.
+
+### The second part
+
+Words on the second part.
+
+:::
+```
+
+One paragraph before the first heading is the label, and nothing else stands there.
 
 **Read from content.** *(CSS)* As Reading Area and Table of Contents. `data-kn-side="start"` puts the menu before the text. An Aside Block that begins with a table of contents has no rule above it, so the menu's label stands level with the text (the owner, 2026-11-12).
 
@@ -563,7 +923,27 @@ The intro is the menu's label; without one, the `<nav>` takes an `aria-label` in
 
 - Every `<details>` of one choice carries the same `name`, unique on the page; none carries `open`.
 - The intro stands as written in `.kn-choice-label`; without one there is no label, no `role` and no `aria-labelledby`.
-- Every answer takes `surfaceOf('choice-answer', ground)`. A panel that holds more than a form takes `surfaceOf('choice-panel', ground)`; a panel of only a form takes none.
+- Every answer takes `surfaceOf('choice-answer', ground)`. A panel that holds more than a form takes `surfaceOf('choice-panel', ground)`; a panel of only a form takes none. *A form in an answer waits for the core* (The components, What only the core can draw): until then the checks refuse it.
+
+**Markdown.** The intro is the question; a heading under an answer is written a level below the answer's, and raised:
+
+```markdown
+:::choice
+
+Do you have a garden?
+
+### Yes
+
+#### Then plan it
+
+What to sow first, and when.
+
+### No
+
+Start with a balcony: [see the small plan](/plans/small/).
+
+:::
+```
 
 **Read from content.** *(CSS)* The answers are big buttons side by side, each at least 14rem, none chosen beforehand; an answer with more than a form stands on a plate (owner, 2026-11-10). The chosen answer is marked, and its panel takes the whole line under the answers. A browser without `::details-content` puts each panel under its own answer; in print every panel shows under its answer. A section holding a choice is read by rule 3.
 
@@ -583,11 +963,25 @@ The intro is the menu's label; without one, the `<nav>` takes an `aria-label` in
 - before a heading anywhere else, such as in a panel: the eyebrows and the heading in `<hgroup class="kn-heading-group">`, as in a head;
 - with no heading after it: `<p data-kn-type="label">`.
 
+In a section's body, which the core draws, eyebrows right before a heading join it in `<hgroup class="kn-heading-group">` all the same, the section adding the classes (The components).
+
+**Markdown.** Its words in brackets, on a line of their own, right before its heading:
+
+```markdown
+::eyebrow[A guide]
+```
+
 **Read from content.** None beyond its place. **Behaviour.** None. **Component.** Heading Group, Card and Fact Box.
 
 ### `::small`
 
 **Markup.** `<p class="kn-fine-print" data-kn-type="small">`, where it stands.
+
+**Markdown.**
+
+```markdown
+::small[Free for the first month, and you may stop whenever you like.]
+```
 
 **Read from content.** *(CSS)* Under a hero's actions it is their note; after a form, `form + .kn-fine-print`, it is the form's terms, standing with the form; after a choice, `.kn-choice + .kn-fine-print`, it is the terms of the forms its answers hold, standing with it (the assistant's choice, 2026-11-10: the contract named only a form).
 
@@ -611,6 +1005,13 @@ The intro is the menu's label; without one, the `<nav>` takes an `aria-label` in
 - The page's own level is always the last item. Where the core marks it hidden, by the setting for the page's type, the trail carries `data-kn-current="false"` and keeps the level in the markup, since the narrow form, the way up one level, counts from it. Otherwise `data-kn-current` is the design's `current`.
 - A trail with no step but the start page left to show is none: nothing is written, so a hidden current level needs three levels for a trail.
 - The trail stands directly before the page's H1 (components.md, The H1, the trail and the hero's heading): first in the hero's text, where the editor writes it.
+- Its levels are the page's context's, as the core's `breadcrumbs(entry, Astro.url)` gives them; its first step's word is the start page's name there, and its name for a screen reader the context's word `breadcrumb`.
+
+**Markdown.**
+
+```markdown
+::breadcrumbs
+```
 
 **Read from content.** *(CSS)* `data-kn-current="false"` hides the last item. **Behaviour.** None. **Component.** Breadcrumb Navigation, which must count only the steps it shows when it decides there is no trail.
 
@@ -627,7 +1028,16 @@ The core lists the posts at each build and gives them to the presentation the si
 </article>
 ```
 
-A teaser card is a link as a whole, so it takes `surfaceOf('link-card', ground)`.
+A teaser card is a link as a whole, so it takes `surfaceOf('link-card', ground)`; a post of a type with no address is an open card, its headline no link.
+
+- **Its parts** (the assistant's choices, 2026-11-12): the picture is the post's teaser image, else its featured image, made by Astro's `getImage()` at three widths with `srcset` and `sizes`; the label is the name of its category, else its eyebrow; the headline is its teaser headline, else its main headline, else its title; the text is the core's `ownSummary()`: its excerpt, else its teaser's text, else its standfirst.
+- **One root.** Each presentation writes one `div.kn-post-list`, with its mark in the live preview. The core's pager, where the list has pages of its own, stands last in it, after the cards, as the core's `Pager.astro` writes it, from the pager's data. A list that matches nothing writes the list's text in it, `<p>`, and nothing else.
+
+**Markdown,** the core's own: the presentation by its name, and its options after the list's attributes:
+
+```markdown
+::post-list{type="article" number="9" presentation="filtered" filters="category topics search"}
+```
 
 ### `presentation="cards"`
 
@@ -677,8 +1087,8 @@ A teaser card is a link as a whole, so it takes `surfaceOf('link-card', ground)`
       </fieldset>
       <fieldset class="kn-visitor-filter-group"><legend>Topic</legend>
         <div class="kn-visitor-filter-toggles">
-          <label class="kn-pill"><input type="checkbox" name="topic" value="planning" aria-controls="posts-1" data-kn-match="2-1">Planning</label>
-          <label class="kn-pill"><input type="checkbox" name="topic" value="costs" aria-controls="posts-1" data-kn-match="2-2">Costs</label>
+          <label class="kn-pill"><input type="checkbox" name="topics" value="planning" aria-controls="posts-1" data-kn-match="2-1">Planning</label>
+          <label class="kn-pill"><input type="checkbox" name="topics" value="costs" aria-controls="posts-1" data-kn-match="2-2">Costs</label>
         </div>
       </fieldset>
       <div class="kn-field kn-visitor-filter-search">
@@ -695,10 +1105,13 @@ A teaser card is a link as a whole, so it takes `surfaceOf('link-card', ground)`
 </div>
 ```
 
-- **A row of pills** is a `fieldset.kn-visitor-filter-group` with its `legend`, the taxonomy's name in the site's language, and a `.kn-visitor-filter-toggles` of pills. A pill is a checkbox in its label, `name` the taxonomy's query key (`category`, `topic`, or a site's own taxonomy's) and `value` the term's slug, with `aria-controls` the list's `id`. Its terms are those of the posts listed, the terms with the most posts first, at most 24.
+- **A row of pills** is a `fieldset.kn-visitor-filter-group` with its `legend`, the taxonomy's name in the site's language, and a `.kn-visitor-filter-toggles` of pills. A pill is a checkbox in its label, `name` the taxonomy's query key, its own name (`category`, `topics`, or a site's own taxonomy's), and `value` the term's slug, with `aria-controls` the list's `id`. Its terms are those of every post the list matches, on every page, where the core gives them (its `list`), else those of the posts on the page; the terms with the most posts first, then by name, at most 24. *(Changed 2026-11-12, with the core: a taxonomy's query key is its own name, so `topics` where the example had `topic`.)*
+- **Its legend** is the page's context's word for the taxonomy, "Category", "Topic" and "Author" by default, and another taxonomy's name.
 - **Keys.** A pill's `data-kn-match` is `g-v`: `g` the row's place among the rows of pills, from 1, and `v` the term's place in its row, from 1. A card's `data-kn-matches` holds the keys of all its terms, in every row, separated by spaces. `filterKeys`, `filterGroups` and `itemMatches` in `components/visitor-filters.js` give both at build, with the rows of pills as `toggles` in their order. The stylesheet knows 3 rows of 24 (`FILTER_GROUPS`, `FILTER_VALUES`).
 - **The search row** is Visitor Filters' search field, `.kn-field.kn-visitor-filter-search`, its `label` the site's word for search and its field `name="q"`, last among the rows, followed by the submit button with the site's word for search. Without a search row the button is the same with the site's word for show, and the stylesheet hides it.
-- **Where a search goes.** With a search row, the form's `action` is the site's search page, and the form begins with a hidden field for what the list itself settles, the posts' type as `type`, and on a term's page one for the term the page settles, by its taxonomy's query key, so that a search from a category's page searches only within that category. Without a search row the form has no hidden field and `action=""`.
+- **Where a search goes.** With a search row, the form's `action` is the site's search page, and the form begins with a hidden field for what the list itself settles, the posts' type as `type`, and on a term's page one for the term the page settles, by its taxonomy's query key, so that a search from a category's page searches only within that category. Without a search row the form has no hidden field and `action=""`. The search page and the type are the core's `list` where it gives them, else the page's context's `search` and `types`; a list that knows no search page leaves its search row out, saying so at the build.
+- **The count** is the core's total, over every page, where it gives it ("Showing 9 of 17 articles"), else the posts on the page ("Showing 9 articles"), in the page's context's words.
+- **What a page settles.** A term's page, which calls the presentation itself, gives it `settled: { taxonomy, term }`, and the core gives it the same, with `list`, from a version that has them.
 
 **Read from content.** *(CSS)* The rows over the cards, as Visitor Filters draws them: each row of pills spans the panel, the field of the search row stands up to 30rem wide with the button beside it, as high as the field, and under it in a panel of 15rem or less. **Behaviour.** No script (the owner's principle, 2026-11-10). With no pill checked every card shows; pills checked on one row show the cards with any of them, and pills on another row narrow those to the cards with one of that row's too, by CSS alone (components.md, Visitor Filters). A search sends the form, as an ordinary GET form, to the site's search page with `q`, every checked pill and the hidden fields, which answers with the posts that match all of them; nothing filters the cards as the visitor types, which would need a script. A form of pills alone needs no "Show", so the stylesheet hides it. The count is the server's: it stands while no pill differs from how the page was sent and steps aside once one does, since nothing can count again; it is no live region. A screen-reader user hears each pill's state as a checkbox, and the cards that do not match are `display: none`, so they leave the accessibility tree and reading on finds only the matching cards. The columns stay those of all the cards while pills narrow them (cards.css). **Component.** Post List, with Visitor Filters, which takes `hidden` for the hidden fields. ***Superseded* (the assistant's choice, 2026-11-10):** the pills were submit buttons with `aria-pressed`, the form carried `data-kn-for`, `data-kn-page-size` and `data-kn-count-text`, the count was a polite live region, a pagination place followed it, and each card carried `data-kn-filter` as JSON, all for `visitor-filters.js`, which is gone; the Konzilo core writes the markup above instead.
 
@@ -774,7 +1187,7 @@ An article's page is laid out by its fields, not by directives: an opening, the 
 ```
 
 - The body is a lede, the paragraphs before the first crosshead, and then sections, each a crosshead, `h2`, with what follows it. The lede is body text with no look of its own.
-- The menu's stops, in document order, are every crosshead and every fact box with an `id`; its label is in the site's language.
+- The menu's stops, in document order, are every crosshead and every fact box with an `id`; its label is in the site's language. With fewer than two stops there is no menu, and no Aside (the assistant's choice, 2026-11-12, as Table of Contents writes nothing for fewer than two headings).
 - **The interview's question:** a paragraph whose only content, apart from white space, is one `<strong>` carries the class `kn-question`.
 
 **Read from content.** *(CSS)* Crossheads and the headings under them take the article's steps, which the design sets by place, so the body's headings carry no `data-kn-type`. A question is drawn as an interview's question.
@@ -806,6 +1219,6 @@ An article's page is laid out by its fields, not by directives: an opening, the 
 - **A deck in a section with a choice.** The directive list says a paragraph is no deck where it leads to a form. The rule above also takes a choice, as the directive list's own build does, since a choice's answers usually hold forms; a section with a choice is centred as a page's end either way.
 - **The trail's last level.** The core hides it by a setting per type, and the design has `current`. The core's setting wins where it hides the level; elsewhere the design's holds.
 - **"All topics".** Visitor Filters shows every card when no pill is checked and lets several be checked, so `filtered` has no "All" pill in any row, and checking two topics shows the cards of either.
-- **Which rows a filtered list has** (2026-11-12). The directive list has no attribute for them yet. The design proposes `filters`, the rows' names apart by spaces, from `category`, `topics`, a site's own taxonomy's name and `search`, such as `filters="category topics search"`; the core decides the name, and a site writes the rows in the fixed order above whatever order they are given in.
+- **Which rows a filtered list has** (2026-11-12). *Settled 2026-11-12:* an option of the presentation, `filters`, which a site declares in its description as a string with the control `text` (konzilo.md), and the core hands the presentation as any option: the rows' names apart by spaces, from `category`, `topics`, a site's own taxonomy's name and `search`, such as `filters="category topics search"`; the presentation writes the rows in the fixed order above whatever order they are given in.
 - **More than 24 terms.** The stylesheet knows 24 keys a row (components.md, Visitor Filters), so a row of `filtered` shows the 24 terms with the most posts. Whether a site with more wants another way in is open.
 - **Captions in cards.** A picture in a card, a hero, a section's media or a logo band has no caption; the core's intake does not refuse one yet.

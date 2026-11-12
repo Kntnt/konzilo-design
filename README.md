@@ -162,8 +162,15 @@ A Konzilo site installs this package as a tarball and reads its design file at b
 konzilo({ ...await fromDesign('./design/site.design.json'), /* … */ })
 ```
 
-`docs/spec/konzilo.md` gives the full setup. `docs/spec/directives.md` gives the HTML for Konzilo's
-content directives.
+The package also draws Konzilo's content directives and its post lists: a site registers its
+components and presentations, and takes their declarations and checks into its site description.
+
+```js
+konzilo({ ...await fromDesign('./design/site.design.json'), directives: { ...DESIGN_DIRECTIVES }, presentations: { ...DESIGN_PRESENTATIONS } })
+```
+
+`docs/spec/konzilo.md` gives the full setup. `docs/spec/directives.md` gives the HTML of each
+directive, the Markdown an editor writes for it, and what its components, declarations and checks do.
 
 ## Commands
 
@@ -198,7 +205,8 @@ file whose values no longer match its inputs is refused. `design-check` tells yo
 
 ```text
 bin/            the commands
-src/            the generator, CSS, components, directive helpers, DESIGN.md writer, fonts
+src/            the generator, CSS, components, the directives' components and post-list
+                presentations with their helpers, DESIGN.md writer, fonts
 tool/           the design tool
 presentation/   the client presentation
 gallery/        the live component gallery
@@ -214,6 +222,8 @@ test/           the tests
 ```sh
 npm test               # all tests; browser tests need Playwright's browsers
 npm run gallery        # builds gallery/dist/index.html, every component in one page
+KONZILO_CORE=~/Projects/konzilo node --test test/konzilo-build.test.js
+                       # builds a site with the Konzilo core's checkout and the packed package
 ```
 
 Install the browsers once with `npx playwright-core install firefox webkit chromium`.

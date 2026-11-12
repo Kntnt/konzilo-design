@@ -78,7 +78,8 @@ async function fontStylesheet(file, folder, name, way) {
   return join(folder, FONT_CSS);
 }
 
-// The core's content security policy refuses an image at a data: address, so a design's logos are served as files.
+// A design's logos are served as files, which the core's content security policy allows whether or not a site lets it
+// take an image at a data: address (its security.dataImages).
 async function checkLogos(file, folder, name, way) {
   for (const { filename } of logoFiles(file.project)) {
     if (!await access(join(folder, filename)).then(() => true, () => false)) {

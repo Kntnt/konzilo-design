@@ -15,6 +15,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Their checks, `componentProblems(name, attributes, blocks)` in `@kntnt/konzilo-design/directives/checks`, which the core's intake runs for a site that names the module under `componentChecks`. They refuse, in an editor's words, what would otherwise be dropped or drawn wrong: a heading in an opening or more than two pictures; a styled list without exactly one Markdown list, an action that is more than a link, a second main action, a value without its value, a logo that is no picture; cards, an accordion, tabs, a table of contents or a choice without headings, a choice of one answer, a table of contents with more than its label before its first heading; cards that lead on whose heading is not their one link, symbols without pictures, steps with a picture behind or a symbol; and a post list, a form or a site's own component anywhere but directly in a section, until the core can draw them inside a part.
 - The presentations of a post list, `cards`, `featured` and `filtered`, as Astro components under `@kntnt/konzilo-design/presentations/`, for what the core hands a presentation. Each writes one root, `div.kn-post-list`, its teaser cards, the core's pager after them and the list's own words where nothing matches. A teaser's label is its category, else its eyebrow, and its words are the core's summary. A filtered list writes the rows its option `filters` names, by the taxonomies' own names as their query keys (`category`, `topics`), with the terms and the count over every page where the core gives them as `list`, and what a term's page settles, given as `settled`, as a hidden field of its search.
 - `DESIGN_DIRECTIVES` and `DESIGN_PRESENTATIONS` in `@kntnt/konzilo-design/konzilo`, the components by name in the form `konzilo({ directives, presentations })` takes them, and `DESIGN_COMPONENTS_FROM` and `DESIGN_COMPONENT_CHECKS`, the specifiers a site description names. The package exports `./directives/components.json`, `./directives/checks`, `./directives/*.astro` and `./presentations/*.astro`, and the tarball holds them; installing it still installs nothing more.
+- `docs/spec/directives.md` records the Markdown an editor writes for each directive, the components and what they keep of the core, the declarations with a table a test holds to `components.json`, and the checks; `docs/spec/konzilo.md` how a site registers them, declares them and gives the page's context.
+
+### Changed
+
+- A hero written without a Surface stands on the design's own, `inputs.hero.surface`; the directive's default was `raised`, which overrode the design on every page.
+- A filtered list's pills send each taxonomy by its own name, `topics` where `docs/spec/directives.md`'s example had `topic`, as the core reads a search.
+
+### Fixed
+
+- `docs/spec/directives.md` and `docs/spec/konzilo.md` said that the core refuses an image at a `data:` address, which it allows unless a site turns it off, and that it writes small SVG files inline, which it never does, so a card's symbol keeps its own colours.
 
 ## [0.6.1] – 2026-11-12
 

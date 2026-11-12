@@ -170,4 +170,10 @@ The names in code, the custom properties, classes, attributes and design-file ke
 
 **Series**: A run of like parts in a section's body: cards, cards that lead on, a timeline, reasons or a post list. Its number of items sets its columns. _Avoid_: grid, for a series.
 
+**Item**: A part of a form that begins at a heading: a card, an accordion's item, a tab, an entry of a table of contents or a choice's answer. Every heading at the level of the form's first begins one, and what stands before the first is the form's intro. _Avoid_: child, entry.
+
+**Page context**: What a page's template gives the directives' components and the post lists' presentations once, before its body, with `designPage(Astro, …)`: the design, the post's title, the trail's levels, the site's own words and the page's count of ids, none of which the core hands a component. _Avoid_: props, globals.
+
+**Post-list presentation**: How a post list is drawn, `cards`, `featured` or `filtered`: a component a site registers and declares in its site description, which the core hands the list's posts. _Avoid_: presentation, alone, which is the client's ZIP.
+
 **Following menu**: A table of contents that stays beside the text as the page scrolls, as an article's "In this article". It marks no section as the one being read, so it is the same in every browser. _Avoid_: scroll-spy.
