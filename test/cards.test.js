@@ -1,5 +1,6 @@
 // Cards in the browser, in every engine Playwright has here: the links of a Content Loop in body text, which keep their
-// own look as a Card's do, and an eyebrow that stands closer to its heading than the heading to what follows it.
+// own look as a Card's do, an eyebrow that stands closer to its heading than the heading to what follows it, and one
+// behaviour under the pointer for every card that leads somewhere.
 import test, { after, before } from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync } from 'node:fs';
@@ -18,16 +19,19 @@ before(async () => {
   const rows = await render('ContentLoop', { id: 'loop-rows', presentation: 'rows', images: false, items });
   const cards = await render('ContentLoop', { id: 'loop-cards', presentation: 'cards', images: false, surface: 'raised', items });
   const eyebrowed = await render('Card', { id: 'eyebrowed', surface: 'raised', eyebrow: 'Field notes', heading: 'A walk by the river', text: 'Where the path meets the water.', href: '#d' });
+  const linked = await render('Card', { id: 'linked', surface: 'raised', heading: 'Plans', text: 'Where this page leads.', href: '#e' });
+  const open = await render('Card', { id: 'open', heading: 'Plans', text: 'Where this page leads.', href: '#f' });
+  const teaser = await render('ContentLoop', { id: 'teaser', presentation: 'cards', images: false, surface: 'raised', items: [{ title: 'A walk by the river', href: '#g' }] });
   const group = await render('HeadingGroup', { id: 'grouped', eyebrow: 'Field notes', heading: 'A walk by the river', deck: 'Where the path meets the water.' });
   markup = `<section class="kn-band kn-section"><div class="kn-band-content"><div class="kn-section-body kn-body-text">
     <p>A paragraph with <a id="body-link" href="#c">a link of its own</a>.</p>${rows}${cards}</div></div></section>
-    <section class="kn-band"><div class="kn-band-content">${group}<div class="kn-card-grid" data-kn-columns="3">${eyebrowed}</div></div></section>`;
+    <section class="kn-band"><div class="kn-band-content">${group}<div class="kn-card-grid" data-kn-columns="3">${eyebrowed}${linked}${open}</div>${teaser}</div></section>`;
   for (const [name, type] of BROWSERS) browsers.push([name, await type.launch()]);
 }, { timeout: 120000 });
 after(() => Promise.all(browsers.map(([, browser]) => browser.close())));
 
-async function page(browser, inputs = defaultInputs()) {
-  const tab = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+async function page(browser, inputs = defaultInputs(), options = {}) {
+  const tab = await browser.newPage({ viewport: { width: 1440, height: 900 }, ...options });
   await tab.setContent(`<!doctype html><html lang="en"><head><style>${coreCss(derive(inputs))}${components}</style></head><body data-kn-surface="page"><div class="kn-page">${markup}</div></body></html>`);
   return tab;
 }
@@ -60,6 +64,46 @@ test('an eyebrow stands closer to its heading than the heading to what follows i
       }, [eyebrow, heading, next]);
       assert.ok(above >= 0 && above < below / 1.5, `${name}: ${scope} has ${above}px above its heading and ${below}px below it`);
     }
+    await tab.close();
+  }
+});
+
+// The shadows on, at the reference positions.
+const shadows = () => { const inputs = defaultInputs(); inputs.shadow.strength = 50; inputs.shadow.hardness = 20; return inputs; };
+async function hovered(tab, selector, part) {
+  const look = () => tab.$eval(selector, (card, part) => ({ top: card.getBoundingClientRect().top + scrollY, shadow: getComputedStyle(card).boxShadow, line: getComputedStyle(card.querySelector(part)).textDecorationLine, arrow: card.querySelector('.kn-card-arrow')?.getBoundingClientRect().left ?? null }), part);
+  await tab.mouse.move(0, 0);
+  await tab.waitForTimeout(300);
+  const before = await look();
+  await tab.hover(`${selector} ${part}`);
+  await tab.waitForTimeout(300);
+  return [before, await look()];
+}
+
+test('every card that leads somewhere underlines its heading and, where it casts a shadow, rises a hair with its shadow; its mark stays still', { timeout: 120000 }, async () => {
+  for (const [name, browser] of browsers) {
+    let tab = await page(browser, shadows());
+    for (const [selector, part] of [['#linked', '.kn-card-link'], ['#teaser .kn-content-card', '.kn-content-link']]) {
+      const [rest, under] = await hovered(tab, selector, part);
+      assert.equal(under.line, 'underline', `${name}: ${selector}'s heading is underlined`);
+      assert.equal(Math.round((rest.top - under.top) * 100) / 100, 2, `${name}: ${selector} rises 0.125rem`);
+      assert.notEqual(under.shadow, rest.shadow, `${name}: ${selector}'s shadow lifts with it`);
+      assert.equal(under.arrow === null ? null : under.arrow - (rest.arrow ?? 0), rest.arrow === null ? null : 0, `${name}: ${selector}'s mark stays still`);
+    }
+    // Without a Surface a card casts no shadow, and does not move.
+    const [open, openUnder] = await hovered(tab, '#open', '.kn-card-link');
+    assert.deepEqual([openUnder.line, openUnder.top], ['underline', open.top], `${name}: an open card is underlined and stays`);
+    await tab.close();
+    // A design without shadows: the heading is underlined, and nothing moves.
+    tab = await page(browser);
+    const [flat, flatUnder] = await hovered(tab, '#linked', '.kn-card-link');
+    assert.deepEqual([flatUnder.line, flatUnder.top], ['underline', flat.top], `${name}: no shadow, no rise`);
+    await tab.close();
+    // Reduced motion: no rise, but the shadow still lifts.
+    tab = await page(browser, shadows(), { reducedMotion: 'reduce' });
+    const [still, stillUnder] = await hovered(tab, '#linked', '.kn-card-link');
+    assert.equal(stillUnder.top, still.top, `${name}: with reduced motion the card does not move`);
+    assert.notEqual(stillUnder.shadow, still.shadow, `${name}: and its shadow lifts`);
     await tab.close();
   }
 });

@@ -6,8 +6,17 @@
   .kn-content-heading { text-wrap: balance; }
   /* Two classes, so a loop in body text keeps its own link, as a card does: `.kn-body-text a` outweighs one class. */
   :is(.kn-content-card, .kn-content-row) .kn-content-link { color: var(--kn-text); text-decoration: none; text-underline-offset: 0.18em; }
+  /* As every card that leads somewhere (card.css): the heading underlined, and where the card casts a shadow a rise of a
+     hair with its shadow lifting, except where the visitor asks for reduced motion (the owner, 2026-11-12). A row casts
+     none and does not move. */
   :is(.kn-content-card, .kn-content-row):is(:hover, :focus-within) .kn-content-link { color: var(--kn-link); text-decoration: underline; }
   .kn-content-card[data-kn-surface]:is(:hover, :focus-within) { box-shadow: var(--kn-shadow-box-lifted); }
+  @container not style(--kn-shadow-box: none) {
+    .kn-content-card[data-kn-surface]:has(.kn-content-link):is(:hover, :focus-within) { translate: 0 -0.125rem; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .kn-content-card[data-kn-surface]:has(.kn-content-link):is(:hover, :focus-within) { translate: none; }
+  }
   .kn-content-card:has(> .kn-content-picture:not([hidden])) { border-block-start: 0; padding-block-start: 0; }
   .kn-content-card[data-kn-surface]:has(> .kn-content-picture:not([hidden])) { border-block-start: var(--kn-frame-width) solid var(--kn-frame-color); padding-block-start: var(--kn-space-plate); }
   .kn-content-picture { display: block; min-inline-size: 0; min-block-size: 0; border-radius: var(--kn-radius-card); overflow: clip; background: var(--kn-background-alt); aspect-ratio: 3 / 2; }

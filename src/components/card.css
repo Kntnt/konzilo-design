@@ -1,6 +1,5 @@
 @layer kn-components {
   .kn-card {
-    --kn-card-direction: 1;
     position: relative;
     display: flex;
     flex-direction: column;
@@ -9,7 +8,7 @@
     min-inline-size: 0;
     padding-block-start: var(--kn-space-component-gap);
     border-block-start: 1px solid var(--kn-border);
-    transition: box-shadow var(--kn-duration-feedback) var(--kn-easing-standard);
+    transition: box-shadow var(--kn-duration-feedback) var(--kn-easing-standard), translate var(--kn-duration-feedback) var(--kn-easing-standard);
   }
   .kn-card > * { margin-block: 0; }
   .kn-card:has(> .kn-card-picture) { border: 0; padding-block-start: 0; }
@@ -42,12 +41,24 @@
   .kn-card-link::after { content: ""; position: absolute; inset: 0; border-radius: inherit; }
   .kn-card:has(.kn-card-link:focus-visible) { outline: 2px solid var(--kn-focus); outline-offset: 2px; }
   .kn-card-link:focus-visible { outline: none; }
+  /* A card that leads somewhere answers the pointer and the keyboard alike, wherever it stands: its heading turns `link`
+     and underlined, and where it casts a shadow it rises a hair, its shadow lifting to `box-lifted` with it (the owner,
+     2026-11-12). A card that casts none, without a Surface or in a design without shadows, does not move, since a rise
+     with no shadow under it reads as a jump rather than as depth; nor does one where the visitor asks for reduced motion,
+     whose shadow still lifts (the assistant's choices). */
   .kn-card:has(.kn-card-link):is(:hover, :focus-within) .kn-card-link { color: var(--kn-link); text-decoration: underline; }
   .kn-card[data-kn-surface]:has(.kn-card-link):is(:hover, :focus-within) { box-shadow: var(--kn-shadow-box-lifted); }
-  .kn-card-arrow { margin-block-start: auto; color: var(--kn-link); align-self: flex-start; transition: transform var(--kn-duration-feedback) var(--kn-easing-standard); }
-  .kn-card:dir(rtl) { --kn-card-direction: -1; }
+  @container not style(--kn-shadow-box: none) {
+    .kn-card[data-kn-surface]:has(.kn-card-link):is(:hover, :focus-within) { translate: 0 -0.125rem; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .kn-card[data-kn-surface]:has(.kn-card-link):is(:hover, :focus-within) { translate: none; }
+  }
+  /* The mark that a card leads on stays still under the pointer, as a word such as "Read more" would, with or without an
+     icon after it: the three are one idea and behave alike, and the card itself answers the pointer (the owner,
+     2026-11-12). */
+  .kn-card-arrow { margin-block-start: auto; color: var(--kn-link); align-self: flex-start; }
   .kn-card:dir(rtl) .kn-card-arrow { transform: scaleX(-1); }
-  .kn-card:has(.kn-card-link):is(:hover, :focus-within) .kn-card-arrow { transform: translateX(calc(0.2em * var(--kn-card-direction))) scaleX(var(--kn-card-direction)); }
   .kn-card-contacts { display: grid; gap: 0.5em; list-style: none; padding: 0; }
   .kn-card-contacts a { display: inline-flex; align-items: center; gap: 0.5em; color: var(--kn-link); text-underline-offset: 0.18em; overflow-wrap: anywhere; }
 }

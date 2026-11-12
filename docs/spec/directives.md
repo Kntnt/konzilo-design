@@ -350,7 +350,7 @@ A value may be a link, such as `tel:`, kept as written.
 **Read from content.** *(CSS, with the contact fact and the Surfaces above.)*
 
 - The number of cards sets the columns: two for two, three for one or three, and from four on three or four, whichever leaves the last row fuller, four where both do alike (owner, 2026-11-10). With `n` cards from four on that is three where `n` is 5, 6 or 9 more than a multiple of 12, and four otherwise, which child-count selectors read: `:has(> :nth-child(12n+5):last-child)` and so on.
-- A card is open, with the design's hairline, unless it is a link as a whole, which stands on its plate and lifts on hover (owner, 2026-11-10).
+- A card is open, with the design's hairline, unless it is a link as a whole, which stands on its plate and lifts on hover (owner, 2026-11-10): its heading is underlined and, where it casts a shadow, it rises a hair with its shadow following, while a mark that it leads on, such as the arrow of `type="navigation"`, stays still (owner, 2026-11-12; components.md, The owner's review of a site built with the components).
 - All card series are drawn alike (owner, 2026-11-10), post lists and "Read more" too.
 - A number or an address has the design's look for them; "Call us" stays an ordinary link.
 - Cards in an accordion make the section denser, `.kn-accordion .kn-cards`.
