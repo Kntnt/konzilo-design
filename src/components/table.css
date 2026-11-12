@@ -5,7 +5,9 @@
   :is(.kn-table, .kn-table-scroll > table, .kn-body-text table) { inline-size: 100%; border-collapse: collapse; color: var(--kn-text); font-family: var(--kn-typeface-main); font-size: var(--kn-type-small-size); line-height: var(--kn-type-small-line-height); font-weight: var(--kn-type-small-weight); letter-spacing: var(--kn-type-small-letter-spacing); }
   :is(.kn-table, .kn-table-scroll > table, .kn-body-text table) caption { caption-side: top; text-align: start; color: var(--kn-text-muted); font-size: var(--kn-type-small-size); padding-block-end: 0.75em; }
   :is(.kn-table, .kn-table-scroll > table, .kn-body-text table) :is(th, td) { padding-block: 0.75em; padding-inline: 0.9em; border-block-end: 1px solid var(--kn-border); text-align: start; vertical-align: top; }
-  :is(.kn-table, .kn-table-scroll > table, .kn-body-text table) :is(th, td) { overflow-wrap: normal; }
+  /* A column is at least 6rem wide, so that a table in a narrow column or on a phone scrolls rather than squeezing its
+     words a few letters to a line (the assistant's choice after 0.6.1). */
+  :is(.kn-table, .kn-table-scroll > table, .kn-body-text table) :is(th, td) { overflow-wrap: normal; min-inline-size: 6rem; }
   :is(.kn-table, .kn-table-scroll > table, .kn-body-text table) th { font-weight: var(--kn-type-heading-6-weight); }
   :is(.kn-table, .kn-table-scroll > table, .kn-body-text table) thead th { border-block-end-color: var(--kn-border-strong); }
   :is(.kn-table, .kn-table-scroll > table, .kn-body-text table) tfoot { border-block-start: 1px solid var(--kn-border-strong); }
@@ -18,10 +20,12 @@
   :is(table[data-kn-striped], .kn-table-scroll[data-kn-striped] > table) > tbody > tr:hover { background: var(--kn-background-hover); }
   .kn-table-scroll[data-kn-surface] { padding: var(--kn-space-component-gap); border: 0; border-radius: var(--kn-radius-card); }
   .kn-table-scroll[data-kn-surface] > table > :is(tbody, tfoot):last-child > tr:last-child > :is(th, td) { border-block-end: 0; }
-  /* Bare Markdown tables have no wrapper: their own box supplies the scrollport. */
-  .kn-body-text > table:not(.kn-table) { display: block; max-inline-size: 100%; overflow-x: auto; margin-block: 1.5em; }
+  /* A bare table in body text, at any depth, in a card, a fact box, a tab or an answer too, has no wrapper: its own box
+     is the scrollport. */
+  .kn-body-text table:not(.kn-table, .kn-table-scroll > table) { display: block; max-inline-size: 100%; overflow-x: auto; overscroll-behavior-inline: contain; }
+  .kn-body-text > table:not(.kn-table) { margin-block: 1.5em; }
   @media print {
-    .kn-table-scroll, .kn-body-text > table:not(.kn-table) { overflow: visible; }
+    .kn-table-scroll, .kn-body-text table:not(.kn-table, .kn-table-scroll > table) { overflow: visible; }
     :is(.kn-table, .kn-table-scroll > table, .kn-body-text table) thead { display: table-header-group; }
   }
 }
