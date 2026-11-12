@@ -1,0 +1,12 @@
+---
+// The presentation `featured` of a post list (docs/spec/directives.md, ::post-list): The latest post large and the next two beside it. The Konzilo core
+// hands it { posts, options, empty, pager } and, in a version that gives it, list; a term's page also settled. A site
+// registers it by DESIGN_PRESENTATIONS of @kntnt/konzilo-design/konzilo, and declares it in its site description.
+import { getEntry } from 'astro:content';
+import { getImage } from 'astro:assets';
+import { contextOf } from '../directives/render/context.js';
+import { presentationHtml } from './teasers.js';
+
+const html = await presentationHtml('featured', Astro.props, contextOf(Astro), { getEntry, getImage });
+---
+<Fragment set:html={html} />
