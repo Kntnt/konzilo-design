@@ -104,9 +104,11 @@ test('Footer.astro and the preview write one markup for the brand, in every comb
 });
 
 test('the export for AI says what the brand is and where the slogan stands', () => {
-  const words = (header) => designMd({ inputs: withDefaults(inputs(header)), project: { name: 'Name' }, resolved: derive(inputs(header)) }, 'name.design.json');
+  const logo = `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 8 8"><rect width="8" height="8"/></svg>')}`;
+  const words = (header, project = { name: 'Name', logo }) => designMd({ inputs: withDefaults(inputs(header)), project, resolved: derive(inputs(header)) }, 'name.design.json');
   assert.match(words({ identity: 'both', 'brand-axis': 'column', 'slogan-place': 'below' }), /\*\*Brand:\*\* the logo and the name, stacked[^\n]*below the name/);
   assert.match(words({}), /\*\*Brand:\*\* the logo, in the header and in the footer alike[^\n]*beside the brand/);
+  assert.match(words({}, { name: 'Name' }), /\*\*Brand:\*\* the name, since the design has no logo, in the header and in the footer alike/);
 });
 
 // The geometry, in each browser that is there. A line of words stands on its baseline up to its cap height, so

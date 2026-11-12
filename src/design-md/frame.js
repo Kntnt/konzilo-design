@@ -1,6 +1,7 @@
 // The frame in DESIGN.md: what this design chose for the header, footer, page, trail and hero, and the recipe of each,
 // written so an agent with nothing but the file can build it. The order and groups come from the components themselves.
 import { GIVING_WAY_ORDER, arrangementGroups } from '../components/header.js';
+import { brandParts } from '../components/brand.js';
 import { TRANSLUCENT_LEAST, translucentOpacity } from '../generator/surface.js';
 
 const ITEM_NAMES = { identity: 'identity', links: 'link menu', search: 'search icon', language: 'globe', menu: 'menu button', cta: 'CTA' };
@@ -62,11 +63,14 @@ const opacityWords = (surfaces, kind) => {
   const [light, dark] = ['light', 'dark'].map((mode) => Math.round((surfaces[kind][mode].translucent ?? translucentOpacity(surfaces[kind][mode])) * 100));
   return light === dark ? `${light}%` : `${light}% in light mode and ${dark}% in dark mode`;
 };
-function frameWords({ header: h, footer: f, page: p, breadcrumbs: b, hero, surfaces }) {
+function frameWords({ header: h, footer: f, page: p, breadcrumbs: b, hero, surfaces }, project) {
   const items = Object.keys(SHOWS).filter((key) => h[key]).map((key) => SHOWS[key]);
   const button = { word: 'a menu button with the word and a chevron', icon: 'a menu button with a hamburger icon', off: 'a menu button only when items give way' }[h['menu-button']];
   const attached = h.attachment === 'flow' ? 'It scrolls away with the page.' : `It sticks to the top of the window${h.autohide ? ' and slides away while scrolling down, back at the first scroll up' : ''}.${h.start === 'under' ? ' The page starts under it, and it is transparent at the top, taking its own Surface 1.5rem (24 px) down, and while its megamenu is open.' : ''}${h.translucent ? ` It is translucent: where its bar is not clear, the bar shows its Surface's background at an opacity of ${opacityWords(surfaces, h.surface)}, and the megamenu and the language list theirs at ${opacityWords(surfaces, 'page')}, each over the page blurred by 1rem (\`backdrop-filter: blur(1rem)\`), so the page under it is sensed, not read (Header, A hint of the page).` : ''}`;
-  const brand = { logo: 'the logo', name: 'the name', both: `the logo and the name, ${h['brand-axis'] === 'column' ? 'stacked from one start edge' : 'side by side'}` }[h.identity];
+  // What the brand shows is what the design has: without a logo, the name, whatever the identity asks for.
+  const show = brandParts(h.identity, !!(project.logo || project['logo-dark']));
+  const brand = show.logo && show.name ? `the logo and the name, ${h['brand-axis'] === 'column' ? 'stacked from one start edge' : 'side by side'}`
+    : show.logo ? 'the logo' : h.identity === 'name' ? 'the name' : 'the name, since the design has no logo';
   const slogan = h['slogan-place'] === 'below' ? 'below the name, or below the logo without one, from the same start edge' : 'beside the brand, after a hairline';
   const bar = groupWords(arrangementGroups(h.arrangement, { links: h['link-menu'], search: h.search, language: h.language, menu: h['menu-button'] !== 'off', cta: h.cta }));
   const rows = [h['menu-above'] && 'a row above the menu', h['menu-below'] && 'a row below it'].filter(Boolean);
@@ -164,7 +168,7 @@ function heroRecipe(r) {
 **A picture beside.** The content area is split into two equal halves with the column gap between them; the text stands in one half at the chosen place, and the picture fills the other half's height, cropped to cover, with the card radius. A bleeding picture runs to the window's edge on its side and through the hero's top and bottom space, with no radius. In a window of 40rem or less the picture stands above the text, at least 16:9 of its own width, with the column gap below it, and the hero grows when the two need more than its share.`;
 }
 
-export function frameSections(resolved) {
+export function frameSections(resolved, project = {}) {
   if (!resolved.header) return '';
-  return [frameWords(resolved), headerRecipe(resolved), footerRecipe(resolved), heroRecipe(resolved)].join('\n\n');
+  return [frameWords(resolved, project), headerRecipe(resolved), footerRecipe(resolved), heroRecipe(resolved)].join('\n\n');
 }

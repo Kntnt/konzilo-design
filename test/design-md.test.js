@@ -54,6 +54,18 @@ test('DESIGN.md carries the name, the slogan and the logo, or says plainly that 
   assert.match(none, /\*\*Slogan:\*\* none\./);
 });
 
+test('the frame\'s brand is what the design has: the name where it has no logo, whatever the header asks for', () => {
+  const brand = (header, project) => exported({ ...DESIGNS[0], header }, { name: 'Example', ...project }).body.match(/\*\*Brand:\*\* ([^,]+(?:, since the design has no logo)?)/)[1];
+  const logo = { logo: base64(SVG) };
+  assert.equal(brand({ identity: 'logo' }, logo), 'the logo');
+  assert.equal(brand({ identity: 'logo' }, { 'logo-dark': base64(SVG) }), 'the logo', 'a dark logo alone is a logo');
+  assert.equal(brand({ identity: 'both' }, logo), 'the logo and the name');
+  assert.equal(brand({ identity: 'name' }, logo), 'the name');
+  for (const identity of ['logo', 'both']) assert.equal(brand({ identity }, {}), 'the name, since the design has no logo', identity);
+  assert.equal(brand({ identity: 'name' }, {}), 'the name');
+  assert.doesNotMatch(exported(DESIGNS[0]).body, /Brand:\*\* the logo/);
+});
+
 test('DESIGN.md gives every Surface in both modes, with the picture Surfaces\' overlay and the status Surfaces', () => {
   for (const inputs of DESIGNS) {
     const { resolved: r, front, body } = exported(inputs);

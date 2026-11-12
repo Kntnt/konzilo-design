@@ -439,7 +439,7 @@ Build pages from these, and do not make new ones where one of them will do. Each
 
 ${sharedRules(resolved, assets)}
 
-${frameSections(resolved) ? `${frameSections(resolved)}\n\n` : ''}${groups}`;
+${frameSections(resolved, project) ? `${frameSections(resolved, project)}\n\n` : ''}${groups}`;
 }
 
 function rulesSection() {
