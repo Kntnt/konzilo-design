@@ -149,6 +149,36 @@ for (const [name, type] of BROWSERS) {
     before(async () => { browser = await type.launch(); });
     after(() => browser.close());
 
+    test('a gallery takes its columns from its number of pictures, as a series of cards does, its caption not counted', async () => {
+      const figure = '<figure><button class="konzilo-lightbox-open" type="button"><img alt="A field" width="1600" height="1000" src="data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'1600\' height=\'1000\'/%3E"></button></figure>';
+      const gallery = (n) => `<figure class="konzilo-gallery" data-n="${n}">${figure.repeat(n)}<figcaption>Pictures</figcaption></figure>`;
+      for (const width of [72, 44, 34, 20]) {
+        const body = `<div class="kn-body-text" style="inline-size: ${width}rem">${Array.from({ length: 13 }, (_, i) => gallery(i + 1)).join('')}</div>`;
+        const page = await pageFor(browser, { body, viewport: { width: 1280, height: 800 } });
+        const found = await page.evaluate(() => {
+          const probe = document.body.appendChild(document.createElement('div'));
+          probe.style.inlineSize = '12rem';
+          const minimum = probe.getBoundingClientRect().width;
+          return [...document.querySelectorAll('.konzilo-gallery')].map((grid) => {
+            const counts = new Map();
+            for (const item of grid.querySelectorAll(':scope > figure')) { const top = Math.round(item.getBoundingClientRect().top); counts.set(top, (counts.get(top) ?? 0) + 1); }
+            const caption = grid.querySelector(':scope > figcaption').getBoundingClientRect();
+            return { n: Number(grid.dataset.n), rows: [...counts.values()].join('+'), width: grid.clientWidth, gap: Number.parseFloat(getComputedStyle(grid).columnGap), minimum, captionWidth: caption.width };
+          });
+        });
+        for (const { n, rows, width: inner, gap, minimum, captionWidth } of found) {
+          const needs = (c) => c * minimum + (c - 1) * gap;
+          if ([4, 3, 2].some((c) => Math.abs(inner - needs(c)) < 1)) continue;
+          const fit = inner >= needs(4) ? 4 : inner >= needs(3) ? 3 : inner >= needs(2) ? 2 : 1;
+          const c = fit === 1 ? 1 : n === 2 || fit === 2 ? 2 : n === 1 || n === 3 || [5, 6, 9].includes(n % 12) ? 3 : fit === 4 ? 4 : n % 6 === 4 ? 2 : 3;
+          const expected = [...Array(Math.floor(n / c)).fill(c), ...(n % c ? [n % c] : [])].join('+');
+          assert.equal(rows, expected, `${n} pictures in ${width}rem`);
+          assert.ok(Math.abs(captionWidth - inner) < 1, 'the caption spans the gallery');
+        }
+        await close(page);
+      }
+    });
+
     for (const mode of ['light', 'dark']) {
       test(`the button that opens a lightbox takes the design's focus ring, as every other control does, ${mode}`, async () => {
         const page = await pageFor(browser, { mode });

@@ -273,8 +273,38 @@
   .konzilo-pager a[aria-current="page"] { background: var(--kn-button-background); color: var(--kn-button-text); }
   .konzilo-pager a:hover { text-decoration: underline; text-underline-offset: 0.18em; }
 
-  /* A gallery in a body: its figures, under the rules for a figure in the layer below. */
-  .konzilo-gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 12rem), 1fr)); gap: var(--kn-space-component-gap); }
+  /* A gallery in a body: its figures, under the rules for a figure in the layer below. The number of its pictures sets
+     its columns, as a series of cards' does (cards.css, the owner's rule of 2026-11-10): two for two, three for one or
+     three, and from four on three or four, whichever leaves the last row fuller; where four do not fit, the same choice
+     between three and two, then one, each column at least 12rem. Only the figures count, not the gallery's caption. The
+     tracks fill the row whether or not there are pictures for them, so a row is never left with an empty column at its
+     end where the pictures could have filled it. */
+  .konzilo-gallery {
+    --kn-series-minimum: 12rem;
+    --kn-series-gap: var(--kn-space-component-gap);
+    --kn-series-four: calc((100% - 3 * var(--kn-series-gap)) * 0.99 / 4);
+    --kn-series-three: calc((100% - 2 * var(--kn-series-gap)) * 0.99 / 3);
+    --kn-series-two: calc((100% - var(--kn-series-gap)) * 0.99 / 2);
+    --kn-series-wide: var(--kn-series-four);
+    --kn-series-middle: var(--kn-series-three);
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(max(
+      var(--kn-series-wide),
+      min(var(--kn-series-middle), (4 * var(--kn-series-minimum) + 3 * var(--kn-series-gap) - 100%) * 999),
+      min(var(--kn-series-two), (3 * var(--kn-series-minimum) + 2 * var(--kn-series-gap) - 100%) * 999),
+      min(100%, (2 * var(--kn-series-minimum) + var(--kn-series-gap) - 100%) * 999)
+    ), 1fr));
+    gap: var(--kn-series-gap);
+  }
+  .konzilo-gallery:has(> :nth-child(6n+4 of figure):nth-last-child(1 of figure)) { --kn-series-middle: var(--kn-series-two); }
+  .konzilo-gallery:has(
+    > :nth-child(1 of figure):nth-last-child(1 of figure),
+    > :nth-child(3 of figure):nth-last-child(1 of figure),
+    > :nth-child(12n+5 of figure):nth-last-child(1 of figure),
+    > :nth-child(12n+6 of figure):nth-last-child(1 of figure),
+    > :nth-child(12n+9 of figure):nth-last-child(1 of figure)
+  ) { --kn-series-wide: var(--kn-series-three); --kn-series-middle: var(--kn-series-three); }
+  .konzilo-gallery:has(> :nth-child(2 of figure):nth-last-child(1 of figure)) { --kn-series-wide: var(--kn-series-two); --kn-series-middle: var(--kn-series-two); }
   .konzilo-gallery > figure { margin: 0; }
   .konzilo-gallery > figure img { inline-size: 100%; aspect-ratio: 4 / 3; object-fit: cover; }
   .konzilo-gallery > figcaption { grid-column: 1 / -1; padding-block-start: 0; }
