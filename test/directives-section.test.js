@@ -262,6 +262,30 @@ test('a section body: parts a column gap apart, a label at the component gap ove
   }
 });
 
+test('a fact box in a section\'s body stands in the reading column, and in the middle of a centred section', { timeout: 120000 }, async () => {
+  const box = '<aside class="kn-fact-box" data-kn-surface="tint"><p class="kn-fact-box-label" data-kn-type="label">In short</p><h3 class="kn-fact-box-heading" data-kn-type="heading-5">Three things</h3><ul><li>One thing that is said at some length, so the box would take all the room it is given.</li></ul></aside>';
+  for (const [name, browser] of browsers) for (const width of [390, 1440]) {
+    const tab = await open(browser, { width });
+    const found = await tab.evaluate((html) => {
+      const probe = document.body.appendChild(document.createElement('div'));
+      probe.style.inlineSize = 'var(--kn-layout-narrow)';
+      const narrow = probe.getBoundingClientRect().width;
+      return ['#other', '#end'].map((id) => {
+        const body = document.querySelector(`${id} .kn-section-body`);
+        body.insertAdjacentHTML('beforeend', html);
+        const fact = body.lastElementChild.getBoundingClientRect(), room = body.getBoundingClientRect();
+        return { id, width: fact.width, room: room.width, narrow, start: fact.left - room.left, end: room.right - fact.right };
+      });
+    }, box);
+    for (const { id, width: inner, room, narrow, start, end } of found) {
+      assert.ok(Math.abs(inner - Math.min(room, narrow)) < 1, `${name} at ${width}: ${id}'s fact box is ${inner} wide, the reading column ${narrow}, its room ${room}`);
+      if (id === '#end') assert.ok(Math.abs(start - end) < 1, `${name} at ${width}: in the middle of a centred section`);
+      else assert.ok(start < 1, `${name} at ${width}: at the start`);
+    }
+    await tab.close();
+  }
+});
+
 test('in a centred section a form reads down one edge, its button and its terms with it', { timeout: 120000 }, async () => {
   for (const [name, browser] of browsers) {
     const tab = await open(browser);

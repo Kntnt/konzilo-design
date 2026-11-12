@@ -33,6 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A choice's answers take their columns from their number, so that none stands alone on a row: two answers or four stand two to a row, any other number three, and fewer where the window holds fewer at 14rem each. Four answers fell three and one.
 - A table on a phone or in a narrow column scrolls inside its own box rather than squeezing its words: every column is at least 6rem wide. A table in a card, a fact box, a tab or a choice's answer scrolls in its own box too, where only one at the top of body text did, and it ran out of its part.
 - A table the Konzilo core writes in a wrapper, `<div class="konzilo-table">`, takes the whole width of its column, however few its columns, and scrolls inside the wrapper where it is wider; `konzilo.css` styles the wrapper, which the core is asked to write. A bare table cannot be stretched by a stylesheet in Firefox, so it keeps its own width in every browser alike until then.
+- A fact box in a section's body stands in the reading column, as in an article, at the start or in the middle of a centred section, as the text round it does. It spanned the whole content width.
 
 
 ## [0.6.1] – 2026-11-12

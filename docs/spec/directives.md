@@ -352,7 +352,7 @@ On a narrow window everything beside stands above and below in document order. R
 
 Its first heading is its heading, at any level; the eyebrow is its label.
 
-**Read from content.** *(CSS)* Its eyebrow is a plain label, its heading small and a list in it in small type, with the design's bullets. In an article, a fact box with an `id` is a stop in the following menu, its heading the stop's name. In a `toc`'s flow it is no stop, its anchor or not: the menu lists the items' headings, and the fact box's heading, inside it, begins no item (the assistant's choice, 2026-11-12).
+**Read from content.** *(CSS)* Its eyebrow is a plain label, its heading small and a list in it in small type, with the design's bullets. In a section's body it keeps to the reading column too, at the start, or in the middle of a centred section, as the text does (fixed after 0.6.1; it spanned the content width). In an article, a fact box with an `id` is a stop in the following menu, its heading the stop's name. In a `toc`'s flow it is no stop, its anchor or not: the menu lists the items' headings, and the fact box's heading, inside it, begins no item (the assistant's choice, 2026-11-12).
 
 **Behaviour.** None of its own; where the browser marks the section being read (`toc`), it marks a fact box as a crosshead.
 
