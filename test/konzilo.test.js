@@ -461,6 +461,12 @@ test('design props take a site\'s own content, and a setting that is off leaves 
   assert.deepEqual([hero({ picture: 'behind' }).picture, hero({ picture: 'behind' }).alt], ['wide.webp', undefined]);
   assert.deepEqual([hero({ picture: 'end' }).picture, hero({ picture: 'end' }).alt, hero({ picture: 'end' }).side], ['side.webp', 'A field', 'end']);
   assert.equal(hero({ picture: 'none' }).picture, undefined);
+  // A hero the site gives no picture for, such as a page's opening without one, stands on the design's Surface.
+  const bare = (settings) => heroProps({ ...r.hero, ...settings }, {});
+  assert.deepEqual([bare({ picture: 'behind', surface: 'none' }).surface, bare({ picture: 'behind', surface: 'none' }).picture], [undefined, undefined]);
+  assert.equal(bare({ picture: 'behind', surface: 'tint' }).surface, 'tint');
+  assert.deepEqual([bare({ picture: 'end', surface: 'raised' }).surface, bare({ picture: 'end' }).picture, bare({ picture: 'end' }).side, bare({ picture: 'end' }).alt], ['raised', undefined, undefined, undefined]);
+  assert.equal(heroProps({ ...r.hero, picture: 'behind' }, { side: 'side.webp' }).surface, r.hero.surface === 'none' ? undefined : r.hero.surface, 'a side picture is no picture behind');
   assert.deepEqual(nextHeadingProps({ h1: 'below' }), { level: 1, type: 'heading-1' });
 
   const trail = [{ label: 'Services', href: '/services/' }, { label: 'Here' }];

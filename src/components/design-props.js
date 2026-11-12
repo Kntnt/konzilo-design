@@ -105,10 +105,12 @@ export function headerProps(settings, project, { menu = [], languages = [], sear
 export const nextHeadingProps = (settings) => (settings.h1 === 'below' ? { level: 1, type: 'heading-1' } : { level: 2, type: 'heading-2' });
 
 // `behind` is the picture for a hero with its text on it, `side` the one for a hero with its picture beside the text, and
-// `alt` what the side picture says. A site may give one or both, since the design decides which shows.
+// `alt` what the side picture says. A site may give one or both, since the design decides which shows. A hero the design
+// gives a picture the site has not given is a hero without one, on the design's Surface: a picture Surface with nothing on
+// it would be a dark band of the overlay's colour.
 export function heroProps(settings, { behind, side, alt = '' } = {}) {
-  const isBehind = settings.picture === 'behind';
-  const place = isBehind || settings.picture === 'none' ? undefined : settings.picture;
+  const isBehind = settings.picture === 'behind' && Boolean(behind);
+  const place = settings.picture === 'behind' || settings.picture === 'none' || !side ? undefined : settings.picture;
   return {
     level: settings.h1 === 'below' ? false : 1,
     surface: isBehind ? `picture-${settings.overlay}` : settings.surface === 'none' ? undefined : settings.surface,

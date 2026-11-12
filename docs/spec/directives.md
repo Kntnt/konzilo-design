@@ -169,7 +169,7 @@ No directive has a runtime (2026-11-10): a site's layout imports no script for a
 
 ## `hero`
 
-**Markup.** The Hero's markup, with its choices from the design (`heroProps(design.resolved.hero, …)` and `heroAttributes`), and the directive's `surface` in place of the design's `inputs.hero.surface` for this page. Where the design puts the picture behind the text and the hero has one, the picture's Surface takes the place of both, as `heroProps` says.
+**Markup.** The Hero's markup, with its choices from the design (`heroProps(design.resolved.hero, …)` and `heroAttributes`), and the directive's `surface` in place of the design's `inputs.hero.surface` for this page. Where the design puts the picture behind the text and the hero has one, the picture's Surface takes the place of both, as `heroProps` says; a hero without a picture keeps the Surface it would have beside one, since `heroProps` gives a picture Surface only to a picture it is given (fixed after 0.6.1).
 
 ```html
 <section class="kn-band kn-hero" data-kn-surface="raised" data-kn-picture="end-bleed" data-kn-height="two-thirds">
