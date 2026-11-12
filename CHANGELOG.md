@@ -30,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A hero whose design puts a picture behind its text, and to which the site gives none, stands on the design's own Surface, or on none where the design has none: `heroProps` gave it the picture's Surface, a dark band of the overlay's colour with nothing on it. A hero whose design puts its picture beside the text and gets none says nothing of a side either.
 - The ring round an image on a Konzilo site, which opens its lightbox, is the design's focus ring in colour, as on every other control. The core's stylesheet draws it in the button's own text colour, which was the browser's black on a light and a dark Surface alike.
 - A gallery in a body takes its columns from its number of pictures, as a series of cards does: two pictures stand in two columns, three in three, four in four or two and two, and so on, never leaving an empty column at a row's end where the pictures could have filled it, nor one picture alone on a last row where another count would not. It filled as many columns of at least 12rem as its width held, so two pictures in a wide column left a third empty.
+- A choice's answers take their columns from their number, so that none stands alone on a row: two answers or four stand two to a row, any other number three, and fewer where the window holds fewer at 14rem each. Four answers fell three and one.
 
 
 ## [0.6.1] – 2026-11-12

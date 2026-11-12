@@ -69,12 +69,16 @@
   .kn-choice-panel > :first-child { margin-block-start: 0; }
   .kn-choice-panel > :last-child { margin-block-end: 0; }
 
-  /* The answers side by side, each at least 14rem, and the chosen answer's panel on the whole line under them. */
+  /* The answers side by side, each at least 14rem, and the chosen answer's panel on the whole line under them. Their
+     number sets their columns, so that no answer stands alone on a row: two for two or four, three for any other number
+     (the assistant's choice after 0.6.1, which the owner may veto). Each answer takes a hair under its column's share,
+     which flex-grow gives back; where that share is under 14rem it takes 14rem, and the answers wrap as they fit. */
   @supports selector(::details-content) {
-    .kn-choice { display: flex; flex-wrap: wrap; gap: var(--kn-space-component-gap); }
+    .kn-choice { --kn-choice-columns: 3; display: flex; flex-wrap: wrap; gap: var(--kn-space-component-gap); }
+    .kn-choice:has(> :nth-child(2 of .kn-choice-item):nth-last-child(1 of .kn-choice-item), > :nth-child(4 of .kn-choice-item):nth-last-child(1 of .kn-choice-item)) { --kn-choice-columns: 2; }
     .kn-choice-label { flex-basis: 100%; margin-block-end: 0; }
     .kn-choice-item { display: contents; }
-    .kn-choice-answer { flex: 1 1 14rem; }
+    .kn-choice-answer { flex: 1 1 min(100%, max(14rem, (100% - (var(--kn-choice-columns) - 1) * var(--kn-space-component-gap)) * 0.99 / var(--kn-choice-columns))); }
     .kn-choice-item::details-content { order: 1; flex-basis: 100%; min-inline-size: 0; }
     .kn-choice-item:not([open])::details-content { display: none; }
     .kn-choice-panel { margin-block-start: 0; }

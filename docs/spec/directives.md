@@ -945,7 +945,7 @@ Start with a balcony: [see the small plan](/plans/small/).
 :::
 ```
 
-**Read from content.** *(CSS)* The answers are big buttons side by side, each at least 14rem, none chosen beforehand; an answer with more than a form stands on a plate (owner, 2026-11-10). The chosen answer is marked, and its panel takes the whole line under the answers. A browser without `::details-content` puts each panel under its own answer; in print every panel shows under its answer. A section holding a choice is read by rule 3.
+**Read from content.** *(CSS)* The answers are big buttons side by side, each at least 14rem, none chosen beforehand, their number setting their columns so that no answer stands alone on a row: two for two or four, three for any other number, fewer where the window holds fewer at 14rem (the assistant's choice after 0.6.1, which the owner may veto; four answers fell three and one); an answer with more than a form stands on a plate (owner, 2026-11-10). The chosen answer is marked, and its panel takes the whole line under the answers. A browser without `::details-content` puts each panel under its own answer; in print every panel shows under its answer. A section holding a choice is read by rule 3.
 
 **Behaviour.** The browser's own, with no script (the assistant's choice, 2026-11-10, replacing `choice.js`). A click, Enter or Space chooses an answer and shows its panel alone; a click on the chosen answer keeps it chosen, while Enter or Space on it closes it, as on any disclosure. A link to something in a panel chooses its answer, as the browser opens any `<details>` that holds a link's target. **Given up:** the runtime's scrolling of a panel that opened far below the window into view.
 

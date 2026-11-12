@@ -303,6 +303,31 @@ test('a choice has no answer open beforehand, and a click opens that answer\'s p
   }
 });
 
+test('a choice\'s answers take their columns from their number: two for two or four, three otherwise, each at least 14rem', { timeout: 120000 }, async () => {
+  for (const [name, browser] of browsers) for (const width of [1280, 768, 390]) for (const n of [2, 3, 4, 5, 6]) {
+    const { tab, close } = await open(browser, { width });
+    const found = await tab.evaluate((count) => {
+      const choice = document.querySelector('#start .kn-choice');
+      const items = [...choice.querySelectorAll(':scope > .kn-choice-item')];
+      while (items.length < count) items.push(choice.appendChild(items[items.length % 2].cloneNode(true)));
+      for (const item of items.slice(count)) item.remove();
+      const probe = choice.appendChild(document.createElement('div'));
+      probe.style.inlineSize = '14rem';
+      const minimum = probe.getBoundingClientRect().width;
+      probe.remove();
+      const counts = new Map();
+      for (const answer of choice.querySelectorAll('.kn-choice-answer')) { const top = Math.round(answer.getBoundingClientRect().top); counts.set(top, (counts.get(top) ?? 0) + 1); }
+      return { rows: [...counts.values()].join('+'), inner: choice.clientWidth, gap: Number.parseFloat(getComputedStyle(choice).columnGap), minimum, details: CSS.supports('selector(::details-content)') };
+    }, n);
+    await close();
+    if (!found.details) continue;
+    const fit = Math.max(1, Math.floor((found.inner + found.gap) / (found.minimum + found.gap)));
+    const c = Math.min(n === 2 || n === 4 ? 2 : 3, fit);
+    const expected = [...Array(Math.floor(n / c)).fill(c), ...(n % c ? [n % c] : [])].join('+');
+    assert.equal(found.rows, expected, `${n} answers in ${name} at ${width}`);
+  }
+});
+
 test('a link to something in a closed panel opens it, and a live preview\'s own opening of a <details> shows its panel alone', { timeout: 120000 }, async () => {
   for (const [name, browser] of browsers) {
     const { tab, close } = await open(browser);
