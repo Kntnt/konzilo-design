@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.0] – 2026-11-13
+
 ### Added
 
 - Page parts for a Konzilo site's templates, as Astro components under `@kntnt/konzilo-design/page-parts/`, made from what a template has in hand from the core. `PageBody` lays a body out as bands: a run of loose blocks at its top stands in a section of its own, read by a section's rules, so a heading beside its paragraphs as a legal page is written; a body that opens with no hero has the page's title and trail first; and where the design puts the page's H1 under the hero, the band after it holds the H1 and the trail. `TitleBand` is that title band, for a page that writes its own, such as the search page; `TermOpening` a term's opening on its page. `ArticleOpening` is an article's opening from its fields, the core's meta line and its topics; `ArticleBody` its body in a Reading Area with the following menu of its crossheads and fact boxes, and its interview's questions marked; `ReadMore` its related posts as teaser cards with a lone action to the rest. A type of the site's own made like an article takes them too.
