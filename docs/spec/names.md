@@ -162,7 +162,7 @@ The specs decide fluid space steps and semantic space roles, but give neither a 
 | `--space-component-gap` | Gap inside a component | plates.md §3; proposed here | Proposed here | Names the first decided space use explicitly. |
 | `--space-column-gap` | Gap between columns, including Narrow and Aside | plates.md §3; page.md, Reading Area §4; proposed here | Proposed here | Shares the same column-gap role across layouts. |
 | `--space-band` | Vertical space at a band's outer edges | plates.md §3; page.md §3; footer.md, model; proposed here | Proposed here | Uses Band, which includes main-content and footer bands. |
-| `--space-plate` | Inner space of a box whose colour differs from its ground | Components, 2026-11-01 | Assistant's technical choice | Separate use from column-gap, sharing step 6 today. |
+| `--space-plate` | Inner space of a box whose colour differs from its ground | Components, 2026-11-01 | Assistant's technical choice | Separate use from column-gap; step 4 since 2026-11-12, when the owner found it too large at step 6. |
 | `--space-band-run` | Smaller gap within a run of bands sharing a background | plates.md §3; footer.md, model; proposed here | Proposed here | Makes the adjacency relationship part of the band family. |
 
 ### Shape
@@ -424,7 +424,7 @@ Each entry keeps its problem, options and reason as the record. Decisions 1 and 
 - **Variants:** `data-kn-variant` holds mutually exclusive choices: `filled`, `outline`, `arrow` on Button; `link`, `person` on Card (the former article variant is now Content Card). Link Group uses `data-kn-direction="row|stack"`; Card Grid uses `data-kn-columns="2|3|4"`.
 - **Type:** `data-kn-type="display|heading-1|heading-2|heading-3|heading-4|heading-5|heading-6|lead|body|small|label|mono"` applies the complete type recipe, independently of the semantic heading level. Display uses the display role, heading-1 its own, the other headings the heading role, mono the monospace family, label the family the design chose for labels, and everything else the main family.
 - **Button roles:** `--kn-button-background`, `--kn-button-text`, `--kn-button-background-hover` are context roles, supplied on every Surface in both modes. Names follow family, part, state; recipes and pairs are in generator.md.
-- **Plate space:** `--kn-space-plate` is the inner space of a coloured box. It maps to step 6 today, alongside the distinct column-gap use. Components read neither numbered steps nor colour ramps.
+- **Plate space:** `--kn-space-plate` is the inner space of a coloured box. It mapped to step 6 alongside the distinct column-gap use, and maps to step 4 since the owner found the padding round a card's text too large (2026-11-12). Components read neither numbered steps nor colour ramps.
 
 The class grammar and selectors are shared by Astro and the plain HTML export.
 

@@ -196,9 +196,12 @@ The root gets no font size. Line-height is unitless. Shadows and frame retain px
 32–40, 36–48 and 40–64px. A 0–100 density slider maps linearly to a multiplier
 of 0.5–1.5; endpoints are rounded to whole pixels before fluid CSS is built.
 The five roles map to steps 3 (component-gap), 6 (column-gap), 8 (band),
-5 (band-run) and 6 (plate), and store copies of those resolved values.
-`--kn-space-plate` supplies the inner space of a coloured box. It currently
-shares a step with column-gap, but names a separate use.
+5 (band-run) and 4 (plate), and store copies of those resolved values.
+`--kn-space-plate` supplies the inner space of a coloured box. It shared step 6
+with column-gap until the owner found the padding round the text in a card too
+large while the gaps were right (2026-11-12): the gaps stay, and a plate's
+inner space is step 4, between the component gap and band-run, 25–30px at the
+default density.
 
 `radii(profile)` maps the first quarter of the corner slider linearly from 0 to
 3px for both controls and cards. Above 25, radii continue linearly to 12px for

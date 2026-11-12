@@ -18,7 +18,7 @@ test('synchronous derivation matches resolution except for its fingerprint, with
     if (!coreCss(derive(defaultInputs())).includes('--kn-button-text:')) throw new Error('Missing button role');`;
   execFileSync(process.execPath, ['--input-type=module', '-e', script], { cwd: new URL('../', import.meta.url), encoding: 'utf8' });
   const space = derive(inputs).space;
-  assert.deepEqual(space.roles.plate, space.steps[6]);
+  assert.deepEqual(space.roles.plate, space.steps[4], 'a plate\'s inner space is step 4 (owner, 2026-11-12)');
   assert.notEqual(space.roles.plate, space.roles['column-gap']);
 });
 

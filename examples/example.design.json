@@ -1778,9 +1778,9 @@
           "css": "clamp(2.1875rem, 2.0982rem + 0.4464vw, 2.5rem)"
         },
         "plate": {
-          "min": 40,
-          "max": 50,
-          "css": "clamp(2.5rem, 2.3214rem + 0.8929vw, 3.125rem)"
+          "min": 25,
+          "max": 30,
+          "css": "clamp(1.5625rem, 1.4732rem + 0.4464vw, 1.875rem)"
         }
       }
     },

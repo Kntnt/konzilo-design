@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Less padding round the text in a card and every other plate: the plate space is step 4 of the space scale, 25–30px at the default density, where it shared step 6, 40–50px, with the column gap. The gaps are unchanged. Open a design in the tool, or run `konzilo-design resolve`, to take the new value.
+
 ### Fixed
 
 - A Content Loop in body text keeps its own links, as a Card does: its titles are no longer drawn as body links, underlined in the link colour.

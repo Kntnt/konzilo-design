@@ -86,6 +86,9 @@ test('eight density-scaled steps and shared corner profile preserve comparable g
   const space = spacing(35);
   assert.deepEqual(Object.values(space.steps).map(({ min, max }) => [min, max]), [[5, 7], [9, 10], [12, 14], [17, 20], [24, 27], [27, 34], [31, 41], [34, 54]]);
   assert.deepEqual(space.roles['column-gap'], space.steps[6]);
+  // A plate's inner space is step 4, between the gap inside a component and the run of bands (owner, 2026-11-12).
+  assert.deepEqual(space.roles.plate, space.steps[4]);
+  assert.ok(space.roles['component-gap'].max < space.roles.plate.min && space.roles.plate.max < space.roles['band-run'].min);
   assert.ok(spacing(75).roles.band.min > spacing(50).roles.band.min);
   assert.deepEqual(radii(0), { control: 0, card: 0 });
   assert.deepEqual(radii(25), { control: 3, card: 3 });

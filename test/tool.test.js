@@ -74,14 +74,14 @@ test('the default design\'s resolved JSON and core CSS change only on purpose', 
   const hash = (value) => createHash('sha256').update(value).digest('hex');
   // The generator's version is the package's, which every release raises, so it is left out of the comparison.
   // Changed on purpose 2026-11-11: dark mode's own steps 850 and 975, for a blacker page and lighter plates, while light
-  // mode stays as it was (plates.md).
+  // mode stays as it was (plates.md). Changed on purpose 2026-11-12: a plate's inner space is step 4 (generator.md).
   assert.equal(
     hash(JSON.stringify({ ...r, 'generator-version': '' })),
-    '516faee850004b9cc28eea5a583f91d09dc637a0f58e2ccc0689f376035ce030',
+    '5d9a3cea47751d5e8d1ce7dffdae848e825f624e658e822a3c499deee1e7c64d',
   );
   assert.equal(
     hash(coreCss(r)),
-    '37f62e7089be3d11be49e0c6a89765446d5ea786c5068ec7c45d5a91b190b203',
+    'a40cf77a27e18536bbd6b15d18b98b3be592068b77fb86f8ad3383d70a00b8c9',
   );
 });
 
