@@ -57,7 +57,7 @@ Records the HTML contract between the directive list Konzilo defines and this de
 | `choice-answer` | `raised` | `page` |
 | `choice-panel` | `raised` | `page` |
 
-`SERVICES` today: `linkedin` (linkedin.com), `facebook` (facebook.com), `instagram` (instagram.com), `youtube` (youtube.com, youtu.be) and `x` (x.com, twitter.com), each matching its host and the host's subdomains. Their icons are `linkedin`, `facebook`, `instagram`, `youtube` and `brand-x` in `icons.js`; `instagram` and `brand-x` are to be added from Tabler, whose licence is already beside the icons.
+`SERVICES` today: `linkedin` (linkedin.com), `facebook` (facebook.com), `instagram` (instagram.com), `youtube` (youtube.com, youtu.be) and `x` (x.com, twitter.com), each matching its host and the host's subdomains. Their icons are `linkedin`, `facebook`, `instagram`, `youtube` and `brand-x` in `src/components/icons.js`, `instagram` and `brand-x` from Tabler, whose licence is beside the icons.
 
 ### Rules for every directive
 

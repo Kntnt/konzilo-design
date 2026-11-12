@@ -19,7 +19,7 @@ Nothing in this repository imports `@kntnt/konzilo`, and a test holds that. The 
 - **Format version.** A design file carries a required top-level integer, `"format": 1`, raised only when the file's shape breaks.
 - **Works without a design file.** A site without one never calls `fromDesign`, and has the core's own defaults.
 - **The public site, not the editor.** The design styles the public site. It does not style Sveltia's interface.
-- **A tarball in the site's repository, with the fonts copied separately.** The owner reckoned on about 1 MB for a version upgrade. The tarball measures 0.14 MB, and the fonts a design uses, about 0.3 MB a file, change only when the design does.
+- **A tarball in the site's repository, with the fonts copied separately.** The owner reckoned on about 1 MB for a version upgrade. The tarball measured 0.29 MB at 0.8.0, the directives' and page parts' components among it, and the fonts a design uses, about 0.3 MB a file, change only when the design does. A test holds the tarball under 2 MB.
 
 ## Who owns what
 

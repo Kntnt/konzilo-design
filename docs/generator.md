@@ -79,7 +79,7 @@ what it changed there. CSS goes to stdout unless an output path is supplied. Che
 validates the format, the file, the fingerprint and the Surface contrast check. Fonts copies the typefaces the design uses, and logos writes its logos as files, for a Konzilo site's repository (docs/spec/konzilo.md). Errors go to stderr with a nonzero exit status.
 
 `tool <file> [--port N] [--no-open]` opens the local editor on 127.0.0.1, on the named file or a new design created there, and returns at once; the editor stops by itself when its last window has been closed for 30 seconds. `tool --status` and `tool --stop [<file>]` list and stop the editors running (`tool/README.md`).
-A missing file starts with Mona Sans and is created on first save. `presentation <file>
+A missing file starts as a new design, with Mona Sans, and is written at once, as the tool starts. `presentation <file>
 [-o out.zip]` generates a ZIP holding one self-contained, browsable HTML presentation.
 The default output is `<stem>-presentation-<YYYY-MM-DD>.zip` beside the input.
 It needs no browser at runtime.
@@ -94,6 +94,12 @@ as optional `resolved.typefaces.heading-1` and `resolved.heading-1-color`.
 Absent inputs leave the prior resolved serialization and emitted CSS byte-identical.
 No component rule changes.
 
+Optional `project.name` and `project.slogan` are strings: the brand's words, which the
+header and footer show by `header.identity`, the presentation and DESIGN.md carry, and a
+site gives its components by `identityProps`. Optional `project.logo` is a string or null.
+Optional `project.brief` is a string, who the site is for and how it should feel, which
+opens DESIGN.md and is not shown in the presentation.
+
 Optional `project.logo-dark` is a string or null like `logo`. Both accept data
 URIs or SVG/PNG paths relative to the design file; the tool embeds picked files
 and the presentation embeds referenced files at build time. Identity never enters
@@ -107,6 +113,12 @@ Optional `project.introduction`, `project.contact` (`name`, `email`) and
 All leaves are strings. Blank lines separate paragraphs, with no markup. These
 fields are validated by the design-file schema and excluded from the input
 fingerprint and generated CSS. Unknown project and explanation keys are errors.
+
+Optional `project.menu` and `project.footer` are the client's own menu and footer words,
+which the tool's preview and the presentation show in place of their samples: `menu` a list
+of entries, each with a `label`, an optional `description` and `items` under it, no address;
+`footer` the words of the footer's cells, a cell left out keeping the sample's. The schema
+holds their shape. They are not design: no input, fingerprint, CSS or site reads them.
 
 ## Algorithms and storage
 
