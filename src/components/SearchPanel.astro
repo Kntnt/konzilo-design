@@ -24,6 +24,6 @@ const field = { 'data-kn-surface': 'page', type: 'search', name: 'q', placeholde
     {search.close !== false && <Button class="kn-header-control kn-header-icon-button kn-header-search-close" variant="outline" icon="x" aria-label="Close search" data-kn-close commandfor={id} command="close" />}
     <Heading id={`${id}-heading`} data-kn-type="heading-5" hidden={search.heading === false}>Search</Heading>
     <form class="kn-header-search-row kn-search-row" role="search" action={search.action} method="get"><span class="kn-search-field" data-kn-surface="page" data-kn-placeholder={shows}><input {...field} autofocus />{shows === 'icon' && <Icon name="search" />}</span><Button type="submit">Search</Button></form>
-    {search.links?.length && <ul class="kn-header-search-links kn-search-links">{search.links.map((link) => <li><a href={link.href}>{link.label}</a></li>)}</ul>}
+    {(search.links?.length ?? 0) > 0 && <ul class="kn-header-search-links kn-search-links">{search.links.map((link) => <li><a href={link.href}>{link.label}</a></li>)}</ul>}
   </div>
 </dialog>}

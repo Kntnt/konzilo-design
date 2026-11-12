@@ -119,3 +119,19 @@ test('only a sticky header loads a polyfill, and only one that slides away loads
   assert.equal(one(flow, '.kn-header').attributes['data-kn-translucent'], 'false');
   assert.equal(one(parse(await render('Header', { ...everything, translucent: true })), '.kn-header').attributes['data-kn-translucent'], 'true');
 });
+
+const text = (node) => node?.value ?? node?.children?.map(text).join('') ?? '';
+
+test('an empty list of links writes nothing, in the search box and under an entry of the large menu', async () => {
+  const html = await render('Header', { ...everything, menu: [{ label: 'One', href: '/one', children: [] }, { label: 'Two', href: '/two', children: [{ label: 'Two A', href: '/two/a' }] }], search: { action: '/search/', links: [] } });
+  const tree = parse(html);
+  const box = one(tree, '.kn-header-search-box');
+  assert.ok(!one(box, '.kn-header-search-links'));
+  assert.doesNotMatch(text(box), /\b0\b/, 'no stray count in the search box');
+  const [first, second] = all(tree, '.kn-megamenu-column');
+  assert.doesNotMatch(text(first), /\b0\b/, 'no stray count under an entry with no children');
+  assert.ok(!one(first, 'ul'));
+  assert.ok(one(second, 'ul'));
+  const links = parse(await render('Header', { ...everything, search: { action: '/search/', links: [{ label: 'Opening hours', href: '/hours/' }] } }));
+  assert.equal(all(links, '.kn-header-search-links a').length, 1, 'links where there are some');
+});
