@@ -492,7 +492,7 @@ test('the directive chapters show every directive and variant as the contract wr
   assert.ok(has(roles, 'hgroup', '.kn-heading-group-eyebrow'));
   assert.ok(elements(roles).some((node) => node.name === 'p' && node.attributes['data-kn-type'] === 'label'));
   assert.ok(one(tree, '.kn-article-opening .kn-heading-group-subheadline'));
-  assert.ok(one(tree, '.kn-article-meta .kn-article-byline'));
+  assert.ok(has(tree, '.kn-article-meta', '.kn-article-line', '.kn-article-byline', 'a') && has(tree, '.kn-article-meta', '.kn-article-line', 'time.kn-article-date') && has(tree, '.kn-article-meta', '.kn-article-topics', 'a.kn-pill'));
   const article = one(tree, '.kn-article-body');
   for (const part of ['.kn-toc[data-kn-follow]', '.kn-question', '.kn-fact-box[data-kn-surface]']) assert.ok(one(article, part), part);
   for (const link of all(tree, '.kn-toc[data-kn-follow] a')) assert.ok(one(tree, link.attributes.href), link.attributes.href);

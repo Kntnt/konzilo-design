@@ -195,15 +195,23 @@ test('the hero\'s logo, actions and fine print, the trail with its level hidden,
       const rem = parseFloat(getComputedStyle(document.documentElement).fontSize);
       const gap = parseFloat(getComputedStyle(document.querySelector('#hero .kn-fine-print')).marginBlockStart);
       const after = [...document.querySelectorAll('#opening .kn-article-meta > span')].map((span) => getComputedStyle(span, '::after').content);
+      // The owner's meta line (2026-11-12): the core's sentence, then the topics as pills, each a link, after a bullet.
+      const meta = document.querySelector('#opening .kn-article-meta');
+      const line = meta.querySelector('.kn-article-line').getBoundingClientRect(), pills = [...meta.querySelectorAll('.kn-article-topics > a.kn-pill')];
+      const style = (element) => getComputedStyle(element);
       return {
         logoAbove: logo.bottom <= group.top,
         logoSmall: logo.height <= 4 * rem + 0.5,
         noteUnder: note.top >= actions.bottom && gap < parseFloat(getComputedStyle(document.querySelector('#hero .kn-actions')).marginBlockStart),
         current: document.querySelector('#hero .kn-breadcrumbs li:last-child').getClientRects().length,
-        separators: after.map((content) => content !== 'none' && content !== 'normal')
+        separators: after.map((content) => content !== 'none' && content !== 'normal'),
+        bullet: after[0].includes('•'),
+        links: [...meta.querySelectorAll('.kn-article-byline a, a.kn-article-category')].map((link) => style(link).textDecorationLine),
+        pills: pills.map((pill) => [style(pill).textTransform, style(pill).textDecorationLine, style(pill).backgroundColor === style(pill).borderTopColor]),
+        after: ((pill) => pill.left >= line.right - 1 || pill.top > line.top + 1)(pills[0].getBoundingClientRect()),
       };
     });
-    assert.deepEqual(facts, { logoAbove: true, logoSmall: true, noteUnder: true, current: 0, separators: [true, true, false] }, `${name} at ${width}`);
+    assert.deepEqual(facts, { logoAbove: true, logoSmall: true, noteUnder: true, current: 0, separators: [true, false], bullet: true, links: ['underline', 'underline'], pills: [['uppercase', 'none', true], ['uppercase', 'none', true]], after: true }, `${name} at ${width}`);
     await tab.close();
   }
 });

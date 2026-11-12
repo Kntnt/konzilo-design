@@ -1,13 +1,19 @@
 /* An article's opening and the headings of its body (docs/spec/directives.md, An article). The opening is a Hero, its
    headline in up to three parts in the Heading Group, and a meta line under it. */
 @layer kn-components {
-  /* The meta line: the published date, the byline and, where an eyebrow stands over the headline, the category. Its parts
-     are separated as Content Card separates its metadata, the mark staying with the part before it, so a wrapped line
-     never starts with one. */
+  /* The meta line (directives.md, An article, the owner's form of 2026-11-12): the core's line, written by its type's
+     format, such as "By {authors} • Published {date} in {category}", with the byline, the published date and the category
+     each an element of its own, and after it the article's topics as pills, each a link to its topic's page. The topics
+     are parted from the line by a bullet, which stays with the line, so a wrapped meta line never starts with one. The
+     byline and the category are links in the line's muted colour, underlined, turning the text colour under the
+     pointer. */
   .kn-article-meta { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.25em 0.5em; margin: 0; color: var(--kn-text-muted); }
-  .kn-article-meta > :has(+ *)::after { content: "·" / ""; margin-inline-start: 0.5em; }
+  .kn-article-meta > :has(+ *)::after { content: "•" / ""; margin-inline-start: 0.5em; }
   .kn-article-meta a { color: inherit; text-underline-offset: 0.18em; }
   .kn-article-meta a:hover { color: var(--kn-text); }
+  .kn-article-topics { display: inline-flex; flex-wrap: wrap; align-items: baseline; gap: 0.25em 0.4em; }
+  .kn-article-topics > a.kn-pill { color: var(--kn-button-text); text-decoration: none; }
+  .kn-article-topics > a.kn-pill:hover { color: var(--kn-button-text); text-decoration: underline; text-underline-offset: 0.18em; }
 
   /* The body's headings carry no type: an article's steps are set by place. A crosshead is the step below a band's heading,
      and each heading under it one more, so the reading column keeps the scale of reading. */

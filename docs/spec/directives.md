@@ -726,9 +726,8 @@ An article's page is laid out by its fields, not by directives: an opening, the 
         <p class="kn-heading-group-deck" data-kn-type="lead">The standfirst</p>
       </hgroup>
       <p class="kn-article-meta" data-kn-type="small">
-        <span class="kn-article-date">Published <time datetime="2026-10-10">10 October 2026</time></span>
-        <span class="kn-article-byline">By A. Writer</span>
-        <span class="kn-article-category">A category</span>
+        <span class="kn-article-line">By <span class="kn-article-byline"><a href="/author/a-writer/">A. Writer</a></span> • Published <time class="kn-article-date" datetime="2026-10-10">10 October 2026</time> in <a class="kn-article-category" href="/category/guides/">Guides</a></span>
+        <span class="kn-article-topics"><a class="kn-pill" href="/topic/soil/">Soil</a><a class="kn-pill" href="/topic/tools/">Tools</a></span>
       </p>
     </div>
     <div class="kn-hero-media"><img src="…" alt="…"></div>
@@ -737,10 +736,12 @@ An article's page is laid out by its fields, not by directives: an opening, the 
 ```
 
 - The headline is in up to three parts: the eyebrow above the main headline, and the subheadline under it.
-- The category stands over the headline as its label, unless the article has an eyebrow; then it stands in the meta line, in `.kn-article-category`.
-- The meta line is the published date and the byline, each part a `span`.
+- The category stands over the headline as its label, unless the article has an eyebrow.
+- **The meta line** (***decided* by the owner, 2026-11-12**, in his words for an article, its own names left out, "By [the author] • Published [the date] in [the category] • [THE TOPIC]", the author's name and the category as links and the topic as a pill; replacing three spans the design parted, which did not match the sentence the core writes) is two parts in `p.kn-article-meta`:
+  - `.kn-article-line`, the core's line, written by the format its type has in the site's settings (the core's ADR 0062), such as `By {authors} • Published {date} in {category}`, or the core's default, `Published on {date} in {category} by {authors}`: the format's own words as text, and each variable's value an element of its own. The authors are `span.kn-article-byline`, each author a link to the author's page where authors have pages, with the core's words between them; the published date is `time.kn-article-date` with its `datetime`; the category is `a.kn-article-category`, a link to the category's page, or a `span` where categories have no pages. A variable the format does not name, or the article lacks, is left out with its words, as the core's writer drops it. The order and the words, the bullet between "By A. Writer" and "Published" included, are the format's, the site's own.
+  - `.kn-article-topics`, after the line, the article's topics, each `a.kn-pill` linking to its topic's page, in the article's order; absent where the article has none.
 
-**Read from content.** *(CSS)* The meta line's parts are separated by the design, as Content Card separates its metadata. **Behaviour.** None. **Component.** Hero and Heading Group. New: the parts `.kn-heading-group-subheadline` and `.kn-article-meta` with its three, and the class `kn-article-opening`.
+**Read from content.** *(CSS)* The meta line is small and muted. The byline's and the category's links are underlined in its colour and turn the text colour under the pointer; a topic is a pill in the label style, filled in the button colours, underlined under the pointer. A bullet the design draws parts the topics from the line, staying with the line, so a wrapped meta line never starts with one, and the pills stand 0.4em apart. **Behaviour.** None. **Component.** Hero and Heading Group. New: the parts `.kn-heading-group-subheadline` and `.kn-article-meta`, with `.kn-article-line`, `.kn-article-byline`, `.kn-article-date`, `.kn-article-category` and `.kn-article-topics`, and the class `kn-article-opening`.
 
 ### The body and its following menu
 
