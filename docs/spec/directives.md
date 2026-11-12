@@ -246,7 +246,7 @@ Start small, and let the beds widen year by year.
 
 The trail first, where the page has one; a picture before the text is the logo; eyebrows; the first paragraph is the deck; actions and small print in the order written; the last picture is the hero's.
 
-**Read from content.** *(CSS)* Fine print right after the actions is a note under them. A hero without a picture has no `.kn-hero-media`, and its text takes the content width as Hero's choices say.
+**Read from content.** *(CSS)* Fine print right after the actions is a note under them. A hero without a picture has no `.kn-hero-media`, and its text takes the content width as Hero's choices say. It keeps the design's height, two thirds of the window by default, as a hero with a picture does (***decided*** by the owner, 2026-11-13, after a site built with the components asked whether such an opening should be only as tall as its text).
 
 **Behaviour.** None.
 
