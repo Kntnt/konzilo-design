@@ -91,6 +91,8 @@
   }
   a[data-kn-contact]:hover { text-decoration-thickness: 0.12em; }
   a[data-kn-contact="phone"] { font-variant-numeric: tabular-nums; }
+  /* An address breaks after its `@` and before each full stop, where the renderer writes <wbr>, and in the middle of a word
+     only where a piece between them is longer than its line. */
   a[data-kn-contact="email"] { overflow-wrap: anywhere; }
 
   /* Cards that lead on, under their label. */

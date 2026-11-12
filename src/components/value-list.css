@@ -10,6 +10,8 @@
     margin-inline: 0;
     padding: 0;
   }
+  /* A long value breaks where it may: an address after its `@` and before each full stop, where the renderer writes
+     <wbr>, and in the middle of a word only where a piece between them is longer than its line. */
   .kn-value-list-item { display: flex; flex-direction: column; gap: 0.25em; min-inline-size: 0; padding-block-start: var(--kn-space-component-gap); border-block-start: 1px solid var(--kn-border); overflow-wrap: anywhere; }
   .kn-value-list-item > dt { margin: 0; color: var(--kn-text-muted); }
   .kn-value-list-value {

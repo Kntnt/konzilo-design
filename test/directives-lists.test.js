@@ -300,6 +300,38 @@ test('actions: the main one filled, the others outlined, a service as its icon, 
   }
 });
 
+test('a long address breaks after its @ and before a full stop, where the renderer lets it, and not in a word', { timeout: 120000 }, async () => {
+  // As the renderer writes an address alone in a value or a card: <wbr> after the @ and before each full stop.
+  const address = 'enquiries@<wbr>greenfieldallotments<wbr>.example';
+  const markup = `<section class="kn-band kn-section"><div class="kn-band-content"><div class="kn-section-body kn-body-text">
+    <dl class="kn-value-list"><div class="kn-value-list-item"><dt>Phone</dt><dd class="kn-value-list-value"><a href="tel:+15550100">+1 555 0100</a></dd></div><div class="kn-value-list-item"><dt>E-mail</dt><dd class="kn-value-list-value"><a href="mailto:enquiries@greenfieldallotments.example">${address}</a></dd></div><div class="kn-value-list-item"><dt>Hours</dt><dd class="kn-value-list-value">8–17</dd></div><div class="kn-value-list-item"><dt>Post</dt><dd class="kn-value-list-value">Box 12</dd></div></dl>
+    <ul class="kn-card-grid kn-cards"><li><article class="kn-card" data-kn-surface="raised"><h3 class="kn-card-heading" data-kn-type="heading-5">Write to us</h3><p class="kn-card-text" data-kn-type="small"><a href="mailto:enquiries@greenfieldallotments.example" data-kn-contact="email">${address}</a></p></article></li><li><article class="kn-card" data-kn-surface="raised"><h3 class="kn-card-heading" data-kn-type="heading-5">Call us</h3></article></li><li><article class="kn-card" data-kn-surface="raised"><h3 class="kn-card-heading" data-kn-type="heading-5">Visit us</h3></article></li></ul>
+  </div></div></section>`;
+  for (const [name, browser] of browsers) for (const width of [1440, 1024, 390]) {
+    const context = await browser.newContext({ viewport: { width, height: 900 } });
+    const tab = await context.newPage();
+    await tab.setContent(`<!doctype html><html lang="en"><head><style>${styles}</style></head><body data-kn-surface="page">${markup}</body></html>`);
+    const lines = await tab.evaluate(() => [...document.querySelectorAll('a[href^="mailto:"]')].map((link) => {
+      const range = document.createRange();
+      const found = [];
+      let top = null;
+      for (const node of [...link.childNodes].filter((one) => one.nodeType === Node.TEXT_NODE)) for (let i = 0; i < node.length; i++) {
+        range.setStart(node, i);
+        range.setEnd(node, i + 1);
+        const at = Math.round(range.getBoundingClientRect().top);
+        if (top === null || at > top + 2) found.push('');
+        top = at;
+        found[found.length - 1] += node.data[i];
+      }
+      return found;
+    }));
+    await context.close();
+    for (const found of lines) {
+      for (const line of found) assert.ok(['enquiries@', 'greenfieldallotments', '.example', 'enquiries@greenfieldallotments', 'greenfieldallotments.example', 'enquiries@greenfieldallotments.example'].includes(line), `${name} at ${width}: a line "${line}" of ${found.join(' | ')}`);
+    }
+  }
+});
+
 test('no list leaves the window or scrolls it sideways, at a phone\'s width and larger text', { timeout: 240000 }, async () => {
   for (const [name, browser] of browsers) for (const text of [16, 24]) for (const width of [390, 768, 1440]) {
     const tab = await open(browser, { width, text });
