@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] – 2026-11-12
+
 ### Added
 
 - Where the line across the tabs stands, `tabs.rule-place`: under the row of tabs, as before and by default, or above it, the open tab marked on the line, so that a tab reads as a value under it does, a line, a label and the content, and tabs over a value list no longer stack two lines. The tool sets it on its Text page, whose preview now shows tabs over values, as the presentation's Text page does. The tabs' HTML is unchanged: the generated CSS carries the choice, and a design file resolved before keeps its tabs as they were.
