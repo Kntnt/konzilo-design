@@ -532,6 +532,9 @@ function footerPage(copy) {
     ${setting('Empty cells', `<div class="fields">
         ${choice('An empty cell gives way to', 'inputs.footer.fill', [['column', 'The cell above or below'], ['row', 'The cell beside it']], 'Which neighbour takes the room where a cell could fill either way. An empty row or column always goes, and the content stays at its own edge, at the top.')}
       </div>`)}
+    ${setting('Text', `<div class="fields">
+        ${choice('Text in the right column', 'inputs.footer.b-align', [['start', 'Left-aligned'], ['end', 'Right-aligned']], 'The right column\'s content stands at its right edge. Its lines can start at the left, each as long as it is, or end at the right edge, as its links and icons do. On a phone every cell stands at the left, and its text with it.')}
+      </div>`)}
     ${setting('Attachment', `<div class="fields">
         ${choice('The footer is fixed to', 'inputs.footer.attachment', [['flow', 'The end of the page'], ['reveal', 'The bottom of the window']], 'Fixed to the end of the page, the footer is the page\'s last part and scrolls in with it. Fixed to the bottom of the window, it lies still there under the page, which slides off it as you reach the end. That holds only while the whole footer fits in the window; a taller one stays at the end of the page.')}
       </div>`)}

@@ -76,10 +76,11 @@ test('the default design\'s resolved JSON and core CSS change only on purpose', 
   // Changed on purpose 2026-11-11: dark mode's own steps 850 and 975, for a blacker page and lighter plates, while light
   // mode stays as it was (plates.md). Changed on purpose 2026-11-12: a plate's inner space is step 4 (generator.md), and labels
   // stand three steps below body text (components.md); each Surface stores and writes its translucent opacity (generator.md);
-  // the design's tabs pass to resolved and the core writes where their line stands (generator.md).
+  // the design's tabs pass to resolved and the core writes where their line stands (generator.md), and the footer says how
+  // column B's text is aligned (footer.md).
   assert.equal(
     hash(JSON.stringify({ ...r, 'generator-version': '' })),
-    '9c4ce79d34b85524167d7e8aacf8914a22c0a0f38f7725d77627949221c002e2',
+    '9887d071f9e3eb68cf5fed40e48c8a1b6bdcdb7d9ba7bb5778ced20dfe9d4444',
   );
   assert.equal(
     hash(coreCss(r)),

@@ -687,6 +687,12 @@ test('tool saves presentation prose, keeps controls still and serves the exporte
     await page.locator('[data-path="inputs.footer.fill"]').selectOption('row');
     await preview.waitForFunction(() => document.querySelector('[data-kn-band="upper"] [data-kn-cell="a1"]').dataset.knColumns === '2');
     await page.locator('[data-path="inputs.footer.fill"]').selectOption('column');
+    // Column B's text at the end, and back (the owner, 2026-11-12): the same footer element takes it.
+    await page.locator('[data-path="inputs.footer.b-align"]').selectOption('end');
+    await preview.waitForFunction(() => document.querySelector('.kn-footer').dataset.knBAlign === 'end' && document.querySelector('.kn-footer') === window.__footer);
+    assert.deepEqual(await preview.evaluate(() => [getComputedStyle(document.querySelector('[data-kn-band="lower"] [data-kn-cell="b1"] .kn-footer-box')).textAlign, document.querySelector('.kn-footer').getBoundingClientRect().width > 600]), ['end', true], 'the wide preview\'s column B ends its lines at its end');
+    await page.locator('[data-path="inputs.footer.b-align"]').selectOption('start');
+    await preview.waitForFunction(() => !('knBAlign' in document.querySelector('.kn-footer').dataset));
     await cell('upper', 'b1').click();
     await preview.waitForFunction(() => document.querySelector('[data-kn-band="upper"] [data-kn-cell="b1"]'));
     await flag('footer.horizontal-rules').click();

@@ -71,6 +71,7 @@ export function footerFromDesign(settings, content = {}) {
     upper: band('upper'),
     lower: band('lower'),
     fill: settings.fill,
+    bAlign: settings['b-align'],
     attachment: settings.attachment,
     rules: settings['rule-extent'],
     horizontalRules: settings['horizontal-rules'],

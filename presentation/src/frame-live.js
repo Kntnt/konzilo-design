@@ -170,6 +170,8 @@ function updateFooter(page, main, props) {
     old.replaceChildren(...next.childNodes);
     old.dataset.knAttachment = next.dataset.knAttachment;
     old.dataset.knRules = next.dataset.knRules;
+    if (next.dataset.knBAlign) old.dataset.knBAlign = next.dataset.knBAlign;
+    else delete old.dataset.knBAlign;
   }
   if (atEnd) end();
 }

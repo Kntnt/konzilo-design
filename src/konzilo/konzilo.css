@@ -182,6 +182,14 @@
   .kn-footer :is(.konzilo-consent-policies li, .konzilo-consent-secondary)::before { content: "•"; display: inline-block; inline-size: var(--kn-footer-separator); text-align: center; color: var(--kn-text-muted); }
   .kn-footer .konzilo-consent-policies a { display: inline; min-block-size: 0; }
   .kn-footer .konzilo-consent-secondary { display: inline-block; min-block-size: 0; white-space: nowrap; }
+  /* In column B of a footer whose text stands at the end (footer.md, the owner, 2026-11-12), they wrap from the end, a
+     separator after each, overhanging the box's end, as the cell's own links do. */
+  @container (inline-size > 37.5rem) {
+    .kn-footer[data-kn-b-align="end"] [data-kn-column="B"] :is(.konzilo-consent-policies, .konzilo-consent-buttons) { justify-content: flex-end; margin-inline: -0.0625rem calc(-1 * var(--kn-footer-separator)); clip-path: inset(-0.25rem calc(var(--kn-footer-separator) - 0.25rem) -0.25rem -0.25rem); }
+    .kn-footer[data-kn-b-align="end"] [data-kn-column="B"] :is(.konzilo-consent-policies, .konzilo-consent-buttons):dir(rtl) { clip-path: inset(-0.25rem -0.25rem -0.25rem calc(var(--kn-footer-separator) - 0.25rem)); }
+    .kn-footer[data-kn-b-align="end"] [data-kn-column="B"] :is(.konzilo-consent-policies li, .konzilo-consent-secondary)::before { content: none; }
+    .kn-footer[data-kn-b-align="end"] [data-kn-column="B"] :is(.konzilo-consent-policies li, .konzilo-consent-secondary)::after { content: "•"; display: inline-block; inline-size: var(--kn-footer-separator); text-align: center; color: var(--kn-text-muted); }
+  }
 
   @media (width <= 40rem) {
     .konzilo-consent-banner { inset-block-end: 0; inset-inline: 0; inline-size: 100%; max-block-size: 90dvh; border-end-start-radius: 0; border-end-end-radius: 0; }

@@ -17,7 +17,7 @@ function band(band) {
     band.vertical ? `<div class="kn-footer-vertical-rule" aria-hidden="true"${attributes({ 'data-kn-row': band.vertical })}></div>` : ''
   }${band.cells.map(cell).join('')}</div>`;
 }
-export function footerHtml(layout, { attachment = 'flow', rules = 'content' } = {}) {
+export function footerHtml(layout, { attachment = 'flow', rules = 'content', bAlign = 'start' } = {}) {
   if (!layout.bands.length) return '';
-  return `<footer class="kn-footer"${attributes({ 'data-kn-attachment': attachment, 'data-kn-rules': rules })}>${layout.bands.map(band).join('')}</footer>`;
+  return `<footer class="kn-footer"${attributes({ 'data-kn-attachment': attachment, 'data-kn-rules': rules, 'data-kn-b-align': bAlign === 'end' ? 'end' : undefined })}>${layout.bands.map(band).join('')}</footer>`;
 }

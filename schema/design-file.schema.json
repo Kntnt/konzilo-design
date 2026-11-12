@@ -702,6 +702,14 @@
             "row"
           ]
         },
+        "b-align": {
+          "type": "string",
+          "description": "How the text in column B's boxes is aligned on a wide screen: at the start, or at the end, where the boxes stand. On a narrow screen it is at the start.",
+          "enum": [
+            "start",
+            "end"
+          ]
+        },
         "upper": {
           "$ref": "#/$defs/footer-band-settings"
         },

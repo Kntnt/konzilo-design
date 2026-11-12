@@ -36,6 +36,7 @@ test('a new design has all eight cells on, the upper band in the brand colour an
   assert.deepEqual(footer, {
     attachment: 'flow',
     fill: 'column',
+    'b-align': 'start',
     upper: { surface: 'brand', cells: { a1: true, b1: true, a2: true, b2: true } },
     lower: { surface: 'inverse', cells: { a1: true, b1: true, a2: true, b2: true } },
     'horizontal-rules': false,
@@ -75,10 +76,13 @@ test('every combination of cells lays out in every colour, with lines or without
       }
 });
 
-test('the lines, their extent, the fill and the attachment reach the footer', () => {
-  const footer = { ...settings().footer, attachment: 'reveal', fill: 'row', 'horizontal-rules': true, 'vertical-rule': true, 'rule-extent': 'full' };
+test('the lines, their extent, the fill, the attachment and column B\'s text reach the footer', () => {
+  const footer = { ...settings().footer, attachment: 'reveal', fill: 'row', 'horizontal-rules': true, 'vertical-rule': true, 'rule-extent': 'full', 'b-align': 'end' };
   const props = footerProps(footer, { name: 'A' });
-  assert.deepEqual([props.attachment, props.fill, props.rules, props.horizontalRules, props.verticalRule], ['reveal', 'row', 'full', true, true]);
+  assert.deepEqual([props.attachment, props.fill, props.rules, props.horizontalRules, props.verticalRule, props.bAlign], ['reveal', 'row', 'full', true, true, 'end']);
+  assert.equal(footerProps(settings().footer, { name: 'A' }).bAlign, 'start', 'at the start unless the design says otherwise');
+  validateInputs(inputs({ footer: { 'b-align': 'end' } }));
+  assert.throws(() => validateInputs(inputs({ footer: { 'b-align': 'center' } })), /unsupported value/);
   assert.ok(layoutFooter(props).bands.every((band) => band.vertical === 'all' && band.horizontal === 'both'));
 });
 

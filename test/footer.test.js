@@ -135,6 +135,7 @@ test('a design\'s settings and a site\'s content make a Footer, and a cell that 
   assert.deepEqual(props.upper, { surface: 'tint', cells: { a1: { text: 'A' }, a2: false, b1: false, b2: false } });
   assert.deepEqual(props.lower.cells, { a1: true, a2: false, b1: true, b2: false }, 'without content, the cell waits for its slot');
   assert.deepEqual([props.fill, props.attachment, props.rules, props.horizontalRules, props.verticalRule], ['row', 'reveal', 'full', true, false]);
+  assert.equal(footerFromDesign({ ...settings, 'b-align': 'end' }).bAlign, 'end', 'column B\'s text at the end, where the design says so');
 });
 
 test('the preview\'s markup writes a cell, its box and its lines', () => {
@@ -148,6 +149,9 @@ test('the preview\'s markup writes a cell, its box and its lines', () => {
   assert.match(html, /data-kn-cell="b2" data-kn-column="B" data-kn-columns="2" data-kn-row="2"/);
   assert.equal([...html.matchAll(/kn-footer-rule/g)].length, 1);
   assert.doesNotMatch(html, /kn-footer-vertical-rule/, 'a cell across each row leaves no room for the line');
+  // Column B's text at the end writes its attribute, and at the start, the default, nothing (footer.md, 2026-11-12).
+  assert.match(footerHtml(layoutFooter(props), { ...props, bAlign: 'end' }), /^<footer class="kn-footer" data-kn-attachment="reveal" data-kn-rules="full" data-kn-b-align="end">/);
+  assert.doesNotMatch(footerHtml(layoutFooter(props), { ...props, bAlign: 'start' }), /data-kn-b-align/);
 });
 
 test('only a footer at the edge of the screen loads the script that says whether it fits, and writes its bands once', async () => {
@@ -168,7 +172,8 @@ test('the component and the preview write the same markup, in any combination of
   for (const [upper, lower, more] of [
     ['a1 a2 b1 b2', 'a1 a2 b1 b2', {}],
     ['a1 b2', 'b1', { fill: 'row', horizontalRules: true, verticalRule: true }],
-    ['a2 b1 b2', 'a1 a2', { horizontalRules: true, verticalRule: true, rules: 'full', attachment: 'reveal' }],
+    ['a2 b1 b2', 'a1 a2', { horizontalRules: true, verticalRule: true, rules: 'full', attachment: 'reveal', bAlign: 'end' }],
+    ['a1 b1', 'b1 b2', { bAlign: 'start' }],
     ['a1', 'a1', { surfaces: ['brand', 'brand'], horizontalRules: true }],
     ['b2', '', { surfaces: ['page', 'page'] }],
     ['', '', {}],

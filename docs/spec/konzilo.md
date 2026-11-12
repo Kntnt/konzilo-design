@@ -87,7 +87,7 @@ Nothing to import. A site's layout places the core's controls in this package's 
 </Footer>
 ```
 
-A slot's content takes its cell's alignment, at the start in column A and the end in column B, and all at the start on a narrow screen, where the upper band stacks column by column and the lower band row by row, so `lower-a2` and `lower-b2` follow each other there (footer.md), and `konzilo.css` makes it look like the cell's links: the same size and colour, the same separators, and buttons that read as links. A cell filled by a slot must be on in the design and have no content of its own in `content`. A cell that is off stays empty, whatever its slot holds.
+A slot's content takes its cell's alignment, at the start in column A and the end in column B, its text at the end there too where the design sets `footer.b-align` to `end`, and all at the start on a narrow screen, where the upper band stacks column by column and the lower band row by row, so `lower-a2` and `lower-b2` follow each other there (footer.md), and `konzilo.css` makes it look like the cell's links: the same size and colour, the same separators, after each link where column B's text is at the end, and buttons that read as links. A cell filled by a slot must be on in the design and have no content of its own in `content`. A cell that is off stays empty, whatever its slot holds.
 
 ## The header and the footer in the browser
 

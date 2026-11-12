@@ -472,6 +472,85 @@ test('on a phone the upper band stacks column by column and the lower band row b
   for (const other of rest) assert.deepEqual(orders(other), orders(first), 'every engine stacks alike');
 });
 
+test('column B\'s text stands at the end where the design says so, its rows of links wrapping from the end with no separator at a line\'s end, and at the start on a phone, in every engine', { timeout: 240000 }, async () => {
+  // The owner's wish of 2026-11-12 (footer.md, Column B's text). The Konzilo core's consent links in a slot of column B
+  // follow the cell's links (konzilo.css).
+  const links = ['Products', 'Services and support', 'Markets', 'Knowledge', 'About us', 'Careers', 'Contact', 'Press'].map((label, i) => ({ label, href: `#l${i}` }));
+  const consent = '<div class="konzilo-consent-controls"><div class="konzilo-consent-buttons"><button type="button" class="konzilo-consent-secondary">Change privacy settings</button><button type="button" class="konzilo-consent-secondary">Withdraw consent</button></div></div>';
+  const props = (bAlign) => ({
+    upper: { surface: 'brand', cells: { a1: { text: 'A brand' }, a2: { text: 'A statement of what the brand stands for.' }, b2: { links } } },
+    lower: { surface: 'inverse', cells: { a1: { text: 'Street 1' }, b1: { content: '<p class="kn-footer-muted">Registered office: Sampleton<br>A made-up company.<br>A third line, a little longer than the others.</p>' }, b2: { content: consent } } },
+    bAlign,
+  });
+  const konzilo = await readFile(new URL('../src/konzilo/konzilo.css', import.meta.url), 'utf8');
+  const css = coreCss(derive(defaultInputs())) + await componentsCss() + konzilo;
+  const page = (bAlign, dir = 'ltr') => `<!doctype html><html lang="en" dir="${dir}"><head><meta charset="utf-8"><title>Column B</title><style>${css}</style></head><body>${footerHtml(layoutFooter(props(bAlign)), props(bAlign))}</body></html>`;
+  const files = { '/end.html': page('end'), '/start.html': page('start'), '/end-rtl.html': page('end', 'rtl') };
+  // Each line of the lower band's B1 and of each row in column B: where it starts and ends, against its box.
+  const read = (tab) => tab.evaluate(() => {
+    const lines = (node) => {
+      const range = document.createRange();
+      range.selectNodeContents(node);
+      const byTop = new Map();
+      for (const box of range.getClientRects()) if (box.width > 0) { const key = Math.round(box.top); const [l, r] = byTop.get(key) ?? [Infinity, -Infinity]; byTop.set(key, [Math.min(l, box.left), Math.max(r, box.right)]); }
+      return [...byTop.values()];
+    };
+    const cell = (band, name) => document.querySelector(`[data-kn-band="${band}"] [data-kn-cell="${name}"]`);
+    const box = (band, name) => cell(band, name).querySelector('.kn-footer-box').getBoundingClientRect();
+    // A row's items by line, each line's outermost items, and the separator's width.
+    const row = (list) => {
+      const items = [...list.children].map((item) => item.getBoundingClientRect());
+      const byTop = new Map();
+      for (const item of items) { const key = Math.round(item.top); const [l, r] = byTop.get(key) ?? [Infinity, -Infinity]; byTop.set(key, [Math.min(l, item.left), Math.max(r, item.right)]); }
+      return { lines: [...byTop.values()], separator: parseFloat(getComputedStyle(list).getPropertyValue('--kn-footer-separator')) * parseFloat(getComputedStyle(list).fontSize) || null, clip: getComputedStyle(list).clipPath };
+    };
+    return {
+      align: getComputedStyle(cell('lower', 'b1').querySelector('.kn-footer-box')).textAlign,
+      text: { box: [box('lower', 'b1').left, box('lower', 'b1').right], cell: [cell('lower', 'b1').getBoundingClientRect().left, cell('lower', 'b1').getBoundingClientRect().right], lines: lines(cell('lower', 'b1').querySelector('p')) },
+      links: { box: [box('upper', 'b2').left, box('upper', 'b2').right], ...row(cell('upper', 'b2').querySelector('.kn-footer-links')) },
+      consent: { box: [box('lower', 'b2').left, box('lower', 'b2').right], ...row(cell('lower', 'b2').querySelector('.konzilo-consent-buttons')) },
+    };
+  });
+  for (const [name, type] of ENGINES) {
+    const { browser, tab } = await open(type, files);
+    try {
+      for (const width of [820, 1280]) {
+        await tab.setViewportSize({ width, height: 800 });
+        await tab.goto(`${ORIGIN}/end.html`);
+        const found = await read(tab);
+        const what = `${name} at ${width}px`;
+        assert.equal(found.align, 'end', what);
+        assert.ok(Math.abs(found.text.box[1] - found.text.cell[1]) < 1, `${what}: the box at the column's end`);
+        assert.ok(found.text.lines.length === 3 && found.text.lines.every(([, right]) => Math.abs(right - found.text.box[1]) < 1), `${what}: every line ends at the box's end, ${JSON.stringify(found.text)}`);
+        assert.ok(new Set(found.text.lines.map(([left]) => Math.round(left))).size > 1, `${what}: and starts where it must`);
+        for (const part of ['links', 'consent']) {
+          const { box, lines, clip } = found[part];
+          // Each line's last item, its separator after it, overhangs the box's end by one separator, which is clipped.
+          assert.ok(lines.every(([, right]) => right > box[1] + 4 && right < box[1] + 40), `${what}, ${part}: every line ends at the box's end, its separator past it, ${JSON.stringify(found[part])}`);
+          assert.ok(lines.every(([left]) => left >= box[0] - 1), `${what}, ${part}: no line starts before the box`);
+          assert.match(clip, /^inset\(/, `${what}, ${part}`);
+        }
+        if (width === 820) assert.ok(found.links.lines.length > 1, `${what}: the row of links wraps`);
+      }
+      // The default keeps the text at the start, and a phone, where every box stands at the start, too.
+      await tab.setViewportSize({ width: 1280, height: 800 });
+      await tab.goto(`${ORIGIN}/start.html`);
+      assert.equal((await read(tab)).align, 'start', `${name}: start by default`);
+      await tab.setViewportSize({ width: 390, height: 800 });
+      await tab.goto(`${ORIGIN}/end.html`);
+      const phone = await read(tab);
+      assert.equal(phone.align, 'start', `${name} on a phone`);
+      assert.ok(phone.text.lines.every(([left]) => Math.abs(left - phone.text.box[0]) < 1), `${name} on a phone: every line starts at the box's start`);
+      // Right to left, the end is the left.
+      await tab.setViewportSize({ width: 1280, height: 800 });
+      await tab.goto(`${ORIGIN}/end-rtl.html`);
+      const rtl = await read(tab);
+      assert.ok(rtl.text.lines.every(([left]) => Math.abs(left - rtl.text.box[0]) < 1), `${name}, right to left: every line ends at the box's left`);
+      assert.ok(rtl.links.lines.every(([left]) => left < rtl.links.box[0] - 4), `${name}, right to left: the separators past the box's end`);
+    } finally { await browser.close(); }
+  }
+});
+
 test('the bar gives way in order as the window narrows, never overflows, and comes back as it widens, in every engine', { timeout: 240000 }, async () => {
   const files = await pages();
   const order = ['slogan', 'name', 'links', 'word', 'language', 'cta', 'search'];

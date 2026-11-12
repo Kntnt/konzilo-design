@@ -78,6 +78,24 @@
   .kn-footer[data-kn-rules="full"] .kn-footer-vertical-rule:not([data-kn-row="2"]) { margin-block-start: calc(-1 * var(--kn-footer-edge-start)); }
   .kn-footer[data-kn-rules="full"] .kn-footer-vertical-rule:not([data-kn-row="1"]) { margin-block-end: calc(-1 * var(--kn-footer-padding-end)); }
 
+  /* Column B's text at the end, where the design says so (`footer.b-align`, the owner, 2026-11-12): in a box of column B,
+     which stands at the column's end, every line ends at the box's end, and a row of links or icons wraps from the end.
+     A row of links then carries its separators after each link and overhangs the box's end by one, so that no line ends
+     with one, as at the start it overhangs the start. On a narrow screen, where every box stands at the start, its text
+     does too. */
+  @container (inline-size > 37.5rem) {
+    .kn-footer[data-kn-b-align="end"] .kn-footer-cell[data-kn-column="B"] .kn-footer-box { justify-items: end; text-align: end; }
+    .kn-footer[data-kn-b-align="end"] .kn-footer-cell[data-kn-column="B"] .kn-footer-social { justify-content: flex-end; }
+    .kn-footer[data-kn-b-align="end"] .kn-footer-cell[data-kn-column="B"] .kn-footer-links {
+      justify-content: flex-end;
+      margin-inline: -0.0625rem calc(-1 * var(--kn-footer-separator));
+      clip-path: inset(-0.25rem calc(var(--kn-footer-separator) - 0.25rem) -0.25rem -0.25rem);
+    }
+    .kn-footer[data-kn-b-align="end"] .kn-footer-cell[data-kn-column="B"] .kn-footer-links:dir(rtl) { clip-path: inset(-0.25rem -0.25rem -0.25rem calc(var(--kn-footer-separator) - 0.25rem)); }
+    .kn-footer[data-kn-b-align="end"] .kn-footer-cell[data-kn-column="B"] .kn-footer-links li::before { content: none; }
+    .kn-footer[data-kn-b-align="end"] .kn-footer-cell[data-kn-column="B"] .kn-footer-links li::after { content: "•"; display: inline-block; inline-size: var(--kn-footer-separator); text-align: center; color: var(--kn-text-muted); }
+  }
+
   /* On a narrow screen one column, with the cells in document order and every box at the start edge. */
   @container (inline-size <= 37.5rem) {
     .kn-footer-band { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; padding-inline: var(--kn-layout-side-margin); }

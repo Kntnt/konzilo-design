@@ -1852,6 +1852,7 @@
     "footer": {
       "attachment": "flow",
       "fill": "column",
+      "b-align": "start",
       "upper": {
         "surface": "brand",
         "cells": {

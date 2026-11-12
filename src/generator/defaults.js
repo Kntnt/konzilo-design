@@ -24,7 +24,7 @@ const defaults = {
     'search-close': true, 'search-placeholder': 'word',
   },
   footer: {
-    attachment: 'flow', fill: 'column',
+    attachment: 'flow', fill: 'column', 'b-align': 'start',
     upper: { surface: 'brand', cells: { a1: true, b1: true, a2: true, b2: true } },
     lower: { surface: 'inverse', cells: { a1: true, b1: true, a2: true, b2: true } },
     'horizontal-rules': false, 'vertical-rule': false, 'rule-extent': 'content',

@@ -308,6 +308,7 @@ The reusable repository stores no actual presentation identity or project-specif
 | `inputs.footer` | The footer's settings: attachment, how empty cells fill, its two bands and its lines | footer.md | *Built* 2026-11-05, replacing the models of 2026-11-03 | Named for the component they go to. |
 | `inputs.footer.attachment` | `flow` (default) or `reveal` | footer.md, Attachment | *Decided* 2026-10-31 | The spec's own two words; since 2026-11-11 the tool says "The footer is fixed to" "The end of the page" or "The bottom of the window", replacing "At the end of the page" and "At the edge of the screen" (footer.md, Attachment). |
 | `inputs.footer.fill` | How a cell fills where it could go either way: `column` (default) or `row` | footer.md | *Decided* 2026-11-05 | Names what the cell does, along the axis it does it. |
+| `inputs.footer.b-align` | How the text in column B's boxes is aligned on a wide screen: `start` (default) or `end`; written as `data-kn-b-align="end"` on the footer, and nothing at `start` | footer.md, Column B's text; the owner's wish, 2026-11-12 | The assistant's technical choice | `b` is column B in the owner's spreadsheet notation, lower case as the cells' keys are (`b1`, `b2`), and `align` the word `inputs.hero.align` and Table's `data-kn-align` use for where text stands across; `start` and `end` are logical, so right-to-left mirrors them. |
 | `inputs.footer.upper`, `inputs.footer.lower` | The two bands, each with `surface` and `cells` | footer.md | *Decided* 2026-11-05 | The owner's own words for them. |
 | `inputs.footer.upper.surface`, `inputs.footer.lower.surface` | The band's Surface: `page`, `raised`, `tint`, `brand` (the upper's default) or `inverse` (the lower's default) | footer.md | *Decided* 2026-11-05 | Keeps the Surface word and its kinds. |
 | `inputs.footer.upper.cells`, `inputs.footer.lower.cells` | The cells `a1`, `b1`, `a2` and `b2`, each on or off, all on by default | footer.md | *Decided* 2026-11-05 | The owner's spreadsheet notation, in lower case as keys are. |
@@ -497,6 +498,7 @@ The class grammar and selectors are shared by Astro and the plain HTML export.
 | `data-kn-scrolled="block-end|block-start"` | On the root, where the browser has no scroll-state queries: the direction of the last relative scroll, which `scroll-state-polyfill.js` writes and the parallel rules read. |
 | `data-kn-attachment="flow|reveal"` | Footer attachment. |
 | `data-kn-rules="content|full"` | Footer hairline extent. |
+| `data-kn-b-align="end"` | On a footer: column B's text at the end on a wide screen (2026-11-12); absent at `start`. |
 | `data-kn-band="upper|lower"`, `data-kn-rows="1|2"`, `data-kn-joined` | Which Footer band, how many rows it has, and that the two bands share a colour and close up. |
 | `data-kn-cell="a1|b1|a2|b2"`, `data-kn-column="A|B"`, `data-kn-columns="1|2"`, `data-kn-row="1|2|all"` | Cell address, the column that places its box, and what it covers. A vertical hairline uses `data-kn-row` too. |
 | `data-kn-only="a|b|both"`, `data-kn-join` | A hairline between a band's rows, over the columns no merged cell covers, or between two bands on one colour. |
