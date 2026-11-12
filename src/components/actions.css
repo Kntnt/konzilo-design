@@ -20,7 +20,8 @@
   .kn-actions:not(:has(> li > .kn-action:not([data-kn-service]))) .kn-action:not([data-kn-main]):is(:hover, :active) { color: var(--kn-link); box-shadow: none; }
 
   /* A lone main action right after a series, cards that lead on among them, shows more of the series: under it, in the middle, and drawn as the way on
-     rather than as a button, in the link's colour with an arrow that moves as Button's arrow link does. */
+     rather than as a button, in the link's colour with an arrow, its word underlined under the pointer and the arrow still,
+     as Button's arrow link (the owner, 2026-11-12, issue #1). */
   :is(.kn-cards, .kn-cards-nav, .kn-timeline, .kn-reasons, .kn-post-list) + .kn-actions:has(> li:only-child > [data-kn-main]) { justify-content: center; margin-block-start: var(--kn-space-column-gap); }
   :is(.kn-cards, .kn-cards-nav, .kn-timeline, .kn-reasons, .kn-post-list) + .kn-actions:has(> li:only-child > [data-kn-main]) .kn-action {
     --kn-action-direction: 1;
@@ -44,8 +45,6 @@
     border-style: solid;
     border-color: currentColor;
     border-width: 0.12em 0.12em 0 0;
-    transform: translateX(0) scaleX(var(--kn-action-direction)) rotate(45deg);
-    transition: transform var(--kn-duration-feedback) var(--kn-easing-standard);
+    transform: scaleX(var(--kn-action-direction)) rotate(45deg);
   }
-  :is(.kn-cards, .kn-cards-nav, .kn-timeline, .kn-reasons, .kn-post-list) + .kn-actions:has(> li:only-child > [data-kn-main]) .kn-action:is(:hover, :active)::after { transform: translateX(calc(0.2em * var(--kn-action-direction))) scaleX(var(--kn-action-direction)) rotate(45deg); }
 }

@@ -107,3 +107,39 @@ test('every card that leads somewhere underlines its heading and, where it casts
     await tab.close();
   }
 });
+
+// Issue #1 (the owner, 2026-11-12): the two arrows outside a card stand still under the pointer and on a press, as a
+// card's mark does, and their word is underlined instead.
+test('a Button\'s arrow and the lone action after a series keep their arrow still under the pointer and on a press, and underline their word', { timeout: 120000 }, async () => {
+  const arrow = await render('Button', { href: '#more', variant: 'arrow', id: 'arrow' }, { default: 'See every plan' });
+  const series = `<div class="kn-card-grid kn-cards"><article class="kn-card"><h3 class="kn-card-heading">One</h3></article><article class="kn-card"><h3 class="kn-card-heading">Two</h3></article></div><ul class="kn-actions" role="list"><li><a class="kn-action" id="more" href="#all" data-kn-main>All plans</a></li></ul>`;
+  for (const [name, browser] of browsers) for (const dir of ['ltr', 'rtl']) {
+    const tab = await browser.newPage({ viewport: { width: 1024, height: 700 } });
+    await tab.setContent(`<!doctype html><html lang="en" dir="${dir}"><head><style>${coreCss(derive(defaultInputs()))}${components}</style></head><body data-kn-surface="page"><section class="kn-band"><div class="kn-band-content"><div class="kn-link-group">${arrow}</div></div></section><section class="kn-band kn-section"><div class="kn-band-content"><div class="kn-section-body kn-body-text">${series}</div></div></section></body></html>`);
+    const look = () => tab.evaluate(() => {
+      const button = document.getElementById('arrow'), more = document.getElementById('more');
+      return {
+        arrow: button.querySelector('.kn-button-arrow').getBoundingClientRect().left, arrowLine: getComputedStyle(button).textDecorationLine,
+        more: getComputedStyle(more, '::after').transform, moreLine: getComputedStyle(more).textDecorationLine,
+        moreBox: more.getBoundingClientRect().right,
+      };
+    });
+    const rest = await look();
+    assert.deepEqual([rest.arrowLine, rest.moreLine], ['none', 'none'], `${name} ${dir}: no line at rest`);
+    for (const [id, line, still] of [['#arrow', 'arrowLine', 'arrow'], ['#more', 'moreLine', 'more']]) {
+      await tab.hover(id);
+      await tab.waitForTimeout(400);
+      const under = await look();
+      assert.equal(under[line], 'underline', `${name} ${dir}: ${id}'s word is underlined under the pointer`);
+      assert.equal(under[still], rest[still], `${name} ${dir}: ${id}'s arrow stands still under the pointer`);
+      await tab.mouse.down();
+      await tab.waitForTimeout(400);
+      const pressed = await look();
+      assert.equal(pressed[still], rest[still], `${name} ${dir}: ${id}'s arrow stands still on a press`);
+      assert.equal(pressed[line], 'underline', `${name} ${dir}: ${id}'s word is underlined on a press`);
+      await tab.mouse.up();
+      await tab.mouse.move(0, 0);
+    }
+    await tab.close();
+  }
+});

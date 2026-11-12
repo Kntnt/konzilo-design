@@ -367,8 +367,8 @@ test('a window that remembers looks or a held panel from an earlier version open
   }
 });
 
-// An arrow button has no box, so its focus ring needs room of its own: off the word and the arrow, even when the arrow
-// steps forward on a press, with the word still at the edge of its column, where the button at rest has it.
+// An arrow button has no box, so its focus ring needs room of its own: off the word and the arrow, pressed too, with the
+// word still at the edge of its column, where the button at rest has it.
 test('the focus ring keeps off an arrow button\'s word and arrow, and the word stays where it was', { timeout: 120000 }, async () => {
   const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
   try {

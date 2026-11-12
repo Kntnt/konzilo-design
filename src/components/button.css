@@ -33,13 +33,14 @@
   .kn-button[data-kn-variant="outline"], .kn-actions .kn-action:not([data-kn-main]) { background: transparent; color: var(--kn-text); box-shadow: inset 0 0 0 max(1px, var(--kn-frame-width)) var(--kn-border-strong); }
   .kn-button[data-kn-variant="outline"]:is(:hover, :active), .kn-actions .kn-action:not([data-kn-main]):is(:hover, :active) { box-shadow: inset 0 0 0 max(1px, var(--kn-frame-width)) var(--kn-text); }
   /* The arrow is drawn without a box, so its word stands at the edge of its column. Room at each end, given back by
-     the margin, keeps the focus ring off the word and the arrow, also when the arrow steps forward on a press,
-     and moves nothing. */
-  .kn-button[data-kn-variant="arrow"] { padding: 0 0.375rem; margin-inline: -0.375rem; min-block-size: 1.5rem; min-inline-size: 1.5rem; background: transparent; color: var(--kn-link); box-shadow: none; }
-  .kn-button-arrow { transition: transform var(--kn-duration-feedback) var(--kn-easing-standard); }
+     the margin, keeps the focus ring off the word and the arrow, and moves nothing. */
+  .kn-button[data-kn-variant="arrow"] { padding: 0 0.375rem; margin-inline: -0.375rem; min-block-size: 1.5rem; min-inline-size: 1.5rem; background: transparent; color: var(--kn-link); box-shadow: none; text-underline-offset: 0.18em; }
   .kn-button:dir(rtl) { --kn-button-direction: -1; }
   .kn-button:dir(rtl) .kn-button-arrow { transform: scaleX(-1); }
-  .kn-button[data-kn-variant="arrow"]:is(:hover, :active) .kn-button-arrow { transform: translateX(calc(0.2em * var(--kn-button-direction))) scaleX(var(--kn-button-direction)); }
+  /* The arrow stands still, under the pointer and on a press, as the mark of a card that leads on does: a word and an
+     arrow are one idea, and a word does not move (the owner, 2026-11-12, issue #1). The word is underlined instead, as a
+     card's heading and the lone action after a series are (the assistant's choice, which the owner may veto). */
+  .kn-button[data-kn-variant="arrow"]:is(:hover, :active) { text-decoration: underline; }
   .kn-button:disabled { cursor: default; }
   @media (forced-colors: active) {
     .kn-button:not([data-kn-variant="arrow"]), .kn-actions .kn-action { border: 1px solid currentColor; }

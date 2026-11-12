@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- A Button's arrow link and the lone action that shows more of a series keep their arrow still under the pointer and on a press, as the mark of a card that leads on has since 0.4.0 (the owner, 2026-11-12); the Button's word is underlined instead, as the lone action's already was. Their arrow stepped forward.
 - A section's head over a series stands at the start edge, as every other head does: over reasons, over cards without pictures and over two cards it stood centred (the owner, 2026-11-13). The cards themselves, and a section whose form or choice centres it as a page's end, are as before.
 
 ## [0.8.0] – 2026-11-13
