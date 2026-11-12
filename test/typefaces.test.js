@@ -196,10 +196,13 @@ test('the first heading takes the role the user chooses, at its own size', () =>
   assert.throws(() => validateInputs(inputs({ type: { 'heading-1-role': 'title' } })), /heading-1-role/);
 });
 
-test('labels sit on the type scale, five steps below body text unless changed, and never below 12px', () => {
-  assert.equal(derive(inputs()).type.label.size.max, 12);
-  const higher = derive(inputs({ type: { steps: { label: 3 } } })).type.label.size;
-  assert.deepEqual([higher.min, higher.max], [14, 13]);
+test('labels sit on the type scale, three steps below body text unless changed, and never below 12px', () => {
+  // Three since the owner asked for eyebrows a step larger (2026-11-12): five and four steps both gave 12px on a wide
+  // screen, where no text goes below 12px.
+  const label = derive(inputs()).type.label.size;
+  assert.deepEqual([label.min, label.max], [14, 13]);
+  const lower = derive(inputs({ type: { steps: { label: 5 } } })).type.label.size;
+  assert.deepEqual([lower.min, lower.max], [12, 12]);
   const tiny = derive(inputs({ type: { 'body-size': { min: 13, max: 13 } } })).type;
   assert.equal(tiny.label.size.min, 12);
 });

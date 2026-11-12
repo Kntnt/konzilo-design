@@ -9,7 +9,7 @@ const defaults = {
     'body-size': { min: 17, max: 19 },
     ratio: { min: 1.067, max: 1.125 },
     breakpoints: { min: 390, max: 1440 },
-    steps: { 'heading-6': 0, 'heading-5': 1, 'heading-4': 1, 'heading-3': 1, 'heading-2': 1, 'heading-1': 3, display: 3, lead: 1, small: 2, label: 5 },
+    steps: { 'heading-6': 0, 'heading-5': 1, 'heading-4': 1, 'heading-3': 1, 'heading-2': 1, 'heading-1': 3, display: 3, lead: 1, small: 2, label: 3 },
     label: 'main',
   },
   shadow: { strength: 0, hardness: 30, angle: 0, elevation: 50, color: 'default', targets: { box: true, header: true, panel: true, page: true } },

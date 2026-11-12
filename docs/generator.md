@@ -412,7 +412,7 @@ headings. A typeface input is a CSS family stack; one that does not end in a gen
 family gets the matching system stack appended, because a named family may never
 load. Body endpoints are 17–19px, ratios 1.067–1.125, chained
 heading/display steps 0, 1, 1, 1, 1, 3, 3, lead 1, small 2 below and
-label 5 below. Grey is
+label 3 below (5 until the owner asked for eyebrows a step larger, 2026-11-12). Grey is
 achromatic. Density 75 gives a looser-leaning multiplier of 1.25; corner 25 gives
 3px radii. Shadows are off through strength zero, with hardness 30, angle 0, elevation 50,
 the text colour and all targets enabled. Frame is off.

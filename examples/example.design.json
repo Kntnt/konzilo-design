@@ -1671,11 +1671,11 @@
       },
       "label": {
         "size": {
-          "min": 12,
-          "max": 12,
-          "css": "clamp(0.75rem, 0.75rem + 0vw, 0.75rem)"
+          "min": 14,
+          "max": 13,
+          "css": "clamp(0.8125rem, 0.8982rem - 0.0952vw, 0.875rem)"
         },
-        "step": -5,
+        "step": -3,
         "line-height": 1.4,
         "weight": 600,
         "letter-spacing": 0.06

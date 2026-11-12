@@ -42,7 +42,7 @@ test('the sizes follow the curve where a browser can, and otherwise the clamp', 
   assert.match(css, /@supports \(width: calc\(1rem \* pow\(tan\(atan2\(100vw, 1rem\)\), 2\)\)\) \{/);
   assert.match(css, /--kn-type-window: clamp\(0, \(tan\(atan2\(100vw, 1rem\)\) - 24\.375\) \/ 65\.625, 1\);/);
   assert.match(css, /--kn-type-display-size: calc\(var\(--kn-type-body-size\) \* pow\(var\(--kn-type-base\), 10\)\);/);
-  assert.match(css, /--kn-type-label-size: max\(0\.75rem, calc\(var\(--kn-type-body-size\) \* pow\(var\(--kn-type-base\), -5\)\)\);/);
+  assert.match(css, /--kn-type-label-size: max\(0\.75rem, calc\(var\(--kn-type-body-size\) \* pow\(var\(--kn-type-base\), -3\)\)\);/, 'labels three steps below body text (owner, 2026-11-12)');
   assert.match(css, /--kn-type-display-size: clamp\(/, 'the fallback stays');
   const { 'type-scale': scale, ...older } = resolved;
   assert.doesNotMatch(coreCss(older), /@supports/, 'a file resolved before the curve keeps its clamps');
