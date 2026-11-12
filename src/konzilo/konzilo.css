@@ -39,7 +39,6 @@
     overflow-wrap: normal;
   }
   .kn-body-text pre code { font-size: inherit; }
-  .kn-body-text blockquote cite { display: block; margin-block-start: 0.5em; font-size: var(--kn-type-small-size); font-style: normal; }
   /* A task list: a box in place of the bullet, item by item, so an item that is no task keeps its bullet. The box hangs
      where a bullet would, with the item's words lined up with the others', and is centred on the first line, in a
      paragraph too where the reader writes a loose list. */
