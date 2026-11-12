@@ -18,7 +18,10 @@ Everything is saved in one JSON file, the design file. Every output is made from
   Components cover what a normal website needs, such as header, footer, hero, cards, lists, forms,
   tabs and accordions, and the styles work with any design the tool makes.
 - **Approval before sketches.** The presentation is one self-contained HTML file. The client opens
-  it offline and sees the colours, type and every component in the real design, and can comment.
+  it offline and sees the colours, the type and the main components in the real design, such as
+  the header, the footer, a hero, body text, cards, buttons and forms, and can comment. The parts
+  that only the directives draw, such as fact boxes, value lists and a choice, are not in it; the
+  gallery shows every component, but in the example design, not the client's.
 - **Works with any platform.** It is made for Konzilo, but the output is plain CSS, HTML and
   Markdown:
 
@@ -223,7 +226,7 @@ test/           the tests
 
 ```sh
 npm test               # all tests; browser tests need Playwright's browsers
-npm run gallery        # builds gallery/dist/index.html, every component in one page
+npm run gallery        # builds gallery/dist/index.html, every component in one page, in the example design
 KONZILO_CORE=~/Projects/konzilo node --test test/konzilo-build.test.js
                        # builds a site with the Konzilo core's checkout and the packed package
 ```
