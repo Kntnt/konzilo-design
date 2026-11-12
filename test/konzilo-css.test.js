@@ -58,6 +58,16 @@ test('the fixture holds nothing but made-up content', () => {
   assert.match(fixture, /data-konzilo-form="\{\}"/);
 });
 
+test('the fixture marks a link to the site\'s policies as the core\'s consent does, and no link in body text', () => {
+  // The core (src/consent/markup.js, policyLink()) marks each such link in the banner, the dialog, a placeholder and the
+  // declaration with the link type, so that its script can give a page it does not build the right address.
+  const consent = fixture.split('\n').filter((line) => /konzilo-(consent|embed-storage|declaration)/.test(line)).join('\n');
+  const links = [...consent.matchAll(/<a href="\/pages\/(privacy|cookie)-policy\/"([^>]*)>/g)];
+  assert.ok(links.length >= 6, `only ${links.length} links to a policy in the consent's markup`);
+  for (const [link, kind, rest] of links) assert.equal(rest, ` data-konzilo-consent-policy="${kind}-policy"`, link);
+  assert.match(fixture, /<a href="\/pages\/privacy-policy\/">a page of the site<\/a>/);
+});
+
 test('konzilo.css has a layer of its own after the components, so a site\'s stylesheets may come in any order and a site can override it', () => {
   const tree = parse(css, { parseValue: false, parseRulePrelude: false, parseAtrulePrelude: false });
   const top = tree.children.toArray().filter((node) => node.type !== 'Comment');
@@ -539,7 +549,7 @@ for (const [name, type] of BROWSERS) {
       const links = (label) => ({ links: [{ label: `${label} one`, href: '#one' }, { label: `${label} two`, href: '#two' }] });
       const footer = await render('Footer', footerFromDesign(settings, { lower: { a1: links('Start'), b1: links('End') } }), {
         // What `<ConsentControls slot="lower-a2" buttons={false} />` and `<ConsentControls slot="lower-b2" links={false} />` write.
-        'lower-a2': '<div class="konzilo-consent-controls"><ul class="konzilo-consent-policies"><li><a href="/pages/privacy-policy/">Privacy policy</a></li><li><a href="/pages/cookie-policy/">Cookie policy</a></li></ul></div>',
+        'lower-a2': '<div class="konzilo-consent-controls"><ul class="konzilo-consent-policies"><li><a href="/pages/privacy-policy/" data-konzilo-consent-policy="privacy-policy">Privacy policy</a></li><li><a href="/pages/cookie-policy/" data-konzilo-consent-policy="cookie-policy">Cookie policy</a></li></ul></div>',
         'lower-b2': '<div class="konzilo-consent-controls"><div class="konzilo-consent-buttons"><button type="button" class="konzilo-consent-secondary" data-konzilo-consent-action="change">Change privacy settings</button><button type="button" class="konzilo-consent-secondary" data-konzilo-consent-action="withdraw">Withdraw consent</button><button type="button" class="konzilo-consent-secondary" hidden>Not yet shown</button></div></div>',
       });
       const measure = (page) => page.evaluate(() => {
