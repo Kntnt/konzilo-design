@@ -374,6 +374,16 @@ test('the menu adapter turns the core\'s plain entries into Header\'s, with its 
 
   const chosen = menuProps(MENU, { linkMenu: (entry, index) => entry.title !== 'Home' && index < 3 });
   assert.deepEqual(chosen.map(({ linkMenu }) => linkMenu), [false, undefined, false], 'and an entry with no address never stands there');
+
+  // An entry may have a line of description, at any depth, which the core gives where the Admin wrote one.
+  const described = menuProps([
+    { title: 'Services', url: '/services/', description: 'What we do for you', items: [{ title: 'Planning', url: '/services/planning/', description: 'A plan for the year', items: [] }, { title: 'Pruning', url: '/services/pruning/', items: [] }] },
+    { title: 'About', url: '/about/', description: '', items: [] },
+  ]);
+  assert.deepEqual(described, [
+    { label: 'Services', href: '/services/', description: 'What we do for you', children: [{ label: 'Planning', href: '/services/planning/', description: 'A plan for the year' }, { label: 'Pruning', href: '/services/pruning/' }] },
+    { label: 'About', href: '/about/' },
+  ], 'a description where an entry has one, and none where it is empty');
 });
 
 test('Header renders what the adapter gives: the link menu it chose, the current page, and no address where there is none', async () => {

@@ -122,7 +122,7 @@ What the Header writes for the browser (the assistant's choices, 2026-11-10):
 
 ## The menu
 
-The core gives a menu as plain data, entries of `{ title, url, items }`, and its entries carry no mark of the current page. `menuProps(entries, { current, base, linkMenu })` in `design-props` turns them into Header's `{ label, href, children, current, linkMenu }`, and imports nothing of the core's.
+The core gives a menu as plain data, entries of `{ title, url, items }` and, where the Admin wrote one, `description`, a line of plain text of at most 160 characters, and its entries carry no mark of the current page. `menuProps(entries, { current, base, linkMenu })` in `design-props` turns them into Header's `{ label, href, description, children, current, linkMenu }`, `description` only where an entry has one, which the large menu shows under its entry, and imports nothing of the core's.
 
 - `current` is the page's address, `Astro.url.pathname`, and marks the entry at that address alone, not those above it. A trailing slash makes no difference.
 - `base` is the site's base, which an address on the site starts at, so that it stays in a preview.

@@ -45,7 +45,8 @@ export function identityProps(settings, project, { href = '/', logos } = {}) {
   };
 }
 
-// A menu as plain data, entries of `{ title, url, items }` as the Konzilo core gives them, in the shape Header takes.
+// A menu as plain data, entries of `{ title, url, description, items }` as the Konzilo core gives them, `description` a
+// line of plain text an entry may have, in the shape Header takes; the large menu shows the line under its entry.
 // `current` is the page's address, Astro.url.pathname, for the data has no mark of its own, and `base` the site's base, which
 // an address on the site starts at, so that it stays in a preview. `linkMenu(entry, index)` says which top entries stand in
 // the link menu, all by default, and an entry with no address, which only holds others, never does. Header's children are one
@@ -54,9 +55,9 @@ export function menuProps(entries = [], { current, base = '/', linkMenu } = {}) 
   const start = base.endsWith('/') ? base : `${base}/`;
   const based = (url) => (url.startsWith('/') && !url.startsWith('//') ? `${start}${url.slice(1)}` : url);
   const bare = (address) => String(address).replace(/\/+$/, '');
-  const link = ({ title, url }) => {
+  const link = ({ title, url, description }) => {
     const href = url ? based(url) : undefined;
-    return { label: title, ...(href ? { href } : {}), ...(href && current !== undefined && bare(href) === bare(current) ? { current: true } : {}) };
+    return { label: title, ...(href ? { href } : {}), ...(typeof description === 'string' && description.trim() ? { description: description.trim() } : {}), ...(href && current !== undefined && bare(href) === bare(current) ? { current: true } : {}) };
   };
   const below = (items = []) => items.flatMap((entry) => [...(entry.url ? [link(entry)] : []), ...below(entry.items)]);
   return entries.map((entry, index) => {

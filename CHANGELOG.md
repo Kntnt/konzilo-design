@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `menuProps` passes on a menu entry's `description`, the line the Konzilo core now gives an entry where its Admin wrote one, at any depth, so the large menu shows it under the entry.
+
 ### Changed
 
 - A Button's arrow link and the lone action that shows more of a series keep their arrow still under the pointer and on a press, as the mark of a card that leads on has since 0.4.0 (the owner, 2026-11-12); the Button's word is underlined instead, as the lone action's already was. Their arrow stepped forward.
