@@ -1,5 +1,6 @@
 ---
-import type { MenuItem, Language, Search, Cta, Level, Surface } from './frame-types';
+import type { MenuItem, Language, Search, Cta, Level, Surface, HeaderWords } from './frame-types';
+import { HEADER_WORDS } from './header.js';
 import LanguageSwitcher from './LanguageSwitcher.astro';
 import SearchPanel from './SearchPanel.astro';
 import Button from './Button.astro';
@@ -9,8 +10,11 @@ interface Props {
   // Whether the rows above and below the columns show. Astro counts a slot written inside a condition as filled even
   // when the condition is false, so the Header says it outright; on its own the menu goes by its slots.
   above?: boolean; below?: boolean;
+  // The header's words in the site's language, HEADER_WORDS where it gives none.
+  words?: HeaderWords;
 }
-const { id, items, level = 2, numbered = false, surface = 'page', languages = [], search, cta, above = Astro.slots.has('above'), below = Astro.slots.has('below') } = Astro.props;
+const { id, items, level = 2, numbered = false, surface = 'page', languages = [], search, cta, above = Astro.slots.has('above'), below = Astro.slots.has('below'), words = {} } = Astro.props;
+const said = { ...HEADER_WORDS, ...words };
 const Heading = `h${level}` as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
 // An entry with entries under it heads a column of them; one without stands as a link in a row after the columns, rather
 // than as a column with nothing in it (the assistant's choice, which the owner may veto). A description shows under its
@@ -21,11 +25,11 @@ const singles = items.filter((item) => !hasChildren(item) && item.href);
 // A modal dialog that the menu button opens with no script: Esc and a click outside close it, focus stays in it and
 // returns to the button.
 ---
-<dialog id={id} class="kn-header-panel kn-megamenu" data-kn-panel="menu" aria-label="Menu" data-kn-surface={surface} closedby="any">
-  <nav class="kn-megamenu-inner" aria-label="Main menu">
+<dialog id={id} class="kn-header-panel kn-megamenu" data-kn-panel="menu" aria-label={said.menu} data-kn-surface={surface} closedby="any">
+  <nav class="kn-megamenu-inner" aria-label={said.mainMenu}>
     {(search || languages.length || cta) && <div class="kn-header-moved">
-      {search && <SearchPanel search={search} inline />}
-      {languages.length > 0 && <LanguageSwitcher languages={languages} inline />}
+      {search && <SearchPanel search={search} inline words={said} />}
+      {languages.length > 0 && <LanguageSwitcher languages={languages} inline words={said} />}
       {cta && <Button class="kn-header-cta" href={cta.href} commandfor={cta.href === undefined ? cta.dialog : undefined} command={cta.href === undefined && cta.dialog ? 'show-modal' : undefined} aria-haspopup={cta.href === undefined && cta.dialog ? 'dialog' : undefined} aria-controls={cta.href === undefined ? cta.dialog : undefined} data-kn-moved="cta">{cta.label}</Button>}
     </div>}
     {above && <div class="kn-megamenu-above"><slot name="above" /></div>}

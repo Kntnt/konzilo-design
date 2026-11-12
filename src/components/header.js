@@ -1,6 +1,24 @@
 // What the header decides at build time. Its behaviour in the browser is HTML and CSS (header.md, How it is built):
 // no script measures it, follows the scrolling or opens its panels.
 
+// The header's own words, which a site gives in its language through Header's `words` (or headerProps' `words`); each
+// one it leaves out is the English one here. `menu` names the menu button and the large menu, `mainMenu` the large
+// menu's navigation and `linkMenu` the bar's, `openSearch` the magnifier, `search` the search button, `searchHeading`
+// the search box's heading, `closeSearch` its close button, `languages` the languages moved into the large menu,
+// `language` the globe, followed by the current language's name, and `skip` the link that skips to the content.
+export const HEADER_WORDS = Object.freeze({
+  skip: 'Skip to content',
+  menu: 'Menu',
+  mainMenu: 'Main menu',
+  linkMenu: 'Main',
+  openSearch: 'Search',
+  search: 'Search',
+  searchHeading: 'Search',
+  closeSearch: 'Close search',
+  languages: 'Languages',
+  language: 'Language',
+});
+
 export const GIVING_WAY_ORDER = ['slogan', 'name', 'links', 'word', 'language', 'cta', 'search'];
 const ARRANGEMENTS = {
   A: [['identity'], ['search', 'language', 'links', 'menu', 'cta']],

@@ -14,6 +14,8 @@ export interface MenuButton { word?: string; icon?: 'chevron-down' | 'menu' | fa
 // word such as "Search" or "Sök", or the label where it gives none; `icon` is a magnifier that goes as the visitor types.
 // Without the close button (`close: false`), Esc or a click beside the box closes it.
 export interface Search { action: string; label?: string; word?: string; placeholder?: 'none' | 'word' | 'icon'; links?: FrameLink[]; surface?: Surface; blur?: boolean; heading?: boolean; close?: boolean }
+// The header's own words in the site's language, each left out the English of HEADER_WORDS in header.js.
+export interface HeaderWords { skip?: string; menu?: string; mainMenu?: string; linkMenu?: string; openSearch?: string; search?: string; searchHeading?: string; closeSearch?: string; languages?: string; language?: string }
 export interface Cta { label: string; href?: string; dialog?: string }
 export type FooterCellName = 'a1' | 'b1' | 'a2' | 'b2';
 export interface FooterCellData { heading?: string; level?: Level; text?: string; links?: FrameLink[]; content?: string }

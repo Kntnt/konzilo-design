@@ -157,3 +157,30 @@ test('in the large menu an entry without entries under it is a link in a row aft
   assert.ok(!one(only, '.kn-megamenu-columns'), 'no columns where no entry has entries under it');
   assert.equal(all(only, '.kn-megamenu-links a').length, 2);
 });
+
+test('a site gives the header\'s own words in its language, and each it leaves out is the English one', async () => {
+  const words = { skip: 'Hoppa till innehållet', menu: 'Meny', mainMenu: 'Huvudmeny', linkMenu: 'Huvudlänkar', openSearch: 'Öppna sökningen', search: 'Sök', searchHeading: 'Sök på webbplatsen', closeSearch: 'Stäng sökningen', languages: 'Språk', language: 'Språkval' };
+  const said = (html) => {
+    const tree = parse(html);
+    const label = (selector) => one(tree, selector)?.attributes['aria-label'];
+    return {
+      skip: text(one(tree, '.kn-skip-link')),
+      menuButton: label('.kn-header-menu-button'),
+      menu: label('.kn-megamenu'),
+      mainMenu: label('.kn-megamenu-inner'),
+      linkMenu: label('.kn-header-link-menu'),
+      openSearch: label('.kn-header-search-trigger'),
+      search: [...all(tree, 'button[type="submit"]')].map(text).map((word) => word.trim()),
+      searchHeading: text(one(tree, '.kn-header-search-box [id$="-heading"]')),
+      closeSearch: label('.kn-header-search-close'),
+      languages: label('.kn-header-moved-languages'),
+      language: label('[data-kn-trigger="language"]'),
+    };
+  };
+  const swedish = said(await render('Header', { ...everything, menuButton: undefined, words }));
+  assert.deepEqual(swedish, { skip: words.skip, menuButton: 'Meny', menu: 'Meny', mainMenu: 'Huvudmeny', linkMenu: 'Huvudlänkar', openSearch: 'Öppna sökningen', search: ['Sök', 'Sök'], searchHeading: 'Sök på webbplatsen', closeSearch: 'Stäng sökningen', languages: 'Språk', language: 'Språkval: English' });
+  const english = said(await render('Header', { ...everything, menuButton: undefined }));
+  assert.deepEqual(english, { skip: 'Skip to content', menuButton: 'Menu', menu: 'Menu', mainMenu: 'Main menu', linkMenu: 'Main', openSearch: 'Search', search: ['Search', 'Search'], searchHeading: 'Search', closeSearch: 'Close search', languages: 'Languages', language: 'Language: English' }, 'nothing changes for a site that gives no words');
+  // A menu button that shows a word of the site's own is named by it.
+  assert.equal(said(await render('Header', { ...everything, menuButton: { word: 'Meny' } })).menuButton, 'Meny');
+});

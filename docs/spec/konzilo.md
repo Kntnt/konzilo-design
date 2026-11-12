@@ -242,6 +242,23 @@ const content = {
 </html>
 ```
 
+**The header's own words.** A site in another language gives them to `headerProps` as `words`, each in its language; each it leaves out is the English one, so a site that gives none sees no change (since after 0.6.1). `menuWord`, the menu button's word, names the menu button and the large menu too, unless `words.menu` does. The words, with the English of `HEADER_WORDS` in `components/header.js`:
+
+| Key | Where it stands | English |
+|---|---|---|
+| `skip` | The link that skips to the content | Skip to content |
+| `menu` | The menu button's name, where it shows no word of its own, and the large menu's | Menu |
+| `mainMenu` | The large menu's navigation | Main menu |
+| `linkMenu` | The bar's link menu | Main |
+| `openSearch` | The magnifier that opens the search box | Search |
+| `search` | The search button, in the box and in the large menu | Search |
+| `searchHeading` | The search box's heading, shown or for a screen reader | Search |
+| `closeSearch` | The search box's close button | Close search |
+| `languages` | The languages moved into the large menu | Languages |
+| `language` | The globe, followed by the current language's name | Language |
+
+The search field's own name and the word in an empty field are `search.label` and `search.word`, as before. The footer writes no words of its own: every word in it is the site's. Breadcrumbs and Pagination take theirs as props (`label`, and `previous`, `next` and `pageLabel`).
+
 ### The directives and the presentations
 
 A site draws the directives of directives.md with this package's components, and its post lists with its presentations (directives.md, The components). Besides the configuration above, its site description takes the declarations and the checks by their package specifiers, names the directives among each type's elements, and declares the presentations it registers:

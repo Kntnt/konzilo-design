@@ -461,6 +461,8 @@ test('design props take a site\'s own content, and a setting that is off leaves 
   assert.equal(header.search.action, '/search/');
   assert.deepEqual(header.search.links, content.search.links);
   assert.deepEqual(header.menuButton, { word: 'Meny' });
+  assert.deepEqual(header.words, { menu: 'Meny' }, 'the menu word names the menu too');
+  assert.deepEqual(headerProps(on, project, { ...content, words: { search: 'Sök', mainMenu: 'Huvudmeny' } }).words, { menu: 'Meny', search: 'Sök', mainMenu: 'Huvudmeny' }, 'the header\'s own words, as the site gives them');
   const off = headerProps({ ...on, language: false, search: false, cta: false }, project, content);
   assert.deepEqual([off.languages, off.search, off.cta], [[], undefined, undefined]);
   assert.equal(headerProps(on, project, {}).search, undefined, 'a site without a search has none to show');

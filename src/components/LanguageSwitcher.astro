@@ -1,13 +1,15 @@
 ---
-import type { Language } from './frame-types';
+import type { Language, HeaderWords } from './frame-types';
+import { HEADER_WORDS } from './header.js';
 import Button from './Button.astro';
 import Icon from './Icon.astro';
 // The globe opens a native popover, so the browser says whether it is open.
-interface Props { languages: Language[]; id?: string; inline?: boolean }
-const { languages, id, inline = false } = Astro.props;
+interface Props { languages: Language[]; id?: string; inline?: boolean; words?: HeaderWords }
+const { languages, id, inline = false, words = {} } = Astro.props;
+const said = { ...HEADER_WORDS, ...words };
 const current = languages.find((language) => language.current);
 ---
-{inline ? <nav class="kn-header-moved-languages" aria-label="Languages" data-kn-moved="language"><Icon name="globe" />{languages.map((language) => <a href={language.href} lang={language.code} hreflang={language.code} aria-current={language.current ? 'true' : undefined}>{language.label}</a>)}</nav> : <div class="kn-header-language">
-  <Button class="kn-header-control kn-header-icon-button" variant="outline" aria-label={`Language${current ? `: ${current.label}` : ''}`} aria-controls={id} popovertarget={id} data-kn-trigger="language" icon="globe" />
+{inline ? <nav class="kn-header-moved-languages" aria-label={said.languages} data-kn-moved="language"><Icon name="globe" />{languages.map((language) => <a href={language.href} lang={language.code} hreflang={language.code} aria-current={language.current ? 'true' : undefined}>{language.label}</a>)}</nav> : <div class="kn-header-language">
+  <Button class="kn-header-control kn-header-icon-button" variant="outline" aria-label={`${said.language}${current ? `: ${current.label}` : ''}`} aria-controls={id} popovertarget={id} data-kn-trigger="language" icon="globe" />
   <ul id={id} class="kn-header-panel kn-header-language-list" data-kn-panel="language" data-kn-surface="page" popover="auto">{languages.map((language) => <li><a href={language.href} lang={language.code} hreflang={language.code} aria-current={language.current ? 'true' : undefined}>{language.label}</a></li>)}</ul>
 </div>}

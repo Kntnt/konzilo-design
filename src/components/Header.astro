@@ -1,8 +1,8 @@
 ---
 import { nextId } from './ids.js';
 import type { HTMLAttributes } from 'astro/types';
-import type { Identity, MenuItem, MenuButton, Language, Search, Cta, Level } from './frame-types';
-import { arrangementGroups, givingWaySteps } from './header.js';
+import type { Identity, MenuItem, MenuButton, Language, Search, Cta, Level, HeaderWords } from './frame-types';
+import { arrangementGroups, givingWaySteps, HEADER_WORDS } from './header.js';
 import scrollTimelinePolyfill from './scroll-timeline-polyfill.js?url&no-inline';
 import scrollStatePolyfill from './scroll-state-polyfill.js?url&no-inline';
 import headerFit from './header-fit.js?raw';
@@ -19,18 +19,21 @@ interface Props extends HTMLAttributes<'header'> {
   start?: 'below' | 'under'; autohide?: boolean; surface?: 'page' | 'brand'; translucent?: boolean;
   menu?: MenuItem[]; linkMenu?: boolean; menuButton?: MenuButton | false;
   languages?: Language[]; search?: Search; cta?: Cta; level?: Level; numbered?: boolean;
-  menuAbove?: boolean; menuBelow?: boolean; skipTo?: string;
+  menuAbove?: boolean; menuBelow?: boolean; skipTo?: string; words?: HeaderWords;
 }
-const { identity, arrangement = 'A', attachment = 'flow', start = 'below', autohide = false, surface = 'page', translucent = false, menu = [], linkMenu = false, menuButton = false, languages = [], search, cta, level = 2, numbered = false, menuAbove = true, menuBelow = true, skipTo = '#content', id = nextId('kn-header'), class: className, ...attributes } = Astro.props;
+const { identity, arrangement = 'A', attachment = 'flow', start = 'below', autohide = false, surface = 'page', translucent = false, menu = [], linkMenu = false, menuButton = false, languages = [], search, cta, level = 2, numbered = false, menuAbove = true, menuBelow = true, skipTo = '#content', words = {}, id = nextId('kn-header'), class: className, ...attributes } = Astro.props;
 // Page start and sliding away are a sticky header's only.
 const sticky = attachment === 'sticky';
 const slides = sticky && autohide;
 const inLinkMenu = linkMenu && menu.some((item) => item.linkMenu !== false);
 const hasMenu = !!menuButton || inLinkMenu || !!search || languages.length > 0 || !!cta;
 const groups = arrangementGroups(arrangement, { links: inLinkMenu, menu: hasMenu, language: languages.length > 0, search: !!search, cta: !!cta });
-const button = menuButton || { word: linkMenu ? 'Menu' : '', icon: 'menu' as const };
+const said = { ...HEADER_WORDS, ...Object.fromEntries(Object.entries(words).filter(([, word]) => typeof word === 'string' && word !== '')) };
+const given = menuButton || { word: linkMenu ? said.menu : '', icon: 'menu' as const };
+// The button's name is its visible word where it shows one, so that what is heard is what is seen.
+const button = { ...given, word: given.word ?? said.menu, label: given.label ?? (given.word || said.menu) };
 // The steps this header can take, in order, for header-fit.js to measure; the last resort, `scale`, follows them all.
-const steps = givingWaySteps({ slogan: !!identity.slogan, logo: !!identity.logo, name: !!identity.name, links: inLinkMenu, word: hasMenu && (button.word ?? 'Menu') !== '', language: languages.length > 0, cta: !!cta, search: !!search });
+const steps = givingWaySteps({ slogan: !!identity.slogan, logo: !!identity.logo, name: !!identity.name, links: inLinkMenu, word: hasMenu && button.word !== '', language: languages.length > 0, cta: !!cta, search: !!search });
 // Written inline in every page, so without its comments.
 const headerFitScript = headerFit.replace(/^\s*\/\/.*\n/gm, '');
 // The rows above and below the large menu hold what the site gives in the menu-above and menu-below slots, where the
@@ -40,22 +43,22 @@ const rowBelow = menuBelow && Astro.slots.has('menu-below');
 const opens = (target?: string) => (target ? { commandfor: target, command: 'show-modal', 'aria-haspopup': 'dialog', 'aria-controls': target } : {});
 ---
 <header {...attributes} id={id} class:list={['kn-header', className]} data-kn-arrangement={arrangement} data-kn-attachment={attachment} data-kn-start={sticky ? start : 'below'} data-kn-autohide={String(slides)} data-kn-translucent={String(translucent)} data-kn-surface={surface} data-kn-steps={steps.join(' ')}>
-  <SkipLink href={skipTo} />
+  <SkipLink href={skipTo} label={said.skip} />
   <div class="kn-header-bar"><div class="kn-header-inner">
     <div class="kn-header-row">
       {groups.map((group, i) => <div class="kn-header-group" data-kn-group={i === 0 ? 'start' : 'end'}>{group.map((item) => <>
         {item === 'identity' && <HeaderIdentity identity={identity} />}
-        {item === 'links' && <HeaderLinkMenu items={menu} />}
-        {item === 'search' && <Button class="kn-header-control kn-header-icon-button kn-header-search-trigger" variant="outline" icon="search" aria-label="Search" {...opens(`${id}-search`)} data-kn-trigger="search" />}
-        {item === 'language' && <LanguageSwitcher languages={languages} id={`${id}-languages`} />}
+        {item === 'links' && <HeaderLinkMenu items={menu} label={said.linkMenu} />}
+        {item === 'search' && <Button class="kn-header-control kn-header-icon-button kn-header-search-trigger" variant="outline" icon="search" aria-label={said.openSearch} {...opens(`${id}-search`)} data-kn-trigger="search" />}
+        {item === 'language' && <LanguageSwitcher languages={languages} id={`${id}-languages`} words={said} />}
         {item === 'menu' && <HeaderMenuButton controls={`${id}-menu`} button={button} automatic={!menuButton} />}
         {item === 'cta' && <Button href={cta?.href} class="kn-header-cta" {...opens(cta?.href === undefined ? cta?.dialog : undefined)}>{cta?.label}</Button>}
       </>)}</div>)}
-      {hasMenu && <Megamenu id={`${id}-menu`} items={menu} level={level} numbered={numbered} languages={languages} search={search} cta={cta} above={rowAbove} below={rowBelow}>
+      {hasMenu && <Megamenu id={`${id}-menu`} items={menu} level={level} numbered={numbered} languages={languages} search={search} cta={cta} above={rowAbove} below={rowBelow} words={said}>
         <Fragment slot="above"><slot name="menu-above" /></Fragment>
         <Fragment slot="below"><slot name="menu-below" /></Fragment>
       </Megamenu>}
-      {search && <SearchPanel search={search} id={`${id}-search`} level={level} />}
+      {search && <SearchPanel search={search} id={`${id}-search`} level={level} words={said} />}
     </div>
   </div></div>
   {/* The script that measures giving way, inline and last, so it fits this header before the page paints; then the
