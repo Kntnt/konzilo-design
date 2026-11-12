@@ -223,6 +223,10 @@
   .konzilo-form .konzilo-form-field { display: grid; align-content: start; gap: 0.4em; min-inline-size: 0; inline-size: 100%; margin: 0; padding: 0; border: 0; }
   .konzilo-form .konzilo-form-field > label, .konzilo-form legend { color: var(--kn-text); }
   .konzilo-form .konzilo-form-required { color: var(--kn-text-muted); }
+  /* A link in a field's label or a group's legend, such as an acceptance line's to its policy, as the core writes it: a
+     plain `a`. It looks as a link in body text, wherever the form stands. */
+  .konzilo-form .konzilo-form-field > :is(label, legend) a { color: var(--kn-link); text-decoration: underline; text-underline-offset: 0.18em; text-decoration-thickness: 0.06em; }
+  .konzilo-form .konzilo-form-field > :is(label, legend) a:hover { text-decoration-thickness: 0.12em; }
   .konzilo-form :where(input:not([type="checkbox"], [type="radio"], [type="hidden"]), textarea, select) { display: block; inline-size: 100%; min-inline-size: 0; min-block-size: 2.75rem; padding: 0.6em 0.75em; border: 1px solid var(--kn-border-strong); border-radius: var(--kn-radius-control); background-color: var(--kn-background); color: var(--kn-text); font: inherit; }
   .konzilo-form textarea { resize: block; }
   /* A browser's own arrow stands too close to the edge, and cannot be moved, so a select draws its own: two strokes in its

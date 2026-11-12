@@ -35,7 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A table the Konzilo core writes in a wrapper, `<div class="konzilo-table">`, takes the whole width of its column, however few its columns, and scrolls inside the wrapper where it is wider; `konzilo.css` styles the wrapper, which the core is asked to write. A bare table cannot be stretched by a stylesheet in Firefox, so it keeps its own width in every browser alike until then.
 - A fact box in a section's body stands in the reading column, as in an article, at the start or in the middle of a centred section, as the text round it does. It spanned the whole content width.
 - The pager of a list of posts stands a column gap under its cards, as the parts of a section's body stand from one another, inside the list or right after it. It stood close under the cards, at the component gap.
-
+- A link in a form field's label or a group's legend on a Konzilo site, such as an acceptance line's to its policy, looks as a link in body text, wherever the form stands. Outside body text it kept the browser's own underline.
 
 ## [0.6.1] – 2026-11-12
 

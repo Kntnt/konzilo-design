@@ -203,6 +203,25 @@ for (const [name, type] of BROWSERS) {
       await close(page);
     });
 
+    for (const surface of ['page', 'brand']) {
+      test(`a link in a field's label or a group's legend looks as a link in body text, in body text and outside it, on ${surface}`, async () => {
+        const form = fixture.match(/<form class="konzilo-form" id="konzilo-form-contact".*?<\/form>/s)[0].replaceAll('konzilo-form-contact', 'konzilo-form-alone');
+        const body = `<div data-kn-surface="${surface}"><div class="kn-body-text">${fixture}<p><a href="#probe" id="probe">a link</a></p></div>${form}</div>`;
+        const page = await pageFor(browser, { body });
+        const look = (selector) => page.$eval(selector, (link) => { const style = getComputedStyle(link); return [style.color, style.textDecorationLine, style.textDecorationThickness, style.textUnderlineOffset].join(' '); });
+        const probe = await look('#probe');
+        const links = ['#konzilo-form-contact-terms + label a', '#konzilo-form-contact-topics legend a', '#konzilo-form-alone-terms + label a', '#konzilo-form-alone-topics legend a'];
+        for (const selector of links) assert.equal(await look(selector), probe, selector);
+        await page.hover('#probe');
+        const hovered = await page.$eval('#probe', (link) => getComputedStyle(link).textDecorationThickness);
+        for (const selector of links) {
+          await page.hover(selector);
+          assert.equal(await page.$eval(selector, (link) => getComputedStyle(link).textDecorationThickness), hovered, `${selector} under the pointer`);
+        }
+        await close(page);
+      });
+    }
+
     for (const mode of ['light', 'dark']) {
       test(`the button that opens a lightbox takes the design's focus ring, as every other control does, ${mode}`, async () => {
         const page = await pageFor(browser, { mode });
