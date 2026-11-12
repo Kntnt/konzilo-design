@@ -2,7 +2,7 @@ import test from 'node:test';
 import { TYPEFACES, CATEGORIES, shippedIn } from '../src/fonts/catalog.js';
 import assert from 'node:assert/strict';
 import { readdir, readFile } from 'node:fs/promises';
-import { derive, validateInputs, sizeAt } from '../src/generator/index.js';
+import { derive, fitRolesToFaces, validateInputs, sizeAt } from '../src/generator/index.js';
 import { coreCss } from '../src/css/index.js';
 
 const read = (path, encoding = 'utf8') => readFile(new URL(`../${path}`, import.meta.url), encoding);
@@ -58,6 +58,45 @@ test('a role sets its own axes, and nothing else changes', () => {
   assert.equal(derive(inputs({ typefaces: mona, type: { roles: { display: { features: [] } } } })).type.display.features, undefined, 'an empty choice turns the tuning off');
   assert.throws(() => validateInputs(inputs({ type: { roles: { footer: {} } } })), /footer/);
   assert.throws(() => validateInputs(inputs({ type: { roles: { label: { features: ['not a tag'] } } } })), /features/);
+});
+
+test('a role keeps only what its typeface has, and says what it lost', () => {
+  const roles = () => ({
+    display: { weight: 260, 'letter-spacing': -0.03, axes: { wdth: 112, opsz: 100 } },
+    label: { weight: 800, 'letter-spacing': 0.06, axes: { wdth: 75, opsz: 0 }, features: ['ss02', 'ss10'] },
+    main: { features: [] },
+  });
+  const unchanged = inputs({ typefaces: { main: 'Mona Sans' }, type: { roles: roles() } });
+  assert.deepEqual(fitRolesToFaces(unchanged), [], 'Mona Sans has all of it');
+  assert.deepEqual(unchanged.type.roles, roles());
+
+  // Inter has a weight axis from 100 to 900 and an optical size from 14 to 32, no width and none of these sets.
+  const inter = inputs({ typefaces: { main: 'Inter' }, type: { roles: roles() } });
+  assert.deepEqual(fitRolesToFaces(inter), [
+    'display: Inter has no wdth axis, so its setting 112 is left out',
+    'display: opsz 100 is outside Inter\'s 14 to 32, so it is 32',
+    'label: Inter has no wdth axis, so its setting 75 is left out',
+    'label: opsz 0 is outside Inter\'s 14 to 32, so it is 14',
+    'label: Inter has no ss10, so it is left out',
+  ]);
+  assert.deepEqual(inter.type.roles, {
+    display: { weight: 260, 'letter-spacing': -0.03, axes: { opsz: 32 } },
+    label: { weight: 800, 'letter-spacing': 0.06, axes: { opsz: 14 }, features: ['ss02'] },
+    main: { features: [] },
+  }, 'an empty choice of sets stays, since it turns a tuning off');
+
+  // A typeface the library does not ship has no axes or sets it knows; a role left with nothing goes, and the roles too.
+  const own = inputs({ typefaces: { main: 'Georgia, serif', label: 'Lora' }, type: { roles: { display: { axes: { wdth: 112 } }, label: { weight: 900 } } } });
+  assert.deepEqual(fitRolesToFaces(own), [
+    'display: Georgia is not a typeface the library ships, so it has no known wdth axis, so its setting 112 is left out',
+    'label: weight 900 is outside Lora\'s 400 to 700, so it is 700',
+  ]);
+  assert.deepEqual(own.type.roles, { label: { weight: 700 } });
+  const gone = inputs({ typefaces: { main: 'Georgia, serif' }, type: { roles: { display: { features: ['ss01'] } } } });
+  fitRolesToFaces(gone);
+  assert.equal(gone.type.roles, undefined);
+  validateInputs(gone);
+  assert.deepEqual(fitRolesToFaces(inputs()), [], 'a design without roles');
 });
 
 test('labels can take a typeface of their own', () => {

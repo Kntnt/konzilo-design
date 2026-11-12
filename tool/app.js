@@ -1,4 +1,4 @@
-import { derive, hexToOklch, oklchToHex, contrast } from '/src/generator/index.js';
+import { derive, hexToOklch, oklchToHex, contrast, fitRolesToFaces } from '/src/generator/index.js';
 import { rem } from '/src/generator/fluid.js';
 import { coreCss } from '/src/css/index.js';
 import { faceOf } from '/src/fonts/catalog.js';
@@ -695,23 +695,9 @@ function setFace(role, value) {
     else delete type['heading-1-role'];
   }
   if (role === 'label') type.label = value === '@monospace' ? 'monospace' : 'main';
-  fitRolesToFaces();
-}
-// A new typeface keeps only the settings it has axes for, inside their ranges. Followers change with it.
-function fitRolesToFaces() {
-  const roles = model.inputs.type.roles;
-  if (!roles) return;
-  const resolved = derive(model.inputs);
-  for (const [role, settings] of Object.entries(roles)) {
-    const face = faceOf(stackOfRole(role, resolved));
-    const inRange = ([min, , max], value) => Math.min(max, Math.max(min, value));
-    if (settings.weight !== undefined && face?.axes.wght) settings.weight = inRange(face.axes.wght, settings.weight);
-    settings.axes = Object.fromEntries(Object.entries(settings.axes ?? {}).filter(([tag]) => face?.axes[tag]).map(([tag, value]) => [tag, inRange(face.axes[tag], value)]));
-    if (settings.features) settings.features = settings.features.filter((set) => face?.sets.some(([tag]) => tag === set));
-    if (!Object.keys(settings.axes).length) delete settings.axes;
-    if (!settings.features?.length) delete settings.features;
-  }
-  tidyRoles();
+  // A new typeface keeps only the settings it has axes and sets for, inside their ranges, as `resolve` does. Followers
+  // change with it.
+  fitRolesToFaces(model.inputs);
 }
 function tidyRoles() {
   const roles = model.inputs.type.roles;

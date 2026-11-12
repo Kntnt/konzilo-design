@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- `konzilo-design resolve` keeps only the type roles' settings that their typefaces have, as the tool does when a typeface changes, and says on its output what it changed: an axis or a set of alternate letters the typeface lacks is left out, and a weight or an axis outside its range is brought within it. It kept them all, so a file whose typeface was changed by hand, or by a tool older than the settings, carried another typeface's axes into its resolved values. A design whose settings fit its typefaces, such as a new one, resolves as before. `fitRolesToFaces(inputs)` in the generator does it for both. The tool now also keeps an empty choice of alternate letters, which turns a typeface's own tuning off, when another typeface changes; it dropped it, turning the tuning back on.
+
 ## [0.9.0] – 2026-11-13
 
 ### Added

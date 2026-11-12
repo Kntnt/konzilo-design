@@ -2,7 +2,7 @@
 import { existsSync } from 'node:fs';
 import { readFile, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
-import { resolve, checkFormat, checkFingerprint, checkContrast, validateInputs, validateDesignFile, withFormat } from '../src/generator/index.js';
+import { resolve, checkFormat, checkFingerprint, checkContrast, fitRolesToFaces, validateInputs, validateDesignFile, withFormat } from '../src/generator/index.js';
 import { emitCss } from '../src/css/index.js';
 import { componentsCss } from '../src/css/components.js';
 import { backUp } from '../src/cli/backup.js';
@@ -86,10 +86,12 @@ try {
     if (command === 'resolve') {
       const known = withFormat(file);
       validateInputs(file.inputs);
+      const fitted = fitRolesToFaces(file.inputs);
       const output = { ...known, resolved: await resolve(file.inputs) };
       validateDesignFile(output);
       await backUp(path);
       await writeFile(path, JSON.stringify(output, null, 2) + '\n');
+      if (fitted.length) process.stdout.write(`The type roles keep only what their typefaces have:\n${fitted.map((line) => `- ${line}.\n`).join('')}`);
     } else if (command === 'css') {
       const css = await emitCss(file);
       if (args.length) await writeFile(args[1], css);

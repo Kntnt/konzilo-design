@@ -1,5 +1,6 @@
-import { SYSTEM_MONOSPACE, SYSTEM_SANS } from './defaults.js';
+import { SYSTEM_MONOSPACE, SYSTEM_SANS, withDefaults } from './defaults.js';
 import { windowReaching } from './type.js';
+import { faceOf } from '../fonts/catalog.js';
 
 const GENERIC_LAST = /(?:^|,)\s*(?:serif|sans-serif|monospace|system-ui|ui-serif|ui-sans-serif|ui-monospace)\s*$/i;
 
@@ -19,6 +20,52 @@ export function typefaceStacks({ main, monospace, heading, 'heading-1': firstHea
   if (!firstHeading && firstHeadingRole === 'display') stacks['heading-1'] = stacks.display;
   stacks.label = labelFace ? stack(labelFace, SYSTEM_SANS) : label === 'monospace' ? stacks.monospace : stacks.main;
   return stacks;
+}
+
+// A role keeps only what its typeface has, as the tool has it when a typeface changes and `resolve` whenever it runs:
+// its weight within the typeface's weight axis, the axes the typeface has within their ranges, and the sets of
+// alternate letters it has. A typeface the library does not ship has no axes or sets the library knows, so a role on it
+// keeps only its weight and letter spacing. An empty choice of sets stays, since it turns a typeface's tuning off. A
+// role left with nothing goes, and `type.roles` with it. Changes `inputs` in place and returns what it changed, a line
+// each.
+export function fitRolesToFaces(inputs) {
+  const roles = inputs.type?.roles;
+  if (!roles) return [];
+  const { typefaces, type } = withDefaults(inputs);
+  const stacks = typefaceStacks(typefaces, type.label, type['heading-1-role']);
+  const changes = [];
+  for (const [role, settings] of Object.entries(roles)) {
+    const stack = role === 'heading-1' ? stacks['heading-1'] ?? stacks.heading : stacks[role];
+    const face = faceOf(stack);
+    const name = face?.family ?? stack.split(',')[0].trim().replace(/^["']|["']$/g, '');
+    const lacks = face ? `${name} has no` : `${name} is not a typeface the library ships, so it has no known`;
+    const inRange = (tag, value) => {
+      const [min, , max] = face.axes[tag];
+      const fitted = Math.min(max, Math.max(min, value));
+      if (fitted !== value) changes.push(`${role}: ${tag === 'wght' ? 'weight' : tag} ${value} is outside ${name}'s ${min} to ${max}, so it is ${fitted}`);
+      return fitted;
+    };
+    if (settings.weight !== undefined && face?.axes.wght) settings.weight = inRange('wght', settings.weight);
+    if (settings.axes) {
+      for (const [tag, value] of Object.entries(settings.axes)) {
+        if (face?.axes[tag]) settings.axes[tag] = inRange(tag, value);
+        else {
+          delete settings.axes[tag];
+          changes.push(`${role}: ${lacks} ${tag} axis, so its setting ${value} is left out`);
+        }
+      }
+      if (!Object.keys(settings.axes).length) delete settings.axes;
+    }
+    if (settings.features?.length) {
+      const lacking = settings.features.filter((set) => !face?.sets.some(([tag]) => tag === set));
+      if (lacking.length) changes.push(`${role}: ${lacks} ${lacking.join(', ')}, so ${lacking.length === 1 ? 'it is' : 'they are'} left out`);
+      settings.features = settings.features.filter((set) => !lacking.includes(set));
+      if (!settings.features.length) delete settings.features;
+    }
+    if (!Object.keys(settings).length) delete roles[role];
+  }
+  if (!Object.keys(roles).length) delete inputs.type.roles;
+  return changes;
 }
 
 const familyOf = (stack) => stack.split(',')[0].trim().replace(/^["']|["']$/g, '').toLowerCase();

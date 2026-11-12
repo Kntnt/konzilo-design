@@ -1,7 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync, spawnSync } from 'node:child_process';
-import { writeFile, readFile, unlink } from 'node:fs/promises';
+import { writeFile, readFile, unlink, mkdtemp, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { defaultInputs } from '../src/generator/index.js';
 import { fileURLToPath } from 'node:url';
 
@@ -38,6 +40,21 @@ test('CLI resolves, checks and exports; stale inputs fail both consumers', async
     assert.match(run.stderr, /fingerprint mismatch/);
     assert.equal(run.stdout, '');
   }
+});
+
+test('resolve keeps only the role settings a role\'s typeface has, and says which it changed', async (t) => {
+  const folder = await mkdtemp(join(tmpdir(), 'kd-resolve-'));
+  t.after(() => rm(folder, { recursive: true }));
+  const path = join(folder, 'roles.design.json');
+  const inputs = { ...defaultInputs(), typefaces: { ...defaultInputs().typefaces, main: 'Inter' }, type: { ...defaultInputs().type, roles: { display: { weight: 260, axes: { wdth: 112, opsz: 20 } } } } };
+  await writeFile(path, JSON.stringify({ inputs, project: {} }));
+  const said = execFileSync(process.execPath, [cli, 'resolve', path], { encoding: 'utf8' });
+  assert.equal(said, 'The type roles keep only what their typefaces have:\n- display: Inter has no wdth axis, so its setting 112 is left out.\n');
+  const file = JSON.parse(await readFile(path, 'utf8'));
+  assert.deepEqual(file.inputs.type.roles, { display: { weight: 260, axes: { opsz: 20 } } });
+  assert.equal(file.resolved.type.display.stretch, undefined);
+  assert.match(execFileSync(process.execPath, [cli, 'check', path], { encoding: 'utf8' }), /fingerprint matches/);
+  assert.equal(execFileSync(process.execPath, [cli, 'resolve', path], { encoding: 'utf8' }), '', 'nothing more to say');
 });
 
 test('CLI reports incorrect arguments without modifying the design file', () => {
