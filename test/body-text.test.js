@@ -46,16 +46,17 @@ test('a quotation in body text looks as Quotation does, its source under it in s
   }
 });
 
-// Tables as the Konzilo core writes them in a body: bare, at the top of the body text and in a part.
+// Tables as the Konzilo core writes them in a body: bare, at the top of the body text and in a part, and in the wrapper
+// it is asked to write, `.konzilo-table` (konzilo.css).
 const WIDE = '<table><thead><tr><th>Service</th><th>What it holds</th><th>Price</th><th>Term</th></tr></thead><tbody><tr><td>Planning</td><td>A plan for the beds over a whole season</td><td style="text-align:right">1200</td><td>Monthly</td></tr></tbody></table>';
 const NARROW = '<table><thead><tr><th>Plan</th><th>Price</th></tr></thead><tbody><tr><td>Small</td><td>10</td></tr></tbody></table>';
 const tables = (table) => `<div class="kn-body-text" id="flow" style="inline-size: min(100%, 40rem)">${table.replace('<table', '<table id="top"')}
   <aside class="kn-fact-box" data-kn-surface="raised"><p class="kn-fact-box-label" data-kn-type="label">In short</p>${table.replace('<table', '<table id="fact"')}</aside>
   <details class="kn-tabs-item" name="tabs" open><summary class="kn-tabs-tab">A tab</summary><div class="kn-tabs-panel">${table.replace('<table', '<table id="tab"')}</div></details>
   <article class="kn-card" data-kn-surface="raised"><h3 class="kn-card-heading" data-kn-type="heading-5">A card</h3>${table.replace('<table', '<table id="card"')}</article>
-</div>`;
+  <div class="konzilo-table">${table.replace('<table', '<table id="wrapped"')}</div></div>`;
 const konzilo = readFileSync(new URL('../src/konzilo/konzilo.css', import.meta.url), 'utf8');
-const measureTables = (tab) => tab.evaluate(() => Object.fromEntries(['top', 'fact', 'tab', 'card'].map((id) => {
+const measureTables = (tab) => tab.evaluate(() => Object.fromEntries(['top', 'fact', 'tab', 'card', 'wrapped'].map((id) => {
   const table = document.getElementById(id);
   const port = id === 'wrapped' ? table.parentElement : table;
   const room = port.parentElement.getBoundingClientRect().width - Number.parseFloat(getComputedStyle(port.parentElement).paddingInlineStart) - Number.parseFloat(getComputedStyle(port.parentElement).paddingInlineEnd);
@@ -75,6 +76,18 @@ test('a table at a phone\'s width scrolls in its own box, in a part too, and squ
       assert.ok(found.port <= found.room + 1, `${name}: ${id}'s box keeps to its column`);
       assert.ok(found.least >= 5.99, `${name}: ${id}'s narrowest column is ${found.least}rem`);
     }
+    await tab.close();
+  }
+});
+
+test('a narrow table in the core\'s wrapper takes the whole column, as the library\'s Table does; a bare one keeps its own width', { timeout: 120000 }, async () => {
+  for (const [name, browser] of browsers) {
+    const tab = await browser.newPage({ viewport: { width: 1024, height: 900 } });
+    await tab.setContent(`<!doctype html><html lang="en"><head><style>${styles}${konzilo}</style></head><body data-kn-surface="page">${tables(NARROW)}</body></html>`);
+    const found = await measureTables(tab);
+    assert.ok(Math.abs(found.wrapped.row - found.wrapped.room) < 1, `${name}: the wrapped table is ${found.wrapped.row} of ${found.wrapped.room}`);
+    assert.equal(found.wrapped.scrolls, false, name);
+    assert.ok(found.top.row < found.top.room - 100, `${name}: a bare table keeps its own width in every engine alike`);
     await tab.close();
   }
 });

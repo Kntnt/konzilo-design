@@ -21,11 +21,13 @@
   .kn-table-scroll[data-kn-surface] { padding: var(--kn-space-component-gap); border: 0; border-radius: var(--kn-radius-card); }
   .kn-table-scroll[data-kn-surface] > table > :is(tbody, tfoot):last-child > tr:last-child > :is(th, td) { border-block-end: 0; }
   /* A bare table in body text, at any depth, in a card, a fact box, a tab or an answer too, has no wrapper: its own box
-     is the scrollport. */
-  .kn-body-text table:not(.kn-table, .kn-table-scroll > table) { display: block; max-inline-size: 100%; overflow-x: auto; overscroll-behavior-inline: contain; }
+     is the scrollport. Its rows then stand in a table of their own width, which no stylesheet can stretch in every
+     engine, so a table narrower than its column keeps its own width; one the Konzilo core writes in its wrapper,
+     `.konzilo-table` (konzilo.css), takes the whole column. */
+  .kn-body-text table:not(.kn-table, .kn-table-scroll > table, .konzilo-table > table) { display: block; max-inline-size: 100%; overflow-x: auto; overscroll-behavior-inline: contain; }
   .kn-body-text > table:not(.kn-table) { margin-block: 1.5em; }
   @media print {
-    .kn-table-scroll, .kn-body-text table:not(.kn-table, .kn-table-scroll > table) { overflow: visible; }
+    .kn-table-scroll, .kn-body-text table:not(.kn-table, .kn-table-scroll > table, .konzilo-table > table) { overflow: visible; }
     :is(.kn-table, .kn-table-scroll > table, .kn-body-text table) thead { display: table-header-group; }
   }
 }

@@ -32,6 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A gallery in a body takes its columns from its number of pictures, as a series of cards does: two pictures stand in two columns, three in three, four in four or two and two, and so on, never leaving an empty column at a row's end where the pictures could have filled it, nor one picture alone on a last row where another count would not. It filled as many columns of at least 12rem as its width held, so two pictures in a wide column left a third empty.
 - A choice's answers take their columns from their number, so that none stands alone on a row: two answers or four stand two to a row, any other number three, and fewer where the window holds fewer at 14rem each. Four answers fell three and one.
 - A table on a phone or in a narrow column scrolls inside its own box rather than squeezing its words: every column is at least 6rem wide. A table in a card, a fact box, a tab or a choice's answer scrolls in its own box too, where only one at the top of body text did, and it ran out of its part.
+- A table the Konzilo core writes in a wrapper, `<div class="konzilo-table">`, takes the whole width of its column, however few its columns, and scrolls inside the wrapper where it is wider; `konzilo.css` styles the wrapper, which the core is asked to write. A bare table cannot be stretched by a stylesheet in Firefox, so it keeps its own width in every browser alike until then.
 
 
 ## [0.6.1] – 2026-11-12

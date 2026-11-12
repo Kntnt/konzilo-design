@@ -321,6 +321,15 @@
   dialog.konzilo-lightbox code { background: none; color: inherit; }
   dialog.konzilo-lightbox figure img { border-radius: 0; }
 
+  /* A table in a body, in the wrapper the core is asked to write round it: the wrapper scrolls, so the table is a table
+     again, as wide as its column however few its columns, and as wide as its least column widths where those are more.
+     Without the wrapper the table is its own scrollport (table.css) and keeps its own width. */
+  .konzilo-table { min-inline-size: 0; max-inline-size: 100%; overflow-x: auto; overscroll-behavior-inline: contain; margin-block: 1.5em; }
+  .konzilo-table > table { display: table; inline-size: 100%; margin: 0; }
+  @media print {
+    .konzilo-table { overflow: visible; }
+  }
+
   /* An embed: as Embed, a panel that loads nothing until the visitor allows it. Once allowed it holds the player alone. */
   figure.konzilo-embed { display: flex; flex-direction: column; align-items: start; justify-content: center; gap: var(--kn-space-component-gap); min-block-size: 14rem; margin-inline: 0; padding: var(--kn-space-plate) min(var(--kn-space-plate), 6%); background: var(--kn-background-alt); color: var(--kn-text); border-radius: var(--kn-radius-card); overflow-wrap: anywhere; }
   figure.konzilo-embed:has(> iframe) { display: block; min-block-size: 0; padding: 0; background: none; overflow: clip; }
