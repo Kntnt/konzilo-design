@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 import { parse } from 'ultrahtml';
 import { querySelectorAll as all, querySelector as one } from 'ultrahtml/selector';
 import { arrangementGroups, givingWaySteps, GIVING_WAY_ORDER } from '../src/components/header.js';
@@ -105,7 +106,11 @@ test('only a sticky header loads a polyfill, and only one that slides away loads
   assert.deepEqual(await polyfills({ attachment: 'sticky' }), ['scroll-timeline']);
   assert.deepEqual(await polyfills({ attachment: 'sticky', autohide: true }), ['scroll-timeline', 'scroll-state']);
   const loader = await render('Header', { ...everything, attachment: 'sticky', autohide: true });
-  assert.match(loader, /if \(!CSS\.supports\('animation-timeline: scroll\(\)'\)\) import\(src\);/);
+  // The scroll timelines' polyfill also where the browser's style queries miss what they set, as Firefox's do, which the
+  // loader tests as the polyfill does, word for word.
+  assert.match(loader, /\nif \(!CSS\.supports\('animation-timeline: scroll\(\)'\) \|\| !follows\(\)\) import\(src\);/);
+  const polyfill = await readFile(new URL('../src/components/scroll-timeline-polyfill.js', import.meta.url), 'utf8');
+  assert.ok(loader.includes(`\n${polyfill.match(/^const follows = .*$/m)[0]}\n`), 'the loader\'s test is the polyfill\'s');
   assert.match(loader, /if \(!CSS\.supports\('container-type: scroll-state'\)\) import\(src\);/);
   const flow = parse(await render('Header', { ...everything, start: 'under', autohide: true }));
   assert.equal(one(flow, '.kn-header').attributes['data-kn-start'], 'below', 'page start and sliding away are a sticky header\'s only');

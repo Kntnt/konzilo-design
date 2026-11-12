@@ -1,7 +1,8 @@
 import { setupTooltips } from './tooltips.js';
 import { setupConsent } from '../../src/components/consent.js';
 // The lab turns a header sticky and sliding away after the page has loaded, so it carries both of the header's
-// polyfills; each tests for its feature itself and does nothing where the browser has it.
+// polyfills; each tests for its feature itself and does nothing where the browser has it, the scroll timelines' also
+// that the browser's style queries follow them.
 import '../../src/components/scroll-timeline-polyfill.js';
 import '../../src/components/scroll-state-polyfill.js';
 // And the scripts that measure the header's giving way and say whether a footer at the edge of the screen fits, whose

@@ -33,15 +33,20 @@ test('the header and the footer keep only their build-time helpers, and each pol
     assert.doesNotMatch(source, /\b(?:document|window|addEventListener|ResizeObserver|requestAnimationFrame)\b/, `${name}.js touches no page`);
     assert.doesNotMatch(source, /schedule\.js/, `${name}.js schedules nothing`);
   }
-  for (const [file, feature] of [['scroll-timeline-polyfill.js', "CSS.supports('animation-timeline: scroll()')"], ['scroll-state-polyfill.js', "CSS.supports('container-type: scroll-state')"]]) {
+  // The scroll timelines' stands in also where the browser's style queries miss what they set, as Firefox's do.
+  for (const [file, guard] of [['scroll-timeline-polyfill.js', "const timelines = CSS.supports('animation-timeline: scroll()');\nif (!timelines || !follows()) {"], ['scroll-state-polyfill.js', "if (!CSS.supports('container-type: scroll-state')) {"]]) {
     const source = await readFile(new URL(`../src/components/${file}`, import.meta.url), 'utf8');
     assert.match(source, /^\/\/ Polyfill for /, `${file} says what it stands in for`);
     assert.match(source, /Delete this file once every engine has/, `${file} says when it goes`);
-    assert.ok(source.includes(`if (!${feature})`), `${file} does nothing where the browser has the feature`);
-    assert.ok(source.split('\n').length <= 40, `${file} is small`);
-    // It sets a flag or an attribute and nothing else: no style but custom properties, no markup, no class.
-    assert.doesNotMatch(source, /\.style\.(?!setProperty\(|getPropertyValue\()|classList|innerHTML|createElement/, file);
-    assert.doesNotMatch(source, /setProperty\((?!flag)/, file);
+    assert.ok(source.includes(guard), `${file} does nothing where the browser has the feature`);
+    assert.ok(source.split('\n').length <= 45, `${file} is small`);
+    // Its test of the browser tries two elements of its own, in a shadow tree, and removes them at once.
+    const follows = source.match(/^const follows = .*$/m)?.[0] ?? '';
+    if (follows) assert.match(follows, /attachShadow\(.*document\.documentElement\.append\(host\);.*host\.remove\(\);/);
+    // Else it sets a flag or an attribute and nothing else: no style but custom properties, no markup, no class.
+    const rest = source.replace(follows, '');
+    assert.doesNotMatch(rest, /\.style\.(?!setProperty\(|getPropertyValue\()|classList|innerHTML|createElement/, file);
+    assert.doesNotMatch(rest, /setProperty\((?!flag)/, file);
   }
 });
 

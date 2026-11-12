@@ -59,8 +59,11 @@ const opens = (target?: string) => (target ? { commandfor: target, command: 'sho
     </div>
   </div></div>
   {/* The script that measures giving way, inline and last, so it fits this header before the page paints; then the
-      polyfills, each loaded only where the browser lacks its feature (header.md, How it is built). */}
+      polyfills, each loaded only where the browser lacks its feature (header.md, How it is built): the scroll
+      timelines' also where the browser's style queries miss what they set, as Firefox's do, which it tests as the
+      polyfill does, word for word. */}
   <script is:inline data-kn-header-fit set:html={headerFitScript}></script>
-  {sticky && <script is:inline data-kn-polyfill="scroll-timeline" define:vars={{ src: scrollTimelinePolyfill }}>if (!CSS.supports('animation-timeline: scroll()')) import(src);</script>}
+  {sticky && <script is:inline data-kn-polyfill="scroll-timeline" define:vars={{ src: scrollTimelinePolyfill }}>const follows = () => { const host = document.createElement('span'), tree = host.attachShadow({ mode: 'open' }), sheet = new CSSStyleSheet(); sheet.replaceSync('@keyframes f { from, to { --f: 1; } } b { animation: f 1s paused both; } @container style(--f: 1) { i { --g: 1; } }'); tree.adoptedStyleSheets = [sheet]; const child = tree.appendChild(document.createElement('b')).appendChild(document.createElement('i')); document.documentElement.append(host); const seen = getComputedStyle(child).getPropertyValue('--g'); host.remove(); return seen.trim() === '1'; };
+if (!CSS.supports('animation-timeline: scroll()') || !follows()) import(src);</script>}
   {slides && <script is:inline data-kn-polyfill="scroll-state" define:vars={{ src: scrollStatePolyfill }}>if (!CSS.supports('container-type: scroll-state')) import(src);</script>}
 </header>

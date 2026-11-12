@@ -80,15 +80,16 @@ test('every component has a typed wrapper; only the declared client entries, the
       assert.equal([...source.matchAll(/\{attachment === 'reveal' && <script /g)].length, 2);
     }
     else if (name === 'Header.astro') {
-      // The giving-way script, inline, and two loaders, each testing for its feature before it fetches.
+      // The giving-way script, inline, and two loaders, each testing for its feature before it fetches: the scroll
+      // timelines' also for style queries that follow them, as the polyfill tests it, word for word.
       assert.match(source, /<script is:inline data-kn-header-fit set:html=\{headerFitScript\}><\/script>/);
       assert.match(source, /import headerFit from '\.\/header-fit\.js\?raw';/);
       const loaders = [...source.matchAll(/<script\b([^>]*data-kn-polyfill[^>]*)>([^<]*)<\/script>/g)];
       assert.deepEqual(loaders.map(([, attributes]) => attributes.match(/data-kn-polyfill="([^"]+)"/)[1]), ['scroll-timeline', 'scroll-state']);
-      for (const [, attributes, code] of loaders) {
-        assert.match(attributes, /\bis:inline\b/);
-        assert.match(code, /^if \(!CSS\.supports\('[^']+'\)\) import\(src\);$/);
-      }
+      for (const [, attributes] of loaders) assert.match(attributes, /\bis:inline\b/);
+      const follows = (await readFile(new URL('scroll-timeline-polyfill.js', directory), 'utf8')).match(/^const follows = .*$/m)[0];
+      assert.equal(loaders[0][2], `${follows}\nif (!CSS.supports('animation-timeline: scroll()') || !follows()) import(src);`);
+      assert.match(loaders[1][2], /^if \(!CSS\.supports\('container-type: scroll-state'\)\) import\(src\);$/);
     } else if (name === 'Accordion.astro') {
       assert.equal([...source.matchAll(/<script/g)].length, 1);
       assert.match(source, /<script type="application\/ld\+json" is:inline set:html=/);

@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- In Firefox 160, which runs scroll-driven animations itself, the page's shadow on a footer at the edge of the screen is gone at the very end, as in the other browsers; it stayed on the footer. Firefox's style queries miss a value such an animation sets, which the page read. The page's edge now follows the scrolling by an animation of the edge itself, so it needs no script in any browser with scroll timelines, and the change is at once in every browser, as the header's shadow comes and goes, where it faded.
+- In Firefox 160 a header attached to the window's edge follows the scrolling: it casts its shadow only once something lies under it, slides away on the way down, and over the page's start turns opaque past its threshold. For the same reason it kept the look it had when it was last restyled, often with its shadow at the top and never sliding away. A short test of the browser now gives Firefox the header's polyfill for scroll timelines, as the Firefox without them has. The tests run in Firefox with its own scroll timelines too, which they did not see.
+
 ## [0.6.0] – 2026-11-12
 
 ### Changed

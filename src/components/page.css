@@ -72,33 +72,41 @@
      draws what stands for it (the owner, 2026-11-12, footer.md, Attachment): the counterpart of the header, which casts
      its shadow once the page lies under it. Scrolled to the very end, where the whole footer shows, the page and the
      footer lie in one plane, with no shadow, and a hairline parts them only where they are of one colour, as the header
-     at the top keeps its hairline over a first band of its own colour. --kn-footer-covered says which, a discrete
-     scroll-driven animation on the root scroller that turns 0.0625rem short of the end, in the middle of a range twice
-     as long, as the header's flags turn; where a browser lacks scroll timelines, the header's polyfill sets it. With no
-     room to scroll the timeline is inactive and the page is at its end. Here the shadow and the lines are all shadows
-     of the main, two of them, a hairline on top, its colour clear where it is off, and a shadow, clear where it is off,
-     so the edge's height never changes and the change fades over the feedback duration, as the header's colours do,
-     and at once where the visitor asks for reduced motion. */
+     at the top keeps its hairline over a first band of its own colour. Here the shadow and the lines are all shadows of
+     the main, two of them, a hairline on top, its colour clear where it is off, and a shadow, clear where it is off, so
+     the edge's height never changes. The main draws the end by itself, and while it covers the footer a discrete
+     scroll-driven animation on the root scroller draws the rest on the main itself, until 0.0625rem short of the end,
+     in the middle of a range twice as long, as the header's flags turn. It reads no flag through a style query: Firefox
+     runs scroll timelines, but its style queries miss a value an animation sets (a fault of 0.6.0), so the edge needs
+     no script there. With no room to scroll the timeline is inactive and the page is at its end. Where a browser lacks
+     scroll timelines, the header's polyfill sets --kn-footer-covered on the page instead, which a style query reads. The
+     change is at once, as the header's shadow comes and goes: a time-based fade would need a script in Firefox, where
+     a transition never starts from an animated value. */
   .kn-page { --kn-footer-covered: 0; --kn-footer-covered-at: 0.0625rem; }
-  @supports (animation-timeline: scroll()) {
-    .kn-page:has(> .kn-footer[data-kn-attachment="reveal"]) {
-      animation-name: kn-footer-covered;
-      animation-duration: auto;
-      animation-timing-function: linear;
-      animation-fill-mode: both;
-      animation-timeline: scroll(root);
-      animation-range: calc(100% - 2 * var(--kn-footer-covered-at)) 100%;
-    }
-  }
-  @keyframes kn-footer-covered { from { --kn-footer-covered: 1; } to { --kn-footer-covered: 0; } }
   @media not print {
     .kn-page:has(> .kn-footer[data-kn-attachment="reveal"][data-kn-fit="true"]) > .kn-page-main {
       --kn-page-edge-line: transparent;
       --kn-page-edge-shadow: 0 0 transparent;
       --kn-page-edge-end: transparent;
       border-block-end: 0;
-      box-shadow: 0 1px 0 var(--kn-page-edge-line), var(--kn-page-edge-shadow);
-      transition: box-shadow var(--kn-duration-feedback) var(--kn-easing-standard);
+      box-shadow: 0 1px 0 var(--kn-page-edge-end), 0 0 transparent;
+    }
+    /* Longhands, with the duration `auto` written out, as the header's flags have them; steps(2, jump-none) keeps to
+       the two ends, turning in the middle. */
+    @supports (animation-timeline: scroll()) {
+      .kn-page:has(> .kn-footer[data-kn-attachment="reveal"][data-kn-fit="true"]) > .kn-page-main {
+        animation-name: kn-page-edge;
+        animation-duration: auto;
+        animation-timing-function: steps(2, jump-none);
+        animation-fill-mode: both;
+        animation-timeline: scroll(root);
+        animation-range: calc(100% - 2 * var(--kn-footer-covered-at)) 100%;
+      }
+    }
+    @supports not (animation-timeline: scroll()) {
+      @container style(--kn-footer-covered: 1) {
+        .kn-page:has(> .kn-footer[data-kn-attachment="reveal"][data-kn-fit="true"]) > .kn-page-main { box-shadow: 0 1px 0 var(--kn-page-edge-line), var(--kn-page-edge-shadow); }
+      }
     }
     /* While it covers the footer: the design's shadow or line, or, where page and footer are of one colour, the shadow
        its edge needs; the hairline where no shadow shows, at strength zero or in dark mode, as everywhere else. */
@@ -118,13 +126,11 @@
     @container style(--kn-mode: dark) {
       .kn-page:has(> .kn-footer[data-kn-attachment="reveal"][data-kn-fit="true"]) > .kn-page-main[data-kn-shadow] { --kn-page-edge-line: var(--kn-border); }
     }
-    /* At the very end: one plane. */
-    @container style(--kn-footer-covered: 0) {
-      .kn-page:has(> .kn-footer[data-kn-attachment="reveal"][data-kn-fit="true"]) > .kn-page-main { box-shadow: 0 1px 0 var(--kn-page-edge-end), 0 0 transparent; }
-    }
   }
-  @media (prefers-reduced-motion: reduce) {
-    .kn-page > .kn-page-main { transition: none; }
+  /* While it covers the footer, then at the very end, one plane. */
+  @keyframes kn-page-edge {
+    from { box-shadow: 0 1px 0 var(--kn-page-edge-line), var(--kn-page-edge-shadow); }
+    to { box-shadow: 0 1px 0 var(--kn-page-edge-end), 0 0 transparent; }
   }
   @media print {
     .kn-page > .kn-page-main[data-kn-shadow] { box-shadow: none; }

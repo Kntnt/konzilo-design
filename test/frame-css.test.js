@@ -1,6 +1,7 @@
 // The header and the footer in HTML and CSS, in Gecko, WebKit and Chromium, with script and without (header.md and
-// footer.md, How it is built). A browser that lacks scroll-driven animations or scroll-state queries gets a polyfill
-// that sets the same flags; with script off it lacks only what the polyfill adds.
+// footer.md, How it is built). A browser that lacks scroll-driven animations or scroll-state queries, or whose style
+// queries miss what the first set, gets a polyfill that sets the same flags; with script off it lacks only what the
+// polyfill adds.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync } from 'node:fs';
@@ -14,7 +15,14 @@ import { componentsCss } from '../src/css/components.js';
 import { FOOTER_CELLS, layoutFooter } from '../src/components/footer.js';
 import { footerHtml } from '../src/components/footer-html.js';
 
-const ENGINES = Object.entries({ firefox, webkit, chromium }).filter(([, type]) => existsSync(type.executablePath()));
+// Playwright's Firefox has scroll-driven animations turned off, where a released Firefox has them on (160), and there
+// its style queries miss a value such an animation sets (header.md and footer.md, How it is built). So each test runs in
+// Firefox with them on too, as a released Firefox runs them.
+const firefoxTimelines = { launch: (options = {}) => firefox.launch({ ...options, firefoxUserPrefs: { 'layout.css.scroll-driven-animations.enabled': true } }), executablePath: () => firefox.executablePath() };
+const ENGINES = Object.entries({ firefox, 'firefox with scroll timelines': firefoxTimelines, webkit, chromium }).filter(([, type]) => existsSync(type.executablePath()));
+// Where the scroll timelines' polyfill stands in: where a browser lacks scroll timelines, and in Firefox, whose style
+// queries miss what they set.
+const timelinePolyfill = (name, timelines) => !timelines || name.startsWith('firefox');
 const ORIGIN = 'http://kn.test';
 const logo = (fill) => `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36" width="36" height="36"><circle cx="18" cy="18" r="16" fill="${fill}"/></svg>`)}`;
 const identity = { label: 'Example', href: '#home', name: 'Example', slogan: 'A made-up slogan', logo: { light: logo('#222222'), dark: logo('#ffffff') } };
@@ -86,13 +94,14 @@ test('a sticky header over the page\'s start is clear at the top, opaque and par
       assert.equal(down.line, true, `${name}: a line, at shadow strength zero`);
       assert.equal(down.top, 0, `${name}: sticky`);
       seen[name] = { top, down };
-      // The polyfill for scroll-driven animations loads where they are missing, and nothing else loads.
-      const timelines = await tab.evaluate(() => CSS.supports('animation-timeline: scroll()'));
-      assert.deepEqual(loaded.filter((file) => file !== 'header-fit.js'), timelines ? [] : ['scroll-timeline-polyfill.js'], `${name}: ${loaded}`);
+      // The polyfill for scroll-driven animations loads where they are missing or style queries miss what they set, and
+      // nothing else loads.
+      const polyfill = timelinePolyfill(name, await tab.evaluate(() => CSS.supports('animation-timeline: scroll()')));
+      assert.deepEqual(loaded.filter((file) => file !== 'header-fit.js'), polyfill ? ['scroll-timeline-polyfill.js'] : [], `${name}: ${loaded}`);
       assert.ok(!loaded.includes('header-fit.js'), `${name}: the giving way's script is inline, not fetched`);
       await tab.goto(`${ORIGIN}/flow.html`);
       await tab.waitForTimeout(200);
-      assert.deepEqual(loaded.filter((file) => file !== 'header-fit.js'), timelines ? [] : ['scroll-timeline-polyfill.js'], `${name}: a flow header loads no polyfill`);
+      assert.deepEqual(loaded.filter((file) => file !== 'header-fit.js'), polyfill ? ['scroll-timeline-polyfill.js'] : [], `${name}: a flow header loads no polyfill`);
     } finally { await browser.close(); }
   }
   const [first, ...rest] = Object.values(seen);
@@ -120,7 +129,7 @@ test('a header that slides away does so on the way down and comes back on the wa
       assert.equal((await look(tab)).top, 0, `${name}: an open panel keeps it`);
       await tab.keyboard.press('Escape');
       const native = await tab.evaluate(() => [CSS.supports('animation-timeline: scroll()'), CSS.supports('container-type: scroll-state')]);
-      assert.deepEqual(loaded.filter((file) => file !== 'header-fit.js').sort(), [native[0] ? [] : ['scroll-timeline-polyfill.js'], native[1] ? [] : ['scroll-state-polyfill.js']].flat().sort(), `${name}: ${loaded}`);
+      assert.deepEqual(loaded.filter((file) => file !== 'header-fit.js').sort(), [timelinePolyfill(name, native[0]) ? ['scroll-timeline-polyfill.js'] : [], native[1] ? [] : ['scroll-state-polyfill.js']].flat().sort(), `${name}: ${loaded}`);
     } finally { await browser.close(); }
   }
 });
@@ -163,6 +172,47 @@ test('nothing of a header that has slid away shows, its shadow included, and it 
         const back = await tab.evaluate(() => getComputedStyle(document.querySelector('.kn-header-bar')).boxShadow);
         assert.equal((await look(tab)).top, 0, `${what}: back`);
         assert.notEqual(back, 'none', `${what}: back with its shadow`);
+      }
+    } finally { await browser.close(); }
+  }
+});
+
+test('a sticky header casts its shadow only while something lies under it: none at the top, its shadow once scrolled, none again back at the top, in every engine', { timeout: 240000 }, async () => {
+  // A fault of 0.6.0 in a released Firefox, which runs scroll-driven animations but whose style queries miss what they
+  // set: a header brought back to the top kept the shadow it had while scrolled, and one that slides away stayed.
+  const css = coreCss(derive({ ...defaultInputs(), shadow: { ...defaultInputs().shadow, strength: 50 } })) + await componentsCss();
+  const bands = [];
+  for (let i = 0; i < 10; i++) bands.push(await render('Band', { id: `b${i}` }, { default: `<h2>Band ${i}</h2><p>Some words in band ${i}.</p>` }));
+  const files = {};
+  for (const [file, props] of [['sticky', { attachment: 'sticky' }], ['slides', { attachment: 'sticky', autohide: true, translucent: true }]]) {
+    const body = await render('Page', {}, { header: await render('Header', { ...header, ...props }), default: bands.join(''), footer: await render('Footer', footer) });
+    files[`/${file}.html`] = `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Shadow</title><style>${css}</style></head><body>${body}</body></html>`;
+  }
+  const shadow = (tab) => tab.evaluate(() => getComputedStyle(document.querySelector('.kn-header-bar')).boxShadow !== 'none');
+  for (const [name, type] of ENGINES) {
+    const { browser, tab } = await open(type, files);
+    try {
+      for (const file of ['sticky', 'slides']) {
+        const what = `${name}, ${file}`;
+        await tab.goto(`${ORIGIN}/${file}.html`);
+        await tab.waitForTimeout(300);
+        assert.equal(await shadow(tab), false, `${what}: none at the top`);
+        await scroll(tab, 30);
+        assert.equal(await shadow(tab), true, `${what}: its shadow once scrolled`);
+        await tab.evaluate(() => scrollTo(0, 0));
+        await tab.waitForTimeout(400);
+        assert.equal(await shadow(tab), false, `${what}: none again, back at the top by a jump`);
+        await scroll(tab, 30);
+        assert.equal(await shadow(tab), true, `${what}: its shadow again`);
+        await tab.keyboard.press('Home');
+        await tab.waitForTimeout(700);
+        assert.equal(await shadow(tab), false, `${what}: none again, back at the top by the Home key`);
+        if (file === 'slides') {
+          await scroll(tab, 600);
+          assert.ok((await look(tab)).top < 0, `${what}: away on the way down`);
+          await scroll(tab, -40);
+          assert.deepEqual([(await look(tab)).top, await shadow(tab)], [0, true], `${what}: back on the way up, with its shadow`);
+        }
       }
     } finally { await browser.close(); }
   }
@@ -474,7 +524,7 @@ test('the page casts its shadow on the footer in the ink of the band it falls on
     try {
       for (const [file, ground] of [['brand', 'brand'], ['inverse', 'inverse'], ['raised', 'page']]) {
         await tab.goto(`${ORIGIN}/${file}.html`);
-        // Where the polyfill says the page covers the footer, the shadow fades in over the feedback duration.
+        // Where the polyfill says the page covers the footer, once it has run.
         await tab.waitForTimeout(400);
         const [cast, band, own] = await tab.evaluate(() => [
           getComputedStyle(document.querySelector('.kn-page-main')).boxShadow,
@@ -506,10 +556,10 @@ test('the page casts its shadow on a footer at the edge of the screen only while
   // What stands for the shadow, the page's edge line, does the same. A footer that does not fit is as before.
   const css = async (strength) => coreCss(derive({ ...defaultInputs(), shadow: { ...defaultInputs().shadow, strength, hardness: 20 } })) + await componentsCss();
   const [shadows, none] = [await css(50), await css(0)];
-  const doc = async (styles, { count = 8, last = 'tint', page = { shadow: true }, mode = 'light' } = {}) => {
+  const doc = async (styles, { count = 8, last = 'tint', page = { shadow: true }, mode = 'light', head = { attachment: 'sticky', autohide: true } } = {}) => {
     const bands = [];
     for (let i = 0; i < count; i++) bands.push(await render('Band', { surface: i === count - 1 ? last : undefined, id: `b${i}` }, { default: `<h2>Band ${i}</h2><p>Some words in band ${i}.</p>` }));
-    const body = await render('Page', page, { header: await render('Header', { ...header, attachment: 'sticky', autohide: true }), default: bands.join(''), footer: await render('Footer', { ...footer, attachment: 'reveal' }) });
+    const body = await render('Page', page, { header: await render('Header', { ...header, ...head }), default: bands.join(''), footer: await render('Footer', { ...footer, attachment: 'reveal' }) });
     return `<!doctype html><html lang="en" data-kn-mode="${mode}"><head><meta charset="utf-8"><title>Edge</title><style>${styles}</style></head><body>${body}</body></html>`;
   };
   const files = {
@@ -519,6 +569,8 @@ test('the page casts its shadow on a footer at the edge of the screen only while
     // The page's last band of the footer's first band's colour, and no shadow or line chosen: the edge needs one.
     '/same.html': await doc(shadows, { last: 'brand', page: {} }),
     '/short.html': await doc(shadows, { count: 1 }),
+    // A header in the flow, so that nothing but the footer could load a script.
+    '/alone.html': await doc(shadows, { head: {} }),
   };
   // What the page's main draws at its foot: a shadow that shows, and a hairline, a shadow of 1px offset with no blur.
   const edge = (tab) => tab.evaluate(() => {
@@ -528,7 +580,7 @@ test('the page casts its shadow on a footer at the edge of the screen only while
     return { shadow: parts.length > line.length, line: line.length > 0 || main.borderBlockEndStyle === 'solid', fit: document.querySelector('.kn-footer').dataset.knFit, transition: [main.transitionProperty, main.transitionDuration, main.transitionTimingFunction] };
   });
   for (const [name, type] of ENGINES) for (const width of [1280, 390]) {
-    const { browser, tab } = await open(type, files);
+    const { browser, tab, loaded } = await open(type, files);
     try {
       await tab.setViewportSize({ width, height: 800 });
       const to = async (left) => {
@@ -543,20 +595,26 @@ test('the page casts its shadow on a footer at the edge of the screen only while
         await tab.waitForTimeout(600);
         return edge(tab);
       };
-      for (const [file, covered, end] of [['shadow', { shadow: true, line: false }, { shadow: false, line: false }], ['dark', { shadow: true, line: true }, { shadow: false, line: false }], ['line', { shadow: false, line: true }, { shadow: false, line: false }], ['same', { shadow: true, line: false }, { shadow: false, line: true }]]) {
+      for (const [file, covered, end] of [['shadow', { shadow: true, line: false }, { shadow: false, line: false }], ['dark', { shadow: true, line: true }, { shadow: false, line: false }], ['line', { shadow: false, line: true }, { shadow: false, line: false }], ['same', { shadow: true, line: false }, { shadow: false, line: true }], ['alone', { shadow: true, line: false }, { shadow: false, line: false }]]) {
         const what = `${name} at ${width}px, ${file}`;
+        const before = loaded.length;
         await tab.goto(`${ORIGIN}/${file}.html`);
         await tab.waitForTimeout(300);
+        // Under a header in the flow the footer needs no script for it where the browser has scroll timelines, Firefox's
+        // included: the page's edge follows the scrolling by CSS alone.
+        if (file === 'alone') {
+          const timelines = await tab.evaluate(() => CSS.supports('animation-timeline: scroll()'));
+          assert.deepEqual(loaded.slice(before).filter((script) => script.startsWith('scroll-')), timelines ? [] : ['scroll-timeline-polyfill.js'], `${what}: ${loaded.slice(before)}`);
+        }
         const ending = await to(120);
         assert.equal(ending.fit, 'true', `${what}: the footer fits`);
         assert.deepEqual({ shadow: ending.shadow, line: ending.line }, covered, `${what}: a little short of the end, the page over the footer, ${JSON.stringify(ending)}`);
         const atEnd = await to(0);
         assert.deepEqual({ shadow: atEnd.shadow, line: atEnd.line }, end, `${what}: at the very end, one plane, ${JSON.stringify(atEnd)} ${await tab.evaluate(() => getComputedStyle(document.querySelector(".kn-page-main")).boxShadow)}`);
         assert.deepEqual({ shadow: (await to(60)).shadow, line: (await edge(tab)).line }, covered, `${what}: back up, over the footer again`);
-        // The change goes over the feedback duration with the standard easing, as the header's colours change.
-        const [property, duration, easing] = ending.transition;
-        const [feedback, standard] = await tab.evaluate(() => { const probe = document.body.appendChild(document.createElement('i')); probe.style.transition = 'opacity var(--kn-duration-feedback) var(--kn-easing-standard)'; const style = getComputedStyle(probe); const found = [style.transitionDuration, style.transitionTimingFunction]; probe.remove(); return found; });
-        assert.deepEqual([property, duration, easing], ['box-shadow', feedback, standard], what);
+        // The change is at once, as the header's shadow comes and goes: no transition fades it.
+        const [property, duration] = ending.transition;
+        assert.ok(!/\b(box-shadow|all)\b/.test(property) || /^0s(, 0s)*$/.test(duration), `${what}: at once, ${ending.transition}`);
       }
       // A page with no room to scroll is at its end: the whole footer shows, and no shadow.
       await tab.goto(`${ORIGIN}/short.html`);
@@ -568,12 +626,6 @@ test('the page casts its shadow on a footer at the edge of the screen only while
       await tab.waitForTimeout(300);
       const flow = await to(0);
       assert.deepEqual([flow.fit, flow.shadow], ['false', true], `${name} at ${width}px: a footer that does not fit`);
-      // Where the visitor asks for reduced motion, the change is at once.
-      await tab.emulateMedia({ reducedMotion: 'reduce' });
-      await tab.setViewportSize({ width, height: 800 });
-      await tab.goto(`${ORIGIN}/shadow.html`);
-      assert.match((await edge(tab)).transition[1], /^0s$/, `${name} at ${width}px: reduced motion`);
-      await tab.emulateMedia({ reducedMotion: 'no-preference' });
     } finally { await browser.close(); }
   }
 });
