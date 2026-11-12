@@ -190,7 +190,7 @@ async function filtered(posts, teasers, { ctx, options, list, settled }) {
   // With a search row, what the list settles, its type, and what the page settles, its term, go with a search.
   const hidden = search ? [['type', type?.name], ...(settled ? [[settled.taxonomy, settled.term]] : [])].filter(([, value]) => value) : [];
   const total = Number.isInteger(list?.total) ? list.total : posts.length;
-  const plural = type?.plural ?? words.posts;
+  const nouns = { label: type?.label ?? type?.plural ?? words.post, plural: type?.plural ?? words.posts };
   return tag('form', { class: 'kn-visitor-filters', role: 'search', method: 'get', action: search ? action : '' },
     hidden.map(([name, value]) => voidTag('input', { type: 'hidden', name, value })),
     tag('div', { class: 'kn-visitor-filter-panel' },
@@ -202,7 +202,7 @@ async function filtered(posts, teasers, { ctx, options, list, settled }) {
         tag('label', { class: 'kn-field-label', for: `${id}-search` }, escapeText(words.search)),
         tag('div', { class: 'kn-visitor-filter-input' }, iconHtml('search'), voidTag('input', { class: 'kn-field-control', id: `${id}-search`, name: 'q', type: 'search' }))) : '',
       tag('button', { class: 'kn-button kn-visitor-filter-submit', type: 'submit', 'data-kn-variant': 'outline' }, escapeText(search ? words.search : words.show))),
-    tag('p', { class: 'kn-visitor-filter-count', 'data-kn-type': 'small' }, escapeText(words.count(teasers.length, total, plural))))
+    tag('p', { class: 'kn-visitor-filter-count', 'data-kn-type': 'small' }, escapeText(words.count(teasers.length, total, nouns))))
     + tag('div', { class: 'kn-card-grid kn-cards', id }, teasers.map((teaser) => teaserCard(teaser, {
       ground: ctx.ground,
       values: { 'data-kn-item': '', 'data-kn-matches': itemMatches(keys, teaser.terms) || undefined },

@@ -21,13 +21,16 @@ export const WORDS = Object.freeze({
   search: 'Search',
   // A filtered list's button where it has no search row, which the stylesheet hides.
   show: 'Show',
-  // The noun for the posts a filtered list counts, where neither the core nor `types` names their type.
+  // What a filtered list counts, where neither the core nor `types` names the type it lists: its posts' noun, one and many.
+  post: 'post',
   posts: 'posts',
   // The legend of a filtered list's row of pills, by the taxonomy's name; another taxonomy's is its name.
   taxonomies: Object.freeze({ category: 'Category', topics: 'Topic', authors: 'Author' }),
-  // What a filtered list says it shows: `count` posts on this page of `total`, `plural` the type's plural.
-  count: (count, total, plural) => {
-    const noun = plural.charAt(0).toLowerCase() + plural.slice(1);
+  // What a filtered list says it shows: `count` posts on this page of `total` in all, `type` the type's `label` and
+  // `plural`, as the core names them, which the sentence takes its noun from.
+  count: (count, total, { label, plural }) => {
+    const word = total === 1 ? label : plural;
+    const noun = word.charAt(0).toLowerCase() + word.slice(1);
     return total > count ? `Showing ${count} of ${total} ${noun}` : `Showing ${count} ${noun}`;
   },
 });
@@ -40,8 +43,9 @@ export const WORDS = Object.freeze({
  * @param {{ name: string, href: string, hidden?: boolean }[]} [options.breadcrumbs] The page's levels, as the core's
  *   breadcrumbs(entry, Astro.url) gives them: the start page first and the page itself last; none on the start page.
  * @param {string} [options.search] The site's search page, where a filtered list's search row sends its form.
- * @param {Record<string, { name: string, plural: string }>} [options.types] Each post type by its collection, for a
- *   filtered list where the core does not say what type it lists: its name, which a search sends, and its plural.
+ * @param {Record<string, { name: string, label: string, plural: string }>} [options.types] Each post type by its
+ *   collection, for a filtered list where the core does not say what type it lists: its name, which a search sends, and
+ *   its label and plural, which its count takes.
  * @param {object} [options.words] The site's words, over WORDS.
  * @param {(message: string) => void} [options.warn] Where a part says what it could not draw as written; the console's
  *   warnings by default, which a build prints.

@@ -53,10 +53,10 @@ export function pictureOf(node) {
 // mark, which a figure holds and its image does not.
 function picture(block, values = {}) {
   const image = pictureOf(block);
-  const { class: own, ...rest } = attributesFrom(image);
+  const { class: own, src, ...rest } = attributesFrom(image);
   const classes = [values.class, own].filter(Boolean).join(' ') || undefined;
   const { class: _, ...extra } = values;
-  return voidTag('img', { class: classes, ...rest, alt: rest.alt ?? '', ...extra, ...markOf(block) });
+  return voidTag('img', { class: classes, src, ...rest, alt: rest.alt ?? '', ...extra, ...markOf(block) });
 }
 
 const isActions = (node) => directiveOf(node) === 'list' && attributesOf(node).type === 'actions';

@@ -141,4 +141,8 @@ test('a filtered list without the core\'s list does the best its page\'s posts a
   assert.doesNotMatch(plain, /kn-visitor-filter-search|type="hidden"/);
   assert.match(plain, /Showing 3 inlägg/);
   assert.match(lost[0], /neither the core nor designPage\(Astro, \{ search \}\)/);
+  // One post is counted in the singular, by the type's label.
+  const one = await presentationHtml('filtered', { posts: POSTS.slice(0, 1), options: {} }, context({ types: { articles: { name: 'article', label: 'Article', plural: 'Articles' } } }), { getEntry });
+  assert.match(one, /Showing 1 article<\/p>/);
+  assert.match(await presentationHtml('filtered', { posts: POSTS.slice(0, 1), options: {} }, context(), { getEntry }), /Showing 1 post<\/p>/);
 });
