@@ -28,7 +28,7 @@ Records the HTML contract between the directive list Konzilo defines and this de
 
 **Why.** The HTML stays a description of the content, the same for every design. The decisions stay in this package's CSS, so a design or a later version changes a layout without the site changing a line or knowing a rule. A page written by hand, in the gallery, the tool or a site outside Konzilo, gets the same layout from the same HTML. Only text needs a function, and the function states a fact, so a design stays free to do something else with a long deck. Option (b) was rejected because a `data-kn-layout` value writes the design's decision into the HTML, which every page must then be rebuilt to change and every hand-written page must compute; (a) alone cannot see a deck's length or a heading's question mark.
 
-**The one exception is a Surface.** A Surface is an attribute (names.md, decision 3), and a stylesheet cannot put one on an element. Where the design puts a part on a plate of its own, the site writes the Surface that `surfaceOf` returns, so that choice too stays in this package.
+**The one exception is a Surface.** A Surface is an attribute (names.md, decision 3), and a stylesheet cannot put one on an element. Where the design puts a part on a plate of its own, the site writes the Surface that `surfaceOf` returns, so that choice too stays in this package. Where the site does not know the ground the part stands on, as when the core draws a nested part or a post list's teasers into a band, it gives `surfaceOf` none and writes what it returns: the stylesheet then finds the ground, and a part that stands on a ground of its own kind takes the Surface `surfaceOf` gives on that ground, the third column of the table below, at any depth (since 2026-11-12; plates.md, A plate finds its ground).
 
 ### The module
 
@@ -43,7 +43,7 @@ Records the HTML contract between the directive list Konzilo defines and this de
 | `contactOf(href, text)` | `'phone'`, `'email'` or `null`: a `tel:` link whose text is a telephone number, or a `mailto:` link whose text is an address. |
 | `serviceOf(href)` | `{ service, icon }` or `null`: a link to a service the design knows, by its host. `SERVICES` holds them. |
 | `allQuestions(texts)` | True where there is at least one text and every one, trimmed, ends in a question mark. |
-| `surfaceOf(part, ground)` | The Surface kind for a part the design puts on a plate, or `null`. `ground` is the Surface kind of the band around it, `undefined` for the page. |
+| `surfaceOf(part, ground)` | The Surface kind for a part the design puts on a plate, or `null`. `ground` is the Surface kind of the band around it, left out or `undefined` for the page or where it is not known, and the part then finds its ground by CSS. |
 | `iconHtml(name, className)` | An Icon's markup as a string, exactly as `Icon.astro` writes it: `<svg class="kn-icon …" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true" focusable="false">…</svg>`. |
 
 `surfaceOf` today:

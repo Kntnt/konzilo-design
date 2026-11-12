@@ -360,8 +360,16 @@ Each role is a recipe over the ramps (a ramp and step, or white or black).
   a fixed-polarity kind whose values differ by mode, `inverse` today, writes them as
   `var(--kn-in-light, light) var(--kn-in-dark, dark)`. The two switches are set wherever `--kn-mode` is: the
   current mode's is `initial`, giving its fallback, and the other is empty, giving nothing. No Surface
-  depends on style queries or `if()`. Shadow geometry is shared; only the ink and
-  alpha differ by mode.
+  written for its ground depends on style queries or `if()`. Shadow geometry is shared; only the ink and
+  alpha differ by mode. Each block declares its kind first, `--kn-surface-kind`, which inherits.
+- **A part on a ground of its own kind** (2026-11-12, the assistant's choice; plates.md, A plate finds its
+  ground): for each kind on which a part the design puts on a plate takes another, as `surfaceOf` gives it,
+  the emitter writes inside `@container style(--kn-surface-kind: <kind>)` a rule for those parts with that
+  same kind, which declares the other plate's whole block, its kind included. `sameGroundPlates()` in
+  `src/directives/surfaces.js` gives the pairs from `surfaceOf`'s table and each part's selector as
+  directives.md writes it: today `raised` on `raised` takes `page` (link card, a choice's answer and
+  panel), and `tint` on `tint` takes `raised` (action card, fact box). These two are the only rules of the
+  core that name classes. A Surface written for its ground is never its ground's kind, so they meet none.
 - **A clear header** (2026-11-10, the assistant's choice, with the header's rebuild without script,
   header.md, How it is built): inside `@container style(--kn-header-clear: 1)`, which a Page sets while
   its sticky header is transparent over its start, each kind's roles, polarity, `color-scheme`, shadows and

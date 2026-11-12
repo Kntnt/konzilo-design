@@ -77,14 +77,15 @@ test('the default design\'s resolved JSON and core CSS change only on purpose', 
   // mode stays as it was (plates.md). Changed on purpose 2026-11-12: a plate's inner space is step 4 (generator.md), and labels
   // stand three steps below body text (components.md); each Surface stores and writes its translucent opacity (generator.md);
   // the design's tabs pass to resolved and the core writes where their line stands (generator.md), and the footer says how
-  // column B's text is aligned (footer.md).
+  // column B's text is aligned (footer.md); each Surface declares its kind, and a part on a ground of its own kind takes
+  // its other plate (plates.md, A plate finds its ground).
   assert.equal(
     hash(JSON.stringify({ ...r, 'generator-version': '' })),
     '9887d071f9e3eb68cf5fed40e48c8a1b6bdcdb7d9ba7bb5778ced20dfe9d4444',
   );
   assert.equal(
     hash(coreCss(r)),
-    'd7a6a089b609dd765b9512a65075a6cf854901a8ce382c4f95df21ace6e0db71',
+    '2073839fb0834743f0e09ca0766a9f5841f547f17eafa8e13c5fa7f712f9d7b5',
   );
 });
 

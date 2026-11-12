@@ -1,5 +1,6 @@
 import { ROLES, frameFollows, translucentOpacity } from '../generator/surface.js';
 import { hexToRgb } from '../generator/color.js';
+import { sameGroundPlates } from '../directives/surfaces.js';
 
 // light-dark() answers to the element's own colour scheme, so it serves only a kind whose scheme follows the mode.
 const pair = (light, dark) => light === dark ? light : `light-dark(${light}, ${dark})`;
@@ -32,6 +33,18 @@ const firstBand = (test) => `[data-kn-surface]:has(> main > :first-child${test})
 // is the parent of its main and of the footer, whose first child is its first band.
 const footerGround = (kind) => `[data-kn-surface]:has(> footer > [data-kn-surface="${kind}"]:first-child) > main`;
 
+// A part the design puts on a plate of its own, written with the Surface surfaceOf gives it without its ground, takes
+// the other plate surfaceOf gives where it stands on a ground of its own kind: everything that plate's own block
+// declares, its kind among them, so a part inside it finds its ground in turn (plates.md, A plate finds its ground). A
+// style query reads the kind on the part's parent, which is the ground's, since the kind inherits. A Surface written
+// for its ground is never of the ground's kind, so no rule here meets it. Unlike the rest of the core these rules name
+// classes, the parts' as directives.md writes them, since nothing else tells a part from another Surface.
+const kindLine = (kind) => `  --kn-surface-kind: ${kind};`;
+function sameGround(own) {
+  return sameGroundPlates().filter(({ ground, surface }) => own[ground] && own[surface]).map(({ ground, surface, selector }) =>
+    `@container style(--kn-surface-kind: ${ground}) {\n${selector}[data-kn-surface="${ground}"] {\n${[kindLine(surface), ...own[surface]].join('\n')}\n}\n}`);
+}
+
 export function surfaceCss(surfaces) {
   // With the quiet edge a plate's frame is its own border role. A filled button is a small plate on the Surface, whose
   // own quiet edge is its hover fill, the step beside its fill; it reads --kn-frame-ring before --kn-frame-color.
@@ -45,12 +58,14 @@ export function surfaceCss(surfaces) {
     `:where([data-kn-mode="light"]) {\n  --kn-mode: light;\n  color-scheme: light;\n${switches.light}\n}`,
     `:where([data-kn-mode="dark"]) {\n  --kn-mode: dark;\n  color-scheme: dark;\n${switches.dark}\n}`,
   ];
+  const own = {};
   for (const kind of Object.keys(surfaces)) {
     const { light, dark } = surfaces[kind];
     const selector = kind === 'page' ? ':root,\n[data-kn-surface="page"]' : `[data-kn-surface="${kind}"]`;
     const polarity = light.polarity === dark.polarity ? light.polarity : 'var(--kn-mode)';
     const choose = light.polarity === dark.polarity ? switched : pair;
-    const lines = ROLES.map((role) => `  --kn-${role}: ${choose(light.roles[role], dark.roles[role])};`);
+    // The kind first, which inherits, so a part inside knows the ground it stands on (sameGround).
+    const lines = [kindLine(kind), ...ROLES.map((role) => `  --kn-${role}: ${choose(light.roles[role], dark.roles[role])};`)];
     lines.push(`  --kn-polarity: ${polarity};`, `  color-scheme: ${polarity};`);
     for (const name of Object.keys(light.shadow)) lines.push(`  --kn-shadow-${name}: ${shadowPair(light.shadow[name], dark.shadow[name], choose)};`);
     lines.push(`  --kn-frame-color: ${choose(light['frame-color'], dark['frame-color'])};`);
@@ -74,7 +89,9 @@ export function surfaceCss(surfaces) {
       );
     }
     blocks.push(`${selector} {\n${lines.join('\n')}\n}`);
+    own[kind] = lines.slice(1);
   }
+  blocks.push(...sameGround(own));
   const page = surfaces.page;
   for (const kind of Object.keys(surfaces)) {
     const { light, dark } = surfaces[kind];

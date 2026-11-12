@@ -5,6 +5,7 @@ import {
   resolve, defaultInputs, contrast, KINDS, STATUS_KINDS, MODES, ROLES, ROLE_TARGETS, STEPS, kindsFor, TINT_CEILING, ramps, hexToOklch, solveRole, checkContrast, validateDesignFile, shadowsForSurface, pictureContrast, derive,
 } from '../src/generator/index.js';
 import { emitCss } from '../src/css/index.js';
+import { sameGroundPlates } from '../src/directives/surfaces.js';
 
 const design = async (inputs = defaultInputs()) => ({ format: 1, inputs, project: {}, resolved: await resolve(inputs) });
 
@@ -167,8 +168,9 @@ test('the quiet edge frames each plate in its own border role, in both modes, an
     const rules = css.match(/^(?::root,\n)?\[data-kn-surface="[a-z-]+"\] \{[^}]*\}/gm);
     assert.equal(rules.length, Object.keys(file.resolved.surfaces).length);
     for (const rule of rules) assert.match(rule, /--kn-frame-color: [^;]+;\n  --kn-frame-ring: var\(--kn-button-background-hover\);/);
-    // A clear header over a first band takes that band's ring too.
-    assert.equal(css.match(/--kn-frame-ring/g).length, 2 * rules.length);
+    // A clear header over a first band takes that band's ring too, and so does a part that takes another plate on a
+    // ground of its own kind (plates.md, A plate finds its ground).
+    assert.equal(css.match(/--kn-frame-ring/g).length, 2 * rules.length + sameGroundPlates().length);
   }
   // The shadow has no border role to take.
   assert.throws(() => derive({ 'brand-colors': { primary: '#168b83' }, shadow: { color: 'border' } }), /inputs\.shadow\.color: invalid format/);

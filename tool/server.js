@@ -373,7 +373,7 @@ export async function startTool({ designFile, port = 4174, open = true, idle, on
       }
       const pathname = url.pathname === '/' ? '/tool/index.html' : url.pathname;
       const allowed =
-        /^\/(?:presentation\/pictures\/[a-z0-9-]+\.webp|tool\/(?:index\.html|style\.css|app\.js|logic\.js|history\.js|pages\.js|preview\.js)|src\/(?:generator|css)\/[a-z-]+\.js|src\/design-md\/components\.js|presentation\/src\/(?:catalog|catalogue|page-sketch)\.js|presentation\/src\/page-sketch\.css|src\/fonts\/(?:fonts\.css|catalog\.js|[A-Za-z0-9-]+\.woff2)|schema\/design-file\.schema\.json|package\.json|gallery\/src\/tooltips\.js|presentation\/src\/samples\.js)$/;
+        /^\/(?:presentation\/pictures\/[a-z0-9-]+\.webp|tool\/(?:index\.html|style\.css|app\.js|logic\.js|history\.js|pages\.js|preview\.js)|src\/(?:generator|css)\/[a-z-]+\.js|src\/design-md\/components\.js|src\/directives\/surfaces\.js|presentation\/src\/(?:catalog|catalogue|page-sketch)\.js|presentation\/src\/page-sketch\.css|src\/fonts\/(?:fonts\.css|catalog\.js|[A-Za-z0-9-]+\.woff2)|schema\/design-file\.schema\.json|package\.json|gallery\/src\/tooltips\.js|presentation\/src\/samples\.js)$/;
       if (!allowed.test(pathname)) {
         json(404, { error: 'Not found.' });
         return;

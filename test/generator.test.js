@@ -9,6 +9,7 @@ import {
   canonicalJson, fingerprint, checkFingerprint, validateDesignFile,
 } from '../src/generator/index.js';
 import { emitCss } from '../src/css/index.js';
+import { sameGroundPlates } from '../src/directives/surfaces.js';
 
 const referenceInk = '#202124';
 const expectedShadows = {
@@ -173,7 +174,8 @@ test('CSS emits only namespaced identifiers and the five logical width selectors
   const attributes = [...css.matchAll(/\[(data-[a-z-]+)/g)].map(([, name]) => name);
   assert.ok(attributes.every((name) => name.startsWith('data-kn-')));
   assert.deepEqual([...css.matchAll(/\[data-kn-width="([a-z-]+)"\]/g)].map(([, value]) => value), ['narrow', 'wide', 'full', 'bleed-start', 'bleed-end']);
-  assert.ok(!/\.[a-z][a-z0-9-]*/i.test(css));
+  // No class, but the parts that take another plate on a ground of their own kind (plates.md, A plate finds its ground).
+  assert.ok(!/\.[a-z][a-z0-9-]*/i.test(sameGroundPlates().reduce((rest, { selector }) => rest.replaceAll(selector, ''), css)));
   assert.ok(!/font-size\s*:/.test(css));
   assert.match(css, /--kn-background:/);
   assert.ok(css.includes('--kn-radius-card: 0.1875rem;'));
