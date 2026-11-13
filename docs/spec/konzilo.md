@@ -288,6 +288,7 @@ A site draws the directives of directives.md with this package's components, and
 - **The labels** are the package's British English; a site gives its own by language under `componentLabels`.
 - **The checks** run in the core's intake, which refuses a post for each reason, in the editor's words; the editor's early check runs none (the core's ADR 0060). A site with components of its own names a module of its own under `componentChecks`, which may ask the package's `componentProblems()` for the package's names.
 - **The presentations.** A site declares those it uses, and registers the same: `presentations: { cards: DESIGN_PRESENTATIONS.cards }` for one. `filtered` takes the option `filters`, the rows' names apart by spaces, `filters="category topics search"`.
+- **The trail's last level** is the design's `breadcrumbs.current`, which the tool sets: whether a trail ends with the page itself. The core's own setting for each type, `breadcrumbs.types.<type>.current` among the site's settings, governs the core's Breadcrumbs component alone, and a site that draws its trail with this package leaves it as it is (directives.md, `::breadcrumbs`).
 - **The page's context.** Every template that renders a body, and every page that calls a presentation itself, gives the page's context first, in its frontmatter, with `designPage()` from `design-props`:
 
 ```astro
@@ -388,7 +389,7 @@ const topics = (await getEntries(article.data.topics)).map((topic) => ({ name: t
 - The category over the headline is the article's eyebrow where it has one, else its category's name, which `ArticleOpening` reads itself.
 - `ReadMore` writes nothing where `relatedPosts()` finds none.
 
-**A type of the site's own**, made like an article, such as a case study with a customer and facts: the same parts, its own eyebrow, its facts as the body's Aside in place of the following menu, and its own words for "Read more".
+**A type of the site's own**, made like an article, such as a case study with a customer and facts: the same parts, its own eyebrow, its facts as a value list in the body's Aside in place of the following menu, its own words for "Read more", and a band that closes the page, as a page's own section, by the page part `Section`.
 
 ```astro
 ---
@@ -398,34 +399,78 @@ import { relatedPosts } from '@kntnt/konzilo/astro/post-lists';
 import ArticleOpening from '@kntnt/konzilo-design/page-parts/ArticleOpening.astro';
 import ArticleBody from '@kntnt/konzilo-design/page-parts/ArticleBody.astro';
 import ReadMore from '@kntnt/konzilo-design/page-parts/ReadMore.astro';
+import Section from '@kntnt/konzilo-design/page-parts/Section.astro';
+import ValueList from '@kntnt/konzilo-design/page-parts/ValueList.astro';
 
 export function getStaticPaths() { return entryPages('caseStudies', 'case-study'); }
 const { entry: study, page } = Astro.props;
 const { Content } = await render(study);
 designPage(Astro, { design, title: study.data.headline, breadcrumbs: await breadcrumbs(study, Astro.url) });
-const facts = [['Customer', study.data.customer], ['Location', study.data.location]].filter(([, value]) => value);
+// Each value is HTML the template writes safe: a link to the industry's page, a date as a <time>.
+const facts = [{ label: 'Customer', value: study.data.customer }, { label: 'Location', value: study.data.location }];
 ---
 <Site entry={study} page={page}>
   <ArticleOpening entry={study} eyebrow={study.data.customer} />
   <ArticleBody>
     <Body post={study} page={page}><Content /></Body>
-    <AsideBlock slot="aside" heading="The project" surface="raised">
-      <dl class="kn-value-list">{facts.map(([label, value]) => <div class="kn-value-list-item"><dt data-kn-type="small">{label}</dt><dd class="kn-value-list-value">{value}</dd></div>)}</dl>
-    </AsideBlock>
+    <AsideBlock slot="aside" heading="The project" surface="raised"><ValueList items={facts} /></AsideBlock>
   </ArticleBody>
   <ReadMore posts={await relatedPosts(study)} heading="More case studies" more={{ label: 'All case studies', href: `${base}customers/` }} surface="raised" />
+  <Section surface="brand" heading="Find out what your garden can do"
+    actions={[{ label: 'Book a visit', href: `${base}visit/` }, { label: 'Ask for a reference', href: `${base}contact/` }]}>
+    <Fragment slot="deck">A gardener visits and, within two weeks, <a href={`${base}guides/`}>writes down</a> what would grow.</Fragment>
+  </Section>
 </Site>
 ```
 
-A type with no picture, such as a vacancy, gives `ArticleOpening` a `surface` for its band, and its facts and actions in the slot `after`, under its meta line.
+`Section` writes what the same `:::section` in a body writes (directives.md, The page parts): the heading, the deck and the two actions stand in its head, the first the main action. Its words here stand in the template; a site that lets an Admin change them reads them from its settings.
+
+**A type with no picture**, such as a vacancy: its opening on a Surface of its own, with its facts and the way to apply in the slot `after`, its body with a menu in its own words, and the other vacancies under a heading, as the site's own presentation draws them, with a lone action to all of them.
+
+```astro
+---
+import { entryPages } from '@kntnt/konzilo/astro/languages';
+import { listedPosts } from '@kntnt/konzilo/astro/post-lists';
+import Actions from '@kntnt/konzilo-design/page-parts/Actions.astro';
+import ArticleBody from '@kntnt/konzilo-design/page-parts/ArticleBody.astro';
+import ArticleOpening from '@kntnt/konzilo-design/page-parts/ArticleOpening.astro';
+import Section from '@kntnt/konzilo-design/page-parts/Section.astro';
+import ValueList from '@kntnt/konzilo-design/page-parts/ValueList.astro';
+import Rows from '../components/Rows.astro';   // the site's own presentation
+
+export function getStaticPaths() { return entryPages('jobs', 'job'); }
+const { entry: job, page } = Astro.props;
+const { Content } = await render(job);
+designPage(Astro, { design, title: job.data.title, breadcrumbs: await breadcrumbs(job, Astro.url) });
+const facts = [{ label: 'Office', value: job.data.location }, { label: 'Team', value: job.data.team }];
+const others = await listedPosts({ type: 'job', order: 'closingDate', direction: 'ascending', number: 10 }, { post: job });
+---
+<Site entry={job} page={page}>
+  <ArticleOpening entry={{ ...job, data: { ...job.data, standfirst: job.data.excerpt } }} surface="tint">
+    <Fragment slot="after"><ValueList items={facts} /><Actions links={[{ label: 'How to apply', href: '#how-to-apply' }]} /></Fragment>
+  </ArticleOpening>
+  <ArticleBody label="On this page"><Body post={job} page={page}><Content /></Body></ArticleBody>
+  {others.length > 0 && (
+    <Section surface="raised" heading="Other vacancies">
+      <Rows posts={others} options={{}} empty="" />
+      <Actions links={[{ label: 'All vacancies', href: `${base}careers/#open-positions` }]} />
+    </Section>
+  )}
+</Site>
+```
+
+`ArticleOpening` takes the excerpt as the standfirst here, since a vacancy has no standfirst of its own. The lone action after the list is drawn as more of it, as after any series.
 
 **A term's page**, the `termPage` the integration puts at each taxonomy's address: the term's opening, then its posts as a filtered list in a section of their own, the row it settles left out.
 
 ```astro
 ---
+import Form from '@kntnt/konzilo/astro/Form.astro';
 import { termPages } from '@kntnt/konzilo/astro/post-lists';
 import Filtered from '@kntnt/konzilo-design/presentations/Filtered.astro';
 import PageBody from '@kntnt/konzilo-design/page-parts/PageBody.astro';
+import Section from '@kntnt/konzilo-design/page-parts/Section.astro';
+import SmallPrint from '@kntnt/konzilo-design/page-parts/SmallPrint.astro';
 import TermOpening from '@kntnt/konzilo-design/page-parts/TermOpening.astro';
 
 export async function getStaticPaths({ routePattern }) { return termPages(routePattern); }
@@ -438,25 +483,29 @@ designPage(Astro, { design, title: term.data.name, breadcrumbs: await breadcrumb
   <PageBody title={false}>
     <Filtered posts={posts} pager={pager} empty={empty} options={{ filters: 'category topics search' }} settled={{ taxonomy, term: term.id }} />
   </PageBody>
+  <Section surface="tint" anchor="newsletter" heading="One e-mail a month" deck="The month's guides, and nothing else.">
+    <Form name="newsletter" />
+    <SmallPrint>We keep your address only to send it. Read <a href={`${base}privacy-policy/`}>how we handle it</a>.</SmallPrint>
+  </Section>
 </Site>
 ```
 
-**The search page**, the `searchPage`: its title band, then the core's search in a Reading Area in a section.
+The newsletter's band is a `Section` with the core's `Form` and `SmallPrint` in its body. Since a form follows, its deck stands in the body as a paragraph, and the section is centred as a page's end, as the same `:::section` in a body is.
+
+**The search page**, the `searchPage`: one section, its title and trail as its head and the core's search in a Reading Area as its body.
 
 ```astro
 ---
 import Search from '@kntnt/konzilo/astro/Search.astro';
 import { pageTexts } from '@kntnt/konzilo/astro/languages';
 import ReadingArea from '@kntnt/konzilo-design/components/ReadingArea.astro';
-import PageBody from '@kntnt/konzilo-design/page-parts/PageBody.astro';
 import TitleBand from '@kntnt/konzilo-design/page-parts/TitleBand.astro';
 
 const { title } = pageTexts(Astro.url).search;
 designPage(Astro, { design, title, breadcrumbs: await breadcrumbs(null, Astro.url, { title }) });
 ---
 <Site title={title}>
-  <TitleBand />
-  <PageBody title={false}><ReadingArea side="end"><Search /></ReadingArea></PageBody>
+  <TitleBand><ReadingArea side="end"><Search /></ReadingArea></TitleBand>
 </Site>
 ```
 
