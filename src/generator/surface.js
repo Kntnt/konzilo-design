@@ -1,4 +1,4 @@
-import { contrast, hexToRgb, luminance } from './color.js';
+import { contrast, fitChroma, hexToOklch, hexToRgb, luminance, oklchToHex } from './color.js';
 import { BAND_MINIMUM, ramp, SCALES } from './ramps.js';
 import { resolveColor, shadowsForSurface } from './shadow.js';
 
@@ -15,6 +15,61 @@ export const ROLE_TARGETS = Object.freeze({ text: 4.5, 'text-muted': 4.5, border
 // the status roles use 300 and 600, uncapped.
 const STATUS_CEILING = Object.freeze({ 100: 0.05, 200: 0.08, 800: 0.09, 850: 0.06, 900: 0.06 });
 export const STATUS_SEEDS = Object.freeze({ info: '#1d6fd1', success: '#16803c', warning: '#b77900', error: '#c53030' });
+
+// The warning apart from the brand's tints (2026-11-13). A brand colour near amber gave its tint almost the warning's
+// values, so a warning Surface could not be told from the tint Surface. Where a brand tint's background stands nearer the
+// warning Surface's than WARNING_NEAR in either mode, in OKLab, the warning turns its hue by the fewest whole degrees, up
+// to WARNING_TURN either way and away from that tint first, that set its Surface WARNING_APART from every brand tint and
+// from every other status in both modes, keeping the seed's lightness and chroma where the gamut allows. Where no turn
+// does, it takes the turn that sets it farthest from the nearest of them. WARNING_APART is CSS Color 4's just noticeable
+// difference in OKLab and about the least the four statuses stand from one another in light mode; WARNING_NEAR is half
+// of it. Any other design keeps the warning's seed, and so every value, exactly.
+export const WARNING_NEAR = 0.01;
+export const WARNING_APART = 0.02;
+export const WARNING_TURN = 30;
+const oklab = (hex) => {
+  const { L, C, H } = hexToOklch(hex);
+  return [L, C * Math.cos(H * Math.PI / 180), C * Math.sin(H * Math.PI / 180)];
+};
+// How far apart two colours are, in OKLab (deltaEOK).
+export const oklabDistance = (one, other) => Math.hypot(...oklab(one).map((value, i) => value - oklab(other)[i]));
+// Each light band's background, light mode's and dark mode's.
+const BAND_BACKGROUNDS = [100, 850];
+// The least distance between a ramp's band backgrounds and those of other ramps, mode by mode.
+const nearest = (steps, others) => Math.min(...others.flatMap((other) => BAND_BACKGROUNDS.map((step) => oklabDistance(steps[step], other[step]))));
+
+// A status seed's ramp, as the status Surfaces take it, beside the brand's palette.
+export const statusRamp = (seed, palette) => Object.fromEntries(ramp(seed, { ceiling: STATUS_CEILING, pages: ['#ffffff', palette.gray[950]], darkPages: ['#ffffff', palette.gray[975]] }).map(({ step, hex }) => [step, hex]));
+
+// The warning's seed beside the brand's palette.
+export function warningSeed(palette) {
+  const rampOf = (seed) => statusRamp(seed, palette);
+  const tints = Object.keys(RANK_TINTS).concat('primary').filter((rank) => palette[rank]).map((rank) => palette[rank]);
+  const seed = STATUS_SEEDS.warning;
+  const plain = rampOf(seed);
+  const near = nearest(plain, tints);
+  if (near >= WARNING_NEAR) return seed;
+  const others = Object.entries(STATUS_SEEDS).filter(([name]) => name !== 'warning').map(([, hex]) => rampOf(hex));
+  const { L, C, H } = hexToOklch(seed);
+  const turned = (turn) => {
+    const hue = (H + turn + 360) % 360;
+    return oklchToHex(L, fitChroma(L, C, hue), hue);
+  };
+  // Away from the tint nearest it: the side its hue lies on from the warning's.
+  const closest = tints.reduce((best, tint) => (nearest(plain, [tint]) < nearest(plain, [best]) ? tint : best));
+  const away = (((hexToOklch(plain[100]).H - hexToOklch(closest[100]).H) % 360) + 540) % 360 - 180 < 0 ? -1 : 1;
+  let best = { seed, least: Math.min(near, nearest(plain, others)) };
+  for (let degrees = 1; degrees <= WARNING_TURN; degrees++) {
+    for (const turn of [away * degrees, -away * degrees]) {
+      const hex = turned(turn), candidate = rampOf(hex);
+      const [fromTints, fromOthers] = [nearest(candidate, tints), nearest(candidate, others)];
+      if (fromTints >= WARNING_APART && fromOthers >= WARNING_APART) return hex;
+      if (Math.min(fromTints, fromOthers) > best.least) best = { seed: hex, least: Math.min(fromTints, fromOthers) };
+    }
+  }
+  return best.seed;
+}
+
 const ref = (ramp, step) => `${ramp}-${step}`;
 const color = (recipe, palette) => recipe === 'white' ? '#ffffff' : recipe === 'black' ? '#000000' : palette[recipe.split('-')[0]][recipe.split('-')[1]];
 
@@ -148,7 +203,8 @@ function recipesFor(kind, mode, palette) {
 
 export function surfaces(settings, palette) {
   const seeds = settings['brand-colors'];
-  const status = Object.fromEntries(Object.entries(STATUS_SEEDS).map(([name, seed]) => [name, Object.fromEntries(ramp(seed, { ceiling: STATUS_CEILING, pages: ['#ffffff', palette.gray[950]], darkPages: ['#ffffff', palette.gray[975]] }).map(({ step, hex }) => [step, hex]))]));
+  const statusSeeds = { ...STATUS_SEEDS, warning: warningSeed(palette) };
+  const status = Object.fromEntries(Object.entries(statusSeeds).map(([name, seed]) => [name, statusRamp(seed, palette)]));
   const all = { ...palette, ...status };
   return Object.fromEntries(kindsFor(palette).map((kind) => [kind, Object.fromEntries(MODES.map((mode) => {
     const { polarity, recipes } = recipesFor(kind, mode, all);

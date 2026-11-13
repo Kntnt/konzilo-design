@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import {
   resolve, defaultInputs, contrast, KINDS, STATUS_KINDS, MODES, ROLES, ROLE_TARGETS, STEPS, kindsFor, TINT_CEILING, ramps, hexToOklch, solveRole, checkContrast, validateDesignFile, shadowsForSurface, pictureContrast, derive,
+  STATUS_SEEDS, WARNING_APART, WARNING_NEAR, WARNING_TURN, oklabDistance, fitChroma, oklchToHex, statusRamp, warningSeed,
 } from '../src/generator/index.js';
 import { emitCss } from '../src/css/index.js';
 import { sameGroundPlates } from '../src/directives/surfaces.js';
@@ -249,4 +250,43 @@ test('a translucent layer\'s opacity is the least at which every role it draws h
   for (const modes of Object.values(older.resolved.surfaces)) for (const mode of MODES) delete modes[mode].translucent;
   validateDesignFile(older);
   assert.match(await emitCss(older), /--kn-background-translucent: light-dark\(rgb\(255 255 255 \/ 0\.88\)/);
+});
+
+// The warning apart from the brand's tints: a brand colour near amber gave the warning Surface almost its tint's values.
+const statusBackgrounds = (r, kind) => MODES.map((mode) => r.surfaces[kind][mode].roles.background);
+const apartFrom = (r, kind, others) => Math.min(...others.flatMap((other) => MODES.map((mode, i) => oklabDistance(statusBackgrounds(r, kind)[i], r.surfaces[other][mode].roles.background))));
+
+test('a brand colour near amber turns the warning away from its tint, in light and dark mode, the contrast check holding', () => {
+  for (const [colours, tint] of [[{ primary: '#0f5c4d', secondary: '#f2a93b' }, 'tint-secondary'], [{ primary: '#b77900' }, 'tint'], [{ primary: '#1d4ed8', secondary: '#168b83', tertiary: '#f59e0b' }, 'tint-tertiary']]) {
+    const palette = ramps(colours, 0);
+    const plain = statusRamp(STATUS_SEEDS.warning, palette);
+    assert.ok(Math.min(...[100, 850].map((step) => oklabDistance(plain[step], palette[{ tint: 'primary', 'tint-secondary': 'secondary', 'tint-tertiary': 'tertiary' }[tint]][step]))) < WARNING_NEAR, `${tint} is near the warning`);
+    const seed = warningSeed(palette);
+    assert.notEqual(seed, STATUS_SEEDS.warning);
+    const turn = hexToOklch(seed).H - hexToOklch(STATUS_SEEDS.warning).H;
+    assert.ok(Math.abs(turn) <= WARNING_TURN, `${turn}°`);
+    const r = derive({ 'brand-colors': colours });
+    assert.equal(r['contrast-check'].status, 'passed');
+    assert.ok(apartFrom(r, 'status-warning', [tint]) >= WARNING_APART, tint);
+    assert.ok(apartFrom(r, 'status-warning', ['status-info', 'status-success', 'status-error']) >= WARNING_APART, 'and from the other statuses');
+    // The warning is one colour: its role on every Surface comes from the same turned ramp.
+    const turned = statusRamp(seed, palette);
+    assert.deepEqual([r.surfaces.page.light.roles.warning, r.surfaces.page.dark.roles.warning], [turned[600], turned[300]]);
+  }
+});
+
+test('the warning keeps its seed beside every brand colour not near it, and never stands near a brand tint', () => {
+  const hues = [];
+  for (const [L, C] of [[0.45, 0.12], [0.62, 0.16], [0.8, 0.14]]) for (let H = 0; H < 360; H += 6) hues.push(oklchToHex(L, fitChroma(L, C, H), H));
+  for (const hex of hues) {
+    const colours = { primary: '#168b83', secondary: hex };
+    const palette = ramps(colours, 0);
+    const plain = statusRamp(STATUS_SEEDS.warning, palette);
+    const near = Math.min(...['primary', 'secondary'].flatMap((rank) => [100, 850].map((step) => oklabDistance(plain[step], palette[rank][step]))));
+    const seed = warningSeed(palette);
+    if (near >= WARNING_NEAR) assert.equal(seed, STATUS_SEEDS.warning, hex);
+    const r = derive({ 'brand-colors': colours });
+    assert.equal(r['contrast-check'].status, 'passed', hex);
+    assert.ok(apartFrom(r, 'status-warning', ['tint', 'tint-secondary']) >= WARNING_NEAR, hex);
+  }
 });

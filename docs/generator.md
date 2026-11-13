@@ -318,7 +318,27 @@ Each role is a recipe over the ramps (a ramp and step, or white or black).
 - **Rank:** links and the brand Surfaces from the primary; `accent` and `focus`
   from the secondary when there is one, else the primary, on every Surface,
   the rank tints included. A tertiary feeds only its own tint. Status roles come from fixed
-  blue, green, amber and red seeds, ramped like the brand colours.
+  blue, green, amber and red seeds, ramped like the brand colours (`STATUS_SEEDS`,
+  `statusRamp`).
+- **The warning apart from the brand's tints (2026-11-13):** a brand colour near amber gave
+  its tint almost the warning's values, so a warning Surface could not be told from the tint
+  Surface, in light mode `#fff0dc` beside `#fff0dd`. `warningSeed(palette)` keeps the amber
+  seed unless a brand tint's background (step 100 in light mode, 850 in dark) stands nearer
+  the warning's than `WARNING_NEAR`, 0.01 in OKLab (`oklabDistance`), in either mode. Then the
+  seed turns its hue, keeping its lightness and its chroma where the gamut allows, by the
+  fewest whole degrees up to `WARNING_TURN`, 30, either way and away from the nearest tint
+  first, that set the warning's backgrounds `WARNING_APART`, 0.02, from every brand tint's and
+  from the other statuses' in both modes; where no turn does, the turn within 30 degrees that
+  sets them farthest from the nearest of those. 0.02 is CSS Color 4's just noticeable
+  difference in OKLab and about the least the four statuses stand from one another in light
+  mode, 0.0224. The whole warning ramp follows the seed, so the `status-warning` Surface and the
+  `warning` role on every Surface change together, and the contrast check holds them as before.
+  It touches brand colours with an OKLCH hue of about 60 to 93 degrees, ambers and golden
+  yellows: an amber turns some 12 to 30 degrees towards yellow, and a golden yellow near 90
+  degrees, which no turn sets 0.02 apart from both the tint and the error, takes the
+  compromise. Every other design keeps the seed `#b77900`, and with it every resolved value.
+  Only the warning does this: a blue, green or red brand colour stands as near the info,
+  success or error tint, and those keep their seeds.
 - **Buttons (decided with the components, 2026-11-01):** light polarity takes
   `button-background` from primary 700, `button-text` from white and
   `button-background-hover` from primary 800. Dark polarity, including accent,

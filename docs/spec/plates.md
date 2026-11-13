@@ -67,7 +67,7 @@ How the new steps meet the seed: it anchors on the light scale exactly as before
 
 **Still open:** the remaining components in components.md.
 
-**Decided with the components, 2026-11-02 (owner’s review):** `--kn-background-hover` is the fill under the pointer, beyond the alternate fill where contrast permits. `text-hover` and `link-hover` check the existing foregrounds at 4.5:1; they are matrix pairs, not new text/link roles. `--kn-info`, seed `#1d6fd1`, joins success, warning and error at 4.5:1. Status colours are independent of brand seeds.
+**Decided with the components, 2026-11-02 (owner’s review):** `--kn-background-hover` is the fill under the pointer, beyond the alternate fill where contrast permits. `text-hover` and `link-hover` check the existing foregrounds at 4.5:1; they are matrix pairs, not new text/link roles. `--kn-info`, seed `#1d6fd1`, joins success, warning and error at 4.5:1. Status colours are independent of brand seeds. *(Amended 2026-11-13, to fix a warning that could not be told from an amber brand colour's tint: where a brand tint lies almost on the warning's, the warning turns its hue away from it, and only then; generator.md, The warning apart from the brand's tints.)*
 
 Four always-present, mode-following Surface kinds are **decided**: `status-info`, `status-success`, `status-warning`, `status-error`. Each uses its own ramp’s 100 (light) / 900 (dark) background and 600 / 300 accent, with the tint’s other recipes and all ordinary pairs. The accent belongs to that status hue; links remain primary, focus retains the usual rank policy. Filled Callouts select these contexts; outlined Callouts use the surrounding context’s status role.
 
