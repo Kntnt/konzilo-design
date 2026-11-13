@@ -25,7 +25,9 @@
      engine, so a table narrower than its column keeps its own width; one the Konzilo core writes in its wrapper,
      `.konzilo-table` (konzilo.css), takes the whole column. */
   .kn-body-text table:not(.kn-table, .kn-table-scroll > table, .konzilo-table > table) { display: block; max-inline-size: 100%; overflow-x: auto; overscroll-behavior-inline: contain; }
-  .kn-body-text > table:not(.kn-table) { margin-block: 1.5em; }
+  /* Straight in body text, a table stands off the text round it by one and a half times its own size. The core's wrapper
+     round it stands where the table would stand without it, in the same places, by the table's size and as strongly. */
+  .kn-body-text > :is(table:not(.kn-table), .konzilo-table) { margin-block: calc(1.5 * var(--kn-type-small-size)); }
   @media print {
     .kn-table-scroll, .kn-body-text table:not(.kn-table, .kn-table-scroll > table, .konzilo-table > table) { overflow: visible; }
     :is(.kn-table, .kn-table-scroll > table, .kn-body-text table) thead { display: table-header-group; }

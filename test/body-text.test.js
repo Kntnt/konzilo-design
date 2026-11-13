@@ -8,6 +8,7 @@ import { derive, defaultInputs } from '../src/generator/index.js';
 import { coreCss } from '../src/css/index.js';
 import { componentsCss } from '../src/css/components.js';
 import { render } from './helpers/render.js';
+import { renderMarkdown } from './helpers/konzilo-body.js';
 
 const BROWSERS = Object.entries({ chromium, firefox, webkit }).filter(([, type]) => existsSync(type.executablePath()));
 const browsers = [];
@@ -89,5 +90,58 @@ test('a narrow table in the core\'s wrapper takes the whole column, as the libra
     assert.equal(found.wrapped.scrolls, false, name);
     assert.ok(found.top.row < found.top.room - 100, `${name}: a bare table keeps its own width in every engine alike`);
     await tab.close();
+  }
+});
+
+// A body's table in each place it may stand, as the core renders the body: in the body text between paragraphs, under a
+// heading and over one, alone; in a fact box, a tab, an answer, a choice's panel and a card, between paragraphs and alone.
+const TABLE = '| Service | What it holds | Price | Term |\n| --- | --- | ---: | --- |\n| Planning | A plan for the beds | 1200 | Monthly |';
+const PLACES = {
+  flow: `Words before.\n\n${TABLE}\n\nWords after.`,
+  headings: `## A heading\n\n${TABLE}\n\n### Another heading\n\nWords.`,
+  alone: TABLE,
+  'fact box': `Words.\n\n:::aside\n\n::eyebrow[In short]\n\n${TABLE}\n\nWords in the box.\n\n:::\n\nWords.`,
+  'fact box, alone': `Words.\n\n:::aside\n\n${TABLE}\n\n:::\n\nWords.`,
+  tab: `Words.\n\n:::tabs\n\n### Small\n\nWords before.\n\n${TABLE}\n\nWords after.\n\n### Large\n\nWords.\n\n:::\n\nWords.`,
+  'tab, alone': `:::tabs\n\n### Small\n\n${TABLE}\n\n### Large\n\nWords.\n\n:::`,
+  answer: `:::accordion{first="open"}\n\n### What does it cost?\n\nWords before.\n\n${TABLE}\n\nWords after.\n\n### How long?\n\nWords.\n\n:::`,
+  'answer, alone': `:::accordion{first="open"}\n\n### What does it cost?\n\n${TABLE}\n\n### How long?\n\nWords.\n\n:::\n\nWords.`,
+  choice: `:::choice\n\n### Yes\n\nWords before.\n\n${TABLE}\n\nWords after.\n\n### No\n\nWords.\n\n:::`,
+  'choice, alone': `:::choice\n\n### Yes\n\n${TABLE}\n\n### No\n\nWords.\n\n:::`,
+  card: `:::cards\n\n### A card\n\nWords before.\n\n${TABLE}\n\nWords after.\n\n:::`,
+  'card, last': `:::cards\n\n### A card\n\nWords.\n\n${TABLE}\n\n:::`,
+};
+// Where each table's box stands in its place: its top, the space under it to what follows, and the place's height.
+const placeOfTables = (tab, port) => tab.evaluate((port) => Object.fromEntries([...document.querySelectorAll('[data-place]')].flatMap((place) => {
+  const edge = place.getBoundingClientRect();
+  return [...place.querySelectorAll(port)].map((box, at) => {
+    const own = box.getBoundingClientRect();
+    const next = box.nextElementSibling?.getBoundingClientRect().top ?? box.parentElement.getBoundingClientRect().bottom - Number.parseFloat(getComputedStyle(box.parentElement).paddingBlockEnd);
+    return [`${place.dataset.place} ${at + 1}`, { top: own.top - edge.top, under: next - own.bottom, height: edge.height }];
+  });
+})), port);
+
+test('a table in the core\'s wrapper stands where the bare table stood, in body text, a fact box, a tab, an answer, a choice and a card', { timeout: 180000 }, async () => {
+  // Each place's own names, so that opening one <details> closes none in another, and a choice's first answer chosen.
+  const bare = Object.entries(PLACES).map(([place, markdown], at) => `<div data-place="${place}" style="display: flow-root"><div class="kn-body-text">${
+    renderMarkdown(markdown).replace(/="(accordion|tabs|choice)-1"/g, `="$1-${at}"`).replace(/<details class="kn-choice-item"/, '$& open')}</div></div>`).join('');
+  const boxed = bare.replace(/<table/g, '<div class="konzilo-table"><table').replace(/<\/table>/g, '</table></div>');
+  assert.equal(boxed.match(/class="konzilo-table"/g).length, Object.keys(PLACES).length);
+  for (const [name, browser] of browsers) {
+    for (const width of [1280, 390]) {
+      const tab = await browser.newPage({ viewport: { width, height: 900 } });
+      const placed = async (body, port) => {
+        await tab.setContent(`<!doctype html><html lang="en"><head><style>${styles}${konzilo}</style></head><body data-kn-surface="page" style="padding-inline: 1rem"><main style="inline-size: min(100%, 40rem); margin-inline: auto">${body}</main></body></html>`);
+        return placeOfTables(tab, port);
+      };
+      const before = await placed(bare, 'table');
+      const after = await placed(boxed, '.konzilo-table');
+      assert.deepEqual(Object.keys(after), Object.keys(before), name);
+      const moved = Object.entries(before).flatMap(([at, was]) => ['top', 'under', 'height']
+        .filter((measure) => Math.abs(after[at][measure] - was[measure]) >= 0.5)
+        .map((measure) => `${at}: its ${measure} ${after[at][measure].toFixed(2)}, the bare one's ${was[measure].toFixed(2)}`));
+      assert.deepEqual(moved, [], `${name} at ${width}px`);
+      await tab.close();
+    }
   }
 });

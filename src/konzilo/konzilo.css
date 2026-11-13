@@ -331,8 +331,9 @@
 
   /* A table in a body, in the wrapper the core is asked to write round it: the wrapper scrolls, so the table is a table
      again, as wide as its column however few its columns, and as wide as its least column widths where those are more.
-     Without the wrapper the table is its own scrollport (table.css) and keeps its own width. */
-  .konzilo-table { min-inline-size: 0; max-inline-size: 100%; overflow-x: auto; overscroll-behavior-inline: contain; margin-block: 1.5em; }
+     Without the wrapper the table is its own scrollport (table.css) and keeps its own width. The wrapper stands where the
+     bare table stands, by table.css, which gives both their space round them in body text and none in a part. */
+  .konzilo-table { min-inline-size: 0; max-inline-size: 100%; overflow-x: auto; overscroll-behavior-inline: contain; }
   .konzilo-table > table { display: table; inline-size: 100%; margin: 0; }
   @media print {
     .konzilo-table { overflow: visible; }
