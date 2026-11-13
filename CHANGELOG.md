@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.11.0] – 2026-11-13
+
 ### Changed
 
 - **A design whose brand colour is near amber must be resolved again** (`konzilo-design resolve`, or a save in the tool), and its site's core CSS made from it again: a file resolved before keeps its old warning and still passes `check` and `fromDesign`, since its inputs have not changed. Its warning stood almost on its tint: on an amber secondary such as `#f2a93b`, the warning Surface was `#fff0dc` in light mode beside the tint's `#fff0dd`, and `#412a05` in dark mode, the tint's own. The warning now turns its hue away from a brand tint that lies within 0.01 of it in OKLab, in either mode, by the fewest degrees, up to 30, that set it 0.02 from every brand tint and from the other statuses: for `#f2a93b` 20 degrees towards yellow, its seed `#a28500` where it was `#b77900`. Its owner sees the warning Surface and the warning colour on every Surface change, in that design `#fff0dc` to `#fdf2cc` and `#412a05` to `#392e02` for the Surface, and `#895a00` to `#776100` and `#ecab4d` to `#d3b64c` for the warning's words and marks, light and dark; in dark mode it reads olive-brown where it read amber. Its hover, border and strong border follow, and the contrast check holds. Nothing else in the design changes. It touches a primary, secondary or tertiary with an OKLCH hue of about 60 to 93 degrees, ambers and golden yellows; every other design, the example among them, resolves to exactly what it did.
