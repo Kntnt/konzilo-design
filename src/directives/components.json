@@ -29,6 +29,12 @@
         "label": "Anchor",
         "pattern": "^[a-z0-9_-]+$",
         "refusal": "A section's anchor is lowercase letters a to z, digits, hyphens and underscores, so {value} cannot be one."
+      },
+      "body": {
+        "type": "string",
+        "label": "Body",
+        "values": ["columns"],
+        "refusal": "A section's body is columns, or stacked where this is left out, not {value}."
       }
     }
   },

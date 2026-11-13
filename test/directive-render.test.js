@@ -42,6 +42,34 @@ test('the renderer draws the twelve directives components.json declares, and no 
   assert.throws(() => renderDirective('post-list', {}, { type: 'root', children: [] }, ctx), /draws no directive post-list/);
 });
 
+test('a section in columns keeps the core\'s post list, quotation and source in its slot, with the preview\'s marks', () => {
+  const markdown = md`:::section{body="columns" surface="tint" anchor="courtyard"}
+
+::eyebrow[Case study]
+
+## A courtyard made for growing
+
+A garden for the people around it.
+
+::post-list{type="article" number="1" presentation="cards"}
+
+> We stop to see what has grown.
+>
+> <cite>A. Gardener, resident</cite>
+
+:::`;
+  const ordinary = page(markdown);
+  assert.match(ordinary, /^<section class="kn-band kn-section" id="courtyard" data-kn-surface="tint" data-kn-body="columns">/);
+  assert.match(ordinary, /<header class="kn-section-head">.*<h2[^>]*>A courtyard made for growing<\/h2>.*<p class="kn-heading-group-deck"[^>]*>A garden for the people around it\.<\/p>.*<\/header>/s);
+  assert.match(ordinary, /<div class="kn-section-body kn-body-text"><div class="test-post-list" data-presentation="cards"><\/div>\s*<blockquote>\s*<p>We stop to see what has grown\.<\/p>\s*<p><cite>A\. Gardener, resident<\/cite><\/p>\s*<\/blockquote><\/div>/);
+  const preview = page(markdown, { preview: true });
+  assert.equal(tight(unmarked(preview)), tight(ordinary));
+  for (const [element, mark] of [['section', '0'], ['h2', '0.1'], ['div class="test-post-list"', '0.3'], ['blockquote', '0.4']]) {
+    assert.match(preview, new RegExp(`<${element}[^>]*data-konzilo-block="${mark.replaceAll('.', '\\.')}"`), element);
+  }
+  assert.doesNotMatch(page(markdown.replace('body="columns" ', '')), /data-kn-body/);
+});
+
 test('the serialiser writes the core\'s tree as HTML: classes, labels, data and aria, booleans, SVG, void elements, a template\'s content and escaping', () => {
   const html = '<p class="a b" data-konzilo-block="1.2" aria-label="x &amp; y" tabindex="0">A &lt;b&gt; &amp; <b>c</b><br>d</p><label for="q">L</label><details open name="n"><summary>S</summary></details><svg viewBox="0 0 24 24" stroke-width="2" class="i"><path d="M1"></path></svg><template><iframe src="https://example.com/e" allowfullscreen title="v"></iframe></template><img src="a.webp" srcset="a.webp 1x, b.webp 2x" sizes="100vw" width="10" height="20" loading="lazy" decoding="async" alt=""><input type="checkbox" checked disabled><a href="x" rel="prev next">A</a>';
   const written = toHtml(htmlToHast(html, { fragment: true }));

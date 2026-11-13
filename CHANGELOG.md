@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- A section can set a list of teasers beside the words about them: `:::section{body="columns"}` holds one post list in `cards` and one plain Markdown quotation with its source, in either order, under its head at the start edge. The body takes two equal columns where each has at least 18rem, and stacks in reading order where they no longer fit. A lone teaser fills its column here; ordinary series keep their columns. The core keeps drawing both blocks through the section's slot, with the list's pager or empty text and the live preview's marks. The declaration, the checks in the editor's words, the contract and the gallery show the arrangement. This builds issue #22 without a Quotation directive or any other part of #20.
+
 ## [0.11.0] – 2026-11-13
 
 ### Changed

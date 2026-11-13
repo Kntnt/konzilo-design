@@ -309,7 +309,7 @@ function section(attrs, blocks, ctx, { body } = {}) {
   const drawn = parts.media.length + parts.head.length;
   const rest = body === undefined ? renderBlocks(blocks.slice(drawn), band) : groupEyebrows(bodyFromSlot(body, blocks, drawn, band)).trim();
   if (rest !== '') out.push(tag('div', { class: 'kn-section-body kn-body-text' }, rest));
-  return tag('section', { class: 'kn-band kn-section', id: attrs.anchor || undefined, 'data-kn-surface': surface }, tag('div', { class: 'kn-band-content' }, out));
+  return tag('section', { class: 'kn-band kn-section', id: attrs.anchor || undefined, 'data-kn-surface': surface, 'data-kn-body': attrs.body === 'columns' ? 'columns' : undefined }, tag('div', { class: 'kn-band-content' }, out));
 }
 
 // ---------- aside ----------

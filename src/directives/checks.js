@@ -16,6 +16,7 @@
 import components from './components.json' with { type: 'json' };
 import { seriesItems } from './items.js';
 import { markerAttributes } from './markers.js';
+import { sectionParts } from './section.js';
 
 const OWN = new Set(Object.keys(components));
 
@@ -56,6 +57,23 @@ function hero(blocks) {
   const pictures = blocks.filter((block) => block.type === 'image').length;
   if (pictures > 2) reasons.push(`An opening holds at most two pictures, a logo before its text and its picture last, and this holds ${pictures}.`);
   return reasons;
+}
+
+// Columns pair a list of teasers with the words about it. Both are single roots in the core's slot, so neither needs
+// drawing again from its tree, and a list that is empty or has a pager stays one column beside the quotation.
+function section(attributes, blocks) {
+  if (attributes.body !== 'columns') return [];
+  const parts = sectionParts(blocks.map((block) => ({
+    kind: kindOf(block) ?? (isHeading(block) && block.level === 2 ? 'heading'
+      : block.type === 'paragraph' ? 'paragraph'
+      : isDirective(block, 'list') && block.attributes?.type === 'actions' ? 'actions'
+      : isDirective(block, 'form') ? 'form' : isDirective(block, 'choice') ? 'choice' : 'other'),
+    text: textOf(block.children),
+  })));
+  const body = parts.body.map((at) => blocks[at]);
+  const list = body.find((block) => isDirective(block, 'post-list'));
+  return body.length === 2 && body.some((block) => block.type === 'quote') && list?.attributes?.presentation === 'cards' ? []
+    : ['A section with its body in columns holds one post list with presentation="cards" and one quotation, in either order, after its head. Put other blocks in a section of their own, or leave out body="columns" to stack them.'];
 }
 
 // A list item's text, for a reason to name it.
@@ -151,6 +169,7 @@ export function componentProblems(name, attributes = {}, blocks = []) {
   const own = Array.isArray(blocks) ? blocks : [];
   switch (name) {
     case 'hero': return hero(own);
+    case 'section': return section(attributes ?? {}, own);
     case 'aside': return foreign(own, 'A fact box');
     case 'list': return list(attributes ?? {}, own);
     case 'cards':

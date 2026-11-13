@@ -34,6 +34,21 @@ test('an opening holds no heading, no gallery and at most two pictures', () => {
   refused('hero', {}, [{ type: 'gallery', images: [image('One'), image('Two')], caption: null }], /A gallery cannot stand in it/);
 });
 
+test('a section in columns pairs one cards post list with a plain quotation, after its head', () => {
+  const quote = { type: 'quote', children: [p('We stop to see what has grown.')] };
+  const posts = directive('post-list', { type: 'article', number: 1, presentation: 'cards' });
+  const head = [directive('eyebrow'), h(2, 'A shared garden'), p('How it grew.'), directive('list', { type: 'actions' }, [list(item(a('/garden/', 'Visit')))])];
+  none('section', { body: 'columns' }, [...head, posts, quote]);
+  none('section', { body: 'columns' }, [...head, quote, posts]);
+  none('section', { body: 'columns' }, [posts, quote]);
+  none('section', { body: 'columns' }, [image('The garden'), ...head, posts, quote]);
+  for (const body of [[], [posts], [quote], [quote, quote], [posts, posts], [posts, quote, p('An extra block.')], [directive('post-list', { presentation: 'featured' }), quote], [directive('post-list'), quote], [directive('cards', {}, [h(3, 'One')]), quote], [directive('form'), quote]]) {
+    refused('section', { body: 'columns' }, [...head, ...body], /one post list with presentation="cards" and one quotation, in either order, after its head/);
+  }
+  // With no arrangement chosen the body keeps taking any blocks the core can draw.
+  none('section', {}, [...head, posts, quote, p('An extra block.')]);
+});
+
 test('an item cannot hold a post list, a form or a site\'s own component until the core can draw them there, but a picture and the package\'s own parts', () => {
   for (const [name, part] of [['cards', 'Cards'], ['accordion', 'An accordion'], ['tabs', 'Tabs'], ['toc', 'A table of contents'], ['choice', 'A choice'], ['aside', 'A fact box'], ['hero', 'An opening']]) {
     const blocks = [h(3, 'One'), directive('form', { name: 'contact' }), h(3, 'Two'), directive('post-list', { type: 'article' }), directive('timeline-of-our-own')];

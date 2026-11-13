@@ -28,7 +28,9 @@ Records the HTML contract between the directive list Konzilo defines and this de
 
 **Why.** The HTML stays a description of the content, the same for every design. The decisions stay in this package's CSS, so a design or a later version changes a layout without the site changing a line or knowing a rule. A page written by hand, in the gallery, the tool or a site outside Konzilo, gets the same layout from the same HTML. Only text needs a function, and the function states a fact, so a design stays free to do something else with a long deck. Option (b) was rejected because a `data-kn-layout` value writes the design's decision into the HTML, which every page must then be rebuilt to change and every hand-written page must compute; (a) alone cannot see a deck's length or a heading's question mark.
 
-**The one exception is a Surface.** A Surface is an attribute (names.md, decision 3), and a stylesheet cannot put one on an element. Where the design puts a part on a plate of its own, the site writes the Surface that `surfaceOf` returns, so that choice too stays in this package. Where the site does not know the ground the part stands on, as when the core draws a nested part or a post list's teasers into a band, it gives `surfaceOf` none and writes what it returns: the stylesheet then finds the ground, and a part that stands on a ground of its own kind takes the Surface `surfaceOf` gives on that ground, the third column of the table below, at any depth (since 2026-11-12; plates.md, A plate finds its ground).
+**A Surface is an exception.** A Surface is an attribute (names.md, decision 3), and a stylesheet cannot put one on an element. Where the design puts a part on a plate of its own, the site writes the Surface that `surfaceOf` returns, so that choice too stays in this package. Where the site does not know the ground the part stands on, as when the core draws a nested part or a post list's teasers into a band, it gives `surfaceOf` none and writes what it returns: the stylesheet then finds the ground, and a part that stands on a ground of its own kind takes the Surface `surfaceOf` gives on that ground, the third column of the table below, at any depth (since 2026-11-12; plates.md, A plate finds its ground).
+
+**An explicitly paired body** (issue #22, 2026-11-13) is the other exception: `body="columns"` on a section pairs a list of teasers with a quotation, and the section writes `data-kn-body="columns"`. The editor states that the two belong together; the design chooses their widths and when they stack. An ordinary body still follows the readings below.
 
 ### The module
 
@@ -113,7 +115,7 @@ Records the HTML contract between the directive list Konzilo defines and this de
 | Directive | Element | Form | Label | Attributes |
 |---|---|---|---|---|
 | `hero` | `hero` | container, blocks | Opening | `surface`: `page`, `raised`, `inverse`, `tint`, `brand` or `accent`, no default, the design's own where it is left out |
-| `section` | `section` | container, blocks | Section | `surface`: `page`, `raised`, `inverse`, `tint`, `brand` or `accent`, default `page`; `anchor`: the section's id, of lowercase letters `a` to `z`, digits, hyphens and underscores |
+| `section` | `section` | container, blocks | Section | `surface`: `page`, `raised`, `inverse`, `tint`, `brand` or `accent`, default `page`; `anchor`: the section's id, of lowercase letters `a` to `z`, digits, hyphens and underscores; `body`: `columns`, no default, a stacked body where it is left out |
 | `aside` | `aside` | container, blocks | Fact box | `anchor`: the fact box's id, as a section's |
 | `list` | `list-directive` | container, blocks | Styled list | `type`: `description`, `values`, `logos` or `actions`, no default, a list with the design's bullets or markers where it is left out; `markers`: a value for each level, apart by `/` (List, below) |
 | `cards` | `cards` | container, blocks | Cards | `type`: `navigation`, no default; `markers`: one value, a sign or a numbering; `picture`: `behind`, no default; `symbol`: `item` or `heading`, no default |
@@ -136,6 +138,7 @@ Records the HTML contract between the directive list Konzilo defines and this de
 | Directive | Refused |
 |---|---|
 | `hero` | A heading, which the post's title stands in for; a gallery; more than two pictures, a logo and its own |
+| `section` | With `body="columns"`, anything but one post list with `presentation="cards"` and one plain quotation, in either order, after its head |
 | `list` | Anything but exactly one Markdown list; with `type="actions"`, an item that is more than one link, in bold or not, and a second main action; with `values` or `description`, an item without its value or description under it; with `logos`, an item that is no picture or linked picture |
 | `cards`, `accordion`, `tabs`, `toc`, `choice` | No heading to begin an item at; a choice of one answer; in a table of contents, more than one paragraph before the first heading |
 | `cards` | With `type="navigation"`, a heading that is not one link, or another link in the card; with `symbol`, a card without a picture; a numbering in `markers` with `picture` or `symbol` |
@@ -348,6 +351,30 @@ On a narrow window everything beside stands above and below in document order. R
 **Behaviour.** *(CSS)* Rule 4's head stays in view under the header as the page scrolls, by `position: sticky` at `--kn-reading-sticky-inset`. It is at most as tall as the window below that inset less the component gap, and a head taller than that scrolls inside itself, so it never hides its own end (the assistant's choice, 2026-11-10, replacing `section.js`, which let a head too tall for the window scroll with the page).
 
 **Component.** New: Section, a composition of Band, Heading Group and Actions. Its parts are `.kn-section-media`, `.kn-section-picture`, `.kn-section-badges`, `.kn-section-head` and `.kn-section-body`.
+
+### A quotation beside its teasers
+
+***Built* 2026-11-13, for issue #22 (the assistant's choice):** `body="columns"` pairs one post list in `cards` with one plain Markdown quotation, in either order. The section's media and head are grouped as before; the head keeps the start edge. Its body carries the two blocks as the core drew them in the slot, including the list's empty text or pager and the quotation's `<cite>`. No Quotation directive is needed, and no part of issue #20 is built.
+
+```markdown
+:::section{body="columns"}
+
+## A courtyard made for growing
+
+::post-list{type="article" number="1" presentation="cards"}
+
+> We used to walk straight through. Now we stop to see what has grown.
+>
+> <cite>A. Gardener, resident and volunteer</cite>
+
+:::
+```
+
+The post list's type and selection are the site's own. A deck and actions may stand in the head as usual. The checks refuse extra body blocks, a missing partner and a list in another presentation, in the editor's words; other content belongs in another section or in an ordinary stacked body.
+
+**Markup and layout.** The section adds `data-kn-body="columns"` to its band; its head and body have the same markup as above. The body is a grid of two equal columns with the column gap between them, each at least 18rem wide where that fits; otherwise the two stack in document order, at the same gap. The blocks stand in the middle of each other's height. A lone teaser fills its own column here; a series elsewhere keeps its existing columns, leaving issue #17 otherwise unchanged. A quotation keeps Body Text's own look and source, with no new plate, type recipe or script.
+
+**Why this choice.** The editor explicitly pairs two related blocks under one head, so an ordinary list followed by an independent quotation keeps stacking. A body arrangement leaves the list's presentation responsible for its own posts, and lets the core keep rendering it as it does every other list. Text and Image gives its picture a media role, with cropping, badges and sticky behaviour that a quotation should not take. A post-list presentation that leaves room for its next sibling would make a list responsible for content outside it. A general columns container with arbitrary content would need to group the core's multiple-root blocks into columns; this option supports only the pair this issue needs, whose blocks each have one root.
 
 ## `aside`
 

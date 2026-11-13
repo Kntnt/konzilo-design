@@ -1,6 +1,6 @@
 /* Section: a Band of up to three groups, media, head and body, as sectionParts in @kntnt/konzilo-design/directives
    groups them (docs/spec/directives.md, section). Its layout is read from what the groups hold, by six rules, the first
-   that matches deciding; nothing in the markup names a layout.
+   that matches deciding. The editor may explicitly pair its body's teasers and quotation with body="columns" below.
 
    Each rule's selector stands on the section's content, C below, `.kn-section > .kn-band-content`, and lays it out. What
    a rule asks of a part inside C it sets as a custom property on C, which the part reads, so each long selector is written
@@ -58,6 +58,23 @@
   /* A fact box stands in the reading column, as in an article (directives.md, `aside`), and not across the content width;
      in a centred section it stands in the middle, as the text does. */
   .kn-section-body > .kn-fact-box { max-inline-size: var(--kn-layout-narrow); margin-inline: var(--kn-section-text-margin, 0); }
+
+  /* An editor pairs a list of teasers with a quotation by body="columns". The head follows the section's rules above
+     them; the two blocks keep their document order, each at least 18rem wide where that fits, and stack otherwise.
+     The list's one teaser fills its column here alone; an ordinary series keeps its existing columns. */
+  .kn-section[data-kn-body="columns"] > .kn-band-content > .kn-section-body {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+    gap: var(--kn-space-column-gap);
+    align-items: center;
+  }
+  .kn-section[data-kn-body="columns"] > .kn-band-content > .kn-section-body > * {
+    min-inline-size: 0;
+    margin-block: 0;
+  }
+  .kn-section[data-kn-body="columns"] > .kn-band-content > .kn-section-body > .kn-post-list[data-kn-presentation="cards"] > .kn-cards:has(> :only-child) {
+    grid-template-columns: minmax(0, 1fr);
+  }
 
   /* Media: the picture the section begins with, and the pictures after it as its badges, with it. */
   .kn-section-media { display: grid; align-content: start; justify-items: start; gap: var(--kn-space-component-gap); min-inline-size: 0; }

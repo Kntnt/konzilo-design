@@ -107,6 +107,8 @@ The directive list Konzilo defines needs two components that stood under "Not no
 - **Where they meet** (an integration review over four designs, both modes, four widths and two text sizes in Firefox, WebKit and Chromium, the assistant's choices, 2026-11-10): a section's body spaces its parts a column gap apart and a list's intro label at the component gap, a heading group in body text is spaced as a heading, a section's badges and a hero's logo are 4rem high at their own proportions, and a centred form keeps its button and terms at its start edge (directives.md, `section`, `hero`, `::small`).
 - **Post List** (`post-list.css`): `featured` follows the list's own width by container queries, one column, then two from 32rem with the latest across both, then three from 50rem with the latest over two columns and two rows and its picture growing to match the two beside it. `filtered` draws Visitor Filters as it is, filtering by CSS with no script (2026-11-10).
 
+***Built* 2026-11-13, for issue #22:** a section's `body="columns"` pairs a post list in `cards` and a plain quotation, under its head at the start edge. Two equal columns stack in reading order when each can no longer have 18rem. A lone teaser fills its column only in this arrangement; the quotation keeps Body Text's look and its source. The declarations and checks name the pair (directives.md, A quotation beside its teasers).
+
 ## On the site
 
 What only one site needs stays on that site (tool.md, point 1), such as views fed by its own business data.

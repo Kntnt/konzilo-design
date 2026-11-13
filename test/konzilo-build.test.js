@@ -24,7 +24,7 @@ const why = !core ? 'set KONZILO_CORE to a checkout of the Konzilo core with its
 const md = String.raw;
 // The core's package, by the name a site imports it by, put together so that this file is not taken for an import of it.
 const CORE = ['@kntnt', 'konzilo'].join('/');
-const ELEMENTS = ['paragraph', 'heading', 'list', 'image', 'gallery', 'post-list', 'form', 'hero', 'section', 'aside', 'list-directive', 'cards', 'accordion', 'tabs', 'toc', 'choice', 'eyebrow', 'small', 'breadcrumbs'];
+const ELEMENTS = ['paragraph', 'heading', 'list', 'quote', 'image', 'gallery', 'post-list', 'form', 'hero', 'section', 'aside', 'list-directive', 'cards', 'accordion', 'tabs', 'toc', 'choice', 'eyebrow', 'small', 'breadcrumbs'];
 const description = {
   language: 'en_GB',
   componentsFrom: '@kntnt/konzilo-design/directives/components.json',
@@ -203,7 +203,19 @@ Good soil.
 
 ::small[We answer within a day.]
 
-:::::`;
+:::::
+
+:::section{anchor="courtyard" body="columns"}
+
+## A courtyard made for growing
+
+::post-list{type="article" number="1" leaveOutShown="false" presentation="cards"}
+
+> We stop to see what has grown.
+>
+> <cite>A. Gardener, resident</cite>
+
+:::`;
 
 const QUESTIONS = md`::::section
 
@@ -498,6 +510,9 @@ test('a site built by the core draws every directive with the package\'s compone
   assert.doesNotMatch(built.output, /@kntnt\/konzilo-design:/, 'no part warns');
   const html = main(built.page('pages/garden'));
   assert.doesNotMatch(html, /content="\[object Object\]"|data-directive=/, 'every directive drawn, none given its tree as an attribute');
+  const courtyard = /<section class="kn-band kn-section" id="courtyard" data-kn-body="columns">[\s\S]*?<\/section>/.exec(html)?.[0];
+  assert.ok(courtyard, 'the section takes body="columns" through the core');
+  assert.match(courtyard, /<div class="kn-section-body kn-body-text"><div class="kn-post-list" data-kn-presentation="cards">[\s\S]*?<article class="kn-card"[\s\S]*?<\/div>\s*<blockquote>\s*<p>We stop to see what has grown\.<\/p>\s*<p><cite>A\. Gardener, resident<\/cite><\/p>\s*<\/blockquote>/);
   // The hero: the trail, the post's title, the eyebrow, deck, actions, small print and the picture behind, as the
   // default design has it. The trail ends with the page itself, as the design's `current` says, though the core's setting
   // for the type, off by default, marks the level hidden.
@@ -514,7 +529,7 @@ test('a site built by the core draws every directive with the package\'s compone
   // The latest: the presentations and the core's form in the section's body, each where it was written.
   const latest = /<section class="kn-band kn-section" id="latest">[\s\S]*?<\/section>/.exec(html)[0];
   assert.match(latest, /<header class="kn-section-head"><hgroup class="kn-heading-group"><p class="kn-heading-group-eyebrow" data-kn-type="label">Latest<\/p><h2[^>]*>From the journal<\/h2><\/hgroup><\/header><div class="kn-section-body kn-body-text"><div class="kn-post-list" data-kn-presentation="featured"><div class="kn-featured"><article class="kn-card" data-kn-surface="raised"><img class="kn-card-picture" src="\/_astro\/[^"]+" srcset="[^"]+"[^>]*><p class="kn-card-eyebrow" data-kn-type="label">Guides<\/p><h3 class="kn-card-heading" data-kn-type="heading-3"><a class="kn-card-link" href="\/articles\/soil\/">Know your soil<\/a><\/h3><p class="kn-card-text" data-kn-type="small">All about soil\.<\/p>/);
-  assert.match(latest, /<div class="kn-post-list" data-kn-presentation="filtered"><form class="kn-visitor-filters" role="search" method="get" action="\/search\/"><div class="kn-visitor-filter-panel"><fieldset class="kn-visitor-filter-group"><legend>Category<\/legend>.*value="news".*<legend>Topic<\/legend>.*value="soil"/s);
+  assert.match(latest, /<div class="kn-post-list" data-kn-presentation="filtered"><form class="kn-visitor-filters" role="search" method="get" action="\/search\/"><input type="hidden" name="type" value="article"><div class="kn-visitor-filter-panel"><fieldset class="kn-visitor-filter-group"><legend>Category<\/legend>.*value="news".*<legend>Topic<\/legend>.*value="soil"/s);
   assert.match(latest, /<\/div><\/div>\s*<form class="konzilo-form[^"]*"[\s\S]*<\/form>\s*<p class="kn-fine-print" data-kn-type="small">We answer within a day\.<\/p><\/div><\/div><\/section>$/);
   // A page below it has its trail first in its hero, from the core's levels.
   assert.match(main(built.page('pages/garden/tools')), /^<section class="kn-band kn-hero"[^>]*><div class="kn-band-content kn-hero-content"><div class="kn-hero-text"><nav class="kn-breadcrumbs" aria-label="Breadcrumb" data-kn-type="small"[^>]* data-kn-current="true"[^>]*><ol role="list"><li><a href="\/">.*<span class="kn-breadcrumbs-label">[^<]+<\/span><\/a><\/li><li><span class="kn-breadcrumbs-separator" aria-hidden="true"><\/span><a href="\/pages\/garden\/"><span class="kn-breadcrumbs-label">Planning a garden<\/span><\/a><\/li><li><span class="kn-breadcrumbs-separator" aria-hidden="true"><\/span><span aria-current="page">Tools for a garden<\/span><\/li><\/ol><\/nav><hgroup/s);
@@ -577,6 +592,9 @@ test('in the core\'s live preview every part keeps its block\'s mark, and a sect
   assert.match(html, /<section data-konzilo-block="1" class="kn-band kn-section" id="plans"/);
   assert.match(html, /<div class="kn-section-body kn-body-text"><div data-konzilo-block="1\.4" class="kn-card-grid kn-cards">/);
   assert.match(html, /<div data-konzilo-block="2\.2" class="kn-post-list" data-kn-presentation="featured">/);
+  assert.match(html, /<section data-konzilo-block="3" class="kn-band kn-section" id="courtyard" data-kn-body="columns">/);
+  assert.match(html, /<div data-konzilo-block="3\.1" class="kn-post-list" data-kn-presentation="cards">/);
+  assert.match(html, /<blockquote data-konzilo-block="3\.2">/);
   assert.match(html, /<p class="kn-heading-group-eyebrow" data-kn-type="label" data-konzilo-block="1\.1">Plans<\/p>/);
   assert.doesNotMatch(html, /konzilo-preview-part/, 'no wrapper stands between a part and its band');
   assert.doesNotMatch(html, /data-directive=/);
@@ -615,4 +633,6 @@ test('the core\'s body check reads the package\'s declarations and runs its chec
 
 :::`), ['A styled list of actions has at most one main action, the one link in bold, and this has 2.']);
   assert.match(reasons('::::section{surface="green"}\n\nWords.\n\n::::').join(), /A section stands on page, raised, inverse, tint, brand or accent, not on green\./);
+  assert.match(reasons(':::section{body="split"}\n\nWords.\n\n:::').join(), /A section's body is columns, or stacked where this is left out, not split\./);
+  assert.match(reasons(':::section{body="columns"}\n\n> Only a quotation.\n\n:::').join(), /one post list with presentation="cards" and one quotation/);
 });
