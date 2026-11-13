@@ -547,8 +547,9 @@ function choice(attrs, blocks, ctx) {
 // ---------- the text roles and the trail ----------
 
 /**
- * The page's trail, as Breadcrumbs writes it with the design's settings, from the core's levels in the page's context:
- * nothing where no step but the start page is left to show.
+ * The page's trail, as Breadcrumbs writes it with the design's settings, from the core's levels in the page's context,
+ * the page's own level shown or hidden as the design's `current` says: nothing where no step but the start page is
+ * left to show.
  * @param {object} ctx The page's context.
  */
 export function breadcrumbsHtml(ctx) {
@@ -556,8 +557,9 @@ export function breadcrumbsHtml(ctx) {
   if (!home) return '';
   const trail = rest.map((level, at) => (at === rest.length - 1 ? { label: level.name } : { label: level.name, href: level.href }));
   const props = breadcrumbProps(ctx.design.resolved.breadcrumbs ?? {}, ctx.design.project, { trail, home: home.href, homeWord: home.name });
-  // The core's setting for the page's type wins where it leaves the page itself out (directives.md, ::breadcrumbs).
-  const current = rest.at(-1)?.hidden === true ? false : props.current !== false;
+  // The design's `current` says whether the page itself ends the trail, whatever the core's setting for its type, which
+  // marks the level `hidden` for the core's own Breadcrumbs (directives.md, ::breadcrumbs).
+  const current = props.current !== false;
   const shown = props.items.length - (current ? 0 : 1);
   if (shown < 2) return '';
   return tag('nav', {

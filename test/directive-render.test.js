@@ -76,7 +76,7 @@ Start small and let the beds **widen** year by year.
   const beside = page(markdown, { design: testDesign({ hero: { picture: 'end', h1: 'hero', type: 'heading-1', height: 'two-thirds', place: 'center', align: 'start' } }) });
   assert.equal(tight(unmarked(beside).replace(iconHtml('house', 'kn-breadcrumbs-house'), '<house>')), [
     '<section class="kn-band kn-hero" data-kn-surface="tint" data-kn-picture="end" data-kn-height="two-thirds"><div class="kn-band-content kn-hero-content"><div class="kn-hero-text">',
-    '<nav class="kn-breadcrumbs" aria-label="Breadcrumb" data-kn-type="small" data-kn-separator="slash" data-kn-home="word" data-kn-current="false" data-kn-narrow="trail"><ol role="list"><li><a href="/"><house><span class="kn-breadcrumbs-label">Home</span></a></li><li><span class="kn-breadcrumbs-separator" aria-hidden="true"></span><a href="/guides/"><span class="kn-breadcrumbs-label">Guides</span></a></li><li><span class="kn-breadcrumbs-separator" aria-hidden="true"></span><span aria-current="page">Planning a garden</span></li></ol></nav>',
+    '<nav class="kn-breadcrumbs" aria-label="Breadcrumb" data-kn-type="small" data-kn-separator="slash" data-kn-home="word" data-kn-current="true" data-kn-narrow="trail"><ol role="list"><li><a href="/"><house><span class="kn-breadcrumbs-label">Home</span></a></li><li><span class="kn-breadcrumbs-separator" aria-hidden="true"></span><a href="/guides/"><span class="kn-breadcrumbs-label">Guides</span></a></li><li><span class="kn-breadcrumbs-separator" aria-hidden="true"></span><span aria-current="page">Planning a garden</span></li></ol></nav>',
     '<img class="kn-hero-logo" src="/media/logo.svg" alt="Example Gardens" loading="eager">',
     '<hgroup class="kn-heading-group"><p class="kn-heading-group-eyebrow" data-kn-type="label">A guide</p><h1 class="kn-heading-group-heading" data-kn-type="heading-1">Planning a garden</h1><p class="kn-heading-group-deck" data-kn-type="lead">Start small and let the beds <strong>widen</strong> year by year.</p></hgroup>',
     '<ul class="kn-actions" role="list"><li><a class="kn-action" href="/start/" data-kn-main>Get started</a></li><li><a class="kn-action" href="/more/">Read more</a></li></ul>',
@@ -614,10 +614,13 @@ test('the text roles and the trail: an eyebrow alone, small print, and no trail 
 
 ::small[A note.]`), /<p data-kn-type="label">A label<\/p>\n?<p class="kn-fine-print" data-kn-type="small">A note\.<\/p>/);
   assert.match(page('::breadcrumbs'), /<nav class="kn-breadcrumbs"/);
-  // The page right under the start page, its own level hidden: no trail.
-  assert.doesNotMatch(page('::breadcrumbs', { breadcrumbs: [{ name: 'Home', href: '/' }, { name: 'Guides', href: '/guides/', hidden: true }] }), /kn-breadcrumbs/);
-  // Shown, the page's own level counts: a trail of two.
-  assert.match(page('::breadcrumbs', { breadcrumbs: [{ name: 'Home', href: '/' }, { name: 'Guides', href: '/guides/' }], design: testDesign({ breadcrumbs: { current: true } }) }), /data-kn-current="true"/);
+  // The design's `current` says whether the page's own level ends the trail, whatever the core marks hidden by its
+  // setting for the page's type. Left out, a page right under the start page has no trail.
+  const underStart = [{ name: 'Home', href: '/' }, { name: 'Guides', href: '/guides/', hidden: true }];
+  assert.doesNotMatch(page('::breadcrumbs', { breadcrumbs: underStart, design: testDesign({ breadcrumbs: { current: false } }) }), /kn-breadcrumbs/);
+  assert.doesNotMatch(page('::breadcrumbs', { breadcrumbs: underStart.map(({ hidden, ...level }) => level), design: testDesign({ breadcrumbs: { current: false } }) }), /kn-breadcrumbs/);
+  // Shown, the page's own level counts: a trail of two, the core's hidden mark or not.
+  assert.match(page('::breadcrumbs', { breadcrumbs: underStart, design: testDesign({ breadcrumbs: { current: true } }) }), /data-kn-current="true".*<span aria-current="page">Guides<\/span>/s);
   // The site's name as the first step, by the design, and the site's word for the trail.
   assert.match(page('::breadcrumbs', { design: testDesign({ breadcrumbs: { home: 'name' } }), words: { breadcrumb: 'Brödsmulor' } }), /aria-label="Brödsmulor".*<span class="kn-breadcrumbs-label">Example Gardens<\/span>/s);
   assert.equal(page('::breadcrumbs', { breadcrumbs: [], design: testDesign() }).includes('kn-breadcrumbs'), false, 'the start page has no trail');
