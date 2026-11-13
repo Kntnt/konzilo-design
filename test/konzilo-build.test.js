@@ -72,6 +72,44 @@ That the soil was dry.
 
 Words on planting.`;
 
+// The bands a template writes with Section, ValueList, Actions and SmallPrint, as a page's body writes them, for the
+// build to hold the two to each other.
+const BANDS = md`::::section{surface="brand"}
+
+## Find out what your garden can do
+
+A gardener visits and, within two weeks, [writes it down](/pages/garden/).
+
+:::list{type="actions"}
+
+- **[Book a visit](/pages/garden/)**
+- [Ask for a reference](/pages/garden/)
+
+:::
+
+::::
+
+::::section{surface="tint" anchor="newsletter"}
+
+## One e-mail a month
+
+The month's guides, and nothing else.
+
+::form{name="contact"}
+
+::small[We keep your address only to send it. Read [how](/pages/legal/).]
+
+::::
+
+:::list{type="values"}
+
+- Office
+  - Leeds
+- Write
+  - [jobs@gardens.example](mailto:jobs@gardens.example)
+
+:::`;
+
 // A page with no hero, as a legal page is written: its blocks loose at the top.
 const LEGAL = md`## What we keep
 
@@ -324,6 +362,11 @@ before(() => {
     "import ArticleOpening from '@kntnt/konzilo-design/page-parts/ArticleOpening.astro';",
     "import ArticleBody from '@kntnt/konzilo-design/page-parts/ArticleBody.astro';",
     "import ReadMore from '@kntnt/konzilo-design/page-parts/ReadMore.astro';",
+    "import Actions from '@kntnt/konzilo-design/page-parts/Actions.astro';",
+    "import Section from '@kntnt/konzilo-design/page-parts/Section.astro';",
+    "import ValueList from '@kntnt/konzilo-design/page-parts/ValueList.astro';",
+    "import Cards from '@kntnt/konzilo-design/presentations/Cards.astro';",
+    `import { listedPosts } from '${CORE}/astro/post-lists';`,
     "import { designPage } from '@kntnt/konzilo-design/design-props';",
     "import { getCollection } from 'astro:content';",
     "import design from '../../../design/site.design.json';",
@@ -335,7 +378,7 @@ before(() => {
     "designPage(Astro, { design, title: entry.data.headline, breadcrumbs: await breadcrumbs(entry, Astro.url) });",
     "const topics = (await getEntries(entry.data.topics)).map((topic) => ({ name: topic.data.name, url: `/topic/${topic.id}/` }));",
     '---',
-    "<html lang=\"en\"><head><meta charset=\"utf-8\"><title>{entry.data.headline}</title></head><body><main><ArticleOpening entry={entry} metaLine={await metaLine(entry, Astro.url)} topics={topics} /><ArticleBody><Body post={entry}><Content /></Body></ArticleBody><ReadMore posts={await relatedPosts(entry)} more={{ label: 'More articles', href: '/articles/' }} surface=\"raised\" /></main></body></html>",
+    "<html lang=\"en\"><head><meta charset=\"utf-8\"><title>{entry.data.headline}</title></head><body><main><ArticleOpening entry={entry} metaLine={await metaLine(entry, Astro.url)} topics={topics}><Fragment slot=\"after\"><ValueList items={[{ label: 'Office', value: 'Leeds' }, { label: 'Write', value: '<a href=\"mailto:jobs@gardens.example\">jobs@gardens.example</a>' }]} /><Actions links={[{ label: 'How to apply', href: '#planting' }]} /></Fragment></ArticleOpening><ArticleBody><Body post={entry}><Content /></Body></ArticleBody><ReadMore posts={await relatedPosts(entry)} more={{ label: 'More articles', href: '/articles/' }} surface=\"raised\" /><Section surface=\"raised\" heading=\"Other articles\"><Cards posts={await listedPosts({ type: 'article', number: 2 }, { post: entry })} options={{}} empty=\"\" /><Actions links={[{ label: 'All articles', href: '/articles/' }]} /></Section><Section surface=\"brand\" heading=\"Find out what your garden can do\" actions={[{ label: 'Book a visit', href: '/pages/garden/' }, { label: 'Ask for a reference', href: '/pages/garden/' }]}><Fragment slot=\"deck\">A gardener visits and, within two weeks, <a href=\"/pages/garden/\">writes it down</a>.</Fragment></Section></main></body></html>",
     '',
   ].join('\n'));
   write('src/components/SearchPage.astro', [
@@ -351,7 +394,7 @@ before(() => {
     '',
     "designPage(Astro, { design, title: 'Search', breadcrumbs: await breadcrumbs(null, Astro.url, { title: 'Search' }) });",
     '---',
-    '<html lang="en"><head><meta charset="utf-8"><title>Search</title></head><body><main><TitleBand /><PageBody title={false}><ReadingArea side="end"><Search /></ReadingArea></PageBody></main></body></html>',
+    '<html lang="en"><head><meta charset="utf-8"><title>Search</title></head><body><main><TitleBand><ReadingArea side="end"><Search /></ReadingArea></TitleBand></main></body></html>',
     '',
   ].join('\n'));
   write('src/pages/404.astro', [
@@ -377,6 +420,9 @@ before(() => {
     `import { breadcrumbs } from '${CORE}/astro/breadcrumbs';`,
     "import Filtered from '@kntnt/konzilo-design/presentations/Filtered.astro';",
     "import TermOpening from '@kntnt/konzilo-design/page-parts/TermOpening.astro';",
+    "import Section from '@kntnt/konzilo-design/page-parts/Section.astro';",
+    "import SmallPrint from '@kntnt/konzilo-design/page-parts/SmallPrint.astro';",
+    `import Form from '${CORE}/astro/Form.astro';`,
     "import PageBody from '@kntnt/konzilo-design/page-parts/PageBody.astro';",
     "import { designPage } from '@kntnt/konzilo-design/design-props';",
     "import design from '../../design/site.design.json';",
@@ -387,13 +433,14 @@ before(() => {
     "const taxonomy = { categories: 'category', topics: 'topics' }[term.collection];",
     "designPage(Astro, { design, title: term.data.name, breadcrumbs: await breadcrumbs(term, Astro.url), search: '/search/', types: { articles: { name: 'article', label: 'Article', plural: 'Articles' } } });",
     '---',
-    "<html lang=\"en\"><head><meta charset=\"utf-8\"><title>{term.data.name}</title></head><body><main><TermOpening term={term} surface=\"tint\" /><PageBody title={false}><Filtered posts={posts} pager={pager} empty={empty} options={{ filters: 'category topics search' }} settled={{ taxonomy, term: term.id }} /></PageBody></main></body></html>",
+    "<html lang=\"en\"><head><meta charset=\"utf-8\"><title>{term.data.name}</title></head><body><main><TermOpening term={term} surface=\"tint\" /><PageBody title={false}><Filtered posts={posts} pager={pager} empty={empty} options={{ filters: 'category topics search' }} settled={{ taxonomy, term: term.id }} /></PageBody><Section surface=\"tint\" anchor=\"newsletter\" heading=\"One e-mail a month\" deck=\"The month's guides, and nothing else.\"><Form name=\"contact\" /><SmallPrint>We keep your address only to send it. Read <a href=\"/pages/legal/\">how</a>.</SmallPrint></Section></main></body></html>",
     '',
   ].join('\n'));
   mkdirSync(join(site, 'content/media'), { recursive: true });
   copyFileSync(join(core, 'site-template/demo-content/media/every-element-898a545757.webp'), join(site, 'content/media', PICTURE));
   write('content/pages/garden.md', page('Planning a garden', GARDEN));
   write('content/pages/legal.md', page('What we keep about you', LEGAL));
+  write('content/pages/bands.md', page('Bands', BANDS));
   write('content/not-found.md', '---\ntitle: "This page is not here"\n---\n\nTry the [start page](/pages/garden/).\n');
   // The core's own demo settings, which hold every group the core asks for, with the articles' meta line in a format of the
   // owner's sentence and the pictures they name.
@@ -451,9 +498,10 @@ test('a site built by the core draws every directive with the package\'s compone
   assert.doesNotMatch(built.output, /@kntnt\/konzilo-design:/, 'no part warns');
   const html = main(built.page('pages/garden'));
   assert.doesNotMatch(html, /content="\[object Object\]"|data-directive=/, 'every directive drawn, none given its tree as an attribute');
-  // The hero: the post's title, the eyebrow, deck, actions, small print and the picture behind, as the default design
-  // has it; no trail, since a page right under the start page, its own level hidden, has none to show.
-  assert.match(html, /^<section class="kn-band kn-hero" data-kn-surface="picture-dark"[^>]* style="--kn-picture-image:url\(&quot;\/_astro\/[^&]+\.webp&quot;\)"><div class="kn-band-content kn-hero-content"><div class="kn-hero-text"><hgroup class="kn-heading-group"><p class="kn-heading-group-eyebrow" data-kn-type="label">A guide<\/p><h1 class="kn-heading-group-heading" data-kn-type="heading-1">Planning a garden<\/h1><p class="kn-heading-group-deck" data-kn-type="lead">Start small/s);
+  // The hero: the trail, the post's title, the eyebrow, deck, actions, small print and the picture behind, as the
+  // default design has it. The trail ends with the page itself, as the design's `current` says, though the core's setting
+  // for the type, off by default, marks the level hidden.
+  assert.match(html, /^<section class="kn-band kn-hero" data-kn-surface="picture-dark"[^>]* style="--kn-picture-image:url\(&quot;\/_astro\/[^&]+\.webp&quot;\)"><div class="kn-band-content kn-hero-content"><div class="kn-hero-text"><nav class="kn-breadcrumbs"[^>]* data-kn-current="true"[^>]*>.*?<span aria-current="page">Planning a garden<\/span><\/li><\/ol><\/nav><hgroup class="kn-heading-group"><p class="kn-heading-group-eyebrow" data-kn-type="label">A guide<\/p><h1 class="kn-heading-group-heading" data-kn-type="heading-1">Planning a garden<\/h1><p class="kn-heading-group-deck" data-kn-type="lead">Start small/s);
   assert.match(html, /<ul class="kn-actions" role="list"><li><a class="kn-action" href="\/pages\/garden\/" data-kn-main>Get started<\/a><\/li>/);
   // The core's image service made the pictures, and the components keep what it wrote.
   assert.match(html, /<img class="kn-section-picture" src="\/_astro\/[^"]+\.webp" alt="A shed"[^>]* width="\d+" height="\d+"/);
@@ -469,7 +517,7 @@ test('a site built by the core draws every directive with the package\'s compone
   assert.match(latest, /<div class="kn-post-list" data-kn-presentation="filtered"><form class="kn-visitor-filters" role="search" method="get" action="\/search\/"><div class="kn-visitor-filter-panel"><fieldset class="kn-visitor-filter-group"><legend>Category<\/legend>.*value="news".*<legend>Topic<\/legend>.*value="soil"/s);
   assert.match(latest, /<\/div><\/div>\s*<form class="konzilo-form[^"]*"[\s\S]*<\/form>\s*<p class="kn-fine-print" data-kn-type="small">We answer within a day\.<\/p><\/div><\/div><\/section>$/);
   // A page below it has its trail first in its hero, from the core's levels.
-  assert.match(main(built.page('pages/garden/tools')), /^<section class="kn-band kn-hero"[^>]*><div class="kn-band-content kn-hero-content"><div class="kn-hero-text"><nav class="kn-breadcrumbs" aria-label="Breadcrumb" data-kn-type="small"[^>]* data-kn-current="false"[^>]*><ol role="list"><li><a href="\/">.*<span class="kn-breadcrumbs-label">[^<]+<\/span><\/a><\/li><li><span class="kn-breadcrumbs-separator" aria-hidden="true"><\/span><a href="\/pages\/garden\/"><span class="kn-breadcrumbs-label">Planning a garden<\/span><\/a><\/li><li><span class="kn-breadcrumbs-separator" aria-hidden="true"><\/span><span aria-current="page">Tools for a garden<\/span><\/li><\/ol><\/nav><hgroup/s);
+  assert.match(main(built.page('pages/garden/tools')), /^<section class="kn-band kn-hero"[^>]*><div class="kn-band-content kn-hero-content"><div class="kn-hero-text"><nav class="kn-breadcrumbs" aria-label="Breadcrumb" data-kn-type="small"[^>]* data-kn-current="true"[^>]*><ol role="list"><li><a href="\/">.*<span class="kn-breadcrumbs-label">[^<]+<\/span><\/a><\/li><li><span class="kn-breadcrumbs-separator" aria-hidden="true"><\/span><a href="\/pages\/garden\/"><span class="kn-breadcrumbs-label">Planning a garden<\/span><\/a><\/li><li><span class="kn-breadcrumbs-separator" aria-hidden="true"><\/span><span aria-current="page">Tools for a garden<\/span><\/li><\/ol><\/nav><hgroup/s);
   // A page's ids once each.
   const ids = [...html.matchAll(/\sid="([^"]+)"/g)].map((match) => match[1]);
   assert.deepEqual(ids, [...new Set(ids)]);
@@ -481,17 +529,40 @@ test('a site built by the core draws every directive with the package\'s compone
   }
   // The page parts, each in a template of its kind (konzilo.md, The templates). A page with no hero: its title band, then
   // its loose blocks as a section, the heading beside its paragraphs.
-  assert.match(main(built.page('pages/legal')), /^<section class="kn-band kn-section"><div class="kn-band-content"><header class="kn-section-head"><hgroup class="kn-heading-group"><h1 class="kn-heading-group-heading" data-kn-type="heading-1">What we keep about you<\/h1><\/hgroup><\/header><\/div><\/section>\s*<section class="kn-band kn-section"><div class="kn-band-content"><header class="kn-section-head"><hgroup class="kn-heading-group"><h2 class="kn-heading-group-heading" id="what-we-keep" data-kn-type="heading-2">What we keep<\/h2><\/hgroup><\/header><div class="kn-section-body kn-body-text"><p>What you write in a form/);
+  assert.match(main(built.page('pages/legal')), /^<section class="kn-band kn-section"><div class="kn-band-content"><header class="kn-section-head"><nav class="kn-breadcrumbs".*?<\/nav><hgroup class="kn-heading-group"><h1 class="kn-heading-group-heading" data-kn-type="heading-1">What we keep about you<\/h1><\/hgroup><\/header><\/div><\/section>\s*<section class="kn-band kn-section"><div class="kn-band-content"><header class="kn-section-head"><hgroup class="kn-heading-group"><h2 class="kn-heading-group-heading" id="what-we-keep" data-kn-type="heading-2">What we keep<\/h2><\/hgroup><\/header><div class="kn-section-body kn-body-text"><p>What you write in a form/s);
   // An article: its opening with the core's meta line, its body with its following menu and question, and Read more.
   const soil = main(built.page('articles/soil'));
-  assert.match(soil, /^<section class="kn-band kn-hero kn-article-opening" data-kn-surface="picture-dark"[^>]*><div class="kn-band-content kn-hero-content"><div class="kn-hero-text"><hgroup class="kn-heading-group"><p class="kn-heading-group-eyebrow" data-kn-type="label">Guides<\/p><h1 class="kn-heading-group-heading" data-kn-type="heading-1">Know your soil<\/h1><p class="kn-heading-group-deck" data-kn-type="lead">All about soil\.<\/p><\/hgroup><p class="kn-article-meta" data-kn-type="small"><span class="kn-article-line">By <span class="kn-article-byline">A\. Writer<\/span> • Published <time class="kn-article-date" datetime="2026-10-05T08:00:00\.000Z">5 October 2026<\/time> in <a class="kn-article-category" href="\/category\/guides\/">Guides<\/a><\/span><span class="kn-article-topics"><a class="kn-pill" href="\/topic\/soil\/">Soil<\/a><\/span><\/p>/);
+  assert.match(soil, /^<section class="kn-band kn-hero kn-article-opening" data-kn-surface="picture-dark"[^>]*><div class="kn-band-content kn-hero-content"><div class="kn-hero-text"><nav class="kn-breadcrumbs".*?<span aria-current="page">Know your soil<\/span><\/li><\/ol><\/nav><hgroup class="kn-heading-group"><p class="kn-heading-group-eyebrow" data-kn-type="label">Guides<\/p><h1 class="kn-heading-group-heading" data-kn-type="heading-1">Know your soil<\/h1><p class="kn-heading-group-deck" data-kn-type="lead">All about soil\.<\/p><\/hgroup><p class="kn-article-meta" data-kn-type="small"><span class="kn-article-line">By <span class="kn-article-byline">A\. Writer<\/span> • Published <time class="kn-article-date" datetime="2026-10-05T08:00:00\.000Z">5 October 2026<\/time> in <a class="kn-article-category" href="\/category\/guides\/">Guides<\/a><\/span><span class="kn-article-topics"><a class="kn-pill" href="\/topic\/soil\/">Soil<\/a><\/span><\/p>/s);
   assert.match(soil, /<ol role="list"><li><a href="#what-lies-below">What lies below<\/a><\/li><li><a href="#in-short">In short<\/a><\/li><li><a href="#planting">Planting<\/a><\/li><\/ol>/);
   assert.match(soil, /<p class="kn-question"><strong>What did you find\?<\/strong><\/p>/);
   assert.match(soil, /<section class="kn-band kn-section" data-kn-surface="raised">.*<h2 class="kn-heading-group-heading" data-kn-type="heading-2">Read more<\/h2>.*<article class="kn-card" data-kn-surface="page">.*href="\/articles\/tools\/".*<a class="kn-action" href="\/articles\/" data-kn-main>More articles<\/a>/s);
-  // The search page: its title band, then the core's search in a Reading Area in a section.
-  assert.match(main(built.page('search')), /^<section class="kn-band kn-section"><div class="kn-band-content"><header class="kn-section-head"><nav class="kn-breadcrumbs".*<h1 class="kn-heading-group-heading" data-kn-type="heading-1">Search<\/h1>.*<section class="kn-band kn-section"><div class="kn-band-content"><div class="kn-section-body kn-body-text"><div class="kn-reading-area" data-kn-side="end" data-kn-stack="before"><div class="kn-reading-area-flow"><div class="konzilo-search"/s);
+  // The search page: one section, its title and trail as its head and the core's search in a Reading Area as its body.
+  const search = main(built.page('search'));
+  assert.match(search, /^<section class="kn-band kn-section"><div class="kn-band-content"><header class="kn-section-head"><nav class="kn-breadcrumbs".*<h1 class="kn-heading-group-heading" data-kn-type="heading-1">Search<\/h1><\/hgroup><\/header><div class="kn-section-body kn-body-text"><div class="kn-reading-area" data-kn-side="end" data-kn-stack="before"><div class="kn-reading-area-flow"><div class="konzilo-search"/s);
+  assert.equal((search.match(/<section/g) ?? []).length, 1);
   // The 404 page: the chosen page's title as its H1 and its body as a section.
   assert.match(main(readFileSync(join(site, 'dist/404.html'), 'utf8')), /<h1 class="kn-heading-group-heading" data-kn-type="heading-1">This page is not here<\/h1>.*<div class="kn-section-body kn-body-text"><p>Try the <a href="\/pages\/garden\/">start page<\/a>\.<\/p>/s);
+  // The bands a template writes with Section, ValueList, Actions and SmallPrint are what the same Markdown in a page's
+  // body is, as the core draws it, but for the heading's id, which a template gives from its words, and the core's form,
+  // whose ids are its own. Drawn with white space between blocks as the core's are; compared without it.
+  const tight = (html) => html.replace(/>\s+</g, '><').trim();
+  const bands = tight(main(built.page('pages/bands')));
+  const sectionAt = (html, start) => html.slice(html.indexOf(start), html.indexOf('</section>', html.indexOf(start)) + '</section>'.length);
+  const closing = '<section class="kn-band kn-section" data-kn-surface="brand">';
+  assert.equal(tight(sectionAt(soil, closing)), sectionAt(bands, closing));
+  assert.match(sectionAt(bands, closing), /<header class="kn-section-head"><hgroup class="kn-heading-group"><h2 class="kn-heading-group-heading" data-kn-type="heading-2" id="find-out-what-your-garden-can-do">Find out what your garden can do<\/h2><p class="kn-heading-group-deck" data-kn-type="lead">A gardener visits and, within two weeks, <a href="\/pages\/garden\/">writes it down<\/a>\.<\/p><\/hgroup><ul class="kn-actions" role="list"><li><a class="kn-action" href="\/pages\/garden\/" data-kn-main>Book a visit<\/a><\/li><li><a class="kn-action" href="\/pages\/garden\/">Ask for a reference<\/a><\/li><\/ul><\/header>/);
+  const newsletter = '<section class="kn-band kn-section" id="newsletter" data-kn-surface="tint">';
+  const [own, inBody] = [tight(sectionAt(main(built.page('category/guides')), newsletter)), sectionAt(bands, newsletter)];
+  const formless = (html) => html.replace(/<form class="konzilo-form[\s\S]*<\/form>/, '<form/>');
+  assert.equal(formless(own), formless(inBody));
+  assert.match(own, /<h2 class="kn-heading-group-heading" data-kn-type="heading-2" id="one-e-mail-a-month">One e-mail a month<\/h2><\/hgroup><\/header><div class="kn-section-body kn-body-text"><p>The month's guides, and nothing else\.<\/p><form class="konzilo-form[\s\S]*<\/form><p class="kn-fine-print" data-kn-type="small">We keep your address only to send it\. Read <a href="\/pages\/legal\/">how<\/a>\.<\/p><\/div>/);
+  // A value list and actions in an opening's slot, as the same Markdown draws them.
+  const values = bands.slice(bands.indexOf('<dl class="kn-value-list">'), bands.indexOf('</dl>') + 5);
+  assert.ok(tight(soil).includes(values), 'the value list is the Markdown\'s');
+  assert.match(values, /<a href="mailto:jobs@gardens\.example" data-kn-contact="email">jobs@<wbr>gardens<wbr>\.example<\/a>/);
+  assert.match(tight(soil), /<\/dl><ul class="kn-actions" role="list"><li><a class="kn-action" href="#planting" data-kn-main>How to apply<\/a><\/li><\/ul><\/div><\/div><\/section>/);
+  // A section's head over a list a presentation draws, and a lone action after the list in its body.
+  assert.match(tight(soil), /<section class="kn-band kn-section" data-kn-surface="raised"><div class="kn-band-content"><header class="kn-section-head"><hgroup class="kn-heading-group"><h2 class="kn-heading-group-heading" data-kn-type="heading-2" id="other-articles">Other articles<\/h2><\/hgroup><\/header><div class="kn-section-body kn-body-text"><div class="kn-post-list" data-kn-presentation="cards">.*<\/div><ul class="kn-actions" role="list"><li><a class="kn-action" href="\/articles\/" data-kn-main>All articles<\/a><\/li><\/ul><\/div><\/div><\/section>/);
   // A term's page calls the presentation itself, the row it settles left out and kept with a search.
   const term = main(built.page('category/guides'));
   assert.match(term, /^<section class="kn-band kn-section" data-kn-surface="tint"><div class="kn-band-content"><header class="kn-section-head"><nav class="kn-breadcrumbs".*<p class="kn-heading-group-eyebrow" data-kn-type="label">Category<\/p><h1 class="kn-heading-group-heading" data-kn-type="heading-1">Guides<\/h1><p class="kn-heading-group-deck" data-kn-type="lead">On guides\.<\/p>/s);
