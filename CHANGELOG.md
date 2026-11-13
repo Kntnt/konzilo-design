@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.0] – 2026-11-13
+
 ### Added
 
 - Page parts with which a template writes a section of its own, a band no post holds, with the markup the same `:::section` in a body gets: `Section` takes its Surface, anchor, eyebrow, heading at the level the template gives, deck, actions and its body as its slot, and reads them together by the section's rules, so that a deck before a form stands in the body and actions after the heading or the deck in the head. `ValueList` and `Actions` write what `:::list{type="values"}` and `:::list{type="actions"}` write, from pairs and links a template has, and `SmallPrint` what `::small` writes. A case study's closing band and facts, a vacancy's facts, the way to apply and the other vacancies, and a term page's newsletter band need no directive written by hand any more; `docs/spec/konzilo.md`'s worked templates show each.
