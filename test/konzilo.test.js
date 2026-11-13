@@ -647,7 +647,7 @@ test('the tarball holds what a site needs, and no fonts, tool or presentation, a
   for (const specifier of [DESIGN_COMPONENTS_FROM, DESIGN_COMPONENT_CHECKS, ...Object.values(DESIGN_DIRECTIVES), ...Object.values(DESIGN_PRESENTATIONS)]) {
     assert.ok(require.resolve(specifier).startsWith(realpathSync(installed)), specifier);
   }
-  for (const part of ['TitleBand', 'TermOpening', 'PageBody', 'ArticleOpening', 'ArticleBody', 'ReadMore']) {
+  for (const part of ['TitleBand', 'TermOpening', 'PageBody', 'ArticleOpening', 'ArticleBody', 'ReadMore', 'Section', 'ValueList', 'Actions', 'SmallPrint']) {
     assert.ok(require.resolve(`@kntnt/konzilo-design/page-parts/${part}.astro`).startsWith(realpathSync(installed)), part);
   }
   const { componentProblems } = await import(pathToFileURL(require.resolve(DESIGN_COMPONENT_CHECKS)).href);

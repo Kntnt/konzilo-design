@@ -1,0 +1,9 @@
+---
+// Values under their labels, as :::list{type="values"} draws them (docs/spec/directives.md, `type="values"`), from
+// pairs a template has: `items`, each { label, value }, the value HTML it has written safe, such as a link or a <time>;
+// `label`, the list's own label. An empty value is left out, and an empty list writes nothing.
+import { valueList } from './parts.js';
+
+const { items = [], label } = Astro.props;
+---
+<Fragment set:html={valueList(items, { label })} />

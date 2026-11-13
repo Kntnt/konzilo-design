@@ -6,7 +6,7 @@ import assert from 'node:assert/strict';
 import { bodyHtml, renderBody, testDesign } from './helpers/konzilo-body.js';
 import { render } from './helpers/render.js';
 import { designPage, pageContext } from '../src/directives/render/context.js';
-import { articleBody, articleOpening, looseSection, metaLineHtml, pageBody, readMore, termOpening, titleBand } from '../src/page-parts/parts.js';
+import { actionsList, articleBody, articleOpening, looseSection, metaLineHtml, pageBody, readMore, section, smallPrint, termOpening, titleBand, valueList } from '../src/page-parts/parts.js';
 import { iconHtml } from '../src/directives/icons.js';
 import { PARTS } from '../src/page-parts/parts.js';
 import { readdirSync } from 'node:fs';
@@ -17,7 +17,7 @@ const TRAIL = [{ name: 'Home', href: '/' }, { name: 'Guides', href: '/guides/' }
 const context = ({ design, ...options } = {}) => pageContext({ title: 'Planning a garden', breadcrumbs: TRAIL, warn: () => {}, ...options, design: testDesign(design) });
 const tight = (html) => html.replace(/>\s+</g, '><').trim();
 const house = iconHtml('house', 'kn-breadcrumbs-house').replace(/>\s+</g, '><');
-const TRAIL_HTML = `<nav class="kn-breadcrumbs" aria-label="Breadcrumb" data-kn-type="small" data-kn-separator="slash" data-kn-home="word" data-kn-current="false" data-kn-narrow="trail"><ol role="list"><li><a href="/">${house}<span class="kn-breadcrumbs-label">Home</span></a></li><li><span class="kn-breadcrumbs-separator" aria-hidden="true"></span><a href="/guides/"><span class="kn-breadcrumbs-label">Guides</span></a></li><li><span class="kn-breadcrumbs-separator" aria-hidden="true"></span><span aria-current="page">Planning a garden</span></li></ol></nav>`;
+const TRAIL_HTML = `<nav class="kn-breadcrumbs" aria-label="Breadcrumb" data-kn-type="small" data-kn-separator="slash" data-kn-home="word" data-kn-current="true" data-kn-narrow="trail"><ol role="list"><li><a href="/">${house}<span class="kn-breadcrumbs-label">Home</span></a></li><li><span class="kn-breadcrumbs-separator" aria-hidden="true"></span><a href="/guides/"><span class="kn-breadcrumbs-label">Guides</span></a></li><li><span class="kn-breadcrumbs-separator" aria-hidden="true"></span><span aria-current="page">Planning a garden</span></li></ol></nav>`;
 // A body as the core's Body draws it, with the package's components.
 const drawn = (markdown, ctx = context()) => renderBody(bodyHtml(markdown), ctx);
 
@@ -231,4 +231,114 @@ test('the parts\' components draw what the parts draw, from the page\'s context 
 test('every part is a component of its own, as the package exports them', () => {
   const files = readdirSync(new URL('../src/page-parts/', import.meta.url)).filter((name) => name.endsWith('.astro')).map((name) => name.replace(/\.astro$/, ''));
   assert.deepEqual(files.sort(), [...PARTS].sort());
+});
+
+// What the same Markdown in a body draws, for a part a template writes to be held to.
+const asBody = (markdown) => tight(drawn(markdown));
+
+test('a section a template writes is what the same :::section in a body is: a band that closes a page, its deck with a link and two actions in its head', () => {
+  const written = section({
+    surface: 'tint', heading: 'Find out what your garden can do',
+    deck: 'A gardener visits and, within two weeks, <a href="/guides/">writes it down</a>.',
+    actions: [{ label: 'Book a visit', href: '/visit/' }, { label: 'Ask for a reference', href: '/contact/' }],
+  });
+  assert.equal(tight(written), asBody(md`::::section{surface="tint"}
+
+## Find out what your garden can do
+
+A gardener visits and, within two weeks, [writes it down](/guides/).
+
+:::list{type="actions"}
+
+- **[Book a visit](/visit/)**
+- [Ask for a reference](/contact/)
+
+:::
+
+::::`));
+});
+
+test('a section a template writes reads its deck and body together: before a form the deck stands in the body, and an anchor wins over its heading\'s id', () => {
+  const form = '<form class="konzilo-form" data-name="newsletter"></form>';
+  const written = section({ surface: 'tint', anchor: 'newsletter', heading: 'Newsletter', deck: 'One e-mail a month.', body: `${form}\n${smallPrint('Read <a href="/privacy/">how we keep it</a>.')}` });
+  assert.equal(tight(written), asBody(md`::::section{surface="tint" anchor="newsletter"}
+
+## <a id="newsletter"></a>Newsletter
+
+One e-mail a month.
+
+::form{name="newsletter"}
+
+::small[Read [how we keep it](/privacy/).]
+
+::::`));
+  assert.match(written, /^<section class="kn-band kn-section" id="newsletter" data-kn-surface="tint">.*<h2 class="kn-heading-group-heading" data-kn-type="heading-2">Newsletter<\/h2>.*<div class="kn-section-body kn-body-text"><p>One e-mail a month\.<\/p><form/s);
+});
+
+test('a section a template writes holds what its slot holds as its body, a list its presentation draws and a lone action after it', () => {
+  const list = '<div class="test-post-list" data-presentation="rows"></div>';
+  const written = section({ surface: 'raised', heading: 'Other vacancies', body: `${list}\n${actionsList([{ label: 'All vacancies', href: '/careers/#open' }])}` });
+  assert.equal(tight(written), asBody(md`::::section{surface="raised"}
+
+## Other vacancies
+
+::post-list{type="job" presentation="rows"}
+
+:::list{type="actions"}
+
+- **[All vacancies](/careers/#open)**
+
+:::
+
+::::`));
+  // An eyebrow, a heading at the level the template gives, and no heading: then eyebrows and the deck are the body's.
+  assert.match(section({ eyebrow: 'Careers', heading: 'Join us', level: 3 }), /<hgroup class="kn-heading-group"><p class="kn-heading-group-eyebrow" data-kn-type="label">Careers<\/p><h3 class="kn-heading-group-heading" data-kn-type="heading-2" id="join-us">Join us<\/h3><\/hgroup>/);
+  assert.equal(tight(section({ eyebrow: 'Careers', deck: 'Words.' })), '<section class="kn-band kn-section"><div class="kn-band-content"><div class="kn-section-body kn-body-text"><p data-kn-type="label">Careers</p><p>Words.</p></div></div></section>');
+  assert.match(section({ heading: 'Join us', headingId: 'join' }), /id="join"/);
+});
+
+test('a list of values and a list of actions a template writes are what :::list draws, and nothing where there is nothing', () => {
+  assert.equal(valueList([{ label: 'Office', value: 'Leeds' }, { label: 'Write', value: '<a href="mailto:jobs@gardens.example">jobs@gardens.example</a>' }, { label: 'Team', value: '' }, { label: 'Start', value: '<time datetime="2027-01-04">4 January 2027</time>' }]),
+    asBody(md`:::list{type="values"}
+
+- Office
+  - Leeds
+- Write
+  - [jobs@gardens.example](mailto:jobs@gardens.example)
+- Start
+  - <time datetime="2027-01-04">4 January 2027</time>
+
+:::`));
+  assert.equal(tight(actionsList([{ label: 'How to apply', href: '#how-to-apply' }, { label: 'LinkedIn', href: 'https://www.linkedin.com/company/example' }, { label: 'No address' }])),
+    asBody(md`:::list{type="actions"}
+
+- **[How to apply](#how-to-apply)**
+- [LinkedIn](https://www.linkedin.com/company/example)
+
+:::`));
+  assert.match(actionsList([{ label: 'One', href: '/1/' }, { label: 'Two', href: '/2/', main: true }]), /<a class="kn-action" href="\/1\/">One<\/a>.*<a class="kn-action" href="\/2\/" data-kn-main>Two<\/a>/);
+  assert.match(valueList([{ label: 'A', value: '1' }], { label: 'Facts' }), /^<p data-kn-type="label">Facts<\/p><dl class="kn-value-list">/);
+  assert.equal(valueList([{ label: 'Team', value: undefined }]), '');
+  assert.equal(actionsList([]), '');
+  assert.equal(smallPrint('A note.'), asBody('::small[A note.]'));
+  assert.equal(smallPrint('  '), '');
+});
+
+test('the title band takes what its slot holds as its body, as the search page holds the core\'s search', () => {
+  assert.equal(tight(titleBand(context(), { title: 'Search', trail: false, body: '<div class="kn-reading-area" data-kn-side="end"><div class="kn-reading-area-flow"><div class="konzilo-search"></div></div></div>' })),
+    '<section class="kn-band kn-section"><div class="kn-band-content"><header class="kn-section-head"><hgroup class="kn-heading-group"><h1 class="kn-heading-group-heading" data-kn-type="heading-1">Search</h1></hgroup></header><div class="kn-section-body kn-body-text"><div class="kn-reading-area" data-kn-side="end"><div class="kn-reading-area-flow"><div class="konzilo-search"></div></div></div></div></div></section>');
+});
+
+test('the section parts\' components draw what the parts draw, from their props and slots', async () => {
+  const locals = {};
+  designPage({ locals }, { design: testDesign(), title: 'Search', breadcrumbs: TRAIL });
+  const band = tight(await render('page-parts/Section', { surface: 'tint', heading: 'Find out more', actions: [{ label: 'Book a visit', href: '/visit/' }] }, { deck: 'See <a href="/guides/">our guides</a>.' }, { locals }));
+  assert.equal(band, tight(section({ surface: 'tint', heading: 'Find out more', deck: 'See <a href="/guides/">our guides</a>.', actions: [{ label: 'Book a visit', href: '/visit/' }] })));
+  // A deck with nothing but paragraphs after the heading is none, by the section's rules, so it stands in the body.
+  assert.match(tight(await render('page-parts/Section', { heading: 'Plain', deck: 'Words & more.' }, undefined, { locals })), /<div class="kn-section-body kn-body-text"><p>Words &amp; more\.<\/p><\/div>/);
+  assert.match(tight(await render('page-parts/Section', { heading: 'Body' }, { default: '<p>One.</p><p>Two.</p>' }, { locals })), /<div class="kn-section-body kn-body-text"><p>One\.<\/p><p>Two\.<\/p><\/div>/);
+  assert.equal((await render('page-parts/ValueList', { items: [{ label: 'Office', value: 'Leeds' }] }, undefined, { locals })).trim(), valueList([{ label: 'Office', value: 'Leeds' }]));
+  assert.equal((await render('page-parts/Actions', { links: [{ label: 'Go', href: '/go/' }] }, undefined, { locals })).trim(), actionsList([{ label: 'Go', href: '/go/' }]));
+  assert.equal((await render('page-parts/SmallPrint', {}, { default: 'A note.' }, { locals })).trim(), smallPrint('A note.'));
+  assert.match(tight(await render('page-parts/TitleBand', {}, { default: '<p>Under it.</p>' }, { locals })), /<h1[^>]*>Search<\/h1><\/hgroup><\/header><div class="kn-section-body kn-body-text"><p>Under it\.<\/p><\/div>/);
 });

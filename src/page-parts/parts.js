@@ -4,6 +4,8 @@
 // directives' components call their renderer.
 //
 // - titleBand(): the title and trail of a page without a hero, and a term's opening, as a section's head.
+// - section(), valueList(), actionsList(), smallPrint(): a section a template writes itself, and what it holds that
+//   otherwise only a directive draws, with the markup a :::section in a body gets.
 // - pageBody(): a body as bands: a run of loose blocks at its top in a section of its own, the title band first where
 //   the body opens with no hero, and the H1 under the hero where the design puts it there.
 // - articleOpening(): an article's opening, a Hero of its main image, headline in three parts, standfirst and meta line.
@@ -11,6 +13,9 @@
 // - readMore(): a section of teasers under a heading, and a lone main action to the rest.
 import { DECK_LINE, sectionParts } from '../directives/section.js';
 import { heroAttributes } from '../components/hero-attributes.js';
+import { contactOf } from '../directives/cards.js';
+import { serviceOf } from '../directives/actions.js';
+import { iconHtml } from '../directives/icons.js';
 import { escapeAttribute, escapeText, tag, voidTag } from '../directives/render/html.js';
 import { breadcrumbsHtml, groupEyebrows } from '../directives/render/render.js';
 import { allElements, innerHtml, retagged, textOfHtml, topElements } from '../directives/render/scan.js';
@@ -29,8 +34,9 @@ const long = (text) => [...String(text ?? '').replace(/\s+/g, ' ').trim()].lengt
  * @param {{ title?: string, eyebrow?: string, deck?: string, surface?: string, trail?: boolean }} [options] `title` the
  *   context's by default; `trail` false leaves the trail out; `surface` the band's, the page's by default.
  */
-export function titleBand(ctx, { title = ctx.title, eyebrow, deck, surface, trail = true } = {}) {
+export function titleBand(ctx, { title = ctx.title, eyebrow, deck, surface, trail = true, body = '' } = {}) {
   if (typeof title !== 'string' || title === '') throw new Error('A title band shows the page\'s title: give it to designPage(Astro, { title }), or as `title`.');
+  const rest = groupEyebrows(String(body ?? '')).trim();
   return tag('section', { class: 'kn-band kn-section', 'data-kn-surface': surface && surface !== 'page' ? surface : undefined },
     tag('div', { class: 'kn-band-content' },
       tag('header', { class: 'kn-section-head' },
@@ -38,7 +44,8 @@ export function titleBand(ctx, { title = ctx.title, eyebrow, deck, surface, trai
         tag('hgroup', { class: 'kn-heading-group' },
           eyebrow ? tag('p', { class: 'kn-heading-group-eyebrow', 'data-kn-type': 'label' }, escapeText(eyebrow)) : '',
           tag('h1', { class: 'kn-heading-group-heading', 'data-kn-type': 'heading-1' }, escapeText(title)),
-          deck ? tag('p', { class: 'kn-heading-group-deck', 'data-kn-type': 'lead', 'data-kn-deck': long(deck) ? 'long' : undefined }, escapeText(deck)) : ''))));
+          deck ? tag('p', { class: 'kn-heading-group-deck', 'data-kn-type': 'lead', 'data-kn-deck': long(deck) ? 'long' : undefined }, escapeText(deck)) : '')),
+      rest !== '' ? tag('div', { class: 'kn-section-body kn-body-text' }, rest) : ''));
 }
 
 // The collections of the core's built-in taxonomies, by their names.
@@ -88,38 +95,148 @@ function pictureFrom(html, element, className) {
   return retagged(inside, image, { set: { class: className, ...(mark === undefined ? {} : { 'data-konzilo-block': mark }) } });
 }
 
+// A section from its blocks in order, by the section's rules (directives.md, `section`): each block { kind, text, plain,
+// head, picture }, its kind and text as sectionParts() reads them, `plain` its HTML in a section's body, `head({ long })`
+// its HTML in the head, and `picture(className)` a picture's image as the media's.
+function sectionFrom(blocks, { surface, anchor } = {}) {
+  const parts = sectionParts(blocks);
+  const out = [];
+  if (parts.media.length) {
+    const [first, ...badges] = parts.media.map((at) => blocks[at]);
+    out.push(tag('div', { class: 'kn-section-media' }, first.picture('kn-section-picture'),
+      badges.length ? tag('ul', { class: 'kn-section-badges', role: 'list' }, badges.map((badge) => tag('li', {}, badge.picture()))) : ''));
+  }
+  if (parts.head.length) {
+    const head = parts.head.map((at) => blocks[at]);
+    out.push(tag('header', { class: 'kn-section-head' },
+      tag('hgroup', { class: 'kn-heading-group' }, head.filter((block) => block.kind !== 'actions').map((block) => block.head({ long: parts.deckLong }))),
+      head.filter((block) => block.kind === 'actions').map((block) => block.plain)));
+  }
+  const drawn = parts.media.length + parts.head.length;
+  const rest = groupEyebrows(blocks.slice(drawn).map((block) => block.plain).join('')).trim();
+  if (rest !== '') out.push(tag('div', { class: 'kn-section-body kn-body-text' }, rest));
+  return tag('section', { class: 'kn-band kn-section', id: anchor || undefined, 'data-kn-surface': surface && surface !== 'page' ? surface : undefined },
+    tag('div', { class: 'kn-band-content' }, out));
+}
+
+// The blocks of HTML the core drew, as sectionFrom() takes them: each element at its top, a figure's lightbox's dialog
+// and the white space after it its own.
+function blocksOfHtml(html) {
+  const elements = topElements(html).filter((element) => !isDialog(element));
+  return elements.map((element, at) => {
+    const kind = kindOf(html, element);
+    return {
+      kind,
+      text: element.name === 'p' ? textOfHtml(innerOf(html, element)) : undefined,
+      plain: html.slice(element.start, elements[at + 1]?.start ?? html.length),
+      head: ({ long } = {}) => {
+        if (kind === 'heading') return retagged(html, element, { set: { class: 'kn-heading-group-heading', 'data-kn-type': 'heading-2' } });
+        if (kind === 'paragraph') return retagged(html, element, { set: { class: 'kn-heading-group-deck', 'data-kn-type': 'lead', 'data-kn-deck': long ? 'long' : undefined } });
+        return retagged(html, element, { set: { class: 'kn-heading-group-eyebrow' } });
+      },
+      picture: (className) => pictureFrom(html, element, className),
+    };
+  });
+}
+
 /**
  * A run of blocks the core drew at the top of a body, as a section without a Surface, as if the editor had put
  * :::section around them (directives.md, The body of a page): its pictures first as its media, its eyebrows, heading,
  * deck and actions as its head, and the rest as its body.
  * @param {string} html The run, as the core drew it.
  */
-export function looseSection(html) {
-  const all = topElements(html);
-  const blocks = all.filter((element) => !isDialog(element));
-  const parts = sectionParts(blocks.map((element) => ({ kind: kindOf(html, element), text: element.name === 'p' ? textOfHtml(innerOf(html, element)) : undefined })));
-  const out = [];
-  if (parts.media.length) {
-    const [first, ...badges] = parts.media.map((at) => blocks[at]);
-    out.push(tag('div', { class: 'kn-section-media' }, pictureFrom(html, first, 'kn-section-picture'),
-      badges.length ? tag('ul', { class: 'kn-section-badges', role: 'list' }, badges.map((badge) => tag('li', {}, pictureFrom(html, badge)))) : ''));
+export const looseSection = (html) => sectionFrom(blocksOfHtml(String(html ?? '')));
+
+// A heading's id, as Astro gives a body's heading one from its words: in lower case, its punctuation left out, its
+// spaces hyphens.
+export const headingIdOf = (text) => String(text ?? '').toLowerCase().trim().replace(/[^\p{L}\p{N}\s_-]/gu, '').replace(/\s/g, '-');
+
+/**
+ * A section a template writes itself, with the markup a :::section in a body gets (directives.md, `section`): its
+ * eyebrows, heading, deck and actions, and its body, read together by the section's rules, so that a deck before a
+ * form stands in the body, and actions right after the heading or the deck in the head.
+ * @param {object} options
+ * @param {string} [options.surface] @param {string} [options.anchor] The section's id.
+ * @param {string | string[]} [options.eyebrow] @param {string} [options.heading]
+ * @param {number} [options.level] The heading's level, 2 by default; its look is a section's heading's.
+ * @param {string} [options.headingId] The heading's id, made from its words by default, as a body's heading's is.
+ * @param {string} [options.deck] The deck's HTML, its words, which a template has written safe.
+ * @param {{ label: string, href: string, main?: boolean }[]} [options.actions]
+ * @param {string} [options.body] The body's HTML, as Astro drew the template's slot.
+ */
+export function section({ surface, anchor, eyebrow, heading, level = 2, headingId, deck, actions = [], body = '' } = {}) {
+  const blocks = [];
+  for (const words of [].concat(eyebrow ?? []).filter(Boolean)) {
+    blocks.push({ kind: 'eyebrow', plain: tag('p', { 'data-kn-type': 'label' }, escapeText(words)), head: () => tag('p', { class: 'kn-heading-group-eyebrow', 'data-kn-type': 'label' }, escapeText(words)) });
   }
-  if (parts.head.length) {
-    const head = parts.head.map((at) => blocks[at]);
-    out.push(tag('header', { class: 'kn-section-head' },
-      tag('hgroup', { class: 'kn-heading-group' }, head.filter((element) => element.name !== 'ul').map((element) => {
-        if (element.name === 'h2') return retagged(html, element, { set: { class: 'kn-heading-group-heading', 'data-kn-type': 'heading-2' } });
-        if (blocks.indexOf(element) === parts.deck) return retagged(html, element, { set: { class: 'kn-heading-group-deck', 'data-kn-type': 'lead', 'data-kn-deck': parts.deckLong ? 'long' : undefined } });
-        return retagged(html, element, { set: { class: 'kn-heading-group-eyebrow' } });
-      })),
-      head.filter((element) => element.name === 'ul').map((element) => html.slice(element.start, element.end))));
+  if (heading) {
+    const own = headingId ?? headingIdOf(heading);
+    const id = own && own !== anchor ? own : undefined;
+    const name = `h${Math.min(6, Math.max(1, Number(level) || 2))}`;
+    blocks.push({ kind: 'heading', plain: tag(name, { id }, escapeText(heading)), head: () => tag(name, { class: 'kn-heading-group-heading', 'data-kn-type': 'heading-2', id }, escapeText(heading)) });
   }
-  const drawn = parts.media.length + parts.head.length;
-  const first = blocks[drawn];
-  const rest = first ? groupEyebrows(html.slice(first.start)).trim() : '';
-  if (rest !== '') out.push(tag('div', { class: 'kn-section-body kn-body-text' }, rest));
-  return tag('section', { class: 'kn-band kn-section' }, tag('div', { class: 'kn-band-content' }, out));
+  if (deck) {
+    blocks.push({ kind: 'paragraph', text: textOfHtml(deck), plain: tag('p', {}, deck), head: ({ long }) => tag('p', { class: 'kn-heading-group-deck', 'data-kn-type': 'lead', 'data-kn-deck': long ? 'long' : undefined }, deck) });
+  }
+  const links = actionsList(actions);
+  if (links) blocks.push({ kind: 'actions', plain: links });
+  blocks.push(...blocksOfHtml(String(body ?? '')));
+  return sectionFrom(blocks, { surface, anchor });
 }
+
+/**
+ * Actions from links, as `:::list{type="actions"}` draws them (directives.md, `type="actions"`): each a link, the main
+ * one a filled button and a link to a service the design knows its icon; nothing for no link. The first link is the
+ * main action unless a link says `main` itself; one without its words or its address is left out.
+ * @param {{ label: string, href: string, main?: boolean }[]} links
+ * @param {{ label?: string }} [options] The list's label, written before it.
+ */
+export function actionsList(links = [], { label } = {}) {
+  const given = links.filter((link) => link?.label && link?.href);
+  if (given.length === 0) return '';
+  const flagged = given.some((link) => typeof link.main === 'boolean');
+  return (label ? tag('p', { 'data-kn-type': 'label' }, escapeText(label)) : '') + tag('ul', { class: 'kn-actions', role: 'list' }, given.map((link, at) => {
+    const main = flagged ? link.main === true : at === 0;
+    const known = serviceOf(link.href);
+    const values = { class: 'kn-action', href: link.href, 'data-kn-main': main ? '' : undefined };
+    return tag('li', {}, known
+      ? tag('a', { ...values, 'data-kn-service': known.service }, iconHtml(known.icon), tag('span', { class: 'kn-action-label' }, escapeText(link.label)))
+      : tag('a', values, escapeText(link.label)));
+  }));
+}
+
+// A value as written, with the contact fact on a link alone whose words are a number or an address, an address that
+// may break after its @ and before each full stop, as in a list of values a body holds.
+function valueOf(html) {
+  const value = String(html ?? '').trim();
+  const [link, ...more] = topElements(value);
+  if (!link || more.length || link.name !== 'a' || link.start !== 0 || link.end !== value.length) return value;
+  const inner = innerOf(value, link);
+  if (/</.test(inner)) return value;
+  const words = textOfHtml(inner);
+  const contact = contactOf(link.attributes.href, words);
+  if (!contact) return value;
+  const shown = contact === 'email' ? escapeText(words).replace(/@/g, '@<wbr>').replace(/\./g, '<wbr>.') : inner;
+  const written = retagged(value, link, { set: { 'data-kn-contact': contact } });
+  return `${written.slice(0, written.length - inner.length - '</a>'.length)}${shown}</a>`;
+}
+
+/**
+ * Values under their labels, as `:::list{type="values"}` draws them (directives.md, `type="values"`); nothing for no
+ * value. A value is HTML a template has written safe, such as a link or a <time>; one that is empty is left out.
+ * @param {{ label: string, value: string }[]} items
+ * @param {{ label?: string }} [options] The list's label, written before it.
+ */
+export function valueList(items = [], { label } = {}) {
+  const given = items.filter((item) => item?.label && item.value !== undefined && item.value !== null && String(item.value).trim() !== '');
+  if (given.length === 0) return '';
+  return (label ? tag('p', { 'data-kn-type': 'label' }, escapeText(label)) : '') + tag('dl', { class: 'kn-value-list' }, given.map((item) => tag('div', { class: 'kn-value-list-item' },
+    tag('dt', { 'data-kn-type': 'small' }, escapeText(item.label)),
+    tag('dd', { class: 'kn-value-list-value' }, valueOf(item.value)))));
+}
+
+// Small print, as ::small draws it: its words, HTML a template has written safe.
+export const smallPrint = (html) => (String(html ?? '').trim() ? tag('p', { class: 'kn-fine-print', 'data-kn-type': 'small' }, String(html).trim()) : '');
 
 const isBand = (element) => hasClass(element, 'kn-band');
 const isHero = (element) => isBand(element) && hasClass(element, 'kn-hero');
@@ -320,4 +437,4 @@ export function readMore(ctx, { teasers = [], heading = ctx.words.readMore, more
         more ? tag('ul', { class: 'kn-actions', role: 'list' }, tag('li', {}, tag('a', { class: 'kn-action', href: more.href, 'data-kn-main': '' }, escapeText(more.label)))) : '')));
 }
 
-export const PARTS = Object.freeze(['TitleBand', 'TermOpening', 'PageBody', 'ArticleOpening', 'ArticleBody', 'ReadMore']);
+export const PARTS = Object.freeze(['TitleBand', 'TermOpening', 'PageBody', 'ArticleOpening', 'ArticleBody', 'ReadMore', 'Section', 'ValueList', 'Actions', 'SmallPrint']);

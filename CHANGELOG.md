@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Page parts with which a template writes a section of its own, a band no post holds, with the markup the same `:::section` in a body gets: `Section` takes its Surface, anchor, eyebrow, heading at the level the template gives, deck, actions and its body as its slot, and reads them together by the section's rules, so that a deck before a form stands in the body and actions after the heading or the deck in the head. `ValueList` and `Actions` write what `:::list{type="values"}` and `:::list{type="actions"}` write, from pairs and links a template has, and `SmallPrint` what `::small` writes. A case study's closing band and facts, a vacancy's facts, the way to apply and the other vacancies, and a term page's newsletter band need no directive written by hand any more; `docs/spec/konzilo.md`'s worked templates show each.
+- `TitleBand` takes what its slot holds as the section's body, so that the search page stands in one section, its title and trail as the head and the search under them.
+
+### Changed
+
+- The trail's last level is the design's `breadcrumbs.current` alone: a trail ends with the page itself where the design says so, whatever the core's setting for the page's type, which governs the core's own Breadcrumbs. The core's setting, off by default, hid the level wherever it was off, so a site had to set both.
+
 ### Fixed
 
 - `konzilo-design resolve` keeps only the type roles' settings that their typefaces have, as the tool does when a typeface changes, and says on its output what it changed: an axis or a set of alternate letters the typeface lacks is left out, and a weight or an axis outside its range is brought within it. It kept them all, so a file whose typeface was changed by hand, or by a tool older than the settings, carried another typeface's axes into its resolved values. A design whose settings fit its typefaces, such as a new one, resolves as before. `fitRolesToFaces(inputs)` in the generator does it for both. The tool now also keeps an empty choice of alternate letters, which turns a typeface's own tuning off, when another typeface changes; it dropped it, turning the tuning back on.

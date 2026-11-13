@@ -1,0 +1,9 @@
+---
+// Actions, as :::list{type="actions"} draws them (docs/spec/directives.md, `type="actions"`), from links a template
+// has: `links`, each { label, href, main }, the first the main action unless one says `main` itself; `label`, the
+// list's own label. A link without its words or its address is left out, and no link writes nothing.
+import { actionsList } from './parts.js';
+
+const { links = [], label } = Astro.props;
+---
+<Fragment set:html={actionsList(links, { label })} />

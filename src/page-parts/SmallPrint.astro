@@ -1,0 +1,8 @@
+---
+// Small print, as ::small draws it (docs/spec/directives.md, `::small`): its words as the slot, such as a form's terms
+// after it.
+import { smallPrint } from './parts.js';
+
+const html = (await Astro.slots.render('default')) ?? '';
+---
+<Fragment set:html={smallPrint(html)} />

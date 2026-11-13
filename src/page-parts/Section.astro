@@ -1,0 +1,19 @@
+---
+// A section a template writes itself, with the markup a :::section in a body gets (docs/spec/directives.md, `section`;
+// The page parts): its eyebrow, heading, deck and actions, and its body as the default slot, read together by the
+// section's rules. A band that closes a page, the posts under a heading, a newsletter's band:
+//
+//   <Section surface="tint" heading="Find out more" actions={[{ label: 'Book a visit', href: '/visit/' }]}>
+//     <Fragment slot="deck" set:html={words} />
+//   </Section>
+//
+// `level` is the heading's element, 2 by default; `headingId` its id, made from its words by default. The deck is the
+// prop `deck`, its words, or the slot `deck`, their HTML.
+import { escapeText } from '../directives/render/html.js';
+import { section } from './parts.js';
+
+const { surface, anchor, eyebrow, heading, level, headingId, deck, actions } = Astro.props;
+const words = Astro.slots.has('deck') ? (await Astro.slots.render('deck')).trim() : deck ? escapeText(deck) : undefined;
+const body = (await Astro.slots.render('default')) ?? '';
+---
+<Fragment set:html={section({ surface, anchor, eyebrow, heading, level, headingId, deck: words, actions, body })} />
