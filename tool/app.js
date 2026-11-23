@@ -271,7 +271,7 @@ const valueOf = (path) => {
 function readout(path, value, resolved) {
   if (path === 'inputs.shadow.strength') return value === 0 ? 'Off' : String(value);
   if (path === 'inputs.gray-temperature') return value === 0 ? 'Neutral' : `${value < 0 ? 'Cool' : 'Warm'} ${Math.abs(value)}`;
-  if (path.includes('body-size') || path === 'inputs.frame.width' || path.startsWith('inputs.layout.')) return `${value} px`;
+  if (path.includes('body-size') || path === 'inputs.frame.width' || path.startsWith('inputs.layout.') || path === 'inputs.header.logo-height') return `${value} px`;
   if (path === 'inputs.corner-profile') return `${Math.round(resolved.radius.control * 10) / 10} / ${Math.round(resolved.radius.card * 10) / 10} px`;
   if (path === 'inputs.density-profile') return `${Math.round((0.5 + value / 100) * 100)} %`;
   if (path === 'shadow-direction') return value === 0 ? 'Down' : `${Math.abs(value)}° ${value < 0 ? 'left' : 'right'}`;
@@ -357,6 +357,9 @@ function writeFrameControls() {
   const sticky = header.attachment === 'sticky';
   form.querySelector('[data-path="inputs.header.start"]').disabled = !sticky;
   form.querySelector('[data-flag="inputs.header.autohide"]').disabled = !sticky;
+  // A brand that shows no logo, the name alone or a design with none uploaded (brandParts in components/brand.js, which
+  // the tool's server does not serve), has no logo to size; the slider is off rather than gone, so nothing below it moves.
+  form.querySelector('[data-path="inputs.header.logo-height"]').disabled = header.identity === 'name' || !(model.project.logo || model.project['logo-dark']);
   // Behind the hero's text lies either a picture, with its overlay, or a colour, so one control stands in the place of both.
   const pictureBehind = model.inputs.hero.picture === 'behind';
   form.querySelector('[data-path="inputs.hero.surface"]').closest('label').hidden = pictureBehind;

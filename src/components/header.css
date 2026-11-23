@@ -19,7 +19,7 @@
     --kn-header-identity: max(var(--kn-header-brand), var(--kn-header-slogan));
     --kn-header-height: calc(max(4rem, var(--kn-header-identity) + 1.5rem) + 0.0625rem);
   }
-  :is(:root:has(.kn-page > .kn-header .kn-brand-logo), .kn-header:has(.kn-brand-logo)) { --kn-header-logo: 2.25rem; }
+  :is(:root:has(.kn-page > .kn-header .kn-brand-logo), .kn-header:has(.kn-brand-logo)) { --kn-header-logo: var(--kn-header-logo-height, 2.25rem); }
   :is(:root:has(.kn-page > .kn-header .kn-brand-name), .kn-header:has(.kn-brand-name)) { --kn-header-name: calc(var(--kn-type-heading-5-size) * var(--kn-header-cap)); }
   :is(:root:has(.kn-page > .kn-header .kn-header-slogan), .kn-header:has(.kn-header-slogan)) { --kn-header-slogan: calc(var(--kn-type-small-size) * var(--kn-header-cap)); --kn-header-slogan-gap: 0.5rem; }
   :is(:root:has(.kn-page > .kn-header .kn-brand[data-kn-axis="column"] > .kn-brand-logo + .kn-brand-name), .kn-header:has(.kn-brand[data-kn-axis="column"] > .kn-brand-logo + .kn-brand-name)) { --kn-header-brand: calc(var(--kn-header-logo) + 0.5rem + var(--kn-header-name)); }

@@ -78,14 +78,15 @@ test('the default design\'s resolved JSON and core CSS change only on purpose', 
   // stand three steps below body text (components.md); each Surface stores and writes its translucent opacity (generator.md);
   // the design's tabs pass to resolved and the core writes where their line stands (generator.md), and the footer says how
   // column B's text is aligned (footer.md); each Surface declares its kind, and a part on a ground of its own kind takes
-  // its other plate (plates.md, A plate finds its ground).
+  // its other plate (plates.md, A plate finds its ground). Changed on purpose 2026-11-23: the header's logo height passes to
+  // resolved and the core writes it, 2.25rem by default (header.md, point 13); nothing else moves.
   assert.equal(
     hash(JSON.stringify({ ...r, 'generator-version': '' })),
-    '9887d071f9e3eb68cf5fed40e48c8a1b6bdcdb7d9ba7bb5778ced20dfe9d4444',
+    '13ed7ccdeacb0342557baaad6a9175cfdaf896184cdb31aa1d1d33e97628dabd',
   );
   assert.equal(
     hash(coreCss(r)),
-    '2073839fb0834743f0e09ca0766a9f5841f547f17eafa8e13c5fa7f712f9d7b5',
+    '5649c95b6d085a9670375c3c942fef97a73eb27c0dc6e9c9786df8aecfaa3790',
   );
 });
 

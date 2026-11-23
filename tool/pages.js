@@ -488,6 +488,7 @@ function headerPage(copy) {
       ])}`)}
     ${setting('Identity', `<div class="fields">
         ${choice('Brand', 'inputs.header.identity', [['logo', 'Logo'], ['name', 'Name'], ['both', 'Logo and name']], 'What the brand is, in the header and the footer alike. Without a logo the name is used whatever you choose.')}
+        ${slider('Logo height', 'inputs.header.logo-height', 24, 64, 'How tall the logo is, in the header and the footer alike. Its width follows, keeping its shape. A logo that would be wider than 224 px stops there and is shown smaller. The bar grows with a tall logo. Only with a logo.', { step: 4 })}
         ${textField('Slogan', 'project.slogan', 'Optional words beside or under the brand, in the header only. They go first when space runs out.')}
         ${choice('Logo and name', 'inputs.header.brand-axis', AXIS_CHOICES, 'How logo and name stand to each other, in the header and the footer alike: centred on each other, or stacked from the same edge. Only when both show.')}
         ${choice('Slogan\'s place', 'inputs.header.slogan-place', [['beside', 'Beside'], ['below', 'Below']], 'Beside the brand, centred on it after a thin line. Or below the name and starting where it starts, and below the logo when there is no name. Only with a slogan.')}

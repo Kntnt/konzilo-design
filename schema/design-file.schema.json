@@ -622,6 +622,11 @@
             "below"
           ]
         },
+        "logo-height": {
+          "type": "number",
+          "minimum": 24,
+          "maximum": 64
+        },
         "link-menu": {
           "type": "boolean"
         },

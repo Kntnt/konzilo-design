@@ -3,9 +3,12 @@
 import { GIVING_WAY_ORDER, arrangementGroups } from '../components/header.js';
 import { brandParts } from '../components/brand.js';
 import { TRANSLUCENT_LEAST, translucentOpacity } from '../generator/surface.js';
+import { rem } from '../generator/fluid.js';
 
 const ITEM_NAMES = { identity: 'identity', links: 'link menu', search: 'search icon', language: 'globe', menu: 'menu button', cta: 'CTA' };
 const ALL_ITEMS = { links: true, search: true, language: true, menu: true, cta: true };
+// The logo's height in the header and the footer; a file resolved before the setting existed has the height of then.
+const logoHeight = (header) => rem(header?.['logo-height'] ?? 36);
 const groupWords = (groups) => groups.map((group, i) => `${i ? 'end' : 'start'}: ${group.length ? group.map((item) => ITEM_NAMES[item]).join(', ') : 'nothing'}`).join('; ');
 const GIVE = {
   slogan: 'the slogan goes',
@@ -69,8 +72,8 @@ function frameWords({ header: h, footer: f, page: p, breadcrumbs: b, hero, surfa
   const attached = h.attachment === 'flow' ? 'It scrolls away with the page.' : `It sticks to the top of the window${h.autohide ? ' and slides away while scrolling down, back at the first scroll up' : ''}.${h.start === 'under' ? ' The page starts under it, and it is transparent at the top, taking its own Surface 1.5rem (24 px) down, and while its megamenu is open.' : ''}${h.translucent ? ` It is translucent: where its bar is not clear, the bar shows its Surface's background at an opacity of ${opacityWords(surfaces, h.surface)}, and the megamenu and the language list theirs at ${opacityWords(surfaces, 'page')}, each over the page blurred by 1rem (\`backdrop-filter: blur(1rem)\`), so the page under it is sensed, not read (Header, A hint of the page).` : ''}`;
   // What the brand shows is what the design has: without a logo, the name, whatever the identity asks for.
   const show = brandParts(h.identity, !!(project.logo || project['logo-dark']));
-  const brand = show.logo && show.name ? `the logo and the name, ${h['brand-axis'] === 'column' ? 'stacked from one start edge' : 'side by side'}`
-    : show.logo ? 'the logo' : h.identity === 'name' ? 'the name' : 'the name, since the design has no logo';
+  const brand = show.logo && show.name ? `the logo and the name, ${h['brand-axis'] === 'column' ? 'stacked from one start edge' : 'side by side'}, the logo ${logoHeight(h)} tall`
+    : show.logo ? `the logo, ${logoHeight(h)} tall` : h.identity === 'name' ? 'the name' : 'the name, since the design has no logo';
   const slogan = h['slogan-place'] === 'below' ? 'below the name, or below the logo without one, from the same start edge' : 'beside the brand, after a hairline';
   const bar = groupWords(arrangementGroups(h.arrangement, { links: h['link-menu'], search: h.search, language: h.language, menu: h['menu-button'] !== 'off', cta: h.cta }));
   const rows = [h['menu-above'] && 'a row above the menu', h['menu-below'] && 'a row below it'].filter(Boolean);
@@ -96,7 +99,7 @@ ${arrangements}
 
 **Items.**
 
-- **Identity:** the brand, with an optional slogan, as one link to the start page. The logo is 2.25rem tall at its natural width. The name is in the heading typeface at the h5 size and letter spacing, in the emphasis weight, line height 1.15. Logo and name stand side by side, 0.625rem apart, or stacked from one start edge, 0.5rem apart. The slogan is in the small size, line height 1.3, \`text-muted\`: beside the brand it follows a 1 px hairline in \`border\`, one line tall, with 0.875rem on either side; below, it stands 0.5rem under the name, from the name's start edge, and with logo and name side by side the logo stands beside both lines, centred on them. Optical centring: give a line of words a box from its baseline to its cap height, and centre that. \`text-box: trim-both cap alphabetic\` does it, but not in every browser (not in Firefox); what works everywhere is to make the line a flex row aligned on the baseline, with an empty \`::before\` one \`1cap\` tall, and the words in an inner element with a margin of \`-0.5lh\` above and below.
+- **Identity:** the brand, with an optional slogan, as one link to the start page. A logo is ${logoHeight(r.header)} tall, the height this design sets, at its natural width. The name is in the heading typeface at the h5 size and letter spacing, in the emphasis weight, line height 1.15. Logo and name stand side by side, 0.625rem apart, or stacked from one start edge, 0.5rem apart. The slogan is in the small size, line height 1.3, \`text-muted\`: beside the brand it follows a 1 px hairline in \`border\`, one line tall, with 0.875rem on either side; below, it stands 0.5rem under the name, from the name's start edge, and with logo and name side by side the logo stands beside both lines, centred on them. Optical centring: give a line of words a box from its baseline to its cap height, and centre that. \`text-box: trim-both cap alphabetic\` does it, but not in every browser (not in Firefox); what works everywhere is to make the line a flex row aligned on the baseline, with an empty \`::before\` one \`1cap\` tall, and the words in an inner element with a margin of \`-0.5lh\` above and below.
 - **Link menu:** level 1 of the main menu as a row of links, the component gap apart, in the small size and letter spacing and the emphasis weight, in \`text\` with no underline; a 1 px underline 0.25em below the baseline on hover and on the current page.
 - **Menu button:** the word "Menu" and a chevron that turns 180° while the megamenu is open, in the link menu's type, with no box; on hover the word is underlined. Or a hamburger icon in an icon control.
 - **Globe:** the language switcher is always a globe icon, never a language's name, however many languages there are. It opens the language list.

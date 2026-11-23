@@ -234,7 +234,9 @@ test('the sandbox receives one complete self-contained document, with one contro
   assert.doesNotMatch(sample, /contentDocument|contentWindow\.document|parent\.document/);
   const controls = one(parent, '#g-lab-controls');
   const fields = all(controls, 'input, select');
-  assert.equal(fields.length, 16);
+  assert.equal(fields.length, 17);
+  // The design's logo height, from its least to its most, the default first.
+  assert.deepEqual(all(one(controls, '[name="logoHeight"]'), 'option').map((option) => option.attributes.value), ['36', '24', '48', '64']);
   for (const field of fields) {
     const tip = one(parent, `#${field.attributes['aria-describedby']}`);
     assert.equal(tip.attributes.role, 'tooltip');

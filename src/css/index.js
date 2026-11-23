@@ -78,6 +78,9 @@ export function coreCss(r) {
   // Where the tabs' rule stands, which tabs.css reads by a style query: a site writes the tabs' HTML, so the design's
   // choice reaches it here, and a file resolved before the choice existed has it below, as before.
   put('tabs-rule-place', r.tabs?.['rule-place'] ?? 'below');
+  // The logo's height in the header and the footer's brand, which brand.css and header.css read; a file resolved before
+  // the setting existed has the height every logo had then.
+  put('header-logo-height', rem(r.header?.['logo-height'] ?? 36));
   for (const [name, value] of Object.entries(r.duration)) put(`duration-${name}`, `${value}ms`);
   put('easing-standard', r.easing.standard);
   // Literals, for a consumer that cannot read light-dark(): the primary seed exactly, and the page in light mode.

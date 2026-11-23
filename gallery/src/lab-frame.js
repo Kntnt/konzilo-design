@@ -37,6 +37,10 @@ export function setupFrameLab() {
     main.toggleAttribute('data-kn-shadow', !!config.pageShadow);
     if (config.pageShadow) main.dataset.knShadow = 'true';
     footer.dataset.knAttachment = config.footerAttachment === 'reveal' ? 'reveal' : 'flow';
+    // The design's logo height, in pixels as the design file has it, over the one in the core CSS.
+    const logoHeight = Number(config.logoHeight);
+    if (logoHeight >= 24 && logoHeight <= 64) document.documentElement.style.setProperty('--kn-header-logo-height', `${logoHeight / 16}rem`);
+    else document.documentElement.style.removeProperty('--kn-header-logo-height');
     window.scrollTo({ top: 0, behavior: 'instant' });
   }
   window.addEventListener('message', (event) => {

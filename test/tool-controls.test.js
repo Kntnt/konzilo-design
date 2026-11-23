@@ -438,7 +438,7 @@ test('a label stands as far above its control on every page, and group titles an
   await page.context().close();
 });
 
-test('the identity has its four controls, none disabled, nothing on the left moves, and the header and footer follow live', { timeout: 120000 }, async () => {
+test('the identity has its four controls besides the logo\'s height, none disabled, nothing on the left moves, and the header and footer follow live', { timeout: 120000 }, async () => {
   const page = await opened();
   await turnTo(page, 'frame', 'header');
   const preview = await (await page.locator('#preview').elementHandle()).contentFrame();
@@ -573,6 +573,52 @@ test('the identity has its four controls, none disabled, nothing on the left mov
   await turnTo(page, 'start', 'start');
   await page.locator('[data-path="project.name"]').fill(name);
   await settled(page);
+  assert.deepEqual(page.errors, []);
+  await page.context().close();
+});
+
+test('the logo\'s height has a slider by the identity, off where the brand has no logo, and the header and footer follow it live', { timeout: 60000 }, async () => {
+  const page = await opened();
+  await turnTo(page, 'frame', 'header');
+  const preview = await (await page.locator('#preview').elementHandle()).contentFrame();
+  const slider = page.locator('[data-path="inputs.header.logo-height"]');
+  const identity = page.locator('[data-path="inputs.header.identity"]');
+  assert.deepEqual(await slider.evaluate((node) => [node.min, node.max, node.step, node.value]), ['24', '64', '4', '36']);
+  assert.equal(await page.locator('[data-output="inputs.header.logo-height"]').textContent(), '36 px');
+  // Off, not hidden, where it cannot apply, so nothing below it moves.
+  for (const [value, on] of [['name', false], ['both', true], ['logo', true]]) {
+    await identity.selectOption(value);
+    assert.equal(await slider.isVisible(), true, `with the brand ${value}`);
+    assert.equal(await slider.isEnabled(), on, `with the brand ${value}`);
+  }
+  const start = await controlsNow(page);
+  const set = (to) => slider.evaluate((node, value) => { node.value = value; node.dispatchEvent(new Event('input', { bubbles: true })); }, to);
+  const logos = () => preview.evaluate(() => ['.kn-header-identity', '.kn-footer [data-kn-cell="a1"]'].map((scope) => [...document.querySelectorAll(`${scope} .kn-brand-logo img`)].find((image) => image.getClientRects().length).getBoundingClientRect().height));
+  for (const height of [64, 24, 48]) {
+    await set(height);
+    await preview.waitForFunction((height) => Math.abs(document.querySelector('.kn-header-identity .kn-brand-logo img').getBoundingClientRect().height - height) < 0.1, height);
+    assert.deepEqual((await logos()).map(Math.round), [height, height], `at ${height}`);
+    assert.equal(await page.locator('[data-output="inputs.header.logo-height"]').textContent(), `${height} px`);
+    assertStill(start, await controlsNow(page), `at ${height}`);
+  }
+  await settled(page);
+  assert.equal((await onDisk()).inputs.header['logo-height'], 48);
+  await set(36);
+  await settled(page);
+  // With no logo uploaded the brand is the name, whatever it asks for, so there is no logo to size either.
+  await turnTo(page, 'start', 'start');
+  const removed = [];
+  for (const key of ['logo', 'logo-dark']) {
+    const remove = page.locator(`[data-remove-logo="${key}"]`);
+    if (await remove.isVisible()) { await remove.click(); removed.push(key); }
+  }
+  assert.ok(removed.length > 0, 'the design has a logo to remove');
+  await turnTo(page, 'frame', 'header');
+  assert.equal(await identity.inputValue(), 'logo');
+  assert.equal(await slider.isEnabled(), false, 'off with no logo');
+  for (const key of removed) await page.locator('#undo').click();
+  await settled(page);
+  assert.equal(await slider.isEnabled(), true, 'on with the logo back');
   assert.deepEqual(page.errors, []);
   await page.context().close();
 });

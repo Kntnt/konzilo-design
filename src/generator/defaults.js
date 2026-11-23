@@ -19,7 +19,7 @@ const defaults = {
   layout: { wide: 1200, narrow: 720 },
   header: {
     arrangement: 'A', attachment: 'sticky', start: 'below', autohide: false, surface: 'page', translucent: false,
-    identity: 'logo', 'brand-axis': 'row', 'slogan-place': 'beside',
+    identity: 'logo', 'brand-axis': 'row', 'slogan-place': 'beside', 'logo-height': 36,
     'link-menu': true, 'menu-button': 'word', language: false, search: true, cta: true,
     numbered: false, 'menu-above': false, 'menu-below': false,
     'search-surface': 'inverse', 'search-blur': true, 'search-heading': true, 'search-links': true,

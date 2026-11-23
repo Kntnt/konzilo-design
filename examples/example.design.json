@@ -1834,6 +1834,7 @@
       "identity": "logo",
       "brand-axis": "row",
       "slogan-place": "beside",
+      "logo-height": 36,
       "link-menu": true,
       "menu-button": "word",
       "language": false,
