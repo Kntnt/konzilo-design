@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.13.0] – 2026-11-23
+
 ### Added
 
 - A design sets its logo's height: `header.logo-height`, in pixels as the design file's other lengths, from 24 to 64, 36 by default, which the core CSS writes as `--kn-header-logo-height` in rem. The logo in the header and in the footer's brand takes it, its width following so it keeps its shape, and the bar grows with a tall logo: at 48 px (3rem) the bar is 4.5rem where it was 4rem. The last-resort 0.8 step and the 14rem width cap apply as before, so a very wide logo at a large height stops at 14rem and is shown smaller. The tool sets it with a Logo height slider among the Header page's Identity settings, in steps of 4 px, off where the brand shows no logo; the export for AI gives the height, and the gallery's frame lab can try four. A design without the key, and a file resolved before it, renders exactly as before. A Hero's logo and the Logos band are not affected. This builds issue #24.
