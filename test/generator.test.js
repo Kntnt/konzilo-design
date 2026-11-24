@@ -160,7 +160,7 @@ test('defaults, explicit colour policies, frame and completed contrast metadata'
 });
 
 test('inputs reject unknown controls, invalid ranges and unavailable colour choices', async () => {
-  for (const changes of [{ 'corner-profile': 101 }, { 'density-profile': -1 }, { frame: { width: 4 } }, { shadow: { angle: 91 } }, { type: { steps: { display: 0.5 } } }, { typefaces: { body: 'x; color: red' } }, { tint: 0.5 }, { 'brand-colors': { primary: 'teal' } }, { 'brand-colors': { primary: '#168b83', tertiary: '#123' } }]) {
+  for (const changes of [{ 'corner-profile': 101 }, { 'density-profile': -1 }, { frame: { width: 4 } }, { shadow: { angle: 91 } }, { type: { steps: { display: 0.5 } } }, { typefaces: { body: 'x; color: red' } }, { tint: 0.5 }, { 'brand-colors': { primary: 'teal' } }, { 'brand-colors': { primary: '#168b83', tertiary: '#123' } }, { 'accent-color': 'secondary' }, { 'accent-color': 'tertiary' }]) {
     await assert.rejects(resolve({ ...defaultInputs(), ...changes }), TypeError);
   }
   await assert.rejects(resolve({ 'brand-colors': { primary: '#168b83' }, shadow: { color: 'tertiary' } }), /Unavailable colour/);

@@ -5,6 +5,7 @@ export const SYSTEM_SERIF = 'Georgia, serif';
 
 const defaults = {
   'brand-colors': { primary: '#168b83' },
+  'accent-color': 'default',
   'gray-temperature': 0,
   typefaces: { main: SYSTEM_SANS, monospace: SYSTEM_MONOSPACE },
   type: {

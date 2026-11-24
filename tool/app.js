@@ -34,7 +34,7 @@ import {
   DIVIDER,
 } from './logic.js';
 import { capture, thaw, createHistory, historyAction, isSlider, isTextField, TYPING_PAUSE } from './history.js';
-import { CHAPTERS, PAGES, MOVED_PAGES, ROLES, STEP_ROWS, SCALE_ROWS, axesMarkup, documentMarkup, pageName, tip, tipOnce, takeTips, escapeHtml } from './pages.js';
+import { CHAPTERS, PAGES, MOVED_PAGES, ROLES, SECONDARY_JOBS, STEP_ROWS, SCALE_ROWS, axesMarkup, documentMarkup, pageName, tip, tipOnce, takeTips, escapeHtml } from './pages.js';
 import { setupPreview, paint, measure, followPage } from './preview.js';
 import { setupTooltips } from '/gallery/src/tooltips.js';
 import { pictures, flatPictures, PICTURE_SLOTS, menu as sampleMenu } from '/presentation/src/samples.js';
@@ -226,7 +226,11 @@ function setColourFromHex(key, hex) {
 }
 function removeColour(key) {
   delete model.inputs['brand-colors'].tertiary;
-  if (key === 'secondary') delete model.inputs['brand-colors'].secondary;
+  if (key === 'secondary') {
+    delete model.inputs['brand-colors'].secondary;
+    // Without a secondary the choice of where accents and focus go is not offered, so it goes back to the rank.
+    model.inputs['accent-color'] = 'default';
+  }
   for (const group of ['shadow', 'frame'])
     if (['secondary', 'tertiary'].includes(model.inputs[group].color) && !model.inputs['brand-colors'][model.inputs[group].color])
       model.inputs[group].color = 'default';
@@ -446,6 +450,7 @@ function writeResolved(resolved) {
   for (const key of COLOURS) {
     const on = Boolean(model.inputs['brand-colors'][key]);
     if (key !== 'primary') form.querySelector(`[data-colour-block="${key}"]`).hidden = !on;
+    if (key === 'secondary') form.querySelector('[data-colour-block="secondary"] .colour-job').textContent = SECONDARY_JOBS[model.inputs['accent-color']];
     if (!on) continue;
     const field = form.querySelector(`[data-hex="${key}"]`);
     if (document.activeElement !== field) field.value = model.inputs['brand-colors'][key];
@@ -1191,6 +1196,8 @@ form.addEventListener('click', (event) => {
     model.inputs['brand-colors'][key] = remembered[key];
   } else if (button.dataset.removeColour) {
     removeColour(button.dataset.removeColour);
+    // The choices that named the colour went back to their defaults, so their controls show it.
+    writeForm();
   } else if (button.dataset.flag) {
     setValue(button.dataset.flag, !getValue(button.dataset.flag));
   } else if (button.dataset.pick) {

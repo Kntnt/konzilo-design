@@ -13,6 +13,10 @@ const colourKinds = [
   ...['', '-secondary', '-tertiary'].map((rank) => ['tint', 'brand', 'accent'].map((kind) => `${kind}${rank}`)),
 ].map((kinds) => kinds.filter((kind) => r.surfaces[kind])).filter((kinds) => kinds.length);
 const moreKinds = Object.keys(r.surfaces).filter((kind) => !colourKinds.flat().includes(kind));
+// Accent and focus go to the secondary where there is one, unless the design keeps them in the primary.
+const accentInPrimary = inputs['accent-color'] === 'primary' && Boolean(inputs['brand-colors'].secondary);
+const ACCENT_IN_PRIMARY_JOBS = { primary: 'colour.primary.job-accent-primary', secondary: 'colour.secondary.job-accent-primary' };
+const job = (rank) => t((accentInPrimary && ACCENT_IN_PRIMARY_JOBS[rank]) || `colour.${rank}.job`);
 const summary = (kind, mode) => {
   const pairs = r['contrast-check'].matrix[kind][mode].pairs;
   return t('contrast.summary', {
@@ -27,7 +31,7 @@ const summary = (kind, mode) => {
     {Object.entries(inputs['brand-colors']).map(([rank, hex]) => <div class="brand-column" style={{ background: hex, color: ink(hex) }}>
       <h2 data-kn-type="heading-3">{t(`colour.${rank}`)}</h2>
       <p>{hex}</p>
-      <p>{t(`colour.${rank}.job`)}</p>
+      <p>{job(rank)}</p>
     </div>)}
   </div>
   {Object.entries(r.ramps).map(([name, ramp]) => <section class="ramp-row">

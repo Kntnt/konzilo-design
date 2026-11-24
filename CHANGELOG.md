@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- A design with a second brand colour may keep accent and focus in the primary. A new input, `inputs.accent-color`, is `default`, which keeps today's rule, the secondary's accent and focus where there is one, or `primary`, which takes list markers, quotation rules, tab marks, the first heading's accent option and the focus ring from the primary on every Surface, the further colours' own plates included. The status Surfaces keep their own accent. The second colour still has its tint, brand band and accent band (plates.md, Every brand colour's plates).
+- The tool offers the choice with the second colour on its colour page, only while the design has one, and turns it back to `default` when that colour is removed. DESIGN.md and the presentation say which colour takes accents and focus.
+- Nothing changes for an existing design: one without the input, or with `default`, resolves to exactly the values and the core CSS it had.
+
+### Fixed
+
+- Removing a brand colour in the tool now shows the shadow's and the frame's colour back at their default where they named it; the file had them right, but the two selects kept the removed colour until the page was reloaded.
+
 ## [0.14.0] – 2026-11-24
 
 ### Added

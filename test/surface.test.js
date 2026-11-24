@@ -5,7 +5,7 @@ import {
   resolve, defaultInputs, contrast, KINDS, STATUS_KINDS, MODES, ROLES, ROLE_TARGETS, STEPS, kindsFor, TINT_CEILING, ramps, hexToOklch, solveRole, checkContrast, validateDesignFile, shadowsForSurface, pictureContrast, derive,
   STATUS_SEEDS, WARNING_APART, WARNING_NEAR, WARNING_TURN, oklabDistance, fitChroma, oklchToHex, statusRamp, warningSeed,
 } from '../src/generator/index.js';
-import { emitCss } from '../src/css/index.js';
+import { coreCss, emitCss } from '../src/css/index.js';
 import { sameGroundPlates } from '../src/directives/surfaces.js';
 
 const design = async (inputs = defaultInputs()) => ({ format: 1, inputs, project: {}, resolved: await resolve(inputs) });
@@ -71,6 +71,40 @@ test('recipes preserve rank use; each further brand colour adds its own plates a
     assert.match(three.surfaces[kind].light.recipes.focus, /^secondary-/);
   }
   assert.match((await resolve(defaultInputs())).surfaces.page.light.recipes.focus, /^primary-/);
+});
+
+test('a design with a secondary may keep accent and focus in the primary on every Surface, the status kinds keeping their own accent', async () => {
+  for (const brand of [{ primary: '#168b83', secondary: '#c76532' }, { primary: '#168b83', secondary: '#c76532', tertiary: '#8646b0' }]) {
+    const { surfaces } = derive({ 'brand-colors': brand, 'accent-color': 'primary' });
+    assert.deepEqual(Object.keys(surfaces), kindsFor(brand));
+    for (const kind of kindsFor(brand)) for (const mode of MODES) {
+      const { polarity, recipes } = surfaces[kind][mode];
+      // The steps a one-colour design takes: 600 on a light ground, 300 on a dark one (plates.md, Every brand colour's plates).
+      const step = polarity === 'dark' ? 300 : 600;
+      assert.equal(recipes.accent, `${kind.startsWith('status-') ? kind.slice('status-'.length) : 'primary'}-${step}`, `${kind}/${mode}`);
+      assert.equal(recipes.focus, `primary-${step}`, `${kind}/${mode}`);
+    }
+  }
+});
+
+test('keeping accent and focus in the primary moves nothing else, and nothing at all without a secondary', () => {
+  for (const brand of [{ primary: '#168b83' }, { primary: '#168b83', secondary: '#c76532' }, { primary: '#fff066', secondary: '#101016', tertiary: '#8646b0' }]) {
+    const none = derive({ 'brand-colors': brand });
+    assert.deepEqual(derive({ 'brand-colors': brand, 'accent-color': 'default' }), none);
+    const primary = derive({ 'brand-colors': brand, 'accent-color': 'primary' });
+    if (!brand.secondary) assert.deepEqual(primary, none);
+    assert.equal(primary['contrast-check'].status, 'passed');
+    for (const kind of Object.keys(none.surfaces)) for (const mode of MODES) for (const role of ROLES.filter((name) => !['accent', 'focus'].includes(name)))
+      assert.equal(primary.surfaces[kind][mode].roles[role], none.surfaces[kind][mode].roles[role], `${kind}/${mode}/${role}`);
+  }
+  // The first heading's accent option reads the role, so it takes the primary with it.
+  const resolved = derive({ 'brand-colors': { primary: '#168b83', secondary: '#c76532' }, 'accent-color': 'primary', type: { 'heading-1-color': 'accent' } });
+  const css = coreCss(resolved);
+  const page = css.slice(css.indexOf('[data-kn-surface="page"] {'));
+  const own = (role) => page.match(new RegExp(`--kn-${role}: ([^;]+);`))[1];
+  assert.equal(own('accent'), `light-dark(${resolved.ramps.primary[600]}, ${resolved.ramps.primary[300]})`);
+  assert.equal(own('focus'), own('accent'));
+  assert.match(css, /--kn-text-heading-1: var\(--kn-accent\)/);
 });
 
 test('solver selects the nearest passing ordered step, records adjustments and leaves impossible recipes failed', async () => {

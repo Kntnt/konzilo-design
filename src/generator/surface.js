@@ -197,8 +197,10 @@ const PICTURES = Object.freeze({
   'picture-dark': { polarity: 'dark', family: 'gray', alternate: 'black', hover: 800, muted: 300, border: 800 },
 });
 
-function recipesFor(kind, mode, palette) {
-  const accent = palette.secondary ? 'secondary' : 'primary';
+// Accent and focus follow the rank, the secondary where there is one, unless the design keeps them in the primary
+// (plates.md, Every brand colour's plates, point 2).
+function recipesFor(kind, mode, palette, accentColor) {
+  const accent = palette.secondary && accentColor !== 'primary' ? 'secondary' : 'primary';
   const picture = PICTURES[kind];
   const stands = picture ?? standsOf(kind);
   const { family, lines = family } = stands;
@@ -225,7 +227,7 @@ export function surfaces(settings, palette) {
   const status = Object.fromEntries(Object.entries(statusSeeds).map(([name, seed]) => [name, statusRamp(seed, palette)]));
   const all = { ...palette, ...status };
   return Object.fromEntries(kindsFor(palette).map((kind) => [kind, Object.fromEntries(MODES.map((mode) => {
-    const { polarity, recipes } = recipesFor(kind, mode, all);
+    const { polarity, recipes } = recipesFor(kind, mode, all, settings['accent-color']);
     const surface = { polarity, roles: Object.fromEntries(Object.entries(recipes).map(([role, recipe]) => [role, color(recipe, all)])), recipes, adjustments: {} };
     const solveRoles = () => {
       surface.adjustments = {};

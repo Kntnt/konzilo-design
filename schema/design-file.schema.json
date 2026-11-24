@@ -289,6 +289,13 @@
             ]
           }
         },
+        "accent-color": {
+          "type": "string",
+          "enum": [
+            "default",
+            "primary"
+          ]
+        },
         "gray-temperature": {
           "type": "number",
           "minimum": -100,

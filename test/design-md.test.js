@@ -82,6 +82,18 @@ test('DESIGN.md gives every Surface in both modes, with the picture Surfaces\' o
   }
 });
 
+test('DESIGN.md says which brand colour takes accents and focus, by rank or kept in the primary', () => {
+  const colour = (body, rank) => body.match(new RegExp(`^- \\*\\*${rank} \\(#[0-9a-f]{6}\\):\\*\\* (.*)$`, 'm'))[1];
+  const brand = { primary: '#8a3ffc', secondary: '#d4622b' };
+  const byRank = exported({ 'brand-colors': brand }).body;
+  assert.match(colour(byRank, 'Secondary'), /accents and focus/);
+  assert.doesNotMatch(colour(byRank, 'Primary'), /accents and focus/);
+  const kept = exported({ 'brand-colors': brand, 'accent-color': 'primary' }).body;
+  assert.match(colour(kept, 'Primary'), /accents and focus/);
+  assert.doesNotMatch(colour(kept, 'Secondary'), /accents|focus/);
+  assert.match(colour(kept, 'Secondary'), /Surfaces of its own/);
+});
+
 test('DESIGN.md describes every header arrangement, the chosen one, and the order in which items give way', () => {
   for (const inputs of DESIGNS) {
     const { resolved: r, body } = exported(inputs);

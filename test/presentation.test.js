@@ -181,6 +181,8 @@ test('offline ZIP reader works from file URLs for normal, primary-only and stres
       }
       // Other widths than the example's, which the Page page's sketch must follow.
       if (fixture === 'primary-only') model.inputs.layout = { wide: 1040, narrow: 640 };
+      // Three colours that keep accent and focus in the primary.
+      if (fixture === 'stress') model.inputs['accent-color'] = 'primary';
       model.project.introduction = 'A short introduction.\n\nA second paragraph with <literal> text.';
       model.project.contact = { name: 'Design owner', email: 'review@example.invalid' };
       model.project.explanations = Object.fromEntries(['colour', 'typefaces', 'type-scale', 'space-shape', 'shadow', 'components'].map((key) => [key, 'A choice made for clear information.\n\nA second reason.']));
@@ -192,6 +194,9 @@ test('offline ZIP reader works from file URLs for normal, primary-only and stres
       assert.equal(filename, 'example-design-system.html');
       assert.ok(report.htmlBytes < 5 * 1024 * 1024);
       assert.match(html, /&lt;literal&gt;/);
+      // Each brand colour says what it does, and the one that takes accents and focus says so.
+      const jobs = fixture === 'stress' ? ['colour.primary.job-accent-primary', 'colour.secondary.job-accent-primary'] : ['colour.primary.job', ...(fixture === 'example' ? ['colour.secondary.job'] : [])];
+      for (const key of jobs) assert.ok(copy[key] && html.includes(copy[key]), `${fixture}: ${key}`);
       assert.equal((html.match(/data:font\/woff2;base64/g) || []).length, shippedIn(derive(model.inputs).typefaces).flatMap((face) => [face.upright, face.italic].filter(Boolean)).length);
       try {
         await exec('unzip', ['-t', zip]);

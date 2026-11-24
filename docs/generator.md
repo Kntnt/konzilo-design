@@ -323,7 +323,9 @@ Each role is a recipe over the ramps (a ramp and step, or white or black).
   seeds. That preserves the approved foregrounds and the 4.5:1 target.
 - **Rank:** links, buttons and the primary's Surfaces from the primary; `accent` and `focus`
   from the secondary when there is one, else the primary, on every Surface,
-  a further colour's own included. A tertiary feeds only its own Surfaces. Status roles come from fixed
+  a further colour's own included. Optional `inputs.accent-color`, `default` or `primary`, keeps
+  them in the primary despite a secondary, at the same steps; the status kinds keep their own
+  accent, and `primary` without a secondary resolves as `default` does. A tertiary feeds only its own Surfaces. Status roles come from fixed
   blue, green, amber and red seeds, ramped like the brand colours (`STATUS_SEEDS`,
   `statusRamp`).
 - **The warning apart from the brand's tints (2026-11-13):** a brand colour near amber gave

@@ -212,10 +212,17 @@ function colourSection({ inputs, resolved: r, project }) {
   const ranks = ['primary', 'secondary', 'tertiary'].filter((rank) => inputs['brand-colors'][rank]);
   const scrims = kinds.filter((kind) => r.surfaces[kind].light.scrim)
     .map((kind) => `\`${kind}\` ${r.surfaces[kind].light.scrim.color} at ${r.surfaces[kind].light.scrim.opacity}`);
+  // Accent and focus go to the secondary where there is one, unless the design keeps them in the primary.
+  const accentInPrimary = inputs['accent-color'] === 'primary' && Boolean(inputs['brand-colors'].secondary);
+  const jobs = {
+    primary: `the main identity and the strongest backgrounds, ${accentInPrimary ? 'links, buttons, accents and focus' : 'links and buttons'}`,
+    secondary: `a supporting colour${accentInPrimary ? '' : ' for accents and focus'}, with Surfaces of its own: a tint, a brand band and an accent band`,
+    tertiary: 'one more colour for grouping content, with Surfaces of its own: a tint, a brand band and an accent band',
+  };
   const firstHeading = r['heading-1-color'] === 'accent' ? ' The first heading is in its Surface\'s `accent` rather than `text`.' : '';
   return `## Colors
 ${why(project.explanations?.colour)}
-${ranks.map((rank) => `- **${rank[0].toUpperCase()}${rank.slice(1)} (${inputs['brand-colors'][rank]}):** ${{ primary: 'the main identity and the strongest backgrounds, links and buttons', secondary: 'a supporting colour for accents and focus, with Surfaces of its own: a tint, a brand band and an accent band', tertiary: 'one more colour for grouping content, with Surfaces of its own: a tint, a brand band and an accent band' }[rank]}.`).join('\n')}
+${ranks.map((rank) => `- **${rank[0].toUpperCase()}${rank.slice(1)} (${inputs['brand-colors'][rank]}):** ${jobs[rank]}.`).join('\n')}
 - **Neutral:** a grey scale for text, borders and quiet backgrounds.
 
 ${r.ramps.gray[975] ? 'Each brand colour and the grey have a ramp from 100, lightest, to 975, darkest, in the tokens `primary-100` to `gray-975`. Light mode uses 100 to 950 without 850, and dark mode 100 to 800 with 850 and 975, its own two darkest steps.' : 'Each brand colour and the grey have a ramp from 100, lightest, to 950, darkest, in the tokens `primary-100` to `gray-950`.'} The ramps are what the Surfaces were made from; a page uses the Surfaces' roles, not the ramps.

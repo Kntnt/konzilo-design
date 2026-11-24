@@ -330,6 +330,50 @@ test('a further colour brings its plates to every Surface choice and takes them 
   await page.context().close();
 });
 
+test('a design with a second colour chooses which colour takes accents and focus, offered only with that colour and reset when it goes', { timeout: 60000 }, async () => {
+  const page = await opened();
+  await turnTo(page, 'colour', 'colour-scale');
+  const control = page.locator('[data-path="inputs.accent-color"]');
+  const job = page.locator('[data-colour-block="secondary"] .colour-job');
+  // A design of one colour has nothing to choose.
+  assert.equal((await onDisk()).inputs['brand-colors'].secondary, undefined);
+  assert.equal(await control.isVisible(), false);
+  await page.locator('[data-add-colour]').click();
+  await settled(page);
+  assert.equal(await control.isVisible(), true);
+  assert.equal(await control.isDisabled(), false);
+  assert.deepEqual(await control.evaluate((select) => [...select.options].map((option) => [option.value, option.textContent, option.disabled])), [['default', 'Secondary', false], ['primary', 'Primary', false]]);
+  assert.equal(await control.inputValue(), 'default');
+  assert.match(await job.textContent(), /^Accents and focus/);
+  await control.selectOption('primary');
+  assert.equal((await onDiskSoon(page)).inputs['accent-color'], 'primary');
+  assert.doesNotMatch(await job.textContent(), /Accents and focus/);
+  // The shadow in the second colour, chosen as the browser would, since its page is another.
+  const shadowColour = page.locator('[data-path="inputs.shadow.color"]');
+  await shadowColour.evaluate((select) => {
+    select.value = 'secondary';
+    for (const type of ['input', 'change']) select.dispatchEvent(new Event(type, { bubbles: true }));
+  });
+  assert.equal((await onDiskSoon(page)).inputs.shadow.color, 'secondary');
+  // Removed, the second colour takes the choice along, and every control that named it shows its default.
+  await page.locator('[data-remove-colour="secondary"]').click();
+  const saved = await onDiskSoon(page);
+  assert.equal(saved.inputs['accent-color'], 'default');
+  assert.equal(saved.inputs.shadow.color, 'default');
+  assert.equal(await control.isVisible(), false);
+  assert.equal(await shadowColour.inputValue(), 'default');
+  assert.equal(await control.inputValue(), 'default');
+  // Added again, it starts from the rank.
+  await page.locator('[data-add-colour]').click();
+  await settled(page);
+  assert.equal(await control.inputValue(), 'default');
+  assert.match(await job.textContent(), /^Accents and focus/);
+  await page.locator('[data-remove-colour="secondary"]').click();
+  await settled(page);
+  assert.deepEqual(page.errors, []);
+  await page.context().close();
+});
+
 test('the menu has one height on every page at any pane width, and a page\'s heading always stands in the same place', { timeout: 180000 }, async () => {
   const widths = [[1040, 490], [1440, 540], [1900, 700], [1900, 1000]];
   for (const [window, pane] of widths) {

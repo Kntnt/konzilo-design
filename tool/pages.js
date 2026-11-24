@@ -181,7 +181,12 @@ function start(copy) {
     ${next('start', copy)}`;
 }
 
-function colourBlock(key, name, job, removable) {
+// What the secondary does, by where accents and focus go (plates.md, Every brand colour's plates, point 2).
+export const SECONDARY_JOBS = {
+  default: 'Accents and focus, and plates of its own: a tint, a brand band and an accent band.',
+  primary: 'Plates of its own: a tint, a brand band and an accent band.',
+};
+function colourBlock(key, name, job, removable, choices = '') {
   return `<section class="colour" data-colour-block="${key}">
     <div class="colour-name"><h2 class="setting-title ui">${escapeHtml(name)}</h2><p class="colour-job ui">${escapeHtml(job)}</p></div>
     <div class="colour-body">
@@ -192,6 +197,7 @@ function colourBlock(key, name, job, removable) {
         <input class="input figures" type="text" data-hex="${key}" maxlength="7" spellcheck="false" aria-label="${escapeHtml(name)} as hex" ${tip('The exact colour, as a six-digit hex value.')}>
       </div>
       <div class="ramp figures" data-ramp="${key}"></div>
+      ${choices ? `<div class="colour-controls ui">${choices}</div>` : ''}
       ${removable ? `<div class="colour-actions ui"><button class="link-button" type="button" data-remove-colour="${key}" ${tip('Removes this colour and its plates. Removing the second colour also removes the third.')}>Remove this colour</button></div>` : ''}
     </div>
   </section>`;
@@ -225,7 +231,8 @@ function colourScale(copy) {
       <div class="colour-work">
         <div class="colours">
           ${colourBlock('primary', 'Primary', 'The main colour: links, buttons and strong Surfaces.', false)}
-          ${colourBlock('secondary', 'Secondary', 'Accents and focus, and plates of its own: a tint, a brand band and an accent band.', true)}
+          ${colourBlock('secondary', 'Secondary', SECONDARY_JOBS.default, true,
+            choice('Accents and focus', 'inputs.accent-color', [['default', 'Secondary'], ['primary', 'Primary']], 'Which colour list markers, quotation rules, tab marks and the focus ring take. Primary keeps them in the main colour, and this colour then gives plates alone.'))}
           ${colourBlock('tertiary', 'Tertiary', 'Plates of its own, to group content: a tint, a brand band and an accent band.', true)}
           <section class="colour">
             <div class="colour-name"><h2 class="setting-title ui">Grey</h2><p class="colour-job ui">Text, hairlines and neutral Surfaces.</p></div>
