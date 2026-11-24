@@ -1,4 +1,4 @@
-import { derive, hexToOklch, oklchToHex, contrast, fitRolesToFaces } from '/src/generator/index.js';
+import { derive, hexToOklch, oklchToHex, contrast, fitRolesToFaces, RANK_KINDS, SURFACE_INPUTS } from '/src/generator/index.js';
 import { rem } from '/src/generator/fluid.js';
 import { coreCss } from '/src/css/index.js';
 import { faceOf } from '/src/fonts/catalog.js';
@@ -215,6 +215,8 @@ for (const key of COLOURS) {
   const { L, C, H } = hexToOklch(model.inputs['brand-colors'][key] || remembered[key]);
   lch[key] = { L, C, H };
 }
+// Every option of a Surface choice, the colours the design lacks among them, so they can be offered again.
+const surfaceOptions = new Map();
 const hexOf = (key) => oklchToHex(lch[key].L, lch[key].C, lch[key].H);
 function setColourFromHex(key, hex) {
   model.inputs['brand-colors'][key] = hex.toLowerCase();
@@ -228,6 +230,12 @@ function removeColour(key) {
   for (const group of ['shadow', 'frame'])
     if (['secondary', 'tertiary'].includes(model.inputs[group].color) && !model.inputs['brand-colors'][model.inputs[group].color])
       model.inputs[group].color = 'default';
+  // A Surface in a colour that went takes the primary's kind it repeated, as a directive does (plates.md).
+  for (const path of SURFACE_INPUTS) {
+    const holder = path.slice(0, -1).reduce((value, step) => value?.[step], model.inputs), key = path.at(-1);
+    const rank = RANK_KINDS[holder?.[key]];
+    if (rank && !model.inputs['brand-colors'][rank.rank]) holder[key] = rank.base;
+  }
 }
 function colourTracks() {
   for (const key of COLOURS) {
@@ -449,6 +457,18 @@ function writeResolved(resolved) {
   for (const select of form.querySelectorAll('[data-path="inputs.shadow.color"], [data-path="inputs.frame.color"]'))
     for (const option of select.options)
       if (['secondary', 'tertiary'].includes(option.value)) option.disabled = !model.inputs['brand-colors'][option.value];
+  // A Surface in a colour the design does not have is not offered at all, since nothing on a page is ever disabled.
+  for (const path of SURFACE_INPUTS) {
+    const select = form.querySelector(`[data-path="inputs.${path.join('.')}"]`);
+    if (!select) continue;
+    if (!surfaceOptions.has(select)) surfaceOptions.set(select, [...select.options]);
+    const offered = surfaceOptions.get(select).filter((option) => !RANK_KINDS[option.value] || model.inputs['brand-colors'][RANK_KINDS[option.value].rank]);
+    if (offered.length === select.options.length && offered.every((option, index) => select.options[index] === option)) continue;
+    // What the model holds, since a colour removed has just turned a choice in it to the primary's kind.
+    const value = getValue(select.dataset.path) ?? select.value;
+    select.replaceChildren(...offered);
+    select.value = value;
+  }
   for (const box of form.querySelectorAll('[data-surface-case]')) {
     const surface = box.dataset.surfaceCase;
     box.hidden = !resolved.surfaces[surface];

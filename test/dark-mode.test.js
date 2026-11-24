@@ -8,7 +8,7 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright-core';
 import {
-  BAND_MINIMUM, BAND_STEPS, MODES, ROLE_TARGETS, TINT_CEILING, checkContrast, contrast, contrastCheck, defaultInputs, derive, grayChroma, hexToOklch, ramp, ramps, resolve, validateDesignFile,
+  BAND_MINIMUM, BAND_STEPS, MODES, RANK_KINDS, ROLE_TARGETS, TINT_CEILING, checkContrast, contrast, contrastCheck, defaultInputs, derive, grayChroma, hexToOklch, ramp, ramps, resolve, validateDesignFile,
 } from '../src/generator/index.js';
 import { coreCss, emitCss } from '../src/css/index.js';
 
@@ -74,13 +74,18 @@ test('the page, the light bands and the dark bands stand where the rule says, ke
     brand: ['primary-800', 'primary-800'],
     accent: ['primary-700', 'primary-700'],
     inverse: ['gray-950', 'gray-800'],
+    'brand-secondary': ['secondary-800', 'secondary-800'],
+    'accent-secondary': ['secondary-700', 'secondary-700'],
+    'brand-tertiary': ['tertiary-800', 'tertiary-800'],
+    'accent-tertiary': ['tertiary-700', 'tertiary-700'],
   };
+  const DARK = ['brand', 'accent', 'inverse', 'brand-secondary', 'accent-secondary', 'brand-tertiary', 'accent-tertiary'];
   for (const [kind, [light, dark]] of Object.entries(expected)) {
     assert.equal(surfaces[kind].light.recipes.background, light, kind);
     assert.equal(surfaces[kind].dark.recipes.background, dark, kind);
   }
-  for (const kind of ['brand', 'accent', 'inverse']) for (const mode of MODES) assert.equal(surfaces[kind][mode].polarity, 'dark', kind);
-  for (const kind of Object.keys(expected).filter((name) => !['brand', 'accent', 'inverse'].includes(name))) for (const mode of MODES) assert.equal(surfaces[kind][mode].polarity, mode, kind);
+  for (const kind of DARK) for (const mode of MODES) assert.equal(surfaces[kind][mode].polarity, 'dark', kind);
+  for (const kind of Object.keys(expected).filter((name) => !DARK.includes(name))) for (const mode of MODES) assert.equal(surfaces[kind][mode].polarity, mode, kind);
 });
 
 test('every other role follows the mode and step of the background, whatever the kind', () => {
@@ -107,10 +112,12 @@ test('every other role follows the mode and step of the background, whatever the
       assert.ok(row, `${kind}/${mode} stands on ${mode}/${step}`);
       assert.equal(polarity, ['white', '100'].includes(step) ? 'light' : 'dark', `${kind}/${mode}`);
       seen.add(`${mode}/${step}/${kind}`);
-      // The family is all a kind adds, and accent's muted text and borders are its one grey family.
-      const lines = kind === 'accent' ? 'gray' : family;
+      // The family is all a kind adds, and accent's muted text and borders are its one grey family, in every colour's
+      // accent band.
+      const base = RANK_KINDS[kind]?.base ?? kind;
+      const lines = base === 'accent' ? 'gray' : family;
       // A light band, one that follows the mode, keeps grey muted text in dark mode too (owner, 2026-11-10).
-      const lightBand = !['page', 'brand', 'inverse', 'accent'].includes(kind);
+      const lightBand = !['page', 'brand', 'inverse', 'accent'].includes(base);
       assert.equal(recipes['background-alt'], row.alternate === 'white' ? 'white' : `${family}-${row.alternate}`, `${kind}/${mode}`);
       assert.equal(recipes['background-hover'], `${family}-${row.hover}`, `${kind}/${mode}`);
       assert.equal(recipes['text-muted'], polarity === 'dark' ? `${lightBand ? 'gray' : lines}-${row.muted}` : 'gray-600', `${kind}/${mode}`);

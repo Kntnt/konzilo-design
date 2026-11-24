@@ -35,8 +35,12 @@ const KIND_JOBS = {
   'tint-secondary': 'a quiet band or card in the secondary colour',
   'tint-tertiary': 'a quiet band or card in the tertiary colour',
   brand: 'a strong band in the primary colour',
+  'brand-secondary': 'a strong band in the secondary colour',
+  'brand-tertiary': 'a strong band in the tertiary colour',
   inverse: 'a strong band in dark grey',
   accent: 'a strong band for emphasis',
+  'accent-secondary': 'a strong band for emphasis in the secondary colour',
+  'accent-tertiary': 'a strong band for emphasis in the tertiary colour',
   'picture-light': 'a picture under a light overlay, for dark text on a photograph',
   'picture-dark': 'a picture under a dark overlay, for light text on a photograph, as in a hero',
   'status-info': 'a Callout\'s box for information',
@@ -211,7 +215,7 @@ function colourSection({ inputs, resolved: r, project }) {
   const firstHeading = r['heading-1-color'] === 'accent' ? ' The first heading is in its Surface\'s `accent` rather than `text`.' : '';
   return `## Colors
 ${why(project.explanations?.colour)}
-${ranks.map((rank) => `- **${rank[0].toUpperCase()}${rank.slice(1)} (${inputs['brand-colors'][rank]}):** ${{ primary: 'the main identity and the strongest backgrounds', secondary: 'a supporting colour for accents and a tint of its own', tertiary: 'one more tint, for grouping content' }[rank]}.`).join('\n')}
+${ranks.map((rank) => `- **${rank[0].toUpperCase()}${rank.slice(1)} (${inputs['brand-colors'][rank]}):** ${{ primary: 'the main identity and the strongest backgrounds, links and buttons', secondary: 'a supporting colour for accents and focus, with Surfaces of its own: a tint, a brand band and an accent band', tertiary: 'one more colour for grouping content, with Surfaces of its own: a tint, a brand band and an accent band' }[rank]}.`).join('\n')}
 - **Neutral:** a grey scale for text, borders and quiet backgrounds.
 
 ${r.ramps.gray[975] ? 'Each brand colour and the grey have a ramp from 100, lightest, to 975, darkest, in the tokens `primary-100` to `gray-975`. Light mode uses 100 to 950 without 850, and dark mode 100 to 800 with 850 and 975, its own two darkest steps.' : 'Each brand colour and the grey have a ramp from 100, lightest, to 950, darkest, in the tokens `primary-100` to `gray-950`.'} The ramps are what the Surfaces were made from; a page uses the Surfaces' roles, not the ramps.
@@ -447,7 +451,7 @@ function rulesSection() {
 
 - Do build every page as a header, Bands and a footer, and put each Band on a Surface.
 - Do take every colour on a Surface from that same Surface, and check the page in every mode the site uses.
-- Do let adjacent Bands differ in Surface to give a page rhythm; use the strong Surfaces, \`brand\`, \`inverse\` and \`accent\`, sparingly.
+- Do let adjacent Bands differ in Surface to give a page rhythm; use the strong Surfaces, \`brand\`, \`inverse\` and \`accent\` and any brand colour's own, sparingly.
 - Do use one first heading per page, and keep running text in the Narrow measure.
 - Do keep text on the type scale, and use the fluid sizes rather than breakpoints of your own.
 - Do work at both a phone's width and a wide screen, since the narrow and wide type scales differ.

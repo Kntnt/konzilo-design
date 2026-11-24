@@ -33,7 +33,7 @@ test('every kind and mode passes all required pairs for the example, yellow and 
   }
 });
 
-test('recipes preserve rank use; each further brand colour adds its own tint and changes nothing else', async () => {
+test('recipes preserve rank use; each further brand colour adds its own plates and changes nothing else', async () => {
   const inputs = { 'brand-colors': { primary: '#168b83', secondary: '#c76532' } };
   const two = await resolve(inputs);
   const three = await resolve({ 'brand-colors': { ...inputs['brand-colors'], tertiary: '#8646b0' } });
@@ -44,8 +44,24 @@ test('recipes preserve rank use; each further brand colour adds its own tint and
     assert.match(a.recipes.focus, /^secondary-/);
     for (const role of ROLES) assert.equal(a.roles[role], b.roles[role]);
   }
-  assert.deepEqual(Object.keys(two.surfaces), [...KINDS, ...STATUS_KINDS, 'tint-secondary']);
-  assert.deepEqual(Object.keys(three.surfaces), [...KINDS, ...STATUS_KINDS, 'tint-secondary', 'tint-tertiary']);
+  assert.deepEqual(Object.keys(two.surfaces), [...KINDS, ...STATUS_KINDS, 'tint-secondary', 'brand-secondary', 'accent-secondary']);
+  assert.deepEqual(Object.keys(three.surfaces), [...KINDS, ...STATUS_KINDS, 'tint-secondary', 'tint-tertiary', 'brand-secondary', 'accent-secondary', 'brand-tertiary', 'accent-tertiary']);
+  // The secondary's kinds are the same with a tertiary beside it.
+  for (const kind of ['tint-secondary', 'brand-secondary', 'accent-secondary']) assert.deepEqual(two.surfaces[kind], three.surfaces[kind], kind);
+  // Each further colour's bands are the primary's on its own ramp: links and buttons stay the primary's, accent and focus
+  // the secondary's, as on every Surface (plates.md, Every brand colour's plates).
+  for (const rank of ['secondary', 'tertiary']) for (const [base, step] of [['brand', 800], ['accent', 700]]) for (const mode of MODES) {
+    const own = three.surfaces[`${base}-${rank}`][mode], primary = three.surfaces[base][mode];
+    assert.equal(own.polarity, 'dark');
+    assert.equal(own.recipes.background, `${rank}-${step}`);
+    for (const role of ['background-alt', 'background-hover', ...(base === 'brand' ? ['text-muted', 'border', 'border-strong'] : [])])
+      assert.equal(own.recipes[role], primary.recipes[role].replace(/^primary-/, `${rank}-`), `${base}-${rank}/${mode}/${role}`);
+    if (base === 'accent') for (const role of ['text-muted', 'border', 'border-strong']) assert.match(own.recipes[role], /^gray-/);
+    assert.match(own.recipes.link, /^primary-/);
+    assert.match(own.recipes.accent, /^secondary-/);
+    assert.match(own.recipes.focus, /^secondary-/);
+    for (const role of ['button-background', 'button-text', 'button-background-hover']) assert.equal(own.roles[role], primary.roles[role]);
+  }
   assert.deepEqual(Object.keys((await resolve(defaultInputs())).surfaces), [...KINDS, ...STATUS_KINDS]);
   for (const [kind, rank] of [['tint', 'primary'], ['tint-secondary', 'secondary'], ['tint-tertiary', 'tertiary']]) {
     assert.equal(three.surfaces[kind].light.recipes.background, `${rank}-100`);

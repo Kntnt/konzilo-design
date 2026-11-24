@@ -297,6 +297,39 @@ test('the Surfaces stand where the colours are set, follow Light and Dark, and a
   await page.context().close();
 });
 
+test('a further colour brings its plates to every Surface choice and takes them along when it goes, none disabled', { timeout: 60000 }, async () => {
+  const page = await opened();
+  await turnTo(page, 'colour', 'colour-scale');
+  const choices = (path) => page.locator(`[data-path="inputs.${path}"]`).evaluate((select) => ({ value: select.value, options: [...select.options].map((option) => option.value), disabled: [...select.options].filter((option) => option.disabled).length }));
+  const add = () => page.locator('[data-add-colour]').click();
+  // A design of one colour offers no other colour's plates.
+  assert.equal((await onDisk()).inputs['brand-colors'].secondary, undefined);
+  assert.deepEqual((await choices('footer.upper.surface')).options, ['page', 'raised', 'tint', 'brand', 'inverse']);
+  await add();
+  await settled(page);
+  for (const [path, offered] of [['header.surface', ['page', 'brand', 'brand-secondary']], ['header.search-surface', ['page', 'raised', 'tint', 'brand', 'inverse', 'tint-secondary', 'brand-secondary']],
+    ['footer.upper.surface', ['page', 'raised', 'tint', 'brand', 'inverse', 'tint-secondary', 'brand-secondary']], ['hero.surface', ['none', 'page', 'raised', 'tint', 'brand', 'inverse', 'tint-secondary', 'brand-secondary', 'accent', 'accent-secondary']]]) {
+    const now = await choices(path);
+    assert.deepEqual(now.options, offered, path);
+    assert.equal(now.disabled, 0, `${path}: nothing disabled`);
+  }
+  // Its plates on the colour page, and a choice of one reaches the file.
+  for (const kind of ['tint-secondary', 'brand-secondary', 'accent-secondary']) assert.equal(await page.locator(`[data-surface-case="${kind}"]`).isVisible(), true, kind);
+  // The footer's page is another page, so its select is chosen as the browser would.
+  await page.locator('[data-path="inputs.footer.upper.surface"]').evaluate((select) => {
+    select.value = 'brand-secondary';
+    for (const type of ['input', 'change']) select.dispatchEvent(new Event(type, { bubbles: true }));
+  });
+  assert.equal((await onDiskSoon(page)).inputs.footer.upper.surface, 'brand-secondary');
+  // Removed, the colour takes its plates along, and the choice turns to the primary's kind it repeated.
+  await page.locator('[data-remove-colour="secondary"]').click();
+  assert.equal((await onDiskSoon(page)).inputs.footer.upper.surface, 'brand');
+  assert.deepEqual(await choices('footer.upper.surface'), { value: 'brand', options: ['page', 'raised', 'tint', 'brand', 'inverse'], disabled: 0 });
+  assert.equal(await page.locator('[data-surface-case="brand-secondary"]').isVisible(), false);
+  assert.deepEqual(page.errors, []);
+  await page.context().close();
+});
+
 test('the menu has one height on every page at any pane width, and a page\'s heading always stands in the same place', { timeout: 180000 }, async () => {
   const widths = [[1040, 490], [1440, 540], [1900, 700], [1900, 1000]];
   for (const [window, pane] of widths) {

@@ -6,7 +6,23 @@ export const KINDS = Object.freeze(['page', 'raised', 'tint', 'brand', 'inverse'
 export const STATUS_KINDS = Object.freeze(['status-info', 'status-success', 'status-warning', 'status-error']);
 // A tint per further brand colour (owner, 2026-11-01), generated only when that colour exists.
 export const RANK_TINTS = Object.freeze({ secondary: 'tint-secondary', tertiary: 'tint-tertiary' });
-export const kindsFor = (palette) => [...KINDS, ...STATUS_KINDS, ...Object.entries(RANK_TINTS).filter(([rank]) => palette[rank]).map(([, kind]) => kind)];
+// Every brand colour has the primary's three coloured plates (2026-11-24): its tint above, and its brand band on 800 and
+// its accent band on 700, each the primary's kind on that colour's own ramp, generated only when that colour exists.
+export const RANK_BANDS = Object.freeze({ secondary: ['brand-secondary', 'accent-secondary'], tertiary: ['brand-tertiary', 'accent-tertiary'] });
+// Each further rank's kind, with its rank and the primary's kind it repeats.
+export const RANK_KINDS = Object.freeze(Object.fromEntries(Object.keys(RANK_TINTS).flatMap((rank) => [RANK_TINTS[rank], ...RANK_BANDS[rank]]
+  .map((kind) => [kind, Object.freeze({ rank, base: kind.split('-')[0] })]))));
+export const kindsFor = (palette) => [...KINDS, ...STATUS_KINDS, ...Object.entries(RANK_TINTS).filter(([rank]) => palette[rank]).map(([, kind]) => kind),
+  ...Object.entries(RANK_BANDS).filter(([rank]) => palette[rank]).flatMap(([, kinds]) => kinds)];
+// The design inputs that choose a Surface kind. A kind of a further rank needs that brand colour.
+export const SURFACE_INPUTS = Object.freeze([['header', 'surface'], ['header', 'search-surface'], ['footer', 'upper', 'surface'], ['footer', 'lower', 'surface'], ['hero', 'surface']]);
+export function checkSurfaceInputs(settings) {
+  for (const path of SURFACE_INPUTS) {
+    const kind = path.reduce((value, key) => value?.[key], settings);
+    const rank = RANK_KINDS[kind]?.rank;
+    if (rank && !settings['brand-colors'][rank]) throw new TypeError(`inputs.${path.join('.')}: ${kind} needs a ${rank} brand colour`);
+  }
+}
 export const MODES = Object.freeze(['light', 'dark']);
 export const ROLES = Object.freeze(['background', 'background-alt', 'background-hover', 'text', 'text-muted', 'border', 'border-strong', 'link', 'accent', 'focus', 'info', 'success', 'warning', 'error', 'button-background', 'button-text', 'button-background-hover']);
 // Accent is also checked at 3:1, so it can carry non-text emphasis. background-page holds a band apart from the page.
@@ -152,7 +168,9 @@ const STANDS = Object.freeze({
   // Accent's fills are the primary's, while its muted text and borders are grey.
   accent: { family: 'primary', lines: 'gray', light: 700, dark: 700 },
 });
-const standsOf = (kind) => STANDS[kind] ?? { family: kind === 'tint' ? 'primary' : kind.split('-')[1], ...LIGHT_BAND };
+const standsOf = (kind) => STANDS[kind] ?? (RANK_KINDS[kind] && STANDS[RANK_KINDS[kind].base]
+  ? { ...STANDS[RANK_KINDS[kind].base], family: RANK_KINDS[kind].rank }
+  : { family: kind === 'tint' ? 'primary' : kind.split('-')[1], ...LIGHT_BAND });
 // What stands on a background follows the mode and the step, never the kind; white and 100 are light, the rest dark. A
 // hover fill must show against both the background and the alternate fill. On 700 and 800 a lighter hover would fail
 // link-hover, so these go darker, and 800's alternate is the next step down because 700 fails link-alt; on the two

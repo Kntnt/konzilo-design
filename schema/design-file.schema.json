@@ -594,7 +594,9 @@
           "type": "string",
           "enum": [
             "page",
-            "brand"
+            "brand",
+            "brand-secondary",
+            "brand-tertiary"
           ]
         },
         "translucent": {
@@ -663,7 +665,11 @@
             "raised",
             "tint",
             "brand",
-            "inverse"
+            "inverse",
+            "tint-secondary",
+            "tint-tertiary",
+            "brand-secondary",
+            "brand-tertiary"
           ]
         },
         "search-blur": {
@@ -748,7 +754,11 @@
             "raised",
             "tint",
             "brand",
-            "inverse"
+            "inverse",
+            "tint-secondary",
+            "tint-tertiary",
+            "brand-secondary",
+            "brand-tertiary"
           ]
         },
         "cells": {
@@ -2016,6 +2026,18 @@
         "tint-tertiary": {
           "$ref": "#/$defs/surface-modes"
         },
+        "brand-secondary": {
+          "$ref": "#/$defs/surface-modes"
+        },
+        "accent-secondary": {
+          "$ref": "#/$defs/surface-modes"
+        },
+        "brand-tertiary": {
+          "$ref": "#/$defs/surface-modes"
+        },
+        "accent-tertiary": {
+          "$ref": "#/$defs/surface-modes"
+        },
         "status-info": {
           "$ref": "#/$defs/surface-modes"
         },
@@ -2835,6 +2857,18 @@
             "tint-tertiary": {
               "$ref": "#/$defs/contrast-modes"
             },
+            "brand-secondary": {
+              "$ref": "#/$defs/contrast-modes"
+            },
+            "accent-secondary": {
+              "$ref": "#/$defs/contrast-modes"
+            },
+            "brand-tertiary": {
+              "$ref": "#/$defs/contrast-modes"
+            },
+            "accent-tertiary": {
+              "$ref": "#/$defs/contrast-modes"
+            },
             "status-info": {
               "$ref": "#/$defs/contrast-modes"
             },
@@ -3464,7 +3498,13 @@
             "tint",
             "brand",
             "inverse",
-            "accent"
+            "accent",
+            "tint-secondary",
+            "tint-tertiary",
+            "brand-secondary",
+            "brand-tertiary",
+            "accent-secondary",
+            "accent-tertiary"
           ]
         },
         "overlay": {

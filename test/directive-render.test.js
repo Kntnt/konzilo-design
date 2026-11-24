@@ -729,3 +729,33 @@ Label
   const html = renderBody(bodyHtml(markdown), ctx);
   assert.deepEqual(ids(html).filter((id) => /^(tabs|logos)-/.test(id)), ['tabs-1', 'tabs-2', 'logos-1', 'logos-2']);
 });
+
+test('a band in a further colour stands on its own plate, and on the primary\'s where the design lacks that colour', async () => {
+  const { derive, defaultInputs } = await import('../src/generator/index.js');
+  const two = { project: { name: 'Example Gardens' }, resolved: derive({ ...defaultInputs(), 'brand-colors': { primary: '#168b83', secondary: '#7a3e9d' } }) };
+  const section = md`:::section{surface="brand-secondary"}
+
+## Plans
+
+Words.
+
+:::`;
+  const hero = md`::::hero{surface="accent-secondary"}
+
+Words.
+
+::::`;
+  const warnings = [];
+  const warn = (message) => warnings.push(message);
+  assert.match(page(section, { design: two, warn }), /^<section class="kn-band kn-section" data-kn-surface="brand-secondary">/);
+  assert.match(page(hero, { design: two, warn }), /^<section class="kn-band kn-hero" data-kn-surface="accent-secondary"/);
+  assert.deepEqual(warnings, []);
+  // One colour: the primary's kind it repeats, and the build says so.
+  assert.match(page(section, { warn }), /^<section class="kn-band kn-section" data-kn-surface="brand">/);
+  assert.match(page(hero, { warn }), /^<section class="kn-band kn-hero" data-kn-surface="accent"/);
+  assert.equal(warnings.length, 2);
+  assert.match(warnings[0], /section on brand-secondary, a Surface of the secondary brand colour, which the design does not have; it stands on brand/);
+  // The core's check passes them, since it has no design to ask.
+  for (const name of ['hero', 'section']) for (const kind of ['tint', 'brand', 'accent']) for (const rank of ['secondary', 'tertiary'])
+    assert.ok(components[name].attributes.surface.values.includes(`${kind}-${rank}`), `${name} ${kind}-${rank}`);
+});

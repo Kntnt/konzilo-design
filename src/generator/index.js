@@ -8,7 +8,7 @@ import { spacing } from './space.js';
 import { radii } from './shape.js';
 import { fingerprint } from './fingerprint.js';
 import { endpoints } from './fluid.js';
-import { surfaces, contrastCheck } from './surface.js';
+import { surfaces, contrastCheck, checkSurfaceInputs } from './surface.js';
 
 export { defaultInputs };
 export * from './color.js';
@@ -30,6 +30,7 @@ export function derive(inputs) {
   const settings = withDefaults(inputs);
   const { breakpoints, ratio, 'body-size': bodySize } = settings.type;
   if (breakpoints.min > breakpoints.max) throw new Error('inputs.type.breakpoints: min must not be above max');
+  checkSurfaceInputs(settings);
   const palette = ramps(settings['brand-colors'], settings['gray-temperature']);
   const contexts = surfaces(settings, palette);
   const typefaces = typefaceStacks(settings.typefaces, settings.type.label, settings.type['heading-1-role']);

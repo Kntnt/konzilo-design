@@ -18,6 +18,7 @@ import { markerAttributes } from '../markers.js';
 import { panelParts } from '../panels.js';
 import { sectionParts } from '../section.js';
 import { surfaceOf } from '../surfaces.js';
+import { RANK_KINDS } from '../../generator/surface.js';
 import { breadcrumbProps } from '../../components/design-props.js';
 import { heroAttributes } from '../../components/hero-attributes.js';
 import {
@@ -197,7 +198,7 @@ function hero(attrs, blocks, ctx) {
   const deck = blocks.find((node) => isElement(node, 'p') && !pictureOf(node)) ?? null;
   const rest = blocks.filter((node) => node !== trail && node !== logo && node !== main && !eyebrows.includes(node) && node !== deck && directiveOf(node) !== 'breadcrumbs');
   const behind = settings.picture === 'behind' && !!main;
-  const chosen = attrs.surface ?? (settings.surface === 'none' ? undefined : settings.surface);
+  const chosen = attrs.surface ? bandSurface(attrs.surface, ctx, 'hero') : settings.surface === 'none' ? undefined : settings.surface;
   const surface = behind ? `picture-${settings.overlay ?? 'dark'}` : chosen;
   const side = main && !behind ? (['start', 'end', 'start-bleed', 'end-bleed'].includes(settings.picture) ? settings.picture : 'end') : undefined;
   const below = settings.h1 === 'below';
@@ -283,8 +284,19 @@ export function groupEyebrows(html) {
   return out + html.slice(from);
 }
 
+// A band's Surface as its directive names it, where the design has it. A kind of a brand colour the design does not have,
+// such as `tint-secondary` with one colour, stands on the primary's kind it repeats, as the accent and the focus take the
+// primary where there is no secondary (plates.md, Every brand colour's plates).
+function bandSurface(kind, ctx, name) {
+  const rank = RANK_KINDS[kind];
+  if (!rank || ctx.design.resolved.surfaces?.[kind]) return kind;
+  ctx.warn(`a :::${name} on ${kind}, a Surface of the ${rank.rank} brand colour, which the design does not have; it stands on ${rank.base}`);
+  return rank.base;
+}
+
 function section(attrs, blocks, ctx, { body } = {}) {
-  const surface = attrs.surface && attrs.surface !== 'page' ? attrs.surface : undefined;
+  const named = attrs.surface && attrs.surface !== 'page' ? attrs.surface : undefined;
+  const surface = named && bandSurface(named, ctx, 'section');
   const band = within(ctx, surface);
   const parts = sectionParts(blocks.map((node) => ({ kind: kindOf(node), text: isElement(node, 'p') ? textOf(node) : undefined })));
   const out = [];

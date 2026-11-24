@@ -192,14 +192,17 @@ function colourBlock(key, name, job, removable) {
         <input class="input figures" type="text" data-hex="${key}" maxlength="7" spellcheck="false" aria-label="${escapeHtml(name)} as hex" ${tip('The exact colour, as a six-digit hex value.')}>
       </div>
       <div class="ramp figures" data-ramp="${key}"></div>
-      ${removable ? `<div class="colour-actions ui"><button class="link-button" type="button" data-remove-colour="${key}" ${tip('Removes this colour and its tint. Removing the second colour also removes the third.')}>Remove this colour</button></div>` : ''}
+      ${removable ? `<div class="colour-actions ui"><button class="link-button" type="button" data-remove-colour="${key}" ${tip('Removes this colour and its plates. Removing the second colour also removes the third.')}>Remove this colour</button></div>` : ''}
     </div>
   </section>`;
 }
 // Text, links and buttons on every Surface, with their contrast, on the page where the colours are set, so a
 // change shows at once (the owner, 2026-11-11): below the colours, or beside them where the document is wide.
 // The report keeps them on a page of their own.
-const SURFACE_CASES = [['page', 'Page'], ['raised', 'Raised'], ['tint', 'Tint'], ['tint-secondary', 'Second tint'], ['tint-tertiary', 'Third tint'], ['brand', 'Brand'], ['inverse', 'Inverse'], ['accent', 'Accent']];
+// Grouped by colour: the grey plates, then each brand colour's tint, brand band and accent band (2026-11-24).
+const SURFACE_CASES = [['page', 'Page'], ['raised', 'Raised'], ['inverse', 'Inverse'], ['tint', 'Tint'], ['brand', 'Brand'], ['accent', 'Accent'],
+  ['tint-secondary', 'Second tint'], ['brand-secondary', 'Second brand'], ['accent-secondary', 'Second accent'],
+  ['tint-tertiary', 'Third tint'], ['brand-tertiary', 'Third brand'], ['accent-tertiary', 'Third accent']];
 function surfaceCases(copy) {
   // Each figure has a fixed width, so a ratio with another number of digits never wraps the line differently.
   const ratio = (role, word) => `<span>${word} <span data-ratio="${role}"></span></span>`;
@@ -222,8 +225,8 @@ function colourScale(copy) {
       <div class="colour-work">
         <div class="colours">
           ${colourBlock('primary', 'Primary', 'The main colour: links, buttons and strong Surfaces.', false)}
-          ${colourBlock('secondary', 'Secondary', 'Accents, focus and a tint of its own.', true)}
-          ${colourBlock('tertiary', 'Tertiary', 'One more tint, to group content.', true)}
+          ${colourBlock('secondary', 'Secondary', 'Accents and focus, and plates of its own: a tint, a brand band and an accent band.', true)}
+          ${colourBlock('tertiary', 'Tertiary', 'Plates of its own, to group content: a tint, a brand band and an accent band.', true)}
           <section class="colour">
             <div class="colour-name"><h2 class="setting-title ui">Grey</h2><p class="colour-job ui">Text, hairlines and neutral Surfaces.</p></div>
             <div class="colour-body">
@@ -232,7 +235,7 @@ function colourScale(copy) {
             </div>
           </section>
         </div>
-        <div class="colour-actions ui"><button class="link-button" type="button" data-add-colour ${tip('Adds another brand colour with a tint of its own. It shows in the preview at once.')}>Add a colour</button></div>
+        <div class="colour-actions ui"><button class="link-button" type="button" data-add-colour ${tip('Adds another brand colour with plates of its own: a tint, a brand band and an accent band. It shows in the preview at once.')}>Add a colour</button></div>
       </div>
       ${surfaceCases(copy)}
     </div>
@@ -448,7 +451,10 @@ function shadow(copy) {
 /* ---- The frame: what surrounds every page, and is chosen once. ---- */
 const setting = (title, body) => `<section class="setting"><h2 class="setting-title ui">${escapeHtml(title)}</h2>${body}</section>`;
 const flags = (items) => `<div class="chips ui">${items.map(([path, name, help]) => `<button class="chip" type="button" data-flag="inputs.${path}" ${tip(help)}>${escapeHtml(name)}</button>`).join('')}</div>`;
-const SURFACE_CHOICES = [['page', 'Page colour'], ['raised', 'Raised'], ['tint', 'Tint'], ['brand', 'Brand colour'], ['inverse', 'Dark']];
+// A choice in a second or third colour is offered only where the design has that colour (app.js).
+const RANK_BRANDS = [['brand-secondary', 'Second brand colour'], ['brand-tertiary', 'Third brand colour']];
+const SURFACE_CHOICES = [['page', 'Page colour'], ['raised', 'Raised'], ['tint', 'Tint'], ['brand', 'Brand colour'], ['inverse', 'Dark'],
+  ['tint-secondary', 'Second tint'], ['tint-tertiary', 'Third tint'], ...RANK_BRANDS];
 const AXIS_CHOICES = [['row', 'Side by side'], ['column', 'Stacked']];
 
 // A small drawing of an arrangement. Items that are off stay in their place, greyed.
@@ -480,7 +486,7 @@ function headerPage(copy) {
     ${setting('How it behaves', `<div class="fields">
         ${choice('Scrolling', 'inputs.header.attachment', [['sticky', 'Stays at the top'], ['flow', 'Scrolls away']], 'Stays at the top of the window, or leaves with the page and returns at the top.')}
         ${choice('Page start', 'inputs.header.start', [['below', 'Below the header'], ['under', 'Under the header']], `Under the header, the first band starts at the top of the window and the header is transparent until you scroll. ${onlySticky}`)}
-        ${choice('Solid colour', 'inputs.header.surface', [['page', 'Page colour'], ['brand', 'Brand colour']], 'The colour of the bar, and after a little scrolling also of a header that starts transparent.')}
+        ${choice('Solid colour', 'inputs.header.surface', [['page', 'Page colour'], ['brand', 'Brand colour'], ...RANK_BRANDS], 'The colour of the bar, and after a little scrolling also of a header that starts transparent.')}
       </div>
       ${flags([
         ['header.autohide', 'Slides away', `Slides out of the window when you scroll down, and back when you scroll up. ${onlySticky}`],
@@ -631,7 +637,7 @@ function heroPage(copy) {
     ${setting('Text', `<div class="picks picks-three ui">${HERO_PLACES.map((item) => heroPick('place', item)).join('')}</div>
     <div class="picks picks-three ui">${HERO_ALIGNS.map((item) => heroPick('align', item)).join('')}</div>`)}
     ${setting('Behind the text', `<div class="fields">
-      ${choice('Colour', 'inputs.hero.surface', [['none', 'None'], ...SURFACE_CHOICES, ['accent', 'Accent']], 'The colour behind the text. With none, what lies beneath shows. Accent is the fill of the filled button, which then turns to the Surface’s own button colours.')}
+      ${choice('Colour', 'inputs.hero.surface', [['none', 'None'], ...SURFACE_CHOICES, ['accent', 'Accent'], ['accent-secondary', 'Second accent'], ['accent-tertiary', 'Third accent']], 'The colour behind the text. With none, what lies beneath shows. Accent is the fill of the filled button, which then turns to the Surface’s own button colours.')}
       ${choice('Overlay', 'inputs.hero.overlay', [['dark', 'Dark, with light text'], ['light', 'Light, with dark text']], 'What lies between the picture and the text. It is as strong as the text needs, and no more.')}
     </div>`)}
     ${setting('Heading', `<div class="picks-beside">

@@ -15,10 +15,18 @@
   .kn-band[data-kn-surface="tint-tertiary"] + .kn-band[data-kn-surface="tint-tertiary"] { padding-block-start: var(--kn-space-band-run); }
   .kn-band[data-kn-surface="brand"]:has(+ .kn-band[data-kn-surface="brand"]) { padding-block-end: 0; }
   .kn-band[data-kn-surface="brand"] + .kn-band[data-kn-surface="brand"] { padding-block-start: var(--kn-space-band-run); }
+  .kn-band[data-kn-surface="brand-secondary"]:has(+ .kn-band[data-kn-surface="brand-secondary"]) { padding-block-end: 0; }
+  .kn-band[data-kn-surface="brand-secondary"] + .kn-band[data-kn-surface="brand-secondary"] { padding-block-start: var(--kn-space-band-run); }
+  .kn-band[data-kn-surface="brand-tertiary"]:has(+ .kn-band[data-kn-surface="brand-tertiary"]) { padding-block-end: 0; }
+  .kn-band[data-kn-surface="brand-tertiary"] + .kn-band[data-kn-surface="brand-tertiary"] { padding-block-start: var(--kn-space-band-run); }
   .kn-band[data-kn-surface="inverse"]:has(+ .kn-band[data-kn-surface="inverse"]) { padding-block-end: 0; }
   .kn-band[data-kn-surface="inverse"] + .kn-band[data-kn-surface="inverse"] { padding-block-start: var(--kn-space-band-run); }
   .kn-band[data-kn-surface="accent"]:has(+ .kn-band[data-kn-surface="accent"]) { padding-block-end: 0; }
   .kn-band[data-kn-surface="accent"] + .kn-band[data-kn-surface="accent"] { padding-block-start: var(--kn-space-band-run); }
+  .kn-band[data-kn-surface="accent-secondary"]:has(+ .kn-band[data-kn-surface="accent-secondary"]) { padding-block-end: 0; }
+  .kn-band[data-kn-surface="accent-secondary"] + .kn-band[data-kn-surface="accent-secondary"] { padding-block-start: var(--kn-space-band-run); }
+  .kn-band[data-kn-surface="accent-tertiary"]:has(+ .kn-band[data-kn-surface="accent-tertiary"]) { padding-block-end: 0; }
+  .kn-band[data-kn-surface="accent-tertiary"] + .kn-band[data-kn-surface="accent-tertiary"] { padding-block-start: var(--kn-space-band-run); }
   .kn-band[data-kn-surface="picture-light"]:has(+ .kn-band[data-kn-surface="picture-light"]) { padding-block-end: 0; }
   .kn-band[data-kn-surface="picture-light"] + .kn-band[data-kn-surface="picture-light"] { padding-block-start: var(--kn-space-band-run); }
   .kn-band[data-kn-surface="picture-dark"]:has(+ .kn-band[data-kn-surface="picture-dark"]) { padding-block-end: 0; }

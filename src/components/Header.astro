@@ -16,7 +16,7 @@ import Megamenu from './Megamenu.astro';
 import SkipLink from './SkipLink.astro';
 interface Props extends HTMLAttributes<'header'> {
   identity: Identity; arrangement?: 'A' | 'B' | 'C'; attachment?: 'flow' | 'sticky';
-  start?: 'below' | 'under'; autohide?: boolean; surface?: 'page' | 'brand'; translucent?: boolean;
+  start?: 'below' | 'under'; autohide?: boolean; surface?: 'page' | 'brand' | 'brand-secondary' | 'brand-tertiary'; translucent?: boolean;
   menu?: MenuItem[]; linkMenu?: boolean; menuButton?: MenuButton | false;
   languages?: Language[]; search?: Search; cta?: Cta; level?: Level; numbered?: boolean;
   menuAbove?: boolean; menuBelow?: boolean; skipTo?: string; words?: HeaderWords;

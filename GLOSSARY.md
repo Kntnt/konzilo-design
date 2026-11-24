@@ -78,7 +78,7 @@ The names in code, the custom properties, classes, attributes and design-file ke
 
 **Surface**: Anything that paints its own opaque background, and so supplies the complete set of context Roles to everything on it: the page, a band, the header bar, a card, a button, a panel. Text on a Surface takes its text Role, and is dark on a light one and light on a dark one without anyone saying so. A Surface inside a Surface starts a new context. _Avoid_: plate, which is the Swedish talk's *platta*; theme.
 
-**Kind**: Which Surface something is, which sets its background and every Role on it: `page`, `raised`, `tint`, `tint-secondary`, `tint-tertiary`, `brand`, `inverse`, `accent`, `picture-light`, `picture-dark` and the four status kinds. Content that paints no background takes no kind and inherits. _Avoid_: plate kind, variant.
+**Kind**: Which Surface something is, which sets its background and every Role on it: `page`, `raised`, `tint`, `brand`, `accent`, `inverse`, `picture-light`, `picture-dark`, the four status kinds, and each further brand colour's `tint-`, `brand-` and `accent-` with its rank, such as `brand-secondary`. Content that paints no background takes no kind and inherits. _Avoid_: plate kind, variant.
 
 **Mode**: Light or dark mode, chosen on an element, which turns it and everything in it. Without a choice an element inherits its parent's, and a page is light; the operating system's preference changes nothing by itself. Every Kind has values for both modes; `brand`, `inverse` and `accent` stay dark in both. _Avoid_: theme, polarity.
 

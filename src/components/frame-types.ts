@@ -1,5 +1,5 @@
 // Shared data contracts for the page frame. Content comes from the consuming site.
-export type Surface = 'page' | 'raised' | 'tint' | 'tint-secondary' | 'tint-tertiary' | 'brand' | 'inverse' | 'accent' | 'picture-light' | 'picture-dark' | 'status-info' | 'status-success' | 'status-warning' | 'status-error';
+export type Surface = 'page' | 'raised' | 'tint' | 'tint-secondary' | 'tint-tertiary' | 'brand' | 'brand-secondary' | 'brand-tertiary' | 'inverse' | 'accent' | 'accent-secondary' | 'accent-tertiary' | 'picture-light' | 'picture-dark' | 'status-info' | 'status-success' | 'status-warning' | 'status-error';
 export type Level = 1 | 2 | 3 | 4 | 5 | 6;
 export interface FrameLink { label: string; href: string; current?: boolean; description?: string; consentOpen?: boolean }
 export interface MenuItem extends FrameLink { children?: FrameLink[]; linkMenu?: boolean }

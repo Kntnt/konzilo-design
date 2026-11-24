@@ -267,8 +267,8 @@ use the box and lifted-box shadows among the first six components.
 
 ### Surfaces
 
-`surfaces(settings, palette)` builds the eight base kinds, four status kinds and any rank tints
-in light and dark mode, each
+`surfaces(settings, palette)` builds the eight base kinds, four status kinds and any further colour's tint, brand band
+and accent band in light and dark mode, each
 with seventeen context roles, a polarity, its six shadows and its frame colour.
 Each role is a recipe over the ramps (a ramp and step, or white or black).
 
@@ -310,14 +310,20 @@ Each role is a recipe over the ramps (a ramp and step, or white or black).
 - **Rank tints:** `tint-secondary` and `tint-tertiary` exist only when that
   brand colour does (`kindsFor(palette)`); each is the tint recipe on its own
   colour's ramp, following the mode.
+- **A further colour's bands (2026-11-24; plates.md, Every brand colour's plates):** `brand-secondary`,
+  `accent-secondary`, `brand-tertiary` and `accent-tertiary` likewise exist only with their colour, after the rank tints
+  in `kindsFor`. Each is the primary's kind on its own colour's ramp: brand on 800 and accent on 700, dark in both modes,
+  with every other role on the step they stand on as in the table above, accent's muted text and borders grey.
+  `RANK_KINDS` gives each further kind its rank and the primary's kind it repeats. `SURFACE_INPUTS` lists the inputs that
+  choose a kind, and `checkSurfaceInputs`, which `derive` calls, refuses one in a colour the design does not have.
 - **Alternate backgrounds (decided with the components, 2026-11-02):**
   `background-alt`, emitted as `--kn-background-alt`, is a fixed fill recipe,
   outside foreground solving, in the table above. A background on step 800 takes the next
   step down, 900 in light mode and 850 in dark: 700 misses `link-alt` at about 4:1 for the teal, yellow, blue, red and near-black test
   seeds. That preserves the approved foregrounds and the 4.5:1 target.
-- **Rank:** links and the brand Surfaces from the primary; `accent` and `focus`
+- **Rank:** links, buttons and the primary's Surfaces from the primary; `accent` and `focus`
   from the secondary when there is one, else the primary, on every Surface,
-  the rank tints included. A tertiary feeds only its own tint. Status roles come from fixed
+  a further colour's own included. A tertiary feeds only its own Surfaces. Status roles come from fixed
   blue, green, amber and red seeds, ramped like the brand colours (`STATUS_SEEDS`,
   `statusRamp`).
 - **The warning apart from the brand's tints (2026-11-13):** a brand colour near amber gave

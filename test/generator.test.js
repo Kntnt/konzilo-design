@@ -6,7 +6,7 @@ import {
   defaultInputs, resolve, fluid, typeScale, spacing, radii, LEVELS, REFERENCE,
   shadow, shadowsForSurface, hexToRgb, rgbToHex, hexToOklch, oklchToHex,
   fitChroma, inGamut, oklchToLinearRgb, luminance, contrast, ramp, TARGETS,
-  canonicalJson, fingerprint, checkFingerprint, validateDesignFile,
+  canonicalJson, fingerprint, checkFingerprint, validateDesignFile, derive,
 } from '../src/generator/index.js';
 import { emitCss } from '../src/css/index.js';
 import { sameGroundPlates } from '../src/directives/surfaces.js';
@@ -156,7 +156,7 @@ test('defaults, explicit colour policies, frame and completed contrast metadata'
   const file = { format: 1, inputs, project: {}, resolved: r };
   assert.equal(validateDesignFile(file), file);
   assert.ok((await emitCss(file)).includes('--kn-frame-width: 2px;'));
-  assert.equal(Object.keys(r.surfaces).length, 13); // eight base kinds, four status kinds and tint-secondary
+  assert.equal(Object.keys(r.surfaces).length, 15); // eight base kinds, four status kinds and the secondary's tint, brand and accent
 });
 
 test('inputs reject unknown controls, invalid ranges and unavailable colour choices', async () => {
@@ -192,4 +192,17 @@ test('checked-in neutral example is current, schema-valid and fully reproducible
   const { 'generator-version': written, ...stored } = example.resolved;
   assert.deepEqual(resolved, stored);
   assert.match(written, /^\d+\.\d+\.\d+$/);
+});
+
+test('an input may choose a further colour\'s plate only where the design has that colour', () => {
+  const inputs = (brand, settings) => ({ 'brand-colors': brand, ...settings });
+  for (const settings of [{ header: { surface: 'brand-secondary' } }, { header: { 'search-surface': 'tint-secondary' } }, { footer: { upper: { surface: 'brand-secondary' } } },
+    { footer: { lower: { surface: 'tint-secondary' } } }, { hero: { surface: 'accent-secondary' } }]) {
+    assert.throws(() => derive(inputs({ primary: '#168b83' }, settings)), /needs a secondary brand colour/);
+    assert.equal(derive(inputs({ primary: '#168b83', secondary: '#7a3e9d' }, settings))['contrast-check'].status, 'passed');
+  }
+  assert.throws(() => derive(inputs({ primary: '#168b83', secondary: '#7a3e9d' }, { hero: { surface: 'brand-tertiary' } })), /inputs\.hero\.surface: brand-tertiary needs a tertiary brand colour/);
+  // The schema keeps the accent band to the hero, as it keeps the primary's.
+  assert.throws(() => derive(inputs({ primary: '#168b83', secondary: '#7a3e9d' }, { footer: { upper: { surface: 'accent-secondary' } } })), /unsupported value/);
+  assert.throws(() => derive(inputs({ primary: '#168b83', secondary: '#7a3e9d' }, { header: { surface: 'tint-secondary' } })), /unsupported value/);
 });

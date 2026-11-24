@@ -127,7 +127,9 @@
     .kn-header[data-kn-attachment="sticky"] { --kn-header-under: 0; }
   }
   .kn-page:has(> .kn-page-main > .kn-band:not(.kn-band ~ .kn-band):is(:not([data-kn-surface]), [data-kn-surface="page"])) > .kn-header[data-kn-surface="page"],
-  .kn-page:has(> .kn-page-main > .kn-band:not(.kn-band ~ .kn-band)[data-kn-surface="brand"]) > .kn-header[data-kn-surface="brand"] { --kn-header-same: 1; }
+  .kn-page:has(> .kn-page-main > .kn-band:not(.kn-band ~ .kn-band)[data-kn-surface="brand"]) > .kn-header[data-kn-surface="brand"],
+  .kn-page:has(> .kn-page-main > .kn-band:not(.kn-band ~ .kn-band)[data-kn-surface="brand-secondary"]) > .kn-header[data-kn-surface="brand-secondary"],
+  .kn-page:has(> .kn-page-main > .kn-band:not(.kn-band ~ .kn-band)[data-kn-surface="brand-tertiary"]) > .kn-header[data-kn-surface="brand-tertiary"] { --kn-header-same: 1; }
   @container style(--kn-header-under: 1) and style(--kn-header-clear: 0) {
     .kn-header > .kn-header-bar { box-shadow: var(--kn-shadow-header); }
   }

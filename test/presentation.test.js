@@ -139,7 +139,7 @@ test('copy has no unused keys and all values are strings', async () => {
     ...pageList().flatMap((page) => [`${page.id}.title`, `${page.id}.lead`]),
     ...[...new Set(pageList().map((page) => page.chapter))].map((name) => `chapter.${name}`),
     ...ids.map((name) => `specimen.${name}`),
-    ...['page', 'raised', 'tint', 'tint-secondary', 'tint-tertiary', 'brand', 'inverse', 'accent', 'picture-light', 'picture-dark', 'status-info', 'status-success', 'status-warning', 'status-error'].map((name) => `surface.${name}`),
+    ...['page', 'raised', 'tint', 'tint-secondary', 'tint-tertiary', 'brand', 'brand-secondary', 'brand-tertiary', 'inverse', 'accent', 'accent-secondary', 'accent-tertiary', 'picture-light', 'picture-dark', 'status-info', 'status-success', 'status-warning', 'status-error'].map((name) => `surface.${name}`),
     ...['primary', 'secondary', 'tertiary', 'gray'].map((name) => `colour.${name}`),
     ...['primary', 'secondary', 'tertiary'].map((name) => `colour.${name}.job`),
     ...['display', 'heading-1', 'heading-2', 'heading-3', 'heading-4', 'heading-5', 'heading-6', 'lead', 'body', 'small', 'label', 'before', 'after'].map((name) => `type.${name}`),

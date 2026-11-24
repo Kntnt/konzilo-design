@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.14.0] – 2026-11-24
+
+### Added
+
+- Every brand colour has the primary's three coloured plates. Beside its tint, a second or third colour now has a brand band on step 800 of its own ramp and an accent band on 700, dark in both modes: `brand-secondary`, `accent-secondary`, `brand-tertiary` and `accent-tertiary`, each generated only where its colour exists and checked in both modes like every Surface. A design that adds a second colour gets its plates in three shades from the seed alone. Links and buttons stay the primary's and accent and focus the secondary's, on these plates as on every other (plates.md, Every brand colour's plates).
+- A site chooses them wherever it chooses a coloured plate: the `hero` and `section` directives and the hero's Surface take a further colour's tint, brand band and accent band; the header's solid colour takes its brand band; the search box and the footer's bands take its tint and brand band. The tool offers them while the design has the colour, and turns a choice in a removed colour to the primary's kind. `resolve` refuses an input in a colour the design does not have. A directive in such a colour stands on the primary's kind, with a warning in the build, since the core checks directives without the design.
+- The tool's colour page, the presentation and DESIGN.md show each colour's plates, grouped by colour.
+- Nothing changes for an existing design: one with one brand colour resolves to exactly the values and the core CSS it had. A design with two or three gets the new kinds beside the old, whose values are unchanged.
+
 ## [0.13.0] – 2026-11-23
 
 ### Added

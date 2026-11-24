@@ -104,7 +104,7 @@ test('every component has a typed wrapper; only the declared client entries, the
 
 test('bands join each supported identical Surface with CSS adjacency in both directions', async () => {
   const source = await readFile(new URL('band.css', directory), 'utf8');
-  for (const kind of ['page', 'raised', 'tint', 'tint-secondary', 'tint-tertiary', 'brand', 'inverse', 'accent', 'picture-light', 'picture-dark', 'status-info', 'status-success', 'status-warning', 'status-error']) {
+  for (const kind of ['page', 'raised', 'tint', 'tint-secondary', 'tint-tertiary', 'brand', 'brand-secondary', 'brand-tertiary', 'inverse', 'accent', 'accent-secondary', 'accent-tertiary', 'picture-light', 'picture-dark', 'status-info', 'status-success', 'status-warning', 'status-error']) {
     const selector = `.kn-band[data-kn-surface="${kind}"]`;
     assert.ok(source.includes(`${selector}:has(+ ${selector}) { padding-block-end: 0; }`));
     assert.ok(source.includes(`${selector} + ${selector} { padding-block-start: var(--kn-space-band-run); }`));

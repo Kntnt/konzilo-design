@@ -4,7 +4,7 @@ import { escapeHtml } from './footer-html.js';
 export const brandParts = (identity, hasLogo) => ({ logo: hasLogo && identity !== 'name', name: !hasLogo || identity !== 'logo' });
 
 // A band that is dark in both modes takes the dark logo, and one that follows the mode has both, for CSS to choose.
-const DARK_SURFACES = ['brand', 'inverse'];
+const DARK_SURFACES = ['brand', 'brand-secondary', 'brand-tertiary', 'inverse'];
 
 // The brand for a cell of a footer, following the header: give it as the cell's `content` to `footerFromDesign`
 // or to Footer. `identity` and `axis` are the design's `header.identity` and `header.brand-axis`, `surface` the band's.
