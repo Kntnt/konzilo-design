@@ -95,15 +95,26 @@ function pictureFrom(html, element, className) {
   return retagged(inside, image, { set: { class: className, ...(mark === undefined ? {} : { 'data-konzilo-block': mark }) } });
 }
 
+// A figure as a section's photo: its picture, and its caption under it as a Figure's where it has one, as a :::section draws
+// it (render.js, photo()).
+function photoFrom(html, element) {
+  const image = pictureFrom(html, element, 'kn-section-picture');
+  const inside = innerOf(html, element);
+  const caption = topElements(inside).find((one) => one.name === 'figcaption');
+  if (!caption) return image;
+  return tag('figure', { class: 'kn-section-figure' }, image, tag('figcaption', { class: 'kn-section-caption', 'data-kn-type': 'small' }, innerOf(inside, caption)));
+}
+
 // A section from its blocks in order, by the section's rules (directives.md, `section`): each block { kind, text, plain,
-// head, picture }, its kind and text as sectionParts() reads them, `plain` its HTML in a section's body, `head({ long })`
-// its HTML in the head, and `picture(className)` a picture's image as the media's.
+// head, picture, photo }, its kind and text as sectionParts() reads them, `plain` its HTML in a section's body,
+// `head({ long })` its HTML in the head, `picture()` a picture's image as a badge, and `photo()` the media's first picture
+// with its caption.
 function sectionFrom(blocks, { surface, anchor } = {}) {
   const parts = sectionParts(blocks);
   const out = [];
   if (parts.media.length) {
     const [first, ...badges] = parts.media.map((at) => blocks[at]);
-    out.push(tag('div', { class: 'kn-section-media' }, first.picture('kn-section-picture'),
+    out.push(tag('div', { class: 'kn-section-media' }, first.photo(),
       badges.length ? tag('ul', { class: 'kn-section-badges', role: 'list' }, badges.map((badge) => tag('li', {}, badge.picture()))) : ''));
   }
   if (parts.head.length) {
@@ -135,6 +146,7 @@ function blocksOfHtml(html) {
         return retagged(html, element, { set: { class: 'kn-heading-group-eyebrow' } });
       },
       picture: (className) => pictureFrom(html, element, className),
+      photo: () => photoFrom(html, element),
     };
   });
 }

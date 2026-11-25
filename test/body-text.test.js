@@ -145,3 +145,78 @@ test('a table in the core\'s wrapper stands where the bare table stood, in body 
     }
   }
 });
+
+// A table between two paragraphs in every part whose words flow as body text's do, alone and inside another, as the core
+// renders the body (issue #19); and in a card, whose children stand apart by its gap.
+const FLOWS = {
+  'body text': `Words before.\n\n${TABLE}\n\nWords after.`,
+  'fact box': `:::aside\n\n::eyebrow[In short]\n\nWords before.\n\n${TABLE}\n\nWords after.\n\n:::`,
+  tab: `:::tabs\n\n### Small\n\nWords before.\n\n${TABLE}\n\nWords after.\n\n### Large\n\nWords.\n\n:::`,
+  answer: `:::accordion{first="open"}\n\n### What does it cost?\n\nWords before.\n\n${TABLE}\n\nWords after.\n\n### How long?\n\nWords.\n\n:::`,
+  choice: `:::choice\n\n### Yes\n\nWords before.\n\n${TABLE}\n\nWords after.\n\n### No\n\nWords.\n\n:::`,
+  'table of contents': `:::toc\n\n### The first part\n\nWords before.\n\n${TABLE}\n\nWords after.\n\n### The second part\n\nWords.\n\n:::`,
+  'fact box in a tab': `::::tabs\n\n### Small\n\nWords.\n\n:::aside\n\nWords before.\n\n${TABLE}\n\nWords after.\n\n:::\n\n### Large\n\nWords.\n\n::::`,
+  'fact box in a choice': `::::choice\n\n### Yes\n\nWords.\n\n:::aside\n\nWords before.\n\n${TABLE}\n\nWords after.\n\n:::\n\n### No\n\nWords.\n\n::::`,
+  'tab in an answer': `::::accordion{first="open"}\n\n### What does it cost?\n\n:::tabs\n\n### Small\n\nWords before.\n\n${TABLE}\n\nWords after.\n\n### Large\n\nWords.\n\n:::\n\n### How long?\n\nWords.\n\n::::`,
+  'fact box in a tab in an answer': `:::::accordion{first="open"}\n\n### What does it cost?\n\n::::tabs\n\n### Small\n\nWords.\n\n:::aside\n\nWords before.\n\n${TABLE}\n\nWords after.\n\n:::\n\n### Large\n\nWords.\n\n::::\n\n### How long?\n\nWords.\n\n:::::`,
+  card: `:::cards\n\n### A card\n\nWords before.\n\n${TABLE}\n\nWords after.\n\n:::`,
+};
+// The space between each table's box and the paragraphs on either side of it.
+const spaceOfTables = (tab, port) => tab.evaluate((port) => Object.fromEntries([...document.querySelectorAll('[data-place]')].map((place) => {
+  const box = place.querySelector(port);
+  const own = box.getBoundingClientRect();
+  return [place.dataset.place, {
+    above: own.top - box.previousElementSibling.getBoundingClientRect().bottom,
+    under: box.nextElementSibling.getBoundingClientRect().top - own.bottom,
+    size: Number.parseFloat(getComputedStyle(place.querySelector('table')).fontSize),
+    gap: Number.parseFloat(getComputedStyle(box.parentElement).rowGap) || 0,
+  }];
+})), port);
+
+test('a table stands off the paragraphs round it as in body text, bare or in the core\'s wrapper, in a fact box, a tab, an answer, a choice and a table of contents, at any depth; in a card by its gap', { timeout: 180000 }, async () => {
+  const bare = Object.entries(FLOWS).map(([place, markdown], at) => `<div data-place="${place}" style="display: flow-root"><div class="kn-body-text">${
+    renderMarkdown(markdown).replace(/="(accordion|tabs|choice)-(\d+)"/g, `="$1-$2-${at}"`).replace(/<details class="kn-choice-item"/, '$& open')}</div></div>`).join('');
+  const boxed = bare.replace(/<table/g, '<div class="konzilo-table"><table').replace(/<\/table>/g, '</table></div>');
+  for (const [name, browser] of browsers) {
+    for (const width of [1280, 390]) {
+      const tab = await browser.newPage({ viewport: { width, height: 900 } });
+      for (const [form, body, port] of [['bare', bare, 'table'], ['in its wrapper', boxed, '.konzilo-table']]) {
+        await tab.setContent(`<!doctype html><html lang="en"><head><style>${styles}${konzilo}</style></head><body data-kn-surface="page" style="padding-inline: 1rem"><main style="inline-size: min(100%, 40rem); margin-inline: auto">${body}</main></body></html>`);
+        const found = await spaceOfTables(tab, port);
+        const flow = found['body text'];
+        // In body text one and a half times the table's own size, above and below it.
+        assert.ok(Math.abs(flow.under - 1.5 * flow.size) < 0.5, `${name} at ${width}px, ${form}: ${flow.under} under it in body text`);
+        assert.ok(Math.abs(flow.above - 1.5 * flow.size) < 0.5, `${name} at ${width}px, ${form}: ${flow.above} above it in body text`);
+        const off = Object.entries(found).flatMap(([place, at]) => {
+          const want = place === 'card' ? at.gap : 1.5 * at.size;
+          return ['above', 'under'].filter((side) => Math.abs(at[side] - want) >= 0.5).map((side) => `${place}: ${at[side].toFixed(2)} ${side} it, not ${want.toFixed(2)}`);
+        });
+        assert.deepEqual(off, [], `${name} at ${width}px, ${form}`);
+      }
+      await tab.close();
+    }
+  }
+});
+
+test('a table alone in a fact box, a tab or a choice\'s panel stands at its edges, bare or in the core\'s wrapper', { timeout: 120000 }, async () => {
+  const alone = ['fact box, alone', 'tab, alone', 'choice, alone'].map((place, at) => `<div data-place="${place}" style="display: flow-root"><div class="kn-body-text">${
+    renderMarkdown(PLACES[place]).replace(/="(accordion|tabs|choice)-1"/g, `="$1-${at}"`).replace(/<details class="kn-choice-item"/, '$& open')}</div></div>`).join('');
+  const boxed = alone.replace(/<table/g, '<div class="konzilo-table"><table').replace(/<\/table>/g, '</table></div>');
+  for (const [name, browser] of browsers) {
+    const tab = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+    for (const [form, body, port] of [['bare', alone, 'table'], ['in its wrapper', boxed, '.konzilo-table']]) {
+      await tab.setContent(`<!doctype html><html lang="en"><head><style>${styles}${konzilo}</style></head><body data-kn-surface="page"><main style="inline-size: 40rem">${body}</main></body></html>`);
+      const off = await tab.evaluate((port) => [...document.querySelectorAll('[data-place]')].flatMap((place) => {
+        const box = place.querySelector(port);
+        const part = box.parentElement.getBoundingClientRect();
+        const style = getComputedStyle(box.parentElement);
+        const own = box.getBoundingClientRect();
+        const top = own.top - (part.top + Number.parseFloat(style.borderBlockStartWidth) + Number.parseFloat(style.paddingBlockStart));
+        const bottom = part.bottom - Number.parseFloat(style.borderBlockEndWidth) - Number.parseFloat(style.paddingBlockEnd) - own.bottom;
+        return Math.abs(top) < 0.5 && Math.abs(bottom) < 0.5 ? [] : [`${place.dataset.place}: ${top.toFixed(2)} from its top edge, ${bottom.toFixed(2)} from its bottom`];
+      }), port);
+      assert.deepEqual(off, [], `${name}, ${form}`);
+    }
+    await tab.close();
+  }
+});

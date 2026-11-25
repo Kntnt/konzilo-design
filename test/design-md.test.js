@@ -344,6 +344,9 @@ test('DESIGN.md draws the directives\' components by recipe: sections, series, q
   ]) assert.ok(body.includes(words), words);
   for (const n of [1, 2, 3, 4, 5, 6]) assert.match(body, new RegExp(`^  ${n}\\. \\*\\*`, 'm'), `section rule ${n}`);
   assert.match(body, /from a 48rem window, two equal columns/);
+  // A section's photo keeps its caption (the owner, 2026-11-25, issue #35).
+  assert.match(body, /A caption the editor gave the picture stands under it, the component gap below it, in small type and `text-muted`/);
+  assert.match(body, /A hero's, a card's and a logo's picture, and a section's badges, show no caption/);
   assert.match(body, /from 60rem, the head beside the accordion at 2:3/);
   assert.doesNotMatch(body, /none of these: [^\n]*\b(tabs|timeline)\b/, 'tabs and a timeline are components now');
   assert.match(body, /^- `brand-instagram`: /m);
