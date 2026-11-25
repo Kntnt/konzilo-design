@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A table in a fact box, a tab, a choice's panel or a table of contents' flow stands off the paragraphs round it as in body text, bare or in the wrapper the Konzilo core is asked to write, `<div class="konzilo-table">`, and wherever the part stands, in an answer or another part too: one and a half times its own size above and below it, 1.40625rem at the default type sizes. It had no space of its own there, so the paragraph after it started at its last line and the one before it stood a paragraph's 1em above it. A table first or last in a fact box, a tab or a choice's panel still stands at the part's edge, and in a card the card's gap still stands round it (the assistant's choice, 2026-11-25; components.md, Tables). This builds issue #19.
+
 ## [0.15.0] – 2026-11-25
 
 ### Added
