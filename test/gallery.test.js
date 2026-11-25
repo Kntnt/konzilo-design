@@ -547,6 +547,12 @@ test('the directive chapters show every directive and variant as the contract wr
   const bundle = [...html.matchAll(/<script\b[^>]*type="module"[^>]*>([\s\S]*?)<\/script>/gi)].map(([, js]) => js).join('\n');
   // No runtime for tabs, a choice, a section's head or a Reading Area (principles.md).
   for (const gone of ['setupTabs', 'setupChoices', 'setupSections', 'setupReadingAreas', 'konzilo-preview-show']) assert.ok(!bundle.includes(gone), gone);
-  // Neither the following menu nor Visitor Filters runs a script (principles.md).
+  // Visitor Filters runs no script, and the following menu only its polyfill, where a browser lacks CSS scroll markers
+  // (principles.md; directives.md, `toc`): the menu's loader is gone, the polyfill itself in its place, once.
   for (const gone of ['setupFollowingMenus', 'setupVisitorFilters', 'data-kn-follow]']) assert.ok(!bundle.includes(gone), gone);
+  assert.doesNotMatch(html, /data-kn-polyfill/);
+  const polyfills = [...html.matchAll(/<script>([\s\S]*?)<\/script>/gi)].map(([, js]) => js).filter((js) => js.includes('.kn-toc[data-kn-follow]'));
+  assert.equal(polyfills.length, 1);
+  assert.match(polyfills[0], /^\(function\(\)\{if\(!CSS\.supports\(`scroll-target-group: auto`\)\)\{/);
+  assert.match(html, /<\/ol><script>\(function\(\)\{if\(!CSS\.supports\(`scroll-target-group: auto`\)\)/);
 });

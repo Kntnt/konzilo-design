@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A following menu marks the link of the section being read, in the text colour with its 0.1875rem bar on the rail in the accent colour, alike in Chromium, Firefox and WebKit, in both modes and on every Surface the Aside can take; until now it marked none (the owner, 2026-11-23 and 2026-11-25). Chromium marks it by its CSS scroll markers (`scroll-target-group: auto`, `:target-current`), with no script. Firefox and WebKit load `scroll-markers-polyfill.js`, about 1.3 kB minified, only where `CSS.supports('scroll-target-group: auto')` is false; it sets `aria-current="location"` on the link Chromium would mark, by Chromium's own rule, at the same scroll positions to within a pixel, down and up and at the page's end. Without script such a browser marks nothing, as before. This builds issue #25.
+- `Toc.astro`, `ArticleBody.astro` and a Table of Contents with `data-kn-follow` end the menu's `<nav>` with the polyfill's loader, `<script data-kn-polyfill="scroll-markers">`, its text the same on every page of a build, so the core's content security policy allows it by one hash and a site imports nothing. `renderDirective` and `articleBody` take it as `loader`; a page they draw without one, or one written by hand, is marked only where the browser has scroll markers. A Table of Contents without `data-kn-follow` is unchanged. DESIGN.md describes the mark and the rule, and the gallery's following menus show it.
+
 ## [0.15.0] – 2026-11-25
 
 ### Added

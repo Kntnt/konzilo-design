@@ -3,7 +3,8 @@ import { nextId } from './ids.js';
 import type { HTMLAttributes } from 'astro/types';
 import type { Level, Surface } from './frame-types';
 import type { ContentHeading } from './content-types';
-import { contentsTree } from './table-of-contents.js';
+import { contentsTree, followingMenuLoader } from './table-of-contents.js';
+import scrollMarkersPolyfill from './scroll-markers-polyfill.js?url&no-inline';
 import TableOfContentsList from './TableOfContentsList.astro';
 interface Props extends HTMLAttributes<'nav'> {
   headings: ContentHeading[];
@@ -17,8 +18,11 @@ const entries = contentsTree(headings, depth);
 const count = headings.filter((heading) => heading.depth >= 2 && heading.depth <= depth).length;
 const labelId = nextId('kn-toc-label');
 const Label = (level ? `h${level}` : 'p') as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'p';
+// A following menu ends with the loader of the polyfill that marks the section being read where a browser lacks CSS
+// scroll markers (directives.md, `toc`).
+const follows = attributes['data-kn-follow'] !== undefined && attributes['data-kn-follow'] !== false;
 ---
 {count >= 2 && <nav {...attributes} class:list={['kn-toc', className]} aria-labelledby={labelId} data-kn-type="small" data-kn-surface={surface}>
   <Label class="kn-toc-label" id={labelId} data-kn-type="heading-6">{label}</Label>
-  <TableOfContentsList entries={entries} />
+  <TableOfContentsList entries={entries} />{follows && <Fragment set:html={followingMenuLoader(scrollMarkersPolyfill)} />}
 </nav>}
