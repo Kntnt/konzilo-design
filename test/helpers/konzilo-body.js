@@ -106,6 +106,19 @@ const figures = {
   name: 'test-figures',
   element: { filter: ['p'], visit(node, ctx) { const figure = figureOf(node); if (figure) ctx.replaceNode(node, figure); } },
 };
+// A master, which the editor writes by its address from the post's folder, `../media/<name>`, or `media/<name>` at the
+// content folder's root, the core serves from `/_astro/` by Astro's images, so a component never sees the relative
+// address (the core's content-format.md, Masters; test/konzilo-build.test.js sees the real one).
+const masters = {
+  name: 'test-masters',
+  element: {
+    filter: ['img'],
+    visit(node, ctx) {
+      const master = /^(?:\.\.\/)*media\/([^/]+)$/.exec(String(node.properties.src ?? ''));
+      if (master) ctx.setProperty(node, 'src', `/_astro/${master[1]}`);
+    },
+  },
+};
 
 // Astro's ids for headings without one, as GitHub makes them.
 function headingIds(root) {
@@ -168,7 +181,7 @@ function marks(root) {
  * @param {{ preview?: boolean }} [options] `preview`: with the live preview's marks.
  */
 export function bodyHtml(markdown, { preview = false } = {}) {
-  const { html } = markdownToHtml(String(markdown).trim(), { features: FEATURES, mdastPlugins: [directives], hastPlugins: [headingAnchors, figures] });
+  const { html } = markdownToHtml(String(markdown).trim(), { features: FEATURES, mdastPlugins: [directives], hastPlugins: [headingAnchors, masters, figures] });
   const root = htmlToHast(html, { fragment: true });
   headingIds(root);
   if (preview) marks(root);

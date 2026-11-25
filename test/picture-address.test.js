@@ -5,9 +5,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { parse } from 'ultrahtml';
 import { querySelector as one } from 'ultrahtml/selector';
+import { htmlToHast } from 'satteri';
 import { render } from './helpers/render.js';
 import { renderMarkdown, testDesign } from './helpers/konzilo-body.js';
 import { pageContext } from '../src/directives/render/context.js';
+import { renderDirective } from '../src/directives/render/render.js';
 import { articleOpening } from '../src/page-parts/parts.js';
 
 // Addresses a browser reads the same from the page and from a stylesheet.
@@ -33,7 +35,11 @@ test('a band writes a picture from the site\'s root or a whole one into its styl
 });
 
 test('an opening drawn from its directive with its picture behind refuses a relative address, and beside it keeps it', () => {
-  const opening = (address, picture) => renderMarkdown(`::::hero\n\nStart small.\n\n![Raised beds](${address})\n\n::::`, { design: testDesign({ hero: { picture } }) });
+  // The tree a site's reader hands the component, its picture at the address given.
+  const opening = (address, picture) => {
+    const tree = htmlToHast(`<p>Start small.</p><figure><img src="${address}" alt="Raised beds"></figure>`, { fragment: true });
+    return renderDirective('hero', {}, tree, pageContext({ design: testDesign({ hero: { picture } }), title: 'Planning a garden', warn: () => {} }));
+  };
   for (const address of KEPT) {
     assert.ok(opening(address, 'behind').includes(`--kn-picture-image:url(${JSON.stringify(address).replaceAll('"', '&quot;')})`), address);
   }
@@ -42,6 +48,9 @@ test('an opening drawn from its directive with its picture behind refuses a rela
     // Beside the text it is an <img>, which a browser reads from the page.
     assert.match(opening(address, 'end'), /<div class="kn-hero-media"><img src="[^"]+"/, address);
   }
+  // An editor writes a master by its relative address, which the core serves from the site's root before the hero sees it.
+  const master = renderMarkdown('::::hero\n\nStart small.\n\n![Raised beds](../media/beds.webp)\n\n::::', { design: testDesign({ hero: { picture: 'behind' } }) });
+  assert.match(master, /--kn-picture-image:url\(&quot;\/_astro\/beds\.webp&quot;\)/);
 });
 
 test('an article\'s opening with its main image behind refuses a relative address, and beside it keeps it', () => {
