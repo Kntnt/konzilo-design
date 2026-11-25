@@ -60,7 +60,7 @@ The names in code, the custom properties, classes, attributes and design-file ke
 
 **Gallery**: Every component on one page, `gallery/dist/index.html`, built by `npm run gallery`. _Avoid_: storybook.
 
-**Sample page**: The one real page the tool's preview and the presentation show, with sample content and photos, or the client's own menu, footer words and photos where the design has them, where a component may occur several times. _Avoid_: demo page.
+**Sample page**: The one real page the tool's preview and the presentation show, with sample content and photos, or the client's own menu, call to action, footer words and photos where the design has them, where a component may occur several times. _Avoid_: demo page.
 
 **Way of looking**: A choice of how the design is shown, not what it is: the preview's width, the Mode, pictures or none. It is not saved in the design file or in the history, and it stays in the preview's own bar, never in the control panel. A component's variants are no way of looking either: the preview shows them all. _Avoid_: setting, for these.
 
@@ -141,6 +141,8 @@ The names in code, the custom properties, classes, attributes and design-file ke
 **Identity**: The brand the header shows and the footer repeats: a logo, which is a symbol only, a name, or both, with an optional slogan. _Avoid_: branding, logo, for the whole.
 
 **Megamenu**: The panel the menu button opens under the header, with the menu's first level as headings over columns of the second. _Avoid_: dropdown, hamburger menu.
+
+**Veil**: The page's own background, translucent, over the page blurred: how the page shows behind the open search box, and behind a translucent header's bar and panels, sensed rather than read. _Avoid_: scrim, which keeps text readable on a picture; backdrop.
 
 **Hero**: The Band that opens a page, with its own choices of size, picture, the text's place, colour and the look of its heading. _Avoid_: banner, header.
 
