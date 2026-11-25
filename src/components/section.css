@@ -79,6 +79,10 @@
   /* Media: the picture the section begins with, and the pictures after it as its badges, with it. */
   .kn-section-media { display: grid; align-content: start; justify-items: start; gap: var(--kn-space-component-gap); min-inline-size: 0; }
   .kn-section-picture { display: block; inline-size: 100%; block-size: auto; border-radius: var(--kn-radius-card); }
+  /* A photo with its caption: the caption under the picture as a Figure's, small and muted on the section's Surface, the
+     component gap below it (issue #35, the owner, 2026-11-25). */
+  .kn-section-figure { justify-self: stretch; margin: 0; min-inline-size: 0; }
+  .kn-section-caption { padding-block-start: var(--kn-space-component-gap); color: var(--kn-text-muted); overflow-wrap: anywhere; }
   .kn-section-badges { display: flex; flex-wrap: wrap; align-items: center; gap: var(--kn-space-component-gap); margin: 0; padding: 0; list-style: none; }
   .kn-section-badges > li { margin: 0; }
   /* A badge is as tall as the recipe says and as wide as its proportions make it, shown whole: an SVG with only a viewBox has no
@@ -91,6 +95,9 @@
   /* Rule 1, with a form in the body: the picture is what the form offers, so it is shown whole, as itself, and not cropped. */
   .kn-section > .kn-band-content:has(> .kn-section-media):has(> .kn-section-body > form) > .kn-section-media { justify-items: center; }
   .kn-section > .kn-band-content:has(> .kn-section-media):has(> .kn-section-body > form) .kn-section-picture { inline-size: auto; max-inline-size: min(100%, var(--kn-section-offer-size, 16rem)); max-block-size: min(36rem, 70svh); border-radius: 0; }
+  /* Its caption stands under it the same way, no wider than the room the picture has, and the picture in its middle. */
+  .kn-section > .kn-band-content:has(> .kn-section-media):has(> .kn-section-body > form) .kn-section-figure { justify-self: center; max-inline-size: min(100%, var(--kn-section-offer-size, 16rem)); }
+  .kn-section > .kn-band-content:has(> .kn-section-media):has(> .kn-section-body > form) .kn-section-figure > .kn-section-picture { margin-inline: auto; }
 
   /* Rule 3: another form or a choice, where rules 1 and 2 have not matched. The whole section is centred, as a page's end. */
   .kn-section > .kn-band-content:not(:has(> .kn-section-media)):has(> .kn-section-body > :is(form, .kn-choice)):is(:not(:has(> .kn-section-head + .kn-section-body > form:first-child)), :has(> .kn-section-head :is(.kn-heading-group-deck, .kn-actions))) {
@@ -120,19 +127,26 @@
        (object-fit: cover), so it never floats with space above it, and never short of its own proportions. It grows to a
        square at the most, and to no more than most of the window; beside text longer still it keeps that size and stays at
        the top of the window as the text scrolls by, as a following menu does (the owner, 2026-11-11). With badges, the
-       picture and its badges stay together and follow at their own size. Not with a form, whose picture is shown whole. */
+       picture and its badges stay together and follow at their own size. Not with a form, whose picture is shown whole.
+       A photo with its caption grows and follows as one, its caption under the picture: the two together take the size a
+       picture alone would, a square at the most and within 85svh, so the caption stays in the window with the picture
+       (the assistant's choice, 2026-11-25, issue #35). */
     .kn-section > .kn-band-content:has(> .kn-section-media):not(:has(> .kn-section-body > form)):not(:has(.kn-section-badges)) > .kn-section-media {
       align-self: stretch;
       grid-template-rows: 1fr;
       container-type: inline-size;
     }
-    .kn-section > .kn-band-content:has(> .kn-section-media):not(:has(> .kn-section-body > form)):not(:has(.kn-section-badges)) .kn-section-picture {
+    .kn-section > .kn-band-content:has(> .kn-section-media):not(:has(> .kn-section-body > form)):not(:has(.kn-section-badges)) > .kn-section-media > :is(.kn-section-picture, .kn-section-figure) {
       align-self: start;
       position: sticky;
       inset-block-start: var(--kn-reading-sticky-inset);
       min-block-size: min(100%, 100cqi, 85svh);
-      object-fit: cover;
     }
+    .kn-section > .kn-band-content:has(> .kn-section-media):not(:has(> .kn-section-body > form)):not(:has(.kn-section-badges)) .kn-section-picture { object-fit: cover; }
+    /* The picture takes the height the figure has beyond its caption, so where the figure grows, the picture grows with it
+       and the caption stays under it. */
+    .kn-section > .kn-band-content:has(> .kn-section-media):not(:has(> .kn-section-body > form)):not(:has(.kn-section-badges)) .kn-section-figure { display: grid; grid-template-rows: 1fr auto; }
+    .kn-section > .kn-band-content:has(> .kn-section-media):not(:has(> .kn-section-body > form)):not(:has(.kn-section-badges)) .kn-section-figure > .kn-section-picture { align-self: stretch; }
     .kn-section > .kn-band-content:has(> .kn-section-media):not(:has(> .kn-section-body > form)):has(.kn-section-badges) > .kn-section-media {
       align-self: start;
       position: sticky;

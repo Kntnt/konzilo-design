@@ -230,6 +230,76 @@ Or write to us.
   assert.match(part(preview, 'kn-section-body'), /^<div class="kn-section-body kn-body-text"><div class="test-post-list" data-konzilo-block="0\.4"/);
 });
 
+test('a section\'s photo keeps the caption the editor gave it, under the picture, and a photo without one is the bare picture', () => {
+  const markdown = md`:::::section
+
+![A shed with tools](/media/shed.webp)\
+The shed in May, *before* the [beds](/beds/).
+
+![Award one](/media/award-1.svg)\
+A caption a badge drops.
+
+## Plans
+
+Each shed holds what a garden of its size needs.
+
+![A bed](/media/bed.webp)\
+A picture in the body keeps the core's caption.
+
+:::::`;
+  const html = page(markdown);
+  assert.equal(tight(part(html, 'kn-section-media')), [
+    '<div class="kn-section-media"><figure class="kn-section-figure"><img class="kn-section-picture" src="/media/shed.webp" alt="A shed with tools">',
+    '<figcaption class="kn-section-caption" data-kn-type="small">The shed in May, <em>before</em> the <a href="/beds/">beds</a>.</figcaption></figure>',
+    '<ul class="kn-section-badges" role="list"><li><img src="/media/award-1.svg" alt="Award one"></li></ul></div>',
+  ].join(''));
+  // The body begins after the media and the head, its deck with it, and keeps the core's own figure and caption.
+  assert.match(part(html, 'kn-section-body'), /^<div class="kn-section-body kn-body-text"><figure><img src="\/media\/bed\.webp" alt="A bed"><figcaption>A picture in the body keeps the core's caption\.<\/figcaption><\/figure><dialog/);
+  // In the live preview the block's mark stays where it stood, on the picture, and the page is the same less the marks.
+  const preview = page(markdown, { preview: true });
+  assert.equal(unmarked(preview), html);
+  assert.match(part(preview, 'kn-section-media'), /<figure class="kn-section-figure"><img class="kn-section-picture" src="\/media\/shed\.webp" alt="A shed with tools" data-konzilo-block="0\.0"><figcaption class="kn-section-caption" data-kn-type="small">/);
+  assert.match(part(preview, 'kn-section-body'), /^<div class="kn-section-body kn-body-text"><figure data-konzilo-block="0\.4">/);
+  // Without a caption the photo is drawn exactly as before.
+  const bare = page(markdown.replace('\\\nThe shed in May, *before* the [beds](/beds/).', ''));
+  assert.match(bare, /<div class="kn-section-media"><img class="kn-section-picture" src="\/media\/shed\.webp" alt="A shed with tools"><ul class="kn-section-badges"/);
+  assert.doesNotMatch(part(bare, 'kn-section-media'), /figure|caption/);
+});
+
+test('a hero, a card and a band of logos drop a picture\'s caption without a warning', () => {
+  const warnings = [];
+  const warn = (message) => warnings.push(message);
+  const hero = page(md`::::hero
+
+Words.
+
+![Raised beds in the spring](/media/beds.webp)\
+A caption from the library.
+
+::::`, { design: testDesign({ hero: { picture: 'end' } }), warn });
+  assert.match(hero, /<div class="kn-hero-media"><img src="\/media\/beds\.webp" alt="Raised beds in the spring" loading="eager"><\/div>/);
+  const cards = page(md`::::cards
+
+![A balcony box](/media/box.webp)\
+A caption from the library.
+
+### A balcony
+
+For a small space.
+
+::::`, { warn });
+  assert.match(cards, /<article class="kn-card"><img class="kn-card-picture" src="\/media\/box\.webp" alt="A balcony box"[^>]*><h3/);
+  const logos = page(md`:::list{type="logos"}
+
+- ![A name](/media/a.svg)\
+  A caption from the library.
+
+:::`, { warn });
+  assert.match(logos, /<li><img src="\/media\/a\.svg" alt="A name"><\/li>/);
+  for (const html of [hero, cards, logos]) assert.doesNotMatch(html, /figcaption|A caption from the library/);
+  assert.deepEqual(warnings, []);
+});
+
 test('bodyFromSlot counts the core\'s elements where no marks are, and finds the first block\'s mark where they are', () => {
   const ctx = pageContext({ design: testDesign(), title: 'T' });
   const tree = htmlToHast('<figure><img src="a.webp" alt="A"></figure><h2 id="h">H</h2><p>Rest</p>', { fragment: true }).children;
