@@ -477,6 +477,8 @@ The class grammar and selectors are shared by Astro and the plain HTML export.
 | `--kn-hero-screen`, `--kn-hero-height` | What a Hero's height is a share of, and the share chosen by `data-kn-height`. |
 | `--kn-scrim` | A picture Surface's scrim as one colour at its checked opacity, for a layer that masks say where to show. |
 | `--kn-scrim-fade`, `--kn-scrim-fade-length` | That layer's mask where text stands on part of the picture, from clear to whole over the length. |
+| `--kn-hero-window` | The window's height, which a picture Hero's fade length is a share of: `100svh`, or in the presentation the screen a sample stands for (the assistant's choice, 2026-11-25). |
+| `--kn-hero-heading` | Not a custom property but an anchor name: a picture Hero's main heading where its text stands at the bottom, which places the top of the layer's full strength (the assistant's choice, 2026-11-25, issue #28). |
 | `--kn-scrim-header` | That layer's mask behind a transparent header, whole over the header's height and then clearing. |
 | `--kn-scrim-fade-direction` | Which way that mask runs: `to bottom` (default) with the text at the bottom, `to top` with the text at the top. |
 

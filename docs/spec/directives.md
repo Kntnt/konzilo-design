@@ -270,7 +270,7 @@ Start small, and let the beds widen year by year.
 ::::
 ```
 
-**Read from content.** *(CSS)* Fine print right after the actions is a note under them. A hero without a picture has no `.kn-hero-media`, and its text takes the content width as Hero's choices say. It keeps its height, the design's or its own `height`, as a hero with a picture does (***decided*** by the owner, 2026-11-13, after a site built with the components asked whether such an opening should be only as tall as its text). *(Changed 2026-11-25: the design's height was two thirds of the window by default; a new design's is half, and a hero may choose its own.)*
+**Read from content.** *(CSS)* Fine print right after the actions is a note under them. Over a picture behind with the text at the bottom, the overlay holds its checked strength from the top of the heading down, and the trail and an eyebrow above the heading stand in its fade, where their contrast over a bright picture is not checked (***decided* by the owner, 2026-11-25**, issue #28; components.md, Band compositions): the checks hold from the heading down. Where the design puts the H1 under the hero, the paragraph with the heading's look counts as the heading (the assistant's choice, the same day). A hero without a picture has no `.kn-hero-media`, and its text takes the content width as Hero's choices say. It keeps its height, the design's or its own `height`, as a hero with a picture does (***decided*** by the owner, 2026-11-13, after a site built with the components asked whether such an opening should be only as tall as its text). *(Changed 2026-11-25: the design's height was two thirds of the window by default; a new design's is half, and a hero may choose its own.)*
 
 **Behaviour.** None.
 
