@@ -13,12 +13,10 @@ if (!CSS.supports('scroll-target-group: auto')) {
   const choose = (marks, y, view, end) => {
     if (end <= 0) return marks.at(-1);
     const reserve = view / 8, low = Math.min(...marks.map(({ at }) => at)), high = Math.max(...marks.map(({ at }) => at));
-    for (const mark of marks) {
-      if (mark.at < reserve) mark.at = ((mark.at - low) / (reserve - low)) * reserve;
-      else if (mark.at > end - reserve) mark.at = ((mark.at - (end - reserve)) / (high - (end - reserve))) * reserve + end - reserve;
-    }
+    const spread = marks.map(({ link, at }) => ({ link, at: at < reserve ? ((at - low) / (reserve - low)) * reserve
+      : at > end - reserve ? ((at - (end - reserve)) / (high - (end - reserve))) * reserve + end - reserve : at }));
     let before, after;
-    for (const mark of marks.toSorted((a, b) => a.at - b.at)) {
+    for (const mark of spread.toSorted((a, b) => a.at - b.at)) {
       if (!before || mark.at <= y) before = mark;
       else if (mark.at < y + view / 2 && !(after?.at < mark.at)) after = mark;
     }

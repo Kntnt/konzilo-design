@@ -214,7 +214,9 @@
      Hero's with a picture beside it does, so a picture inside the content area and one out to the window differ only in
      where they end. The picture reaches over the band's space by a negative margin of that space. */
   @container style(--kn-section-picture-side: corners) or style(--kn-section-picture-side: corners-bleed) {
-    /* The band before names the path to the picture inside its one :has(), which cannot hold the band's own. */
+    /* The band's class written again, and the band's before it, weigh more than band.css's rules for two bands on one
+       Surface, a class and an attribute on each band and its neighbour, so these win in whatever order the two files
+       stand. The band before names the path to the picture inside its one :has(), which cannot hold the band's own. */
     .kn-band.kn-section.kn-section:has(> .kn-band-content > .kn-section-media):where(:not(:has(> .kn-band-content > .kn-section-body > form), :has(> .kn-band-content .kn-section-badges))) {
       padding-block: var(--kn-space-band);
       &::before, & + .kn-band::before { content: none; }

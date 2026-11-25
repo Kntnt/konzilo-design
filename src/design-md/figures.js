@@ -17,7 +17,7 @@ const PHONE = 390;
 const px = (value) => `${number(value, 1)} px`;
 const sized = (value) => `${px(value)} (${rem(value)})`;
 // A label size that must not show smaller than it should, rounded up to a tenth of a pixel.
-const up = (value) => Math.ceil(value * 10 - 1e-9) / 10;
+const roundUp = (value) => Math.ceil(value * 10 - 1e-9) / 10;
 const list = (items) => (items.length < 2 ? items.join('') : `${items.slice(0, -1).join(', ')} and ${items.at(-1)}`);
 
 function measures(r) {
@@ -39,14 +39,14 @@ function widthWords({ narrow }) {
 
 function phoneWords({ narrow, first, phone, column }) {
   const where = phone === first ? `a ${px(phone)} window, the design's smallest, where its type scale starts` : `a ${px(phone)} window, a phone's, narrower than the type scale's first breakpoint at ${px(first)}`;
-  return `- **On a phone:** in ${where}, the column is ${sized(column)} wide, so a wider figure shrinks to fit it: one drawn at Narrow to ${Math.round(column / narrow * 100)}% of its size. No text in this design is smaller than ${sized(LEAST_TEXT)}, and no label should show smaller there: in a figure drawn at Narrow the smallest label is ${px(up(LEAST_TEXT * narrow / column))}, and in one W px wide, ${LEAST_TEXT} × W / ${column} px.`;
+  return `- **On a phone:** in ${where}, the column is ${sized(column)} wide, so a wider figure shrinks to fit it: one drawn at Narrow to ${Math.round(column / narrow * 100)}% of its size. No text in this design is smaller than ${sized(LEAST_TEXT)}, and no label should show smaller there: in a figure drawn at Narrow the smallest label is ${px(roundUp(LEAST_TEXT * narrow / column))}, and in one W px wide, ${LEAST_TEXT} × W / ${column} px.`;
 }
 
 function labelWords({ narrow, column, body, small, legible }) {
   const sizes = `main labels at the body size, ${px(body.max)}, and secondary ones, such as an axis's values or a note, at the small size, ${px(small.max)}`;
   const onPhone = `where the text is ${px(body.min)}, a main label shows at ${px(body.max * column / legible)} and a secondary one at ${px(small.max * column / legible)}`;
   const wider = legible < narrow
-    ? ` So draw a figure with text at most ${px(legible)} wide where it can be. One that needs more room, up to Narrow, takes labels larger by its width over ${px(legible)}: at Narrow, main labels at ${px(up(body.max * narrow / legible))} and secondary ones at ${px(up(small.max * narrow / legible))}, which stand larger than the text beside them on a wide screen.`
+    ? ` So draw a figure with text at most ${px(legible)} wide where it can be. One that needs more room, up to Narrow, takes labels larger by its width over ${px(legible)}: at Narrow, main labels at ${px(roundUp(body.max * narrow / legible))} and secondary ones at ${px(roundUp(small.max * narrow / legible))}, which stand larger than the text beside them on a wide screen.`
     : ' So a figure up to Narrow keeps these sizes.';
   return `- **Labels:** in the figure's own pixels at its full width, ${sizes}, the sizes of the text and the captions beside a figure on a wide screen. They stay legible on a phone in a figure at most ${sized(legible)} wide: there, ${onPhone}.${wider}`;
 }
@@ -88,10 +88,10 @@ function fileWords({ legible }) {
 }
 
 export function figureSection({ resolved: r }) {
-  const m = measures(r);
+  const measured = measures(r);
   return `### Figures
 
 A figure with text in it, such as a diagram, a graph or a screenshot, stands in running text as an image. Show it at its own size, never larger, and at most as wide as the column: it looks right only where it was drawn for that column. Every number here is this design's.
 
-${[widthWords(m), phoneWords(m), labelWords(m), typefaceWords(r), colourWords(r), OUTLINES, fileWords(m)].join('\n')}`;
+${[widthWords(measured), phoneWords(measured), labelWords(measured), typefaceWords(r), colourWords(r), OUTLINES, fileWords(measured)].join('\n')}`;
 }
