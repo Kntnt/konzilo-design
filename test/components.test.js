@@ -59,6 +59,16 @@ test('component CSS uses only logical properties, role reads and permitted drawi
   }
 });
 
+// The tool, the presentation and the gallery show the components as a site would, so they read the space roles too: the
+// numbered steps are the core's own, not something to read (names.md, decision 22).
+test('the tool, the presentation and the gallery read the space roles, never a numbered step', async () => {
+  const root = new URL('../', import.meta.url);
+  const files = (await Promise.all(['tool/', 'presentation/src/', 'gallery/src/'].map(async (folder) => (await readdir(new URL(folder, root), { recursive: true }))
+    .filter((name) => /\.(?:css|astro|js|mjs|ts)$/.test(name)).map((name) => `${folder}${name}`)))).flat();
+  assert.ok(files.includes('tool/style.css') && files.includes('gallery/src/gallery.css'), 'the folders are read');
+  for (const file of files) assert.doesNotMatch(await readFile(new URL(file, root), 'utf8'), /--kn-space-[1-8]\b/, file);
+});
+
 test('the plain HTML stylesheet flattens the component entry point and preserves layer order', async () => {
   const css = await componentsCss();
   assert.doesNotMatch(css, /@import/);
