@@ -1,7 +1,8 @@
 // A body as the Konzilo core renders it, for the directive components' tests, without the core: its Markdown read as the
 // core reads it (Sätteri with GFM, raw HTML and directives on, smart punctuation off; each directive as the core's plain
 // rendering; a heading's anchor as its id and every other heading's id from its text, as Astro gives it; an image alone
-// in a paragraph as a figure, several as a gallery), with the live preview's marks where asked, and its Body: the body's
+// in a paragraph as a figure, with its caption on the line after a hard break, several as a gallery), with the live
+// preview's marks where asked, and its Body: the body's
 // HTML split at each directive this package draws, each given its attributes typed with their defaults, its tree, and
 // for a section its slot, the core's own rendering of its body again, with the lightbox's dialog after each figure.
 // What the core alone draws, a post list and a form, stands in the slot as a stand-in element.
@@ -58,13 +59,48 @@ const headingAnchors = {
 
 const isTag = (node, name) => node?.type === 'element' && node.tagName === name;
 const element = (tagName, children, properties = {}) => ({ type: 'element', tagName, properties, children });
+// A paragraph's lines, each { after, nodes }: `after` the break before it, `hard` (a <br>) or `soft` (a newline).
+function linesOf(paragraph) {
+  const lines = [{ after: null, nodes: [] }];
+  let afterBreak = false;
+  for (const node of paragraph.children) {
+    if (isTag(node, 'br')) {
+      lines.push({ after: 'hard', nodes: [] });
+      afterBreak = true;
+      continue;
+    }
+    if (node.type === 'text') {
+      const value = afterBreak ? node.value.replace(/^\n/, '') : node.value;
+      value.split('\n').forEach((part, i) => {
+        if (i > 0) lines.push({ after: 'soft', nodes: [] });
+        if (part !== '') lines.at(-1).nodes.push({ ...node, value: part });
+      });
+    } else lines.at(-1).nodes.push(node);
+    afterBreak = false;
+  }
+  return lines;
+}
+// An image alone, its caption on the next line after a hard break, as a figure; images on lines of their own after soft
+// breaks as a gallery, a last line of words its caption.
 function figureOf(paragraph) {
-  const kids = paragraph.children.filter((node) => !(node.type === 'text' && node.value.trim() === ''));
-  const images = kids.filter((node) => isTag(node, 'img'));
-  const breaks = kids.filter((node) => isTag(node, 'br'));
-  if (images.length === 0 || images.length + breaks.length !== kids.length) return null;
-  const figures = images.map((image) => element('figure', [image]));
-  return figures.length === 1 ? figures[0] : element('figure', figures, { className: ['konzilo-gallery'] });
+  const items = [];
+  let caption = null;
+  for (const { after, nodes } of linesOf(paragraph)) {
+    const [picture, ...rest] = nodes;
+    const image = rest.length === 0 && isTag(picture, 'img') ? picture : null;
+    if (nodes.length === 0 || caption !== null || (!image && nodes.some((node) => isTag(node, 'img')))) return null;
+    if (after === 'hard') {
+      const last = items.at(-1);
+      if (!last || last.caption || image) return null;
+      last.caption = nodes;
+    } else if (image) items.push({ picture: image, caption: null });
+    else if (items.length > 1) caption = nodes;
+    else return null;
+  }
+  const figures = items.map((item) => element('figure', [item.picture, ...(item.caption ? [element('figcaption', item.caption)] : [])]));
+  if (figures.length === 0) return null;
+  if (figures.length === 1) return figures[0];
+  return element('figure', [...figures, ...(caption ? [element('figcaption', caption)] : [])], { className: ['konzilo-gallery'] });
 }
 const figures = {
   name: 'test-figures',

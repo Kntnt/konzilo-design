@@ -60,6 +60,15 @@ function picture(block, values = {}) {
   return voidTag('img', { class: classes, src, ...rest, alt: rest.alt ?? '', ...extra, ...markOf(block) });
 }
 
+// A section's photo, its caption under it as a Figure's where the editor gave it one, and otherwise the bare picture. The
+// block's mark stays on the picture, as on a picture without a caption (directives.md, Pictures).
+function photo(block) {
+  const image = picture(block, { class: 'kn-section-picture' });
+  const caption = isElement(block, 'figure') ? blocksOf(block.children).find((part) => isElement(part, 'figcaption')) : undefined;
+  if (!caption) return image;
+  return tag('figure', { class: 'kn-section-figure' }, image, tag('figcaption', { class: 'kn-section-caption', 'data-kn-type': 'small' }, inner(caption)));
+}
+
 const isActions = (node) => directiveOf(node) === 'list' && attributesOf(node).type === 'actions';
 const isEyebrow = (node) => directiveOf(node) === 'eyebrow';
 
@@ -307,7 +316,7 @@ function section(attrs, blocks, ctx, { body } = {}) {
   if (parts.media.length) {
     const [first, ...badges] = parts.media.map((at) => blocks[at]);
     out.push(tag('div', { class: 'kn-section-media' },
-      picture(first, { class: 'kn-section-picture' }),
+      photo(first),
       badges.length ? tag('ul', { class: 'kn-section-badges', role: 'list' }, badges.map((badge) => tag('li', {}, picture(badge)))) : ''));
   }
   if (parts.head.length) {
