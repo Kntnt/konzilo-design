@@ -1,6 +1,6 @@
 // The design tool's preview: it changes the sample page's header, footer and page as the settings change,
-// without a build. The header comes from a built template with every item, takes the design's own menu in place of the
-// sample's, and leaves out what is off; its giving-way
+// without a build. The header comes from a built template with every item, takes the design's own menu and call to
+// action in place of the sample's, and leaves out what is off; its giving-way
 // script, which the template brings, measures it again when it changes. The trail goes with the page's H1, in hero-live.js.
 import { layoutFooter } from '../../src/components/footer.js';
 // The preview can set its footer at the edge of the screen at any time, so it carries the script that says whether
@@ -10,7 +10,7 @@ import '../../src/components/footer-fit.js';
 // it stands in for the header's flags too where the browser's style queries miss them, as Firefox's do.
 import '../../src/components/scroll-timeline-polyfill.js';
 import { footerHtml } from '../../src/components/footer-html.js';
-import { footerProps, identityProps, menuOf } from './frame.js';
+import { ctaOf, footerProps, identityProps, menuOf } from './frame.js';
 import { search } from './samples.js';
 
 function identity(header, settings, project) {
@@ -134,7 +134,15 @@ function buildHeader(settings, project) {
   if (!settings['link-menu']) drop('.kn-header-link-menu');
   if (!settings.language) drop('.kn-header-language, [data-kn-moved="language"]');
   if (!settings.search) drop('.kn-header-search-trigger, [data-kn-panel="search"], [data-kn-moved="search"]');
+  // The template's call to action is the sample's: the design's own takes its place, in the bar and in the large menu.
   if (!settings.cta) drop('.kn-header-cta');
+  else {
+    const { label, href } = ctaOf(project);
+    for (const button of header.querySelectorAll('.kn-header-cta')) {
+      button.textContent = label;
+      button.setAttribute('href', href);
+    }
+  }
   if (!settings.numbered) drop('.kn-megamenu-number');
   if (!settings['menu-above']) drop('.kn-megamenu-above');
   if (!settings['menu-below']) drop('.kn-megamenu-below');
@@ -265,8 +273,14 @@ export function setupLiveFrame() {
     document.addEventListener('cancel', (event) => { if (event.target === heldPanel()) event.preventDefault(); }, true);
     document.addEventListener('close', (event) => { if (event.target === heldPanel()) showPanel(); }, true);
   }
+  // A link leads nowhere but to a fragment, as in the presentation's reader: the client's own address for the call to
+  // action would take the preview away from the sample page.
+  document.addEventListener('click', (event) => {
+    const link = event.target.closest?.('a[href]');
+    if (link && !link.getAttribute('href').startsWith('#')) event.preventDefault();
+  });
   function apply({ header, footer, page: settings }, project) {
-    const headerKey = JSON.stringify([header, project.name, project.logo, project['logo-dark'], project.slogan, project.menu]);
+    const headerKey = JSON.stringify([header, project.name, project.logo, project['logo-dark'], project.slogan, project.menu, project.cta]);
     if (headerKey !== shown.header) {
       // The header stays the same element, as the footer does: it takes the new attributes and content, with the
       // logos already showing moved over, before a paint.

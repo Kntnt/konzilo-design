@@ -134,13 +134,15 @@ Start small and let the beds widen year by year.
 
 ::small[Free for the first month.]
 
-![Raised beds](../media/${PICTURE})
+![Raised beds](../media/${PICTURE})\
+A caption a hero drops.
 
 ::::
 
 ::::::section{surface="raised" anchor="plans"}
 
-![A shed](../media/${PICTURE})
+![A shed](../media/${PICTURE})\
+The shed in *May*.
 
 ::eyebrow[Plans]
 
@@ -520,6 +522,9 @@ test('a site built by the core draws every directive with the package\'s compone
   assert.match(html, /<ul class="kn-actions" role="list"><li><a class="kn-action" href="\/pages\/garden\/" data-kn-main>Get started<\/a><\/li>/);
   // The core's image service made the pictures, and the components keep what it wrote.
   assert.match(html, /<img class="kn-section-picture" src="\/_astro\/[^"]+\.webp" alt="A shed"[^>]* width="\d+" height="\d+"/);
+  // A section's photo keeps its caption under it; a hero's picture drops its own, with no warning (issue #35).
+  assert.match(html, /<div class="kn-section-media"><figure class="kn-section-figure"><img class="kn-section-picture"[^>]*><figcaption class="kn-section-caption" data-kn-type="small">The shed in <em>May<\/em>\.<\/figcaption><\/figure><\/div>/);
+  assert.doesNotMatch(html, /A caption a hero drops/);
   // The section of plans: its head drawn from the tree, cards and tabs in its body.
   const plans = /<section class="kn-band kn-section" id="plans" data-kn-surface="raised">[\s\S]*?<\/section>/.exec(html)[0];
   assert.match(plans, /<header class="kn-section-head"><hgroup class="kn-heading-group"><p class="kn-heading-group-eyebrow" data-kn-type="label">Plans<\/p><h2 class="kn-heading-group-heading" data-kn-type="heading-2" id="our-plans">Our plans<\/h2><p class="kn-heading-group-deck" data-kn-type="lead" data-kn-deck="long">/);
@@ -590,6 +595,7 @@ test('in the core\'s live preview every part keeps its block\'s mark, and a sect
   const html = main(built.page('pages/garden'));
   assert.match(html, /^<section data-konzilo-block="0" class="kn-band kn-hero"/);
   assert.match(html, /<section data-konzilo-block="1" class="kn-band kn-section" id="plans"/);
+  assert.match(html, /<figure class="kn-section-figure"><img class="kn-section-picture"[^>]* data-konzilo-block="1\.0"[^>]*><figcaption class="kn-section-caption"/, 'a photo with its caption keeps its mark on its picture');
   assert.match(html, /<div class="kn-section-body kn-body-text"><div data-konzilo-block="1\.4" class="kn-card-grid kn-cards">/);
   assert.match(html, /<div data-konzilo-block="2\.2" class="kn-post-list" data-kn-presentation="featured">/);
   assert.match(html, /<section data-konzilo-block="3" class="kn-band kn-section" id="courtyard" data-kn-body="columns">/);

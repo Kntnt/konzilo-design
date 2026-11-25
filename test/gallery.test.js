@@ -479,6 +479,7 @@ test('the directive chapters show every directive and variant as the contract wr
   // Each of the six rules, with the content that triggers it.
   some('rule 1', (section) => has(section, '.kn-section-media', '.kn-section-badges img'));
   some('rule 1 with a form', (section) => one(section, '.kn-section-media') && one(section, '.kn-section-body > form'));
+  some('rule 1, a photo with its caption', (section) => has(section, '.kn-section-media', '.kn-section-figure', 'img.kn-section-picture') && has(section, '.kn-section-figure', 'figcaption.kn-section-caption'));
   some('rule 2', (section) => one(section, '.kn-section-head') && !one(section, '.kn-heading-group-deck') && !one(section, '.kn-section-head > .kn-actions') && elements(body(section))[0]?.name === 'form');
   some('rule 3, on brand, at the start edge', (section) => section.attributes['data-kn-surface'] === 'brand' && one(section, '.kn-section-body > form') && !section.attributes['data-kn-align']);
   // The editor's align="center": a form centred, and a head with no form.

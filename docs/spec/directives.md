@@ -66,7 +66,7 @@ Records the HTML contract between the directive list Konzilo defines and this de
 ### Rules for every directive
 
 - **Items.** A form's items begin at its headings, as the directive list defines: every heading at the level of the first begins an item, and what follows, up to the next, belongs to it. What stands before the first heading is the intro. The site splits them.
-- **Pictures** in a hero, a section's media, a card and a logo band are bare `<img>` elements with their `alt`. Where the reader wraps one in a `<figure>`, the site writes the image alone; a caption has no place there.
+- **Pictures** in a hero, a section's media, a card and a logo band are bare `<img>` elements with their `alt`. Where the reader wraps one in a `<figure>`, the site writes the image alone, with one exception: a section's photo, its first picture, keeps the caption the editor gave it, under the picture (`section`). A hero's pictures, a section's badges, a card's picture and a logo drop a caption without a warning, since there is no room for one beside them and a warning would fire nearly every time an image from the library, which brings its caption with it, is used there (***decided* by the owner, 2026-11-25**, issue #35, replacing "a caption has no place there").
 - **Headings keep their level** as written, except under a tab or an answer, whose own heading is drawn as a button: the headings under it go up one level, never above `h2`, so the page's headings keep their order.
 - **Ids** are unique on the page. The site makes them, and the form `<directive>-<n>` used below is only an example. An anchor made from a heading is the id the reader gave the heading, or one made from its text the same way.
 - **Body text.** `.kn-body-text` stands on a section's body, an accordion's content, as Accordion writes it, and an article's flow. Everything inside it, tabs, answers and cards included, takes Body Text's typography, and a part with a class of its own takes the part's look.
@@ -98,7 +98,7 @@ Records the HTML contract between the directive list Konzilo defines and this de
 
 **Drawn from the tree.** Every component but the section draws all it holds from its tree: its items, the package's directives within them, each with the Surface of the plate or band around it (`surfaceOf(part, ground)`), and every other block as the core wrote it. What the core wrote stays:
 
-- **Marks.** Every element drawn for a block of the tree keeps the block's `data-konzilo-block`, a figure's on its image, and a list's on the list it becomes, its items' on its items. A level with no element of its own, such as a card, a tab's panel or a styled list around its Markdown list, is found by its first block, as the core's contract has it; a tab's and an answer's heading keep theirs on their `<summary>`. A component's own mark stands on each element at its top that holds none of its own, such as a series' grid beside its intro, so the core writes no wrapper (its ADR 0068).
+- **Marks.** Every element drawn for a block of the tree keeps the block's `data-konzilo-block`, a figure's on its image, a section's photo with its caption too, and a list's on the list it becomes, its items' on its items. A level with no element of its own, such as a card, a tab's panel or a styled list around its Markdown list, is found by its first block, as the core's contract has it; a tab's and an answer's heading keep theirs on their `<summary>`. A component's own mark stands on each element at its top that holds none of its own, such as a series' grid beside its intro, so the core writes no wrapper (its ADR 0068).
 - **Pictures.** An image keeps the core's `src`, `srcset`, `sizes`, `width`, `height`, `loading` and `decoding`; a hero's pictures load at once. A picture in a part drawn from its tree has no lightbox, which the core adds only to what it draws.
 - **Ids.** A heading keeps the id the core gave it, which is unique in the body. A section's or a fact box's own `anchor` wins over its heading's id of the same name, which is left out. An id the design writes, such as a tabs' `name` and label, is `<directive>-<n>`, counted on the page.
 
@@ -165,7 +165,7 @@ Records the HTML contract between the directive list Konzilo defines and this de
 
 **Drawn from what the core drew.** `PageBody` and `ArticleBody` take the body as the core's `Body` drew it, so a post list, a form and a picture with its lightbox stand in them as anywhere. Each reads the elements at the top of that HTML and writes them again only where the design adds to them: a class and a text type on the head of a section it makes, `kn-question` on an interview's question. The live preview's marks stay on every block.
 
-**A run of loose blocks** at the top of a body is read by the section's rules (`section`, above) from what the core drew: a figure of one image is a picture, whose lightbox's dialog it leaves out of the media; an eyebrow's label, an `h2`, a plain paragraph, actions, a form and a choice are what they are in the tree. So a run of a heading and paragraphs, as a legal page is written, has its head beside them as rule 5 reads it, as if the editor had written `:::section` around it.
+**A run of loose blocks** at the top of a body is read by the section's rules (`section`, above) from what the core drew: a figure of one image is a picture, whose lightbox's dialog it leaves out of the media, and the first keeps its caption as a section's photo does (2026-11-25); an eyebrow's label, an `h2`, a plain paragraph, actions, a form and a choice are what they are in the tree. So a run of a heading and paragraphs, as a legal page is written, has its head beside them as rule 5 reads it, as if the editor had written `:::section` around it.
 
 **The H1 under the hero** (components.md, The H1, the trail and the hero's heading): where the design's `inputs.hero.h1` is `below`, the hero draws its heading as a paragraph and no trail, and `PageBody` gives the band after the hero the trail first in its head and its heading as the `h1`, with the H1's look; where that band has no heading, a title band stands between them. An article's opening draws its headline as the H1 whatever the design's `h1`, since no band after it holds a heading (the assistant's choice, 2026-11-13).
 
@@ -271,7 +271,10 @@ The trail first, where the page has one; a picture before the text is the logo; 
 <section class="kn-band kn-section" id="plans" data-kn-surface="tint">
   <div class="kn-band-content">
     <div class="kn-section-media">
-      <img class="kn-section-picture" src="…" alt="…">
+      <figure class="kn-section-figure">
+        <img class="kn-section-picture" src="…" alt="…">
+        <figcaption class="kn-section-caption" data-kn-type="small">The caption.</figcaption>
+      </figure>
       <ul class="kn-section-badges" role="list"><li><img src="…" alt="…"></li></ul>
     </div>
     <header class="kn-section-head">
@@ -289,7 +292,7 @@ The trail first, where the page has one; a picture before the text is the logo; 
 
 `sectionParts` groups the blocks so:
 
-1. **Media** is the run of pictures the section begins with: the first is `.kn-section-picture`, and the ones after it are its badges, each an item of `.kn-section-badges`.
+1. **Media** is the run of pictures the section begins with: the first is its photo, `.kn-section-picture`, and the ones after it are its badges, each an item of `.kn-section-badges`. Where the editor gave the photo a caption, the photo is `.kn-section-figure`, the picture and its caption under it, `.kn-section-caption`, small, as a Figure's; without one it is the bare picture, as above, and the HTML is what it was before captions were kept. A badge drops its caption.
 2. **The head** begins after the media with any eyebrows and the `h2` right after them; without that `h2` there is no head, and eyebrows not followed by a heading are plain labels, `<p data-kn-type="label">`, in the body. The head holds the eyebrows, the heading and its deck in an `hgroup`, and after it any actions that follow the heading or the deck at once.
 3. **The deck** is the paragraph right after the heading. It is no deck where nothing but paragraphs follow the heading, or where a form or a choice stands among the section's own blocks, not nested in another part. A deck longer than `DECK_LINE` carries `data-kn-deck="long"`.
 4. **The body** is everything else, in the order written: other paragraphs, lists, forms, series, accordions, fine print. A form stands directly in the body, as the core writes it, so that a selector can find it.
@@ -299,7 +302,8 @@ The trail first, where the page has one; a picture before the text is the logo; 
 ```markdown
 :::::section{surface="tint" anchor="plans"}
 
-![A shed with tools](../media/shed.webp)
+![A shed with tools](../media/shed.webp)\
+The shed in May, before the beds were sown.
 
 ![An award for our sheds](../media/award.svg)
 
@@ -332,7 +336,7 @@ For an acre.
 :::::
 ```
 
-The section's pictures first, each a paragraph of its own: the first is its picture, the others its badges. Then any eyebrows, the `##` heading, the deck and the actions; everything after them is its body.
+The section's pictures first, each a paragraph of its own: the first is its picture, the others its badges. A caption is the line right after a picture, after a hard line break, a backslash or two spaces at the end of the picture's line, as the core reads a caption anywhere; the image library gives it when the image is chosen. Then any eyebrows, the `##` heading, the deck and the actions; everything after them is its body.
 
 **Space in the body** *(the assistant's choice, 2026-11-10; the directive list is silent)*: a part with a class of its own stands a column gap from what is next to it, whatever space it gives itself in other flows, so a description list, a value list and actions are spaced as cards are. A label written as a list's intro, `<p data-kn-type="label">`, stands at the component gap over its part, as the labels of Logos and of cards that lead on do. A heading group in the body, as a panel's eyebrow and heading, is spaced as a heading: room above it and a little under it, close to what it heads. Fine print stands at the component gap after a form or a choice, as their terms.
 
@@ -340,7 +344,7 @@ The section's pictures first, each a paragraph of its own: the first is its pict
 
 | | The section holds | Read by | The design draws |
 |---|---|---|---|
-| 1 | A picture first | `C:has(> .kn-section-media)` | The picture beside the head and body, its badges with it. A head and body shorter than the picture stand in the middle of its height; where they are taller, the picture grows to their height and is cropped to fill it (`object-fit: cover`), never short of its own proportions, up to a square and `85svh`; beside text longer still it keeps that size and stays at the top of the window as the text scrolls by, as a following menu does. With badges, the picture and its badges stay together at their own size and follow together (***decided*** by the owner, 2026-11-11). With a form in the body, `C:has(> .kn-section-body > form)`, the picture is what the form offers. |
+| 1 | A picture first | `C:has(> .kn-section-media)` | The picture beside the head and body, its badges with it. A head and body shorter than the picture stand in the middle of its height; where they are taller, the picture grows to their height and is cropped to fill it (`object-fit: cover`), never short of its own proportions, up to a square and `85svh`; beside text longer still it keeps that size and stays at the top of the window as the text scrolls by, as a following menu does. With badges, the picture and its badges stay together at their own size and follow together (***decided*** by the owner, 2026-11-11). With a form in the body, `C:has(> .kn-section-body > form)`, the picture is what the form offers. A caption stands under the picture, the component gap below it, in `text-muted` on the section's Surface, and above the head on a narrow window; the picture with its caption grows, is cropped and follows as the picture alone does, the two together a square at the most and within `85svh`, so the caption stays in the window (the owner, 2026-11-25; the measure of the two together is the assistant's choice). With badges, the caption stands between the picture and its badges; under the picture a form offers it is no wider than the room the picture has. |
 | 2 | A heading with a form right after it | A head with neither deck nor actions, and `.kn-section-body > form:first-child` | The form beside the heading, with any fine print under the form. |
 | 3 | Another form or a choice | `C:has(> .kn-section-body > :is(form, .kn-choice))` | The head and body in a column of Narrow's width at the start edge (***decided*** by the owner, 2026-11-25: what a section holds centres it no more; this rule centred the whole section, as a page's end, and the editor now centres one with `align="center"`, A centred section, below). |
 | 4 | A head, its actions and an accordion | A head, and `.kn-section-body > .kn-accordion:only-child` | The head beside the accordion, staying in view as the page scrolls. |
@@ -352,7 +356,7 @@ On a narrow window everything beside stands above and below in document order. T
 
 **Behaviour.** *(CSS)* Rule 4's head stays in view under the header as the page scrolls, by `position: sticky` at `--kn-reading-sticky-inset`. It is at most as tall as the window below that inset less the component gap, and a head taller than that scrolls inside itself, so it never hides its own end (the assistant's choice, 2026-11-10, replacing `section.js`, which let a head too tall for the window scroll with the page).
 
-**Component.** New: Section, a composition of Band, Heading Group and Actions. Its parts are `.kn-section-media`, `.kn-section-picture`, `.kn-section-badges`, `.kn-section-head` and `.kn-section-body`.
+**Component.** New: Section, a composition of Band, Heading Group and Actions. Its parts are `.kn-section-media`, `.kn-section-picture`, `.kn-section-figure` and `.kn-section-caption` (2026-11-25), `.kn-section-badges`, `.kn-section-head` and `.kn-section-body`.
 
 ### A quotation beside its teasers
 
@@ -1313,4 +1317,4 @@ An article's page is laid out by its fields, not by directives: an opening, the 
 - **"All topics".** Visitor Filters shows every card when no pill is checked and lets several be checked, so `filtered` has no "All" pill in any row, and checking two topics shows the cards of either.
 - **Which rows a filtered list has** (2026-11-12). *Settled 2026-11-12:* an option of the presentation, `filters`, which a site declares in its description as a string with the control `text` (konzilo.md), and the core hands the presentation as any option: the rows' names apart by spaces, from `category`, `topics`, a site's own taxonomy's name and `search`, such as `filters="category topics search"`; the presentation writes the rows in the fixed order above whatever order they are given in.
 - **More than 24 terms.** The stylesheet knows 24 keys a row (components.md, Visitor Filters), so a row of `filtered` shows the 24 terms with the most posts. Whether a site with more wants another way in is open.
-- **Captions in cards.** A picture in a card, a hero, a section's media or a logo band has no caption; the core's intake does not refuse one yet.
+- **Captions in cards.** *Settled 2026-11-25* (the owner, issue #35): a section's photo shows its caption (Rules for every directive, Pictures); a picture in a card, a hero, a section's badges or a logo band drops one without a warning, and the core's intake refuses none.

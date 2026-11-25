@@ -1,6 +1,6 @@
-// A client's own menu and footer: typed or pasted on the tool's Start page, kept in the design file's `project` as what
-// they come to, and shown in place of the samples wherever the tool's preview and the presentation show the menu and the
-// footer, cell by cell. None of it is design. The content here is made up.
+// A client's own menu, call to action and footer: typed or pasted on the tool's Start page, kept in the design file's
+// `project` as what they come to, and shown in place of the samples wherever the tool's preview and the presentation show
+// the header and the footer, cell by cell. None of it is design. The content here is made up.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { copyFile, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
@@ -28,6 +28,7 @@ const OWN_FOOTER = {
   upper: { b1: ['Instagram', 'Mastodon'], a2: 'Lamps for reading & <rest>.' },
   lower: { a1: '1 Lantern Row\n999 99 Nowhere', a2: ['Lamp care'] },
 };
+const OWN_CTA = { label: 'Book a lamp', href: '/visit' };
 
 test('the menu reads an outline indented by spaces or tabs, with descriptions after a dash, and skips blank lines', () => {
   assert.deepEqual(parseMenu('Lamps\n  Desk lamps - For the late hours\n  Floor lamps\n\n\nWorkshop\n\tRepairs – Old lamps made new\n\t\tRewiring\nÖppettider\r\n'), OWN_MENU);
@@ -124,6 +125,24 @@ test('the design file keeps the content structured beside the other project text
   assert.equal(coreCss(own.resolved), coreCss(await resolve(file.inputs)));
 });
 
+test('the design file keeps the client\'s call to action, its words and where it leads, each optional, and it is no part of the design', async () => {
+  const file = JSON.parse(await readFile(EXAMPLE, 'utf8'));
+  assert.equal(file.project.cta, undefined);
+  const resolved = await resolve(file.inputs);
+  for (const cta of [OWN_CTA, { label: 'Book a lamp' }, { href: '/visit' }, {}]) validateDesignFile({ ...file, project: { ...file.project, cta }, resolved });
+  for (const cta of [
+    'Book a lamp',
+    { label: '' },
+    { href: '' },
+    { label: 'Book a lamp', url: '/visit' },
+    { label: 'Book a lamp', dialog: 'booking' },
+    { label: ['Book a lamp'] },
+  ]) assert.throws(() => validateDesignFile({ ...file, project: { ...file.project, cta }, resolved }), JSON.stringify(cta));
+  const own = { ...file, project: { ...file.project, cta: OWN_CTA }, resolved };
+  assert.equal(await fingerprint(own.inputs), await fingerprint(file.inputs));
+  assert.equal(coreCss(own.resolved), coreCss(await resolve(file.inputs)));
+});
+
 test('an old design file loads and saves as it was, and one with content keeps it', async () => {
   const directory = await mkdtemp(join(tmpdir(), 'kn-own-'));
   try {
@@ -179,6 +198,17 @@ test('the frame shows the design\'s own menu and footer where it has them, and t
   // A cell turned off stays off, whatever the design has for it.
   const off = footerProps({ ...settings.footer, lower: { ...settings.footer.lower, cells: { ...settings.footer.lower.cells, a1: false } } }, { name: 'A', footer: OWN_FOOTER }, settings.header);
   assert.equal(off.lower.cells.a1, false);
+});
+
+test('the header\'s call to action is the design\'s own where it has one, its words and its address each, and none where the design shows none', () => {
+  const settings = withDefaults({ 'brand-colors': { primary: '#168b83' } });
+  assert.equal(settings.header.cta, true, 'a new design shows a call to action');
+  assert.deepEqual(headerProps(settings.header, { name: 'A' }).cta, { label: 'Contact', href: '#contact' });
+  assert.deepEqual(headerProps(settings.header, { name: 'A', cta: OWN_CTA }).cta, { label: 'Book a lamp', href: '/visit' });
+  // Words without an address lead to a fragment named for them, as the menu's do; an address alone keeps the sample's words.
+  assert.deepEqual(headerProps(settings.header, { name: 'A', cta: { label: 'Visit the Workshop' } }).cta, { label: 'Visit the Workshop', href: '#visit-the-workshop' });
+  assert.deepEqual(headerProps(settings.header, { name: 'A', cta: { href: 'https://lantern.invalid/visit' } }).cta, { label: 'Contact', href: 'https://lantern.invalid/visit' });
+  assert.equal(headerProps({ ...settings.header, cta: false }, { name: 'A', cta: OWN_CTA }).cta, undefined);
 });
 
 // The preview's frames: the page at each end, and the large menu held open under it.
@@ -325,6 +355,88 @@ test('the Start page takes the client\'s own menu and footer, saves them with un
   }
 });
 
+test('the Start page takes the client\'s call to action, its words and where it leads, and the preview\'s header shows it as it is typed', { timeout: 240000 }, async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'kn-own-cta-'));
+  const path = join(directory, 'lantern.design.json');
+  await copyFile(EXAMPLE, path);
+  const tool = await startTool({ designFile: path, port: 0, open: false });
+  const browser = await chromium.launch();
+  try {
+    const page = await browser.newPage({ viewport: { width: 1600, height: 1000 } });
+    const errors = [];
+    page.on('pageerror', (error) => errors.push(error.message));
+    await page.goto(tool.url);
+    await page.waitForFunction(() => document.getElementById('status-text').textContent === 'Saved');
+    const settled = async () => {
+      await page.waitForFunction(() => document.getElementById('status').dataset.state === 'saved');
+      return JSON.parse(await readFile(path, 'utf8'));
+    };
+    const field = (path) => page.locator(`[data-own="${path}"]`);
+    const state = page.locator('[data-own-state="cta"]');
+    // Empty, each field shows the sample's in grey, and says the sample shows.
+    assert.equal(await field('cta.label').inputValue(), '');
+    assert.equal(await field('cta.label').getAttribute('placeholder'), 'Contact');
+    assert.equal(await field('cta.href').getAttribute('placeholder'), '#contact');
+    assert.match(await state.textContent(), /sample/i);
+    for (const own of ['cta.label', 'cta.href']) assert.ok((await page.locator(`#${await field(own).getAttribute('data-g-tooltip')}`).textContent()).length > 40, own);
+
+    // The button in the bar and the one the large menu takes when it gives way, at both ends of the preview.
+    const pages = await Promise.all(['#preview', '#preview-narrow'].map(async (selector) => (await page.locator(selector).elementHandle()).contentFrame()));
+    const shows = (frames, wanted) => inAll(frames, ([label, href]) => {
+      const buttons = [...document.querySelectorAll('.kn-page > .kn-header .kn-header-cta')];
+      return buttons.length === 2 && buttons.some((button) => button.dataset.knMoved === 'cta')
+        && buttons.every((button) => button.textContent.trim() === label && button.getAttribute('href') === href);
+    }, wanted);
+    await shows(pages, ['Contact', '#contact']);
+    await field('cta.label').click();
+    await page.keyboard.type('Book  a lamp ');
+    await shows(pages, ['Book a lamp', '#book-a-lamp']);
+    // Without an address of its own the button leads to a fragment named for its words, which the address's grey text says.
+    assert.equal(await field('cta.href').getAttribute('placeholder'), '#book-a-lamp');
+    await field('cta.href').click();
+    await page.keyboard.type(' /visit ');
+    await shows(pages, ['Book a lamp', '/visit']);
+    await page.locator('[data-page="start"] h1').click();
+    let saved = await settled();
+    assert.deepEqual(saved.project.cta, { label: 'Book a lamp', href: '/visit' });
+    // Left, a field shows what it came to.
+    assert.equal(await field('cta.label').inputValue(), 'Book a lamp');
+    assert.equal(await field('cta.href').inputValue(), '/visit');
+    assert.equal(await state.textContent(), 'The client’s own, in the header');
+    // The preview does not follow the client's address away from the sample page.
+    await pages[0].evaluate(() => document.querySelector('.kn-header-bar .kn-header-cta').click());
+    await page.waitForTimeout(500);
+    assert.equal(new URL(pages[0].url()).pathname, '/preview.html');
+
+    // A header that shows no call to action says so where its words are written.
+    await page.locator('.chapter[data-chapter="frame"]').click();
+    await page.locator('.page-link[data-go="header"]').click();
+    await page.locator('[data-flag="inputs.header.cta"]').click();
+    await page.locator('.chapter[data-chapter="start"]').click();
+    await page.waitForFunction(() => /CTA button/.test(document.querySelector('[data-own-state="cta"]').textContent));
+    await inAll(pages, () => !document.querySelector('.kn-page > .kn-header .kn-header-cta'));
+
+    // Undo brings it back, on the page where it was turned off; emptied, the call to action leaves the file, and the
+    // sample's shows again.
+    await page.locator('#undo').click();
+    assert.equal((await settled()).inputs.header.cta, true);
+    await page.locator('.chapter[data-chapter="start"]').click();
+    assert.equal(await state.textContent(), 'The client’s own, in the header');
+    await field('cta.label').fill('');
+    await field('cta.href').fill('');
+    await page.locator('[data-page="start"] h1').click();
+    saved = await settled();
+    assert.equal(saved.project.cta, undefined);
+    assert.equal(saved.inputs.header.cta, true);
+    await shows(pages, ['Contact', '#contact']);
+    assert.deepEqual(errors, []);
+  } finally {
+    await browser.close();
+    await tool.close();
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
 // Opening the large menu in its frame took the focus from the tool in Firefox, a moment later, and what was typed
 // meanwhile was lost; the Start page opens it as it arrives, where a field may already be in use.
 test('keys typed on the Start page as the large menu opens under it all arrive, in Firefox too', { timeout: 240000 }, async () => {
@@ -367,12 +479,12 @@ function extractZip(bytes) {
   return inflateRawSync(bytes.subarray(offset, offset + bytes.readUInt32LE(18))).toString('utf8');
 }
 
-test('the presentation shows the client\'s menu and footer in the header, the footer, the page, the sample page and the shadow scenes', { timeout: 300000 }, async () => {
+test('the presentation shows the client\'s menu, call to action and footer in the header, the footer, the page, the sample page and the shadow scenes', { timeout: 300000 }, async () => {
   const directory = await mkdtemp(join(tmpdir(), 'kn-own-presentation-'));
   const browser = await chromium.launch();
   try {
     const model = JSON.parse(await readFile(EXAMPLE, 'utf8'));
-    model.project = { ...model.project, name: 'Lantern Row', menu: OWN_MENU, footer: OWN_FOOTER };
+    model.project = { ...model.project, name: 'Lantern Row', menu: OWN_MENU, cta: OWN_CTA, footer: OWN_FOOTER };
     // The sample page is in the page's flow, so its frame shows the footer once scrolled; the scenes are short.
     model.inputs.shadow = { ...model.inputs.shadow, strength: 50 };
     const design = join(directory, 'lantern.design.json');
@@ -401,6 +513,8 @@ test('the presentation shows the client\'s menu and footer in the header, the fo
         row: words('.kn-megamenu-links a > span:first-child'),
         items: words('.kn-megamenu-column li > a > span:first-child'),
         descriptions: words('.kn-megamenu-description'),
+        // The button in the bar and the one the large menu takes when it gives way.
+        cta: [...document.querySelectorAll('.kn-header .kn-header-cta')].map((button) => `${button.textContent.trim()} ${button.getAttribute('href')}`),
         footer: cell('lower', 'a1') && {
           address: cell('lower', 'a1').querySelector('.kn-footer-box').innerHTML,
           registration: cell('lower', 'b1')?.textContent,
@@ -421,7 +535,7 @@ test('the presentation shows the client\'s menu and footer in the header, the fo
       policies: ['Lamp care'],
       consent: sampleFooter.lower.b2,
     };
-    const ownMenu = { links: ['Lamps', 'Workshop', 'Öppettider'], headings: ['Lamps', 'Workshop'], row: ['Öppettider'], items: ['Desk lamps', 'Floor lamps', 'Repairs', 'Rewiring'], descriptions: ['For the late hours', 'Old lamps made new'] };
+    const ownMenu = { links: ['Lamps', 'Workshop', 'Öppettider'], headings: ['Lamps', 'Workshop'], row: ['Öppettider'], items: ['Desk lamps', 'Floor lamps', 'Repairs', 'Rewiring'], descriptions: ['For the late hours', 'Old lamps made new'], cta: ['Book a lamp /visit', 'Book a lamp /visit'] };
 
     const header = await read(await specimen('header', 'header-a-menu'));
     assert.deepEqual({ ...header, footer: undefined }, { ...ownMenu, footer: undefined });
@@ -429,12 +543,13 @@ test('the presentation shows the client\'s menu and footer in the header, the fo
     for (const id of ['page-layout', 'preview']) {
       const shown = await read(await specimen('page', id));
       assert.deepEqual(shown.links, ownMenu.links, id);
+      assert.deepEqual(shown.cta, ownMenu.cta, id);
       assert.deepEqual(shown.footer, ownFooter, id);
     }
     // The shadow scenes' short menu is the first three of the client's, two links to a column and no descriptions; an
     // entry with none under it stands in the row after the columns.
     const scene = await read(await specimen('shadow', 'shadow-panel'));
-    assert.deepEqual([scene.links, scene.headings, scene.row, scene.items, scene.descriptions], [ownMenu.links, ownMenu.headings, ownMenu.row, ownMenu.items, []]);
+    assert.deepEqual([scene.links, scene.headings, scene.row, scene.items, scene.descriptions, scene.cta], [ownMenu.links, ownMenu.headings, ownMenu.row, ownMenu.items, [], ownMenu.cta]);
     assert.deepEqual((await read(await specimen('shadow', 'shadow-page'))).footer, ownFooter);
     assert.deepEqual(errors, []);
   } finally {
