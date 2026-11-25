@@ -70,10 +70,23 @@ function colourWords(r) {
   const role = (name) => `\`${name}\` ${light[name]}`;
   const steps = Object.entries(r.ramps).flatMap(([ramp, values]) => Object.entries(values).map(([step, hex]) => ({ name: `${ramp}-${step}`, hex, on: pages.map((page) => contrast(hex, page)) })));
   const holding = steps.filter(({ on }) => Math.min(...on) >= 3);
+  const readable = steps.filter(({ on }) => Math.min(...on) >= 4.5);
   const nearest = steps.reduce((best, step) => (Math.min(...step.on) > Math.min(...best.on) ? step : best));
   const fills = holding.filter(({ hex }) => contrast(light.background, hex) >= 4.5);
+  const named = (items) => list(items.map(({ name, hex }) => `\`${name}\` ${hex}`));
+  const near = `the nearest, \`${nearest.name}\` ${nearest.hex}, has ${ratio(nearest.on[0])} and ${ratio(nearest.on[1])}`;
+  const between = `both page backgrounds, ${pages[0]} and ${pages[1]}`;
   const plate = `its whole background in the \`page\` Surface's light ${role('background')}, and every colour from that Surface's light roles: ${role('text')} for labels, ${role('text-muted')} for quieter ones, ${role('border')} for lines that part things and ${role('border-strong')} for what must be seen, such as an axis or an arrow, ${role('background-alt')} for a quiet fill such as a box, the primary as ${role('button-background')} for a strong fill with ${role('button-text')} on it, and ${role('accent')} for a mark that must stand out. On a light page it does not show; on a dark one it stands as a light panel.`;
-  const held = `with no background of its own, so the page shows through in either mode, and every line, mark and fill in a step with at least 3:1 against both page backgrounds, ${pages[0]} and ${pages[1]}: ${list(holding.map(({ name, hex }) => `\`${name}\` ${hex}`))}. No colour has 4.5:1 against both, which text needs: the nearest, \`${nearest.name}\` ${nearest.hex}, has ${ratio(nearest.on[0])} and ${ratio(nearest.on[1])}. So text stands on a fill of its own, in ${light.background}, on a step that gives it 4.5:1: ${list(fills.map(({ name }) => `\`${name}\``))}.`;
+  // Each claim is worked out from the design's two pages, so it holds for any dark page, and no list is left empty.
+  const onFill = fills.length
+    ? `stands on a fill of its own, in ${light.background}, on a step that gives it 4.5:1: ${list(fills.map(({ name }) => `\`${name}\``))}.`
+    : `needs a light plate: none of these steps gives ${light.background} text 4.5:1.`;
+  const text = readable.length
+    ? `Text needs 4.5:1 against both, which only ${named(readable)} ${readable.length === 1 ? 'has: text in it may' : 'have: text in them may'} stand on the page itself. Text in another colour ${onFill}`
+    : `No colour has 4.5:1 against both, which text needs: ${near}. So text ${onFill}`;
+  const held = holding.length
+    ? `with no background of its own, so the page shows through in either mode, and every line, mark and fill in a step with at least 3:1 against ${between}: ${named(holding)}. ${text}`
+    : `with no background of its own, so the page shows through in either mode. No step of this design's has 3:1 against ${between}, which every line, mark and fill needs: ${near}. So draw a figure on a light plate.`;
   return `- **Colours:** a figure does not follow dark mode, since an image cannot know the page's mode. Draw it in one of two ways:
   - **On a light plate of its own:** ${plate}
   - **In colours that hold in both modes:** ${held}`;

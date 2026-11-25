@@ -148,6 +148,35 @@ test('a figure does not follow dark mode:it stands on a light plate of the page\
   }
 });
 
+// What the colours that hold in both modes are is computed from the design's own two pages, so it says what holds for any
+// dark page: here a made-up purple with the dark page set to pure black, and two darker greys as the dark page.
+test('the colours that hold in both modes are worked out from the design\'s own pages, and never end in an empty list', () => {
+  const inputs = { 'brand-colors': { primary: '#8c64b8' } };
+  const held = (dark) => {
+    const resolved = derive(inputs);
+    resolved.surfaces.page.dark.roles.background = dark;
+    const text = designMd({ inputs: withDefaults(inputs), project: { name: 'Example' }, resolved }, 'example.design.json');
+    const words = bullet(text.match(/\n### Figures\n([\s\S]*?)\n##/)[1], 'Colours');
+    assert.doesNotMatch(words, /:\s*\.|:\s*$/, `${dark}: no empty list`);
+    return words.match(/\n {2}- \*\*In colours that hold in both modes:\*\* (.*)/)[1];
+  };
+  // Worked with a contrast checker: on #ffffff and #000000, #8c64b8 has 4.54:1 and 4.63:1, so text may stand in it on
+  // either page; #a67ed4 3.20:1 and 6.56:1, #7850a3 6.04:1 and 3.48:1, #8f8f8f 3.23:1 and 6.49:1, #727272 4.81:1 and
+  // 4.37:1, #636363 6.01:1 and 3.50:1; white text has 4.5:1 on the four darkest.
+  const black = held('#000000');
+  assert.match(black, /against both page backgrounds, #ffffff and #000000: `primary-400` #a67ed4, `primary-500` #8c64b8, `primary-600` #7850a3, `gray-400` #8f8f8f, `gray-500` #727272 and `gray-600` #636363\./);
+  assert.doesNotMatch(black, /No colour has 4\.5:1 against both/);
+  assert.match(black, /Text needs 4\.5:1 against both, which only `primary-500` #8c64b8 has: text in it may stand on the page itself\./);
+  assert.match(black, /Text in another colour stands on a fill of its own, in #ffffff, on a step that gives it 4\.5:1: `primary-500`, `primary-600`, `gray-500` and `gray-600`\./);
+  // On #555555 no step has 3:1 against both pages, so a figure stands on a light plate.
+  const grey = held('#555555');
+  assert.match(grey, /No step of this design's has 3:1 against both page backgrounds, #ffffff and #555555, which every line, mark and fill needs: the nearest, `[a-z]+-\d+` #[0-9a-f]{6}, has \d+\.\d:1 and \d+\.\d:1\. So draw a figure on a light plate\./);
+  // On #3d3d3d only #a67ed4 and #8f8f8f hold, 3.20:1 and 3.39:1, 3.23:1 and 3.36:1, and neither carries white text at 4.5:1.
+  const dim = held('#3d3d3d');
+  assert.match(dim, /#ffffff and #3d3d3d: `primary-400` #a67ed4 and `gray-400` #8f8f8f\./);
+  assert.match(dim, /So text needs a light plate: none of these steps gives #ffffff text 4\.5:1\./);
+});
+
 const BROWSERS = Object.entries({ chromium, firefox, webkit }).filter(([, type]) => existsSync(type.executablePath()));
 const browsers = [];
 before(async () => {
