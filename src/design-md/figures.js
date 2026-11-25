@@ -1,6 +1,8 @@
 // DESIGN.md's section on figures (issue #34): how a figure with text in it, such as a diagram, a graph or a screenshot,
 // is drawn for this design. A page shows an image in running text at its own size, never larger, and at most as wide as
 // the column, so a figure looks right only when it was drawn for that column. Every number comes from the resolved design.
+// It is a subsection of Layout, after where running text stands, since the format's own sections are fixed and a figure
+// is drawn for that column (tool.md, point 4).
 import { faceOf } from '../fonts/catalog.js';
 import { contrast } from '../generator/color.js';
 import { fluidLine } from '../generator/layout.js';
@@ -87,7 +89,7 @@ function fileWords({ legible }) {
 
 export function figureSection({ resolved: r }) {
   const m = measures(r);
-  return `## Figures
+  return `### Figures
 
 A figure with text in it, such as a diagram, a graph or a screenshot, stands in running text as an image. Show it at its own size, never larger, and at most as wide as the column: it looks right only where it was drawn for that column. Every number here is this design's.
 

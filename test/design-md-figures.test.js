@@ -20,17 +20,20 @@ const ONE_STEP = { 'brand-colors': { primary: '#b8860b' }, type: { breakpoints: 
 const exported = (inputs) => {
   const resolved = derive(inputs);
   const text = designMd({ inputs: withDefaults(inputs), project: { name: 'Example' }, resolved }, 'example.design.json');
-  const section = text.match(/\n## Figures\n([\s\S]*?)\n## /)?.[1];
+  const section = text.match(/\n### Figures\n([\s\S]*?)\n##/)?.[1];
   return { resolved, text, section };
 };
 // A bullet of the section by its lead, with what is nested under it.
 const bullet = (section, lead) => section.match(new RegExp(`^- \\*\\*${lead}:?\\*\\*:? ([\\s\\S]*?)(?=\\n- \\*\\*|\\n\\n|(?![\\s\\S]))`, 'm'))?.[1];
 
-test('DESIGN.md has a section on figures, before the do\'s and don\'ts', () => {
+// The format's own sections are fixed, so figures are a subsection of Layout, after where running text stands.
+test('DESIGN.md has a section on figures, the last under Layout', () => {
   const { text, section } = exported(defaultInputs());
-  assert.ok(section, 'a section headed Figures');
-  assert.ok(text.indexOf('\n## Figures\n') > text.indexOf('\n## Components\n'));
-  assert.ok(text.indexOf('\n## Figures\n') < text.indexOf('\n## Do\'s and Don\'ts\n'));
+  assert.ok(section, 'a subsection headed Figures');
+  assert.ok(!text.includes('\n## Figures\n'), 'no section of its own');
+  assert.ok(text.indexOf('\n### Figures\n') > text.indexOf('**Where running text stands.**'));
+  assert.ok(text.indexOf('\n### Figures\n') > text.indexOf('\n## Layout\n'));
+  assert.ok(text.indexOf('\n### Figures\n') < text.indexOf('\n## Elevation & Depth\n'));
 });
 
 test('the default design\'s figures: Narrow, the column on a phone and the labels that stay legible there', () => {

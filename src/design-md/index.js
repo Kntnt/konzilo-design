@@ -364,7 +364,9 @@ Space is fluid like type. Each role grows in a straight line from a ${windowWord
 - **Above and below a Band** (\`band\`): ${css(space.band)}.
 - **Between two Bands on the same Surface** (\`band-run\`): ${css(space['band-run'])}. The first loses its end space and the second starts with this, so a change of Surface gets more air than a run of one.
 
-**Where running text stands.** Long text lies in a Reading Area inside a Band, as a column at most Narrow wide. With nothing beside it, the column is centred in the content area. With an Aside, for a table of contents or notes, the column lies against the content area's start edge and the Aside takes the rest at the end, after the column gap, which suits most pages; it may also be the other way round. The Aside is at least ${rem(r.layout['aside-min'])} wide: where it would be narrower, the area is one column, with the Aside's content before the text, or after it. In two columns the Narrow column stays where it is even on a page whose Aside is empty, so pages of one kind align alike.`;
+**Where running text stands.** Long text lies in a Reading Area inside a Band, as a column at most Narrow wide. With nothing beside it, the column is centred in the content area. With an Aside, for a table of contents or notes, the column lies against the content area's start edge and the Aside takes the rest at the end, after the column gap, which suits most pages; it may also be the other way round. The Aside is at least ${rem(r.layout['aside-min'])} wide: where it would be narrower, the area is one column, with the Aside's content before the text, or after it. In two columns the Narrow column stays where it is even on a page whose Aside is empty, so pages of one kind align alike.
+
+${figureSection({ resolved: r })}`;
 }
 
 function elevationSection({ inputs, resolved: r, project }) {
@@ -480,6 +482,6 @@ ${yaml(tokens(file))}
 
 <!-- ${MARKER} from ${sourceName}. Change the design and export again rather than editing this file. -->
 
-${[overview(file), colourSection(file), typeSection(file), layoutSection(file), elevationSection(file), shapeSection(file), componentSection(file), figureSection(file), rulesSection()].join('\n\n').replace(/\n{3,}/g, '\n\n')}
+${[overview(file), colourSection(file), typeSection(file), layoutSection(file), elevationSection(file), shapeSection(file), componentSection(file), rulesSection()].join('\n\n').replace(/\n{3,}/g, '\n\n')}
 `;
 }
