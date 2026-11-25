@@ -17,6 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Removing a brand colour in the tool now shows the shadow's and the frame's colour back at their default where they named it; the file had them right, but the two selects kept the removed colour until the page was reloaded.
 
+### Security
+
+- The presentation, the gallery and the tests are built with Astro 7.4.13, up from 7.4.2, past two Astro advisories: GHSA-mh32-jxcr-mh9f, attribute injection through a dynamic tag name, and GHSA-r3h5-4585-7x3w, a file read through the image endpoint of `@astrojs/node`, which nothing here uses. The package still asks a site for Astro `^7`, so a site on 7.4.6 or earlier updates its own. `THIRD-PARTY.md` follows the new lock.
+
 ## [0.14.0] – 2026-11-24
 
 ### Added
