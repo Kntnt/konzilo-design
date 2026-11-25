@@ -397,10 +397,11 @@ export function articleOpening(ctx, { data = {}, eyebrow, picture, metaLine = []
  * following menu, whose stops are the body's crossheads and its fact boxes with an anchor, or the Aside a type gives.
  * @param {string} html The body, as `<Body>` drew it.
  * @param {object} ctx The page's context.
- * @param {{ label?: string, menu?: boolean, aside?: string }} [options] `label` the menu's, the context's word
- *   `articleMenu` by default; `menu` false leaves it out; `aside` the Aside's own HTML in its place.
+ * @param {{ label?: string, menu?: boolean, aside?: string, loader?: string }} [options] `label` the menu's, the
+ *   context's word `articleMenu` by default; `menu` false leaves it out; `aside` the Aside's own HTML in its place;
+ *   `loader` the polyfill's loader the menu ends with, which only a component can give (ArticleBody.astro).
  */
-export function articleBody(html, ctx, { label = ctx.words.articleMenu, menu = true, aside } = {}) {
+export function articleBody(html, ctx, { label = ctx.words.articleMenu, menu = true, aside, loader = '' } = {}) {
   const source = String(html ?? '');
   const elements = topElements(source);
   const stops = [];
@@ -427,7 +428,8 @@ export function articleBody(html, ctx, { label = ctx.words.articleMenu, menu = t
     ? tag('aside', { class: 'kn-aside-block', 'data-kn-sticky': 'true' },
       tag('nav', { class: 'kn-toc', 'aria-labelledby': id, 'data-kn-type': 'small', 'data-kn-follow': '' },
         tag('p', { class: 'kn-toc-label', id, 'data-kn-type': 'heading-6' }, escapeText(label)),
-        tag('ol', { role: 'list' }, stops.map((stop) => tag('li', {}, `<a href="#${escapeAttribute(stop.id)}">${stop.label}</a>`)))))
+        tag('ol', { role: 'list' }, stops.map((stop) => tag('li', {}, `<a href="#${escapeAttribute(stop.id)}">${stop.label}</a>`))),
+        loader))
     : '';
   const side = aside ?? following;
   return tag('section', { class: 'kn-band kn-article-body' }, tag('div', { class: 'kn-band-content' },

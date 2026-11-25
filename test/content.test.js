@@ -25,11 +25,14 @@ async function component(name) {
       name: 'astro-component-test',
       resolveId(id, importer) {
         if (id === 'virtual:component') return id;
+        // An asset's address, as Vite gives it to a component, such as a following menu's polyfill: here only its name.
+        if (/\?url\b/.test(id)) return `virtual:url:${id.split('?')[0].split('/').pop()}`;
         if (id.endsWith('.astro')) return fileURLToPath(id.startsWith('file:') ? id : new URL(id, pathToFileURL(importer)));
         return { id: id.startsWith('.') ? new URL(id, pathToFileURL(importer)).href : import.meta.resolve(id), external: true };
       },
       async load(id) {
         if (id === 'virtual:component') return `export { default } from ${JSON.stringify(entry.href)};`;
+        if (id.startsWith('virtual:url:')) return `export default ${JSON.stringify(`/_astro/${id.slice(12)}`)};`;
         if (id.endsWith('.astro')) return transform(await readFile(id, 'utf8'), { filename: id, internalURL: 'astro/compiler-runtime', resultScopedSlot: true }).code;
       },
     }],

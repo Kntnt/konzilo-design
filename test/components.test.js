@@ -7,6 +7,7 @@ import { derive, defaultInputs } from '../src/generator/index.js';
 import { coreCss } from '../src/css/index.js';
 import { componentsCss } from '../src/css/components.js';
 import { icons } from '../src/components/icons.js';
+import { followingMenuLoader } from '../src/components/table-of-contents.js';
 
 const directory = new URL('../src/components/', import.meta.url);
 const physical = /^(?:(?:min-|max-)?(?:width|height)|left|right|top|bottom|(?:margin|padding|inset)-(?:left|right|top|bottom)|border-(?:left|right|top|bottom)(?:-(?:width|style|color))?|border-(?:top|bottom)-(?:left|right)-radius)$/;
@@ -63,7 +64,7 @@ test('the plain HTML stylesheet flattens the component entry point and preserves
   assert.equal(execFileSync(process.execPath, [new URL('../bin/konzilo-design.js', import.meta.url).pathname, 'components-css'], { encoding: 'utf8' }), css);
 });
 
-test('every component has a typed wrapper; only the declared client entries, the footer\'s fit and the header\'s and footer\'s polyfill loaders', async () => {
+test('every component has a typed wrapper; only the declared client entries, the footer\'s fit and the header\'s, footer\'s and following menu\'s polyfill loaders', async () => {
   const names = (await readdir(directory)).filter((name) => name.endsWith('.astro'));
   for (const name of names) {
     const source = await readFile(new URL(name, directory), 'utf8');
@@ -90,6 +91,14 @@ test('every component has a typed wrapper; only the declared client entries, the
       const follows = (await readFile(new URL('scroll-timeline-polyfill.js', directory), 'utf8')).match(/^const follows = .*$/m)[0];
       assert.equal(loaders[0][2], `${follows}\nif (!CSS.supports('animation-timeline: scroll()') || !follows()) import(src);`);
       assert.match(loaders[1][2], /^if \(!CSS\.supports\('container-type: scroll-state'\)\) import\(src\);$/);
+    } else if (name === 'TableOfContents.astro') {
+      // A following menu ends with the scroll markers' polyfill's loader, which the directive's and the article's
+      // components write too (directives.md, `toc`): one text, written as Astro writes the header's, testing for its
+      // feature before it fetches, so the core's policy needs one hash for it and the offline copies find its address.
+      assert.doesNotMatch(source, /<script/);
+      assert.match(source, /<TableOfContentsList entries=\{entries\} \/>\{follows && <Fragment set:html=\{followingMenuLoader\(scrollMarkersPolyfill\)\} \/>\}\n<\/nav>\}/);
+      assert.equal([...source.matchAll(/followingMenuLoader\(/g)].length, 1);
+      assert.equal(followingMenuLoader('/_astro/scroll-markers-polyfill.js'), `<script data-kn-polyfill="scroll-markers">(function(){const src = "/_astro/scroll-markers-polyfill.js";\nif (!CSS.supports('scroll-target-group: auto')) import(src);})();</script>`);
     } else if (name === 'Accordion.astro') {
       assert.equal([...source.matchAll(/<script/g)].length, 1);
       assert.match(source, /<script type="application\/ld\+json" is:inline set:html=/);

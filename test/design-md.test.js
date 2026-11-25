@@ -328,7 +328,7 @@ test('DESIGN.md carries every role the tool shows, the accent borders too, and t
   }
 });
 
-test('DESIGN.md draws the directives\' components by recipe: sections, series, questions, tabs, a choice and the following menu', () => {
+test('DESIGN.md draws the directives\' components by recipe: sections, series, questions, tabs, a choice and the following menu with its mark', () => {
   const { body } = exported(DESIGNS[0]);
   for (const words of [
     'three or four, whichever leaves the last row fuller, four where both do alike',
@@ -338,7 +338,11 @@ test('DESIGN.md draws the directives\' components by recipe: sections, series, q
     'An exclusive group of native disclosures (`<details name>`), the first open, drawn as tabs',
     'there are no arrow keys between tabs',
     'None is chosen beforehand, and no panel shows until one is',
-    'runs no script and marks no section as the one being read, so it is the same in every browser',
+    'stands on a rail and marks the link of the section being read, the same in every browser',
+    'A browser with CSS scroll markers marks it with no script: `scroll-target-group: auto` on the menu, `:target-current` on the link',
+    'Elsewhere a small polyfill sets `aria-current="location"` on the same link',
+    'The polyfill loads only where `CSS.supports(\'scroll-target-group: auto\')` is false',
+    'of the last target at or above the scroll position and the first less than half a window below it, the nearer is marked',
     'a logo, where a picture stands before the text',
     'with fine print under them as their note',
   ]) assert.ok(body.includes(words), words);
