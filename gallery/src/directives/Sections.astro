@@ -6,7 +6,8 @@ import CoreForm from './CoreForm.astro';
 import QuestionAccordion from './QuestionAccordion.astro';
 import { landscape, portrait } from '../samples.js';
 import { badge } from '../directive-samples.js';
-// The six layout rules of a section, each with the content that triggers it, and a section that matches none.
+// The six layout rules of a section, each with the content that triggers it, a section that matches none, and the
+// editor's align="center" on a form and on a head alone.
 const picture = (alt: string) => ({ src: landscape, alt });
 const plans = ['Herb box', 'Balcony', 'Small yard', 'Family garden', 'Kitchen garden', 'School garden'];
 const questions = [
@@ -30,11 +31,17 @@ const questions = [
   <CoreForm id="question" label="Ask the studio" send="Send" fields={[{ name: 'name', label: 'Name', required: true }, { name: 'message', label: 'Your question', type: 'textarea', required: true }]} />
   <p class="kn-fine-print" data-kn-type="small">We answer within a day. Read how we <a href="#directive-article">handle what you send</a>.</p>
 </Section>
-<Section surface="brand" heading="47 / Section · 3, another form, centred as a page's end" actions={[{ label: 'Compare the plans', href: '#directive-tabs' }]}>
+<Section surface="brand" heading="47 / Section · 3, another form, at the start edge" actions={[{ label: 'Compare the plans', href: '#directive-tabs' }]}>
   <p>Tell us where you live, and we will send what grows there.</p>
   <CoreForm id="start" label="Start a garden" send="Start" fields={[{ name: 'place', label: 'Where you live' }]} />
   <p class="kn-fine-print" data-kn-type="small">No card needed.</p>
 </Section>
+<Section id="directive-centred" align="center" surface="tint" heading={'47 / Section · 3 with align="center", as a page\'s end'} actions={[{ label: 'Compare the plans', href: '#directive-tabs' }]}>
+  <p>The editor centres a section. Its form still reads down one edge.</p>
+  <CoreForm id="start-centred" label="Start a garden" send="Start" fields={[{ name: 'place', label: 'Where you live' }]} />
+  <p class="kn-fine-print" data-kn-type="small">No card needed.</p>
+</Section>
+<Section align="center" eyebrows={['47 / Section · align="center", without a form']} heading="Everything in one shed" deck="The tools, the seeds and the soil, delivered at once." actions={[{ label: 'See the plans', href: '#directive-tabs', main: true }, { label: 'Read the questions', href: '#directive-sticky' }]} />
 <Section id="directive-sticky" heading="47 / Section · 4, a head beside an accordion" deck="The head stays in view as the answers scroll past." actions={[{ label: 'Ask another', href: '#directive-choice', main: true }]}>
   <QuestionAccordion items={questions} expand="one" first="open" name="directive-accordion-1" />
 </Section>

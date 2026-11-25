@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- An editor centres a section: `:::section{align="center"}`. `align` is `center`, or `start` where it is left out. The head stands in the middle, and the body in a column of Narrow's width in the middle, the text of both centred, while a form's labels, fields, button and terms and a choice's panels keep the start edge inside it. It centres any section whose parts stack, not only one with a form: a heading with its deck and actions, a form after words, a choice, a series. Over a series a long deck stays under its heading. The section writes `data-kn-align="center"`, and the page parts' `Section` takes `align` too, so a template can centre a band it adds (directives.md, A centred section).
+- The check refuses `align="center"` where the layout sets parts side by side, a picture first, a heading with a form right after it, a head with an accordion alone or with paragraphs alone, or a body in columns, each reason saying what to write instead; a heading and one paragraph are such a section, and actions after the paragraph centre it. Where such a section reaches the stylesheet all the same, it keeps the start edge. Any other value is refused: "A section's alignment is start or center, and start where this is left out, not {value}." DESIGN.md and the gallery show the centred section. This builds issue #32.
+
+### Changed
+
+- **A section with a form or a choice no longer centres itself; add `align="center"` where it should.** Its head and body now keep the start edge, the body in a column of Narrow's width; it stood centred, as a page's end. What a section holds centres it no more, and the editor decides (the owner, 2026-11-25). A template's `Section` with a form, such as a newsletter's band, keeps the start edge too unless it is given `align="center"`.
+
 ## [0.15.0] – 2026-11-25
 
 ### Added

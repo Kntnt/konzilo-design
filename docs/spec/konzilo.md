@@ -490,7 +490,7 @@ designPage(Astro, { design, title: term.data.name, breadcrumbs: await breadcrumb
 </Site>
 ```
 
-The newsletter's band is a `Section` with the core's `Form` and `SmallPrint` in its body. Since a form follows, its deck stands in the body as a paragraph, and the section is centred as a page's end, as the same `:::section` in a body is.
+The newsletter's band is a `Section` with the core's `Form` and `SmallPrint` in its body. Since a form follows, its deck stands in the body as a paragraph, and the section keeps the start edge, its body in a column of Narrow's width, as the same `:::section` in a body does; `align="center"` on `Section` would centre it as a page's end (directives.md, A centred section). *(Changed 2026-11-25, by the owner's decision that content centres no section: it was centred as a page's end.)*
 
 **The search page**, the `searchPage`: one section, its title and trail as its head and the core's search in a Reading Area as its body.
 

@@ -480,7 +480,10 @@ test('the directive chapters show every directive and variant as the contract wr
   some('rule 1', (section) => has(section, '.kn-section-media', '.kn-section-badges img'));
   some('rule 1 with a form', (section) => one(section, '.kn-section-media') && one(section, '.kn-section-body > form'));
   some('rule 2', (section) => one(section, '.kn-section-head') && !one(section, '.kn-heading-group-deck') && !one(section, '.kn-section-head > .kn-actions') && elements(body(section))[0]?.name === 'form');
-  some('rule 3, on brand', (section) => section.attributes['data-kn-surface'] === 'brand' && one(section, '.kn-section-body > form'));
+  some('rule 3, on brand, at the start edge', (section) => section.attributes['data-kn-surface'] === 'brand' && one(section, '.kn-section-body > form') && !section.attributes['data-kn-align']);
+  // The editor's align="center": a form centred, and a head with no form.
+  some('align="center" with a form', (section) => section.attributes['data-kn-align'] === 'center' && one(section, '.kn-section-body > form'));
+  some('align="center" without a form', (section) => section.attributes['data-kn-align'] === 'center' && has(section, '.kn-section-head', '.kn-heading-group-deck') && one(section, '.kn-section-head > .kn-actions') && !one(section, 'form'));
   some('rule 4', (section) => { const kids = elements(body(section)); return one(section, '.kn-section-head > .kn-actions') && kids.length === 1 && kids[0].attributes.class === 'kn-accordion'; });
   some('rule 5', (section) => { const kids = elements(body(section)); return one(section, '.kn-section-head') && kids.length > 1 && kids.every((node) => node.name === 'p'); });
   some('rule 6, reasons', (section) => one(section, '.kn-section-body > .kn-reasons'));

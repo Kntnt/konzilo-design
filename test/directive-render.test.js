@@ -70,6 +70,23 @@ A garden for the people around it.
   assert.doesNotMatch(page(markdown.replace('body="columns" ', '')), /data-kn-body/);
 });
 
+test('a section with align="center" says so on its band, and one at the start edge writes nothing', () => {
+  const markdown = md`:::section{align="center" surface="brand"}
+
+## Ready for the first bed?
+
+Tell us where you live, and we will send what grows there.
+
+::form{name="start"}
+
+:::`;
+  assert.match(page(markdown), /^<section class="kn-band kn-section" data-kn-surface="brand" data-kn-align="center"><div class="kn-band-content"><header class="kn-section-head">/);
+  // The core hands a section its default, start, where the editor writes none.
+  for (const start of [markdown.replace('align="center" ', ''), markdown.replace('"center"', '"start"')]) {
+    assert.match(page(start), /^<section class="kn-band kn-section" data-kn-surface="brand"><div class="kn-band-content">/);
+  }
+});
+
 test('the serialiser writes the core\'s tree as HTML: classes, labels, data and aria, booleans, SVG, void elements, a template\'s content and escaping', () => {
   const html = '<p class="a b" data-konzilo-block="1.2" aria-label="x &amp; y" tabindex="0">A &lt;b&gt; &amp; <b>c</b><br>d</p><label for="q">L</label><details open name="n"><summary>S</summary></details><svg viewBox="0 0 24 24" stroke-width="2" class="i"><path d="M1"></path></svg><template><iframe src="https://example.com/e" allowfullscreen title="v"></iframe></template><img src="a.webp" srcset="a.webp 1x, b.webp 2x" sizes="100vw" width="10" height="20" loading="lazy" decoding="async" alt=""><input type="checkbox" checked disabled><a href="x" rel="prev next">A</a>';
   const written = toHtml(htmlToHast(html, { fragment: true }));

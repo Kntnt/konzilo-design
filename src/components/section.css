@@ -1,6 +1,7 @@
 /* Section: a Band of up to three groups, media, head and body, as sectionParts in @kntnt/konzilo-design/directives
    groups them (docs/spec/directives.md, section). Its layout is read from what the groups hold, by six rules, the first
-   that matches deciding. The editor may explicitly pair its body's teasers and quotation with body="columns" below.
+   that matches deciding. The editor may explicitly pair its body's teasers and quotation with body="columns" below, and
+   centre a section whose parts stack with align="center"; what a section holds centres it no more (the owner, 2026-11-25).
 
    Each rule's selector stands on the section's content, C below, `.kn-section > .kn-band-content`, and lays it out. What
    a rule asks of a part inside C it sets as a custom property on C, which the part reads, so each long selector is written
@@ -92,8 +93,19 @@
   .kn-section > .kn-band-content:has(> .kn-section-media):has(> .kn-section-body > form) > .kn-section-media { justify-items: center; }
   .kn-section > .kn-band-content:has(> .kn-section-media):has(> .kn-section-body > form) .kn-section-picture { inline-size: auto; max-inline-size: min(100%, var(--kn-section-offer-size, 16rem)); max-block-size: min(36rem, 70svh); border-radius: 0; }
 
-  /* Rule 3: another form or a choice, where rules 1 and 2 have not matched. The whole section is centred, as a page's end. */
+  /* Rule 3: another form or a choice, where rules 1 and 2 have not matched. The head and body stand in a column of
+     Narrow's width at the start edge. Content centres no section: this rule centred the whole section, as a page's end,
+     until the owner gave the choice to the editor, by align="center" below (2026-11-25). */
   .kn-section > .kn-band-content:not(:has(> .kn-section-media)):has(> .kn-section-body > :is(form, .kn-choice)):is(:not(:has(> .kn-section-head + .kn-section-body > form:first-child)), :has(> .kn-section-head :is(.kn-heading-group-deck, .kn-actions))) {
+    --kn-section-measure: min(100%, var(--kn-layout-narrow));
+  }
+
+  /* align="center": the editor centres a section whose parts stack, whatever it holds. The head stands in the middle, and
+     the body in a column of Narrow's width in the middle, as rule 3 drew a form before 2026-11-25 (the owner). Where the
+     rules set parts side by side, a picture first (1), a heading with a form right after it (2), a head with an accordion
+     (4) or paragraphs (5) alone, or a body in columns, the check refuses the attribute, and where it stands all the same
+     the layout keeps the start edge at every width (the assistant's choice, 2026-11-25). */
+  .kn-section[data-kn-align="center"]:not([data-kn-body="columns"]) > .kn-band-content:not(:has(> .kn-section-media)):is(:not(:has(> .kn-section-head + .kn-section-body > form:first-child)), :has(> .kn-section-head :is(.kn-heading-group-deck, .kn-actions))):not(:has(> .kn-section-head + .kn-section-body > .kn-accordion:only-child)):not(:has(> .kn-section-head + .kn-section-body > p):not(:has(> .kn-section-body > :not(p)))) {
     --kn-section-head-place: center;
     --kn-section-align: center;
     --kn-section-measure: min(100%, var(--kn-layout-narrow));
@@ -170,8 +182,9 @@
     }
 
     /* Rule 6, the heading beside its deck: a long deck over a first series with pictures and five cards or more, which is
-       more than a row at three or four columns. The deck stands in the second column, level with the heading's last line. */
-    .kn-section > .kn-band-content:not(:has(> .kn-section-media)):not(:has(> .kn-section-body > :is(form, .kn-choice))):has(> .kn-section-head .kn-heading-group-deck[data-kn-deck="long"]):has(> .kn-section-head + .kn-section-body > :is(.kn-cards, .kn-cards-nav, .kn-post-list):not(:is(.kn-cards, .kn-cards-nav, .kn-timeline, .kn-reasons, .kn-post-list) ~ *) .kn-card-picture):is(
+       more than a row at three or four columns. The deck stands in the second column, level with the heading's last line.
+       A centred head keeps its deck under its heading, since no check can know how many posts a list will show. */
+    .kn-section:not([data-kn-align="center"]) > .kn-band-content:not(:has(> .kn-section-media)):not(:has(> .kn-section-body > :is(form, .kn-choice))):has(> .kn-section-head .kn-heading-group-deck[data-kn-deck="long"]):has(> .kn-section-head + .kn-section-body > :is(.kn-cards, .kn-cards-nav, .kn-post-list):not(:is(.kn-cards, .kn-cards-nav, .kn-timeline, .kn-reasons, .kn-post-list) ~ *) .kn-card-picture):is(
       :has(> .kn-section-body > .kn-cards:not(:is(.kn-cards, .kn-cards-nav, .kn-timeline, .kn-reasons, .kn-post-list) ~ *) > :nth-child(5)),
       :has(> .kn-section-body > :is(.kn-cards-nav, .kn-post-list):not(:is(.kn-cards, .kn-cards-nav, .kn-timeline, .kn-reasons, .kn-post-list) ~ *) > :is(.kn-cards, .kn-featured) > :nth-child(5))
     ) {

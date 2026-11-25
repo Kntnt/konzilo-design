@@ -275,6 +275,24 @@ One e-mail a month.
   assert.match(written, /^<section class="kn-band kn-section" id="newsletter" data-kn-surface="tint">.*<h2 class="kn-heading-group-heading" data-kn-type="heading-2">Newsletter<\/h2>.*<div class="kn-section-body kn-body-text"><p>One e-mail a month\.<\/p><form/s);
 });
 
+test('a section a template writes is centred by align="center", as a :::section is, and keeps the start edge by default', async () => {
+  const form = '<form class="konzilo-form" data-name="newsletter"></form>';
+  const written = section({ surface: 'tint', align: 'center', heading: 'Newsletter', deck: 'One e-mail a month.', body: form });
+  assert.equal(tight(written), asBody(md`::::section{surface="tint" align="center"}
+
+## Newsletter
+
+One e-mail a month.
+
+::form{name="newsletter"}
+
+::::`));
+  for (const align of [undefined, 'start']) assert.doesNotMatch(section({ align, heading: 'Newsletter', body: form }), /data-kn-align/);
+  const locals = {};
+  designPage({ locals }, { design: testDesign(), title: 'Search', breadcrumbs: TRAIL });
+  assert.match(await render('page-parts/Section', { align: 'center', heading: 'Find out more' }, undefined, { locals }), /^<section class="kn-band kn-section" data-kn-align="center">/);
+});
+
 test('a section a template writes holds what its slot holds as its body, a list its presentation draws and a lone action after it', () => {
   const list = '<div class="test-post-list" data-presentation="rows"></div>';
   const written = section({ surface: 'raised', heading: 'Other vacancies', body: `${list}\n${actionsList([{ label: 'All vacancies', href: '/careers/#open' }])}` });

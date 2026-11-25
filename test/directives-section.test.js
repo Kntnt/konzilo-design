@@ -125,7 +125,11 @@ test('a section\'s layout follows the first of the six rules that matches, and s
     offer: { beside: true, centred: false, deckBeside: false }, // 1: a picture first
     guide: { beside: true, centred: false, deckBeside: false }, // 1, with a form
     contact: { beside: true, centred: false, deckBeside: false }, // 2: a heading and a form
-    end: { beside: false, centred: true, deckBeside: false }, // 3: another form
+    end: { beside: false, centred: false, deckBeside: false }, // 3: another form, at the start edge (the owner, 2026-11-25)
+    close: { beside: false, centred: true, deckBeside: false }, // 3, with align="center"
+    welcome: { beside: false, centred: true, deckBeside: false }, // a head alone, with align="center"
+    write: { beside: true, centred: false, deckBeside: false }, // 2, which align="center" leaves be
+    told: { beside: true, centred: false, deckBeside: false }, // 5, which align="center" leaves be
     questions: { beside: true, centred: false, deckBeside: false }, // 4: a head and an accordion
     story: { beside: true, centred: false, deckBeside: false }, // 5: a head and paragraphs
     reasons: { beside: false, centred: false, deckBeside: false }, // 6: reasons, the head at the start (the owner, 2026-11-13)
@@ -143,6 +147,8 @@ test('a section\'s layout follows the first of the six rules that matches, and s
       const narrow = await open(browser, { width });
       const found = await layout(narrow);
       for (const id of ['questions', 'story', 'plans']) assert.equal(found[id].beside || found[id].deckBeside, false, `${name} at ${width}: ${id}`);
+      // align="center" is read from the content at every width: what stands side by side on a wide window stays at the start.
+      assert.deepEqual(['end', 'close', 'welcome', 'write', 'told'].map((id) => found[id].centred), [false, true, true, false, false], `${name} at ${width}`);
       if (width === 390) for (const [id, facts] of Object.entries(found)) assert.equal(facts.beside, false, `${name} at 390: ${id}`);
       assert.equal(await narrow.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth), 0, `${name} at ${width} scrolls sideways`);
       await narrow.close();
@@ -271,7 +277,7 @@ test('a fact box in a section\'s body stands in the reading column, and in the m
       const probe = document.body.appendChild(document.createElement('div'));
       probe.style.inlineSize = 'var(--kn-layout-narrow)';
       const narrow = probe.getBoundingClientRect().width;
-      return ['#other', '#end'].map((id) => {
+      return ['#other', '#end', '#close'].map((id) => {
         const body = document.querySelector(`${id} .kn-section-body`);
         body.insertAdjacentHTML('beforeend', html);
         const fact = body.lastElementChild.getBoundingClientRect(), room = body.getBoundingClientRect();
@@ -280,26 +286,68 @@ test('a fact box in a section\'s body stands in the reading column, and in the m
     }, box);
     for (const { id, width: inner, room, narrow, start, end } of found) {
       assert.ok(Math.abs(inner - Math.min(room, narrow)) < 1, `${name} at ${width}: ${id}'s fact box is ${inner} wide, the reading column ${narrow}, its room ${room}`);
-      if (id === '#end') assert.ok(Math.abs(start - end) < 1, `${name} at ${width}: in the middle of a centred section`);
+      if (id === '#close') assert.ok(Math.abs(start - end) < 1, `${name} at ${width}: in the middle of a centred section`);
       else assert.ok(start < 1, `${name} at ${width}: at the start`);
     }
     await tab.close();
   }
 });
 
-test('in a centred section a form reads down one edge, its button and its terms with it', { timeout: 120000 }, async () => {
+test('a section with a form keeps the start edge in a column of Narrow\'s width, and align="center" sets it in the middle', { timeout: 120000 }, async () => {
+  for (const [name, browser] of browsers) for (const width of [390, 1440]) {
+    const tab = await open(browser, { width });
+    const found = await tab.evaluate(() => {
+      const probe = document.body.appendChild(document.createElement('div'));
+      probe.style.inlineSize = 'var(--kn-layout-narrow)';
+      const narrow = probe.getBoundingClientRect().width;
+      probe.remove();
+      return Object.fromEntries(['end', 'close', 'welcome'].map((id) => {
+        const content = document.querySelector(`#${id} > .kn-band-content`);
+        const style = getComputedStyle(content), outer = content.getBoundingClientRect();
+        const left = outer.left + parseFloat(style.paddingLeft), right = outer.right - parseFloat(style.paddingRight);
+        // Where a part stands in the content: its distance from the start and from the end, and its width.
+        const place = (selector) => {
+          const box = document.querySelector(`#${id} ${selector}`)?.getBoundingClientRect();
+          return box && { start: Math.round(box.left - left), end: Math.round(right - box.right), width: box.width };
+        };
+        const form = document.querySelector(`#${id} form`);
+        return [id, {
+          narrow: Math.min(narrow, right - left), heading: place('.kn-heading-group-heading'), deck: place('.kn-heading-group-deck'),
+          actions: place('.kn-section-head > .kn-actions'), action: place('.kn-section-head > .kn-actions > li:first-child'),
+          body: place('.kn-section-body'), text: place('.kn-section-body > p:first-child'),
+          align: getComputedStyle(document.querySelector(`#${id} .kn-section-head`)).textAlign,
+          // A form reads down one edge, its button and its terms with it.
+          button: form && Math.round(form.querySelector('.konzilo-form-send').getBoundingClientRect().left - form.getBoundingClientRect().left),
+          terms: form && getComputedStyle(document.querySelector(`#${id} .kn-fine-print`)).textAlign,
+        }];
+      }));
+    });
+    const at = `${name} at ${width}`;
+    const middle = (part, what) => assert.ok(Math.abs(part.start - part.end) <= 1, `${at}: ${what} in the middle, ${JSON.stringify(part)}`);
+    // A form keeps the start edge: its head and body at the start, the body in a column of Narrow's width.
+    const { end, close, welcome } = found;
+    assert.equal(end.align, 'start', at);
+    for (const part of ['heading', 'action', 'body', 'text']) assert.equal(end[part].start, 0, `${at}: the form's ${part} at the start, ${JSON.stringify(end[part])}`);
+    assert.ok(Math.abs(end.body.width - end.narrow) < 1, `${at}: the form's body is ${end.body.width} wide, Narrow ${end.narrow}`);
+    assert.deepEqual([end.button, end.terms], [0, 'start'], at);
+    // The same section with align="center" looks as it did before 2026-11-25.
+    assert.equal(close.align, 'center', at);
+    for (const part of ['heading', 'actions', 'body', 'text']) middle(close[part], `the centred form's ${part}`);
+    assert.ok(Math.abs(close.body.width - close.narrow) < 1, `${at}: the centred form's body is ${close.body.width} wide, Narrow ${close.narrow}`);
+    assert.deepEqual([close.button, close.terms], [0, 'start'], at);
+    // A section without a form is centred by the attribute too.
+    assert.equal(welcome.align, 'center', at);
+    for (const part of ['heading', 'deck', 'actions']) middle(welcome[part], `the centred head's ${part}`);
+    await tab.close();
+  }
+});
+
+test('align="center" sets a head over a series in the middle, its deck under its heading and never beside it', { timeout: 120000 }, async () => {
   for (const [name, browser] of browsers) {
     const tab = await open(browser);
-    const facts = await tab.evaluate(() => {
-      const form = document.querySelector('#konzilo-form-end').getBoundingClientRect();
-      const send = document.querySelector('#konzilo-form-end .konzilo-form-send').getBoundingClientRect();
-      return {
-        centred: getComputedStyle(document.querySelector('#end .kn-section-head')).textAlign,
-        button: Math.round(send.left - form.left),
-        terms: getComputedStyle(document.querySelector('#end .kn-fine-print')).textAlign,
-      };
-    });
-    assert.deepEqual(facts, { centred: 'center', button: 0, terms: 'start' }, name);
+    await tab.evaluate(() => document.querySelector('#plans').setAttribute('data-kn-align', 'center'));
+    const { plans } = await layout(tab);
+    assert.deepEqual(plans, { beside: false, centred: true, deckBeside: false }, name);
     await tab.close();
   }
 });

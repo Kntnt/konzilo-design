@@ -81,7 +81,7 @@ The directive list Konzilo defines needs two components that stood under "Not no
 | Timeline | Numbered cards drawn as steps, numbered as the editor writes it (`timeline.css`) | None | Built 2026-11-10 (owner, 2026-11-10, via the directive list) |
 | Choice | Answers as big buttons, none chosen beforehand; the chosen answer's panel under them, on a plate where it holds more than a form | None | Built 2026-11-10 (owner, 2026-11-10, via the directive list) |
 | Fact Box | A box of facts in the reading column: a plain label, a small heading and lists in small type, on the Surface the site writes; a stop in the following menu | None | Built 2026-11-10 (the assistant's choice, 2026-11-10, of the reading column over the Aside) |
-| Section | A Band of media, head and body, its layout read from what they hold by the directive list's six rules; a head beside an accordion stays in view (`section.css`) | Section | Built 2026-11-10 (owner, 2026-11-10, via the directive list) |
+| Section | A Band of media, head and body, its layout read from what they hold by the directive list's six rules; a head beside an accordion stays in view; the editor centres a section whose parts stack, with `align="center"` (`section.css`) | Section | Built 2026-11-10 (owner, 2026-11-10, via the directive list) |
 | Fine Print | A note in small, muted type, under a hero's actions or a form's terms after the form (`fine-print.css`) | None | Built 2026-11-10 (owner, 2026-11-10, via the directive list) |
 | Cards | A series of Cards on a Card Grid, `.kn-cards`: open, a link as a whole, an action card, a number or an address, leading on under a label, pictures behind, symbols, and signs (`cards.css`, `contactOf`) | Link-card Section | Built 2026-11-10 (owner, 2026-11-10, via the directive list) |
 | Reasons | Ticked or crossed cards without pictures: the mark hanging before each heading (`reasons.css`) | None | Built 2026-11-10 (owner, 2026-11-10, via the directive list) |
@@ -108,6 +108,8 @@ The directive list Konzilo defines needs two components that stood under "Not no
 - **Post List** (`post-list.css`): `featured` follows the list's own width by container queries, one column, then two from 32rem with the latest across both, then three from 50rem with the latest over two columns and two rows and its picture growing to match the two beside it. `filtered` draws Visitor Filters as it is, filtering by CSS with no script (2026-11-10).
 
 ***Built* 2026-11-13, for issue #22:** a section's `body="columns"` pairs a post list in `cards` and a plain quotation, under its head at the start edge. Two equal columns stack in reading order when each can no longer have 18rem. A lone teaser fills its column only in this arrangement; the quotation keeps Body Text's look and its source. The declarations and checks name the pair (directives.md, A quotation beside its teasers).
+
+***Built* 2026-11-25, for issue #32 (the owner's decision):** a section's `align="center"` centres it, its head in the middle and its body in a column of Narrow's width in the middle, where a form, its terms and a choice's panels keep the start edge. What a section holds centres it no more: one with a form or a choice keeps the start edge, its body in that column. The check refuses the attribute where the layout sets parts side by side, and the stylesheet keeps the start edge there (directives.md, A centred section).
 
 ## On the site
 

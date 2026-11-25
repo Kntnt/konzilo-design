@@ -35,6 +35,13 @@
         "label": "Body",
         "values": ["columns"],
         "refusal": "A section's body is columns, or stacked where this is left out, not {value}."
+      },
+      "align": {
+        "type": "string",
+        "label": "Alignment",
+        "values": ["start", "center"],
+        "default": "start",
+        "refusal": "A section's alignment is start or center, and start where this is left out, not {value}."
       }
     }
   },

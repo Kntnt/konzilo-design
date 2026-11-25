@@ -98,7 +98,7 @@ function pictureFrom(html, element, className) {
 // A section from its blocks in order, by the section's rules (directives.md, `section`): each block { kind, text, plain,
 // head, picture }, its kind and text as sectionParts() reads them, `plain` its HTML in a section's body, `head({ long })`
 // its HTML in the head, and `picture(className)` a picture's image as the media's.
-function sectionFrom(blocks, { surface, anchor } = {}) {
+function sectionFrom(blocks, { surface, anchor, align } = {}) {
   const parts = sectionParts(blocks);
   const out = [];
   if (parts.media.length) {
@@ -115,8 +115,10 @@ function sectionFrom(blocks, { surface, anchor } = {}) {
   const drawn = parts.media.length + parts.head.length;
   const rest = groupEyebrows(blocks.slice(drawn).map((block) => block.plain).join('')).trim();
   if (rest !== '') out.push(tag('div', { class: 'kn-section-body kn-body-text' }, rest));
-  return tag('section', { class: 'kn-band kn-section', id: anchor || undefined, 'data-kn-surface': surface && surface !== 'page' ? surface : undefined },
-    tag('div', { class: 'kn-band-content' }, out));
+  return tag('section', {
+    class: 'kn-band kn-section', id: anchor || undefined, 'data-kn-surface': surface && surface !== 'page' ? surface : undefined,
+    'data-kn-align': align === 'center' ? 'center' : undefined,
+  }, tag('div', { class: 'kn-band-content' }, out));
 }
 
 // The blocks of HTML the core drew, as sectionFrom() takes them: each element at its top, a figure's lightbox's dialog
@@ -157,6 +159,8 @@ export const headingIdOf = (text) => String(text ?? '').toLowerCase().trim().rep
  * form stands in the body, and actions right after the heading or the deck in the head.
  * @param {object} options
  * @param {string} [options.surface] @param {string} [options.anchor] The section's id.
+ * @param {'start' | 'center'} [options.align] `center` centres the section, as `align="center"` does a :::section's;
+ * it keeps the start edge by default.
  * @param {string | string[]} [options.eyebrow] @param {string} [options.heading]
  * @param {number} [options.level] The heading's level, 2 by default; its look is a section's heading's.
  * @param {string} [options.headingId] The heading's id, made from its words by default, as a body's heading's is.
@@ -164,7 +168,7 @@ export const headingIdOf = (text) => String(text ?? '').toLowerCase().trim().rep
  * @param {{ label: string, href: string, main?: boolean }[]} [options.actions]
  * @param {string} [options.body] The body's HTML, as Astro drew the template's slot.
  */
-export function section({ surface, anchor, eyebrow, heading, level = 2, headingId, deck, actions = [], body = '' } = {}) {
+export function section({ surface, anchor, align, eyebrow, heading, level = 2, headingId, deck, actions = [], body = '' } = {}) {
   const blocks = [];
   for (const words of [].concat(eyebrow ?? []).filter(Boolean)) {
     blocks.push({ kind: 'eyebrow', plain: tag('p', { 'data-kn-type': 'label' }, escapeText(words)), head: () => tag('p', { class: 'kn-heading-group-eyebrow', 'data-kn-type': 'label' }, escapeText(words)) });
@@ -181,7 +185,7 @@ export function section({ surface, anchor, eyebrow, heading, level = 2, headingI
   const links = actionsList(actions);
   if (links) blocks.push({ kind: 'actions', plain: links });
   blocks.push(...blocksOfHtml(String(body ?? '')));
-  return sectionFrom(blocks, { surface, anchor });
+  return sectionFrom(blocks, { surface, anchor, align });
 }
 
 /**
