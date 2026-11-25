@@ -1,42 +1,148 @@
 @layer kn-components {
   .kn-band { padding-block: var(--kn-space-band); background-size: cover; background-position: center; }
   .kn-band-content { inline-size: var(--kn-layout-content-area); margin-inline: auto; min-inline-size: 0; }
+  /* Two adjacent Bands on one background share one Band's space (the owner, 2026-11-25; page.md, point 3): the first
+     keeps no end space, and the second starts with its own, the band space. A Hero keeps the band space under its text
+     at every height (hero.css), so a band after it on its background starts with none, and the two share the Hero's
+     (the assistant's choice, 2026-11-25). One selector per Surface kind, and one for two bands on none, which both show
+     the page. */
   .kn-band:not([data-kn-surface]):has(+ .kn-band:not([data-kn-surface])) { padding-block-end: 0; }
-  .kn-band:not([data-kn-surface]) + .kn-band:not([data-kn-surface]) { padding-block-start: var(--kn-space-band-run); }
   .kn-band[data-kn-surface="page"]:has(+ .kn-band[data-kn-surface="page"]) { padding-block-end: 0; }
-  .kn-band[data-kn-surface="page"] + .kn-band[data-kn-surface="page"] { padding-block-start: var(--kn-space-band-run); }
   .kn-band[data-kn-surface="raised"]:has(+ .kn-band[data-kn-surface="raised"]) { padding-block-end: 0; }
-  .kn-band[data-kn-surface="raised"] + .kn-band[data-kn-surface="raised"] { padding-block-start: var(--kn-space-band-run); }
   .kn-band[data-kn-surface="tint"]:has(+ .kn-band[data-kn-surface="tint"]) { padding-block-end: 0; }
-  .kn-band[data-kn-surface="tint"] + .kn-band[data-kn-surface="tint"] { padding-block-start: var(--kn-space-band-run); }
   .kn-band[data-kn-surface="tint-secondary"]:has(+ .kn-band[data-kn-surface="tint-secondary"]) { padding-block-end: 0; }
-  .kn-band[data-kn-surface="tint-secondary"] + .kn-band[data-kn-surface="tint-secondary"] { padding-block-start: var(--kn-space-band-run); }
   .kn-band[data-kn-surface="tint-tertiary"]:has(+ .kn-band[data-kn-surface="tint-tertiary"]) { padding-block-end: 0; }
-  .kn-band[data-kn-surface="tint-tertiary"] + .kn-band[data-kn-surface="tint-tertiary"] { padding-block-start: var(--kn-space-band-run); }
   .kn-band[data-kn-surface="brand"]:has(+ .kn-band[data-kn-surface="brand"]) { padding-block-end: 0; }
-  .kn-band[data-kn-surface="brand"] + .kn-band[data-kn-surface="brand"] { padding-block-start: var(--kn-space-band-run); }
   .kn-band[data-kn-surface="brand-secondary"]:has(+ .kn-band[data-kn-surface="brand-secondary"]) { padding-block-end: 0; }
-  .kn-band[data-kn-surface="brand-secondary"] + .kn-band[data-kn-surface="brand-secondary"] { padding-block-start: var(--kn-space-band-run); }
   .kn-band[data-kn-surface="brand-tertiary"]:has(+ .kn-band[data-kn-surface="brand-tertiary"]) { padding-block-end: 0; }
-  .kn-band[data-kn-surface="brand-tertiary"] + .kn-band[data-kn-surface="brand-tertiary"] { padding-block-start: var(--kn-space-band-run); }
   .kn-band[data-kn-surface="inverse"]:has(+ .kn-band[data-kn-surface="inverse"]) { padding-block-end: 0; }
-  .kn-band[data-kn-surface="inverse"] + .kn-band[data-kn-surface="inverse"] { padding-block-start: var(--kn-space-band-run); }
   .kn-band[data-kn-surface="accent"]:has(+ .kn-band[data-kn-surface="accent"]) { padding-block-end: 0; }
-  .kn-band[data-kn-surface="accent"] + .kn-band[data-kn-surface="accent"] { padding-block-start: var(--kn-space-band-run); }
   .kn-band[data-kn-surface="accent-secondary"]:has(+ .kn-band[data-kn-surface="accent-secondary"]) { padding-block-end: 0; }
-  .kn-band[data-kn-surface="accent-secondary"] + .kn-band[data-kn-surface="accent-secondary"] { padding-block-start: var(--kn-space-band-run); }
   .kn-band[data-kn-surface="accent-tertiary"]:has(+ .kn-band[data-kn-surface="accent-tertiary"]) { padding-block-end: 0; }
-  .kn-band[data-kn-surface="accent-tertiary"] + .kn-band[data-kn-surface="accent-tertiary"] { padding-block-start: var(--kn-space-band-run); }
   .kn-band[data-kn-surface="picture-light"]:has(+ .kn-band[data-kn-surface="picture-light"]) { padding-block-end: 0; }
-  .kn-band[data-kn-surface="picture-light"] + .kn-band[data-kn-surface="picture-light"] { padding-block-start: var(--kn-space-band-run); }
   .kn-band[data-kn-surface="picture-dark"]:has(+ .kn-band[data-kn-surface="picture-dark"]) { padding-block-end: 0; }
-  .kn-band[data-kn-surface="picture-dark"] + .kn-band[data-kn-surface="picture-dark"] { padding-block-start: var(--kn-space-band-run); }
   .kn-band[data-kn-surface="status-info"]:has(+ .kn-band[data-kn-surface="status-info"]) { padding-block-end: 0; }
-  .kn-band[data-kn-surface="status-info"] + .kn-band[data-kn-surface="status-info"] { padding-block-start: var(--kn-space-band-run); }
   .kn-band[data-kn-surface="status-success"]:has(+ .kn-band[data-kn-surface="status-success"]) { padding-block-end: 0; }
-  .kn-band[data-kn-surface="status-success"] + .kn-band[data-kn-surface="status-success"] { padding-block-start: var(--kn-space-band-run); }
   .kn-band[data-kn-surface="status-warning"]:has(+ .kn-band[data-kn-surface="status-warning"]) { padding-block-end: 0; }
-  .kn-band[data-kn-surface="status-warning"] + .kn-band[data-kn-surface="status-warning"] { padding-block-start: var(--kn-space-band-run); }
   .kn-band[data-kn-surface="status-error"]:has(+ .kn-band[data-kn-surface="status-error"]) { padding-block-end: 0; }
-  .kn-band[data-kn-surface="status-error"] + .kn-band[data-kn-surface="status-error"] { padding-block-start: var(--kn-space-band-run); }
+  :is(
+    .kn-hero:not([data-kn-surface]) + .kn-band:not([data-kn-surface]),
+    .kn-hero[data-kn-surface="page"] + .kn-band[data-kn-surface="page"],
+    .kn-hero[data-kn-surface="raised"] + .kn-band[data-kn-surface="raised"],
+    .kn-hero[data-kn-surface="tint"] + .kn-band[data-kn-surface="tint"],
+    .kn-hero[data-kn-surface="tint-secondary"] + .kn-band[data-kn-surface="tint-secondary"],
+    .kn-hero[data-kn-surface="tint-tertiary"] + .kn-band[data-kn-surface="tint-tertiary"],
+    .kn-hero[data-kn-surface="brand"] + .kn-band[data-kn-surface="brand"],
+    .kn-hero[data-kn-surface="brand-secondary"] + .kn-band[data-kn-surface="brand-secondary"],
+    .kn-hero[data-kn-surface="brand-tertiary"] + .kn-band[data-kn-surface="brand-tertiary"],
+    .kn-hero[data-kn-surface="inverse"] + .kn-band[data-kn-surface="inverse"],
+    .kn-hero[data-kn-surface="accent"] + .kn-band[data-kn-surface="accent"],
+    .kn-hero[data-kn-surface="accent-secondary"] + .kn-band[data-kn-surface="accent-secondary"],
+    .kn-hero[data-kn-surface="accent-tertiary"] + .kn-band[data-kn-surface="accent-tertiary"],
+    .kn-hero[data-kn-surface="picture-light"] + .kn-band[data-kn-surface="picture-light"],
+    .kn-hero[data-kn-surface="picture-dark"] + .kn-band[data-kn-surface="picture-dark"],
+    .kn-hero[data-kn-surface="status-info"] + .kn-band[data-kn-surface="status-info"],
+    .kn-hero[data-kn-surface="status-success"] + .kn-band[data-kn-surface="status-success"],
+    .kn-hero[data-kn-surface="status-warning"] + .kn-band[data-kn-surface="status-warning"],
+    .kn-hero[data-kn-surface="status-error"] + .kn-band[data-kn-surface="status-error"]
+  ) { padding-block-start: 0; }
+  /* Where the design parts them with a hairline (`page.band-line`, which the core writes as --kn-page-band-line, since a
+     site writes its bands' HTML), each keeps its own space, as at a change of background, and a 1 px hairline in the
+     Surface's border colour stands where they meet, at the content area's width. It is drawn over the second band's
+     start space and takes no room, so the bands are as tall as they would be at a change of background. */
+  @container style(--kn-page-band-line: true) {
+    :is(
+      .kn-band:not([data-kn-surface]):has(+ .kn-band:not([data-kn-surface])),
+      .kn-band[data-kn-surface="page"]:has(+ .kn-band[data-kn-surface="page"]),
+      .kn-band[data-kn-surface="raised"]:has(+ .kn-band[data-kn-surface="raised"]),
+      .kn-band[data-kn-surface="tint"]:has(+ .kn-band[data-kn-surface="tint"]),
+      .kn-band[data-kn-surface="tint-secondary"]:has(+ .kn-band[data-kn-surface="tint-secondary"]),
+      .kn-band[data-kn-surface="tint-tertiary"]:has(+ .kn-band[data-kn-surface="tint-tertiary"]),
+      .kn-band[data-kn-surface="brand"]:has(+ .kn-band[data-kn-surface="brand"]),
+      .kn-band[data-kn-surface="brand-secondary"]:has(+ .kn-band[data-kn-surface="brand-secondary"]),
+      .kn-band[data-kn-surface="brand-tertiary"]:has(+ .kn-band[data-kn-surface="brand-tertiary"]),
+      .kn-band[data-kn-surface="inverse"]:has(+ .kn-band[data-kn-surface="inverse"]),
+      .kn-band[data-kn-surface="accent"]:has(+ .kn-band[data-kn-surface="accent"]),
+      .kn-band[data-kn-surface="accent-secondary"]:has(+ .kn-band[data-kn-surface="accent-secondary"]),
+      .kn-band[data-kn-surface="accent-tertiary"]:has(+ .kn-band[data-kn-surface="accent-tertiary"]),
+      .kn-band[data-kn-surface="picture-light"]:has(+ .kn-band[data-kn-surface="picture-light"]),
+      .kn-band[data-kn-surface="picture-dark"]:has(+ .kn-band[data-kn-surface="picture-dark"]),
+      .kn-band[data-kn-surface="status-info"]:has(+ .kn-band[data-kn-surface="status-info"]),
+      .kn-band[data-kn-surface="status-success"]:has(+ .kn-band[data-kn-surface="status-success"]),
+      .kn-band[data-kn-surface="status-warning"]:has(+ .kn-band[data-kn-surface="status-warning"]),
+      .kn-band[data-kn-surface="status-error"]:has(+ .kn-band[data-kn-surface="status-error"])
+    ) { padding-block-end: var(--kn-space-band); }
+    :is(
+      .kn-hero:not([data-kn-surface]) + .kn-band:not([data-kn-surface]),
+      .kn-hero[data-kn-surface="page"] + .kn-band[data-kn-surface="page"],
+      .kn-hero[data-kn-surface="raised"] + .kn-band[data-kn-surface="raised"],
+      .kn-hero[data-kn-surface="tint"] + .kn-band[data-kn-surface="tint"],
+      .kn-hero[data-kn-surface="tint-secondary"] + .kn-band[data-kn-surface="tint-secondary"],
+      .kn-hero[data-kn-surface="tint-tertiary"] + .kn-band[data-kn-surface="tint-tertiary"],
+      .kn-hero[data-kn-surface="brand"] + .kn-band[data-kn-surface="brand"],
+      .kn-hero[data-kn-surface="brand-secondary"] + .kn-band[data-kn-surface="brand-secondary"],
+      .kn-hero[data-kn-surface="brand-tertiary"] + .kn-band[data-kn-surface="brand-tertiary"],
+      .kn-hero[data-kn-surface="inverse"] + .kn-band[data-kn-surface="inverse"],
+      .kn-hero[data-kn-surface="accent"] + .kn-band[data-kn-surface="accent"],
+      .kn-hero[data-kn-surface="accent-secondary"] + .kn-band[data-kn-surface="accent-secondary"],
+      .kn-hero[data-kn-surface="accent-tertiary"] + .kn-band[data-kn-surface="accent-tertiary"],
+      .kn-hero[data-kn-surface="picture-light"] + .kn-band[data-kn-surface="picture-light"],
+      .kn-hero[data-kn-surface="picture-dark"] + .kn-band[data-kn-surface="picture-dark"],
+      .kn-hero[data-kn-surface="status-info"] + .kn-band[data-kn-surface="status-info"],
+      .kn-hero[data-kn-surface="status-success"] + .kn-band[data-kn-surface="status-success"],
+      .kn-hero[data-kn-surface="status-warning"] + .kn-band[data-kn-surface="status-warning"],
+      .kn-hero[data-kn-surface="status-error"] + .kn-band[data-kn-surface="status-error"]
+    ) { padding-block-start: var(--kn-space-band); }
+    :is(
+      .kn-band:not([data-kn-surface]) + .kn-band:not([data-kn-surface]),
+      .kn-band[data-kn-surface="page"] + .kn-band[data-kn-surface="page"],
+      .kn-band[data-kn-surface="raised"] + .kn-band[data-kn-surface="raised"],
+      .kn-band[data-kn-surface="tint"] + .kn-band[data-kn-surface="tint"],
+      .kn-band[data-kn-surface="tint-secondary"] + .kn-band[data-kn-surface="tint-secondary"],
+      .kn-band[data-kn-surface="tint-tertiary"] + .kn-band[data-kn-surface="tint-tertiary"],
+      .kn-band[data-kn-surface="brand"] + .kn-band[data-kn-surface="brand"],
+      .kn-band[data-kn-surface="brand-secondary"] + .kn-band[data-kn-surface="brand-secondary"],
+      .kn-band[data-kn-surface="brand-tertiary"] + .kn-band[data-kn-surface="brand-tertiary"],
+      .kn-band[data-kn-surface="inverse"] + .kn-band[data-kn-surface="inverse"],
+      .kn-band[data-kn-surface="accent"] + .kn-band[data-kn-surface="accent"],
+      .kn-band[data-kn-surface="accent-secondary"] + .kn-band[data-kn-surface="accent-secondary"],
+      .kn-band[data-kn-surface="accent-tertiary"] + .kn-band[data-kn-surface="accent-tertiary"],
+      .kn-band[data-kn-surface="picture-light"] + .kn-band[data-kn-surface="picture-light"],
+      .kn-band[data-kn-surface="picture-dark"] + .kn-band[data-kn-surface="picture-dark"],
+      .kn-band[data-kn-surface="status-info"] + .kn-band[data-kn-surface="status-info"],
+      .kn-band[data-kn-surface="status-success"] + .kn-band[data-kn-surface="status-success"],
+      .kn-band[data-kn-surface="status-warning"] + .kn-band[data-kn-surface="status-warning"],
+      .kn-band[data-kn-surface="status-error"] + .kn-band[data-kn-surface="status-error"]
+    ) { position: relative; }
+    :is(
+      .kn-band:not([data-kn-surface]) + .kn-band:not([data-kn-surface]),
+      .kn-band[data-kn-surface="page"] + .kn-band[data-kn-surface="page"],
+      .kn-band[data-kn-surface="raised"] + .kn-band[data-kn-surface="raised"],
+      .kn-band[data-kn-surface="tint"] + .kn-band[data-kn-surface="tint"],
+      .kn-band[data-kn-surface="tint-secondary"] + .kn-band[data-kn-surface="tint-secondary"],
+      .kn-band[data-kn-surface="tint-tertiary"] + .kn-band[data-kn-surface="tint-tertiary"],
+      .kn-band[data-kn-surface="brand"] + .kn-band[data-kn-surface="brand"],
+      .kn-band[data-kn-surface="brand-secondary"] + .kn-band[data-kn-surface="brand-secondary"],
+      .kn-band[data-kn-surface="brand-tertiary"] + .kn-band[data-kn-surface="brand-tertiary"],
+      .kn-band[data-kn-surface="inverse"] + .kn-band[data-kn-surface="inverse"],
+      .kn-band[data-kn-surface="accent"] + .kn-band[data-kn-surface="accent"],
+      .kn-band[data-kn-surface="accent-secondary"] + .kn-band[data-kn-surface="accent-secondary"],
+      .kn-band[data-kn-surface="accent-tertiary"] + .kn-band[data-kn-surface="accent-tertiary"],
+      .kn-band[data-kn-surface="picture-light"] + .kn-band[data-kn-surface="picture-light"],
+      .kn-band[data-kn-surface="picture-dark"] + .kn-band[data-kn-surface="picture-dark"],
+      .kn-band[data-kn-surface="status-info"] + .kn-band[data-kn-surface="status-info"],
+      .kn-band[data-kn-surface="status-success"] + .kn-band[data-kn-surface="status-success"],
+      .kn-band[data-kn-surface="status-warning"] + .kn-band[data-kn-surface="status-warning"],
+      .kn-band[data-kn-surface="status-error"] + .kn-band[data-kn-surface="status-error"]
+    )::before {
+      content: "";
+      position: absolute;
+      inset-block-start: 0;
+      inset-inline: 0;
+      inline-size: var(--kn-layout-content-area);
+      margin-inline: auto;
+      border-block-start: 1px solid var(--kn-border);
+      pointer-events: none;
+    }
+  }
 }

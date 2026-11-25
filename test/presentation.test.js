@@ -181,8 +181,8 @@ test('offline ZIP reader works from file URLs for normal, primary-only and stres
       }
       // Other widths than the example's, which the Page page's sketch must follow.
       if (fixture === 'primary-only') model.inputs.layout = { wide: 1040, narrow: 640 };
-      // Three colours that keep accent and focus in the primary.
-      if (fixture === 'stress') model.inputs['accent-color'] = 'primary';
+      // Three colours that keep accent and focus in the primary, and bands on one background parted by a hairline.
+      if (fixture === 'stress') Object.assign(model.inputs, { 'accent-color': 'primary', page: { 'band-line': true } });
       model.project.introduction = 'A short introduction.\n\nA second paragraph with <literal> text.';
       model.project.contact = { name: 'Design owner', email: 'review@example.invalid' };
       model.project.explanations = Object.fromEntries(['colour', 'typefaces', 'type-scale', 'space-shape', 'shadow', 'components'].map((key) => [key, 'A choice made for clear information.\n\nA second reason.']));
@@ -197,6 +197,10 @@ test('offline ZIP reader works from file URLs for normal, primary-only and stres
       // Each brand colour says what it does, and the one that takes accents and focus says so.
       const jobs = fixture === 'stress' ? ['colour.primary.job-accent-primary', 'colour.secondary.job-accent-primary'] : ['colour.primary.job', ...(fixture === 'example' ? ['colour.secondary.job'] : [])];
       for (const key of jobs) assert.ok(copy[key] && html.includes(copy[key]), `${fixture}: ${key}`);
+      // The Page page says how two bands on one background meet in this design (page.md, point 3).
+      const [bands, other] = fixture === 'stress' ? ['page.bands-parted', 'page.bands-shared'] : ['page.bands-shared', 'page.bands-parted'];
+      const opening = (key) => copy[key].split(/['{]/)[0];
+      assert.ok(html.includes(opening(bands)) && !html.includes(opening(other)), `${fixture}: ${bands}`);
       assert.equal((html.match(/data:font\/woff2;base64/g) || []).length, shippedIn(derive(model.inputs).typefaces).flatMap((face) => [face.upright, face.italic].filter(Boolean)).length);
       try {
         await exec('unzip', ['-t', zip]);
@@ -727,9 +731,9 @@ test('tool saves presentation prose, keeps controls still and serves the exporte
     for (const name of ['a1', 'b1', 'a2', 'b2']) { await cell('upper', name).click(); await cell('lower', name).click(); }
     await preview.waitForFunction(() => document.querySelectorAll('.kn-footer-cell').length === 8);
 
-    // The page's widths and its surface; how it meets the footer is on the Footer page.
+    // The page's widths, its surface and the line between bands; how it meets the footer is on the Footer page.
     await openPage('Frame', 'Page');
-    assert.equal(await page.locator('[data-page="page"] [data-flag^="inputs.page."]').count(), 0);
+    assert.deepEqual(await page.locator('[data-page="page"] [data-flag^="inputs.page."]').evaluateAll((flags) => flags.map((node) => node.dataset.flag)), ['inputs.page.band-line']);
     await page.locator('[data-path="inputs.layout.wide"]').fill('1000');
     await preview.waitForFunction(() => getComputedStyle(document.documentElement).getPropertyValue('--kn-layout-wide').trim() === '62.5rem');
     assert.equal(await preview.evaluate(() => document.querySelector('.kn-page-main').dataset.knShadow), 'true', 'the shadow set on the Footer page holds');

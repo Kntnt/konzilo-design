@@ -72,6 +72,11 @@ test('built gallery embeds every resource and the actual bundle runs without cry
   ui.listeners.change({ target: ui.fields['secondary-enabled'] });
   assert.equal(ui.rows[0].hidden, false);
   assert.match(ui.style.textContent, /data-kn-surface="tint-secondary"/);
+  // The hairline between two bands on one background, which the core writes for band.css (issue #30).
+  assert.match(ui.style.textContent, /--kn-page-band-line: false;/);
+  ui.fields['band-line'].checked = true;
+  ui.listeners.change({ target: ui.fields['band-line'] });
+  assert.match(ui.style.textContent, /--kn-page-band-line: true;/);
   ui.fields.mode.value = 'dark';
   ui.listeners.change({ target: ui.fields.mode });
   assert.equal(ui.document.documentElement.dataset.knMode, 'dark');
@@ -97,7 +102,7 @@ test('the real Page and Bands frame all examples, including the seven new compon
   const definitions = [...main.matchAll(/<dl\b[^>]*class="kn-key-figures"[^>]*>([\s\S]*?)<\/dl>/g)];
   for (const [, content] of definitions) assert.match(content, /<dt\b[^>]*>[\s\S]*?<\/dt>\s*<dd\b[^>]*class="kn-key-figures-value"/);
   assert.doesNotMatch(main, /style="[^"]*\bundefined\b/);
-  assert.match(main.slice(main.indexOf('id="band-run"')), /First[\s\S]*?<\/section>\s*<section class="kn-band" data-kn-surface="tint"[^>]*>/);
+  assert.match(main.slice(main.indexOf('id="band-pair"')), /First[\s\S]*?<\/section>\s*<section class="kn-band" data-kn-surface="tint"[^>]*>/);
 });
 
 test('Reading Areas keep their inline notes and Aside Blocks in the requested reading order', () => {
@@ -167,7 +172,8 @@ test('live controls defer layout changes, keep immediate feedback, and retain th
 test('every design control is described by a tooltip', () => {
   const form = html.match(/<form class="g-form"[\s\S]*?<\/form>/)[0];
   const controls = [...form.matchAll(/<(?:input|select)\b[^>]*>/g)].map(([tag]) => tag);
-  assert.equal(controls.length, 13);
+  // 14 since 2026-11-25: Line between bands, the design's page.band-line (issue #30).
+  assert.equal(controls.length, 14);
   for (const tag of controls) {
     const id = tag.match(/aria-describedby="([^"]+)"/)?.[1];
     assert.ok(id, tag);

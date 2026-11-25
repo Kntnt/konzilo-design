@@ -79,14 +79,16 @@ test('the default design\'s resolved JSON and core CSS change only on purpose', 
   // the design's tabs pass to resolved and the core writes where their line stands (generator.md), and the footer says how
   // column B's text is aligned (footer.md); each Surface declares its kind, and a part on a ground of its own kind takes
   // its other plate (plates.md, A plate finds its ground). Changed on purpose 2026-11-23: the header's logo height passes to
-  // resolved and the core writes it, 2.25rem by default (header.md, point 13); nothing else moves.
+  // resolved and the core writes it, 2.25rem by default (header.md, point 13); nothing else moves. Changed on purpose
+  // 2026-11-25: the space role band-run is retired, and the page's band-line, off by default, passes to resolved and the
+  // core writes it as --kn-page-band-line (page.md, point 3); nothing else moves.
   assert.equal(
     hash(JSON.stringify({ ...r, 'generator-version': '' })),
-    '13ed7ccdeacb0342557baaad6a9175cfdaf896184cdb31aa1d1d33e97628dabd',
+    'ee9ce879514afa3b4d9c9de4eb6d5f6a06f16bc381eda947815113a963a50dd1',
   );
   assert.equal(
     hash(coreCss(r)),
-    '5649c95b6d085a9670375c3c942fef97a73eb27c0dc6e9c9786df8aecfaa3790',
+    '8ff272bcf4e2615739dc30438cb0a2a18556d20841267f8967cd8c97fed6b6d0',
   );
 });
 

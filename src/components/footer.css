@@ -15,7 +15,10 @@
     --kn-footer-side: calc((100% - var(--kn-footer-inner)) / 2);
     --kn-footer-edge-start: var(--kn-space-band);
     --kn-footer-edge-end: var(--kn-space-band);
-    --kn-footer-row-gap: var(--kn-space-band-run);
+    /* The rows stand the component gap apart in the upper band, and twice that round a hairline between them, which
+       stands in the middle (the owner, 2026-11-25). */
+    --kn-footer-row-space: var(--kn-space-component-gap);
+    --kn-footer-row-gap: var(--kn-footer-row-space);
     display: grid;
     grid-template-columns: [full-start] var(--kn-footer-side) [a-start] calc((var(--kn-footer-inner) - var(--kn-space-column-gap)) / 3) [a-end] var(--kn-space-column-gap) [b-start] minmax(0, 1fr) [bc-start] auto [b-end] var(--kn-footer-side) [full-end];
     grid-template-rows: auto;
@@ -25,10 +28,13 @@
     padding-block: var(--kn-footer-edge-start) var(--kn-footer-padding-end);
   }
   .kn-footer-band[data-kn-rows="2"] { grid-template-rows: auto auto; }
-  .kn-footer-band[data-kn-band="lower"] { --kn-footer-edge-start: 1.25rem; --kn-footer-edge-end: 1.25rem; --kn-footer-row-gap: 0.5rem; font-size: var(--kn-type-label-size); }
-  /* Two bands on one colour close up, as any two Bands do. */
+  .kn-footer-band[data-kn-band="lower"] { --kn-footer-edge-start: 1.25rem; --kn-footer-edge-end: 1.25rem; --kn-footer-row-space: 0.5rem; font-size: var(--kn-type-label-size); }
+  .kn-footer-band:has(> .kn-footer-rule:not([data-kn-join])) { --kn-footer-row-gap: calc(2 * var(--kn-footer-row-space)); }
+  /* Two bands on one colour stand twice the upper band's row gap apart, with or without the hairline that may part
+     them in the middle: unlike the Bands of the main content, they never take a band's space from each other (the
+     owner, 2026-11-25). */
   .kn-footer-band[data-kn-joined][data-kn-band="upper"] { --kn-footer-edge-end: 0rem; }
-  .kn-footer-band[data-kn-joined][data-kn-band="lower"] { --kn-footer-edge-start: var(--kn-space-band-run); }
+  .kn-footer-band[data-kn-joined][data-kn-band="lower"] { --kn-footer-edge-start: calc(2 * var(--kn-space-component-gap)); }
 
   /* A cell takes all it covers. Its content box is as small as its content allows, at the top, against the
      cell's start edge in column A and its end edge in column B, whatever else the cell has come to cover. */
@@ -105,6 +111,8 @@
   /* On a narrow screen one column, with the cells in document order and every box at the start edge. */
   @container (inline-size <= 37.5rem) {
     .kn-footer-band { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; padding-inline: var(--kn-layout-side-margin); }
+    /* No hairline here, so no room for one. */
+    .kn-footer-band:has(> .kn-footer-rule:not([data-kn-join])) { --kn-footer-row-gap: var(--kn-footer-row-space); }
     .kn-footer-band .kn-footer-cell { grid-column: 1; grid-row: auto; justify-content: flex-start; }
     .kn-footer-rule, .kn-footer-vertical-rule { display: none; }
   }

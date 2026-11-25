@@ -32,7 +32,7 @@ const defaults = {
     lower: { surface: 'inverse', cells: { a1: true, b1: true, a2: true, b2: true } },
     'horizontal-rules': false, 'vertical-rule': false, 'rule-extent': 'content',
   },
-  page: { shadow: false, 'edge-line': false },
+  page: { shadow: false, 'edge-line': false, 'band-line': false },
   breadcrumbs: { show: true, separator: 'slash', home: 'word', current: true, narrow: 'trail' },
   hero: { picture: 'behind', surface: 'none', overlay: 'dark', height: 'two-thirds', place: 'bottom', align: 'start', type: 'heading-1', h1: 'hero' },
   tabs: { 'rule-place': 'below' },

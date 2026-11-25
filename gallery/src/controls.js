@@ -31,6 +31,7 @@ export function setupControls({ derive, coreCss, onChange }) {
       inputs.shadow.strength = Number(field('strength').value);
       inputs.shadow.hardness = Number(field('hardness').value);
       inputs.frame.width = Number(field('frame').value);
+      inputs.page = { ...inputs.page, 'band-line': field('band-line').checked };
       const resolved = derive(inputs);
       const report = resolved['contrast-check'];
       if (report.status !== 'passed') throw new Error('Contrast failed. Previous design retained; try another colour.');

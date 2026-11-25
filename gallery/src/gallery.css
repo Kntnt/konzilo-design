@@ -23,7 +23,7 @@
 .g-icon-sample .kn-icon { font-size: 1.5rem; }
 .g-grid-label { margin-block: 0 var(--kn-space-component-gap); }
 .g-note { color: var(--kn-text-muted); margin-block: var(--kn-space-component-gap) 0; }
-.g-footer { padding-block: var(--kn-space-band-run); }
+.g-footer { padding-block: var(--kn-space-5); }
 @media (max-width: 79.999rem) {
   .g-controls { block-size: auto; padding-block: 0.5rem; }
   .g-toolbar { block-size: 1.75rem; }

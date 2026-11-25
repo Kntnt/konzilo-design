@@ -361,7 +361,9 @@ Space is fluid like type. Each role grows in a straight line from a ${windowWord
 - **Between columns** (\`column-gap\`): ${css(space['column-gap'])}.
 - **Inside a card or box on a Surface** (\`plate\`): ${css(space.plate)}.
 - **Above and below a Band** (\`band\`): ${css(space.band)}.
-- **Between two Bands on the same Surface** (\`band-run\`): ${css(space['band-run'])}. The first loses its end space and the second starts with this, so a change of Surface gets more air than a run of one.
+- **Between two Bands on the same Surface**, or both on none: ${r.page?.['band-line']
+    ? 'each keeps its `band` space, as at a change of Surface, and a 1 px hairline in that Surface\'s `border` stands where they meet, as wide as the content area, never between two Surfaces'
+    : `they share one \`band\` space (${css(space.band)}): the first keeps no end space, and the second has its own. At a change of Surface each keeps its own`}. A Hero keeps the \`band\` space under its text, so the Band after it on the Hero's Surface starts with none of its own${r.page?.['band-line'] ? ', unless the hairline parts them' : ''}.
 
 **Where running text stands.** Long text lies in a Reading Area inside a Band, as a column at most Narrow wide. With nothing beside it, the column is centred in the content area. With an Aside, for a table of contents or notes, the column lies against the content area's start edge and the Aside takes the rest at the end, after the column gap, which suits most pages; it may also be the other way round. The Aside is at least ${rem(r.layout['aside-min'])} wide: where it would be narrower, the area is one column, with the Aside's content before the text, or after it. In two columns the Narrow column stays where it is even on a page whose Aside is empty, so pages of one kind align alike.`;
 }

@@ -71,6 +71,7 @@ const tips = {
   strength: 'How strong the shadows are; 0 turns them off. Here they show on cards with a Surface of their own.',
   hardness: "How sharp the shadow's edge is, from soft and diffuse to a solid offset at 100. It shows only when Shadow is above 0.",
   frame: 'A solid outline around buttons and cards with a Surface of their own, from 0 to 3 pixels; 0 means none. Applies when you release the slider.',
+  'band-line': 'A thin line between two bands of one colour, as wide as the content. Each band then keeps its full space; without it, the two share one band\'s space. Never between two colours.',
 };
 const sliders = [
   { id: 'corner', label: 'Corners', value: settings['corner-profile'], max: 100, step: 1 },
@@ -191,6 +192,7 @@ const bandRows = { page: ['Link', 'Article', 'Person'], tint: ['Link', 'Article'
         <label class="g-field"><span>Main typeface</span><select name="main-typeface" aria-describedby="g-tip-main-typeface">{typefaceChoices.main.map(({ label, value }) => <option value={value}>{label}</option>)}</select><span class="g-tip" id="g-tip-main-typeface" role="tooltip" aria-hidden="true" data-kn-surface="inverse">{tips['main-typeface']}</span></label>
         <label class="g-field"><span>Headings</span><select name="heading-typeface" aria-describedby="g-tip-heading-typeface">{typefaceChoices.heading.map(({ label, value }) => <option value={value}>{label}</option>)}</select><span class="g-tip" id="g-tip-heading-typeface" role="tooltip" aria-hidden="true" data-kn-surface="inverse">{tips['heading-typeface']}</span></label>
         <label class="g-field"><span>Monospace</span><select name="monospace-typeface" aria-describedby="g-tip-monospace-typeface">{typefaceChoices.monospace.map(({ label, value }) => <option value={value}>{label}</option>)}</select><span class="g-tip" id="g-tip-monospace-typeface" role="tooltip" aria-hidden="true" data-kn-surface="inverse">{tips['monospace-typeface']}</span></label>
+        <label class="g-field"><span>Line between bands</span><input type="checkbox" name="band-line" aria-describedby="g-tip-band-line" checked={Boolean(settings.page?.['band-line'])} /><span class="g-tip" id="g-tip-band-line" role="tooltip" aria-hidden="true" data-kn-surface="inverse">{tips['band-line']}</span></label>
         <label class="g-field"><span>Labels</span><select name="label" aria-describedby="g-tip-label"><option value="main">Main typeface</option><option value="monospace">Monospace</option></select><span class="g-tip" id="g-tip-label" role="tooltip" aria-hidden="true" data-kn-surface="inverse">{tips['label']}</span></label>
         {sliders.map(({ id, label, value, max, step }) => <label class="g-field" for={`g-${id}`}><span class="g-field-label">{label}<output for={`g-${id}`} id={`g-${id}-value`}>{value}</output></span><input id={`g-${id}`} name={id} type="range" min="0" max={max} step={step} value={value} aria-describedby={`g-tip-${id}`} /><span class="g-tip" id={`g-tip-${id}`} role="tooltip" aria-hidden="true" data-kn-surface="inverse">{tips[id]}</span></label>)}
       </form>
@@ -360,8 +362,8 @@ const bandRows = { page: ['Link', 'Article', 'Person'], tint: ['Link', 'Article'
           <BodyText><h3>A little more time in the meadow</h3>{Array.from({ length: 9 }, () => <p>{runningText}</p>)}</BodyText>
         </ReadingArea>
       </Band>
-      <Band surface="tint" id="band-run"><HeadingGroup heading="13 / A run of two tint bands · First" deck="The first band gives up its padding at the shared edge." /></Band>
-      <Band surface="tint"><HeadingGroup heading="13 / A run of two tint bands · Second" deck="The second band supplies the smaller run gap." /></Band>
+      <Band surface="tint" id="band-pair"><HeadingGroup heading="13 / Two tint bands · First" deck="Two bands on one background share one band's space: the first gives up its end space." /></Band>
+      <Band surface="tint"><HeadingGroup heading="13 / Two tint bands · Second" deck="The second keeps its own. Tick Line between bands under Design controls, and each keeps its full space with a hairline where they meet." /></Band>
       <Band surface="page" id="frame-lab">
         <HeadingGroup heading="14 / Header and Footer" deck="A complete page in its own window. Scroll inside it, open a panel, and narrow the frame to see the measured giving-way steps." />
         <form id="g-lab-controls" class="g-lab-form" aria-label="Header and Footer lab controls">

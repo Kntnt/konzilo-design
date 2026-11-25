@@ -78,6 +78,9 @@ export function coreCss(r) {
   // Where the tabs' rule stands, which tabs.css reads by a style query: a site writes the tabs' HTML, so the design's
   // choice reaches it here, and a file resolved before the choice existed has it below, as before.
   put('tabs-rule-place', r.tabs?.['rule-place'] ?? 'below');
+  // Whether a hairline parts two bands on one background, which band.css reads by a style query: a site writes its
+  // bands' HTML, so the design's choice reaches it here, and a file resolved before the choice existed has none.
+  put('page-band-line', r.page?.['band-line'] === true);
   // The logo's height in the header and the footer's brand, which brand.css and header.css read; a file resolved before
   // the setting existed has the height every logo had then.
   put('header-logo-height', rem(r.header?.['logo-height'] ?? 36));

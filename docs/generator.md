@@ -209,13 +209,18 @@ The root gets no font size. Line-height is unitless. Shadows and frame retain px
 `spacing(profile)` uses base endpoint pairs 6–8, 10–12, 14–16, 20–24, 28–32,
 32–40, 36–48 and 40–64px. A 0–100 density slider maps linearly to a multiplier
 of 0.5–1.5; endpoints are rounded to whole pixels before fluid CSS is built.
-The five roles map to steps 3 (component-gap), 6 (column-gap), 8 (band),
-5 (band-run) and 4 (plate), and store copies of those resolved values.
+The four roles map to steps 3 (component-gap), 6 (column-gap), 8 (band) and
+4 (plate), and store copies of those resolved values. A fifth, band-run on step
+5, the smaller space of a run of bands on one background, was retired on
+2026-11-25, when two such bands came to share one band's space (page.md, point
+3) and the footer got spaces of its own: nothing reads it any more, so
+`--kn-space-band-run` is no longer written. The schema still accepts it in a
+file resolved before, which a site reads as it is.
 `--kn-space-plate` supplies the inner space of a coloured box. It shared step 6
 with column-gap until the owner found the padding round the text in a card too
 large while the gaps were right (2026-11-12): the gaps stay, and a plate's
-inner space is step 4, between the component gap and band-run, 25–30px at the
-default density.
+inner space is step 4, between the component gap and band-run's step 5, 25–30px
+at the default density.
 
 `radii(profile)` maps the first quarter of the corner slider linearly from 0 to
 3px for both controls and cards. Above 25, radii continue linearly to 12px for
@@ -488,6 +493,8 @@ that size. The emitter writes `--kn-type-<style>-features` for every style, `nor
 until the tuning applies, and a media query for a crossing.
 
 Optional `inputs.header`, `inputs.footer`, `inputs.page`, `inputs.breadcrumbs` and `inputs.hero` pass with their defaults to `resolved.header`, `resolved.footer`, `resolved.page`, `resolved.breadcrumbs` and `resolved.hero`, for a site to give to its components. They emit no CSS. `inputs.hero` has `height` (`third`, `half`, `two-thirds`, `full`), `picture` (`none`, `behind`, `start`, `end`, `start-bleed`, `end-bleed`), `place` (`top`, `center`, `bottom`), `align` (`start`, `center`, `end`), `surface`, `overlay` and `type`; components.md says what they mean. `inputs.layout.wide` and `.narrow` set the resolved `layout` widths. `inputs.header` has `identity` (`logo`, `name`, `both`), `brand-axis` (`row`, `column`), `slogan-place` (`beside`, `below`) and `logo-height` (24 to 64 default-setting pixels, 36 by default) among its settings; header.md, point 13, says what they mean. `logo-height` alone of the header's settings is written in the core CSS, as `--kn-header-logo-height` on `:root` in rem, since the logo's height is a length the header's and the footer's CSS read wherever a site draws a brand; a file resolved before 0.13.0, with no `logo-height`, gets 2.25rem, the height every logo had then. `footerFromDesign` in `src/components/footer.js` turns the footer's settings and a site's content into the Footer's props, and `footerBrand` in `src/components/brand.js` writes the brand for a cell, following `header.identity` and `header.brand-axis`. `src/components/design-props.js`, exported as `@kntnt/konzilo-design/design-props`, holds both, with `identityProps`, `headerProps`, `heroProps`, `nextHeadingProps`, `breadcrumbProps` and `pageProps` for the other settings: each takes a site's own content as arguments, and the presentation's `frame.js` gives them the sample's. `logoAddresses` and `menuProps` there are for a Konzilo site (docs/spec/konzilo.md).
+
+`inputs.page.band-line` (`true` or `false`, the default) is the one setting of the page the core CSS writes (2026-11-25), as `--kn-page-band-line` on `:root`, since a site writes its bands' HTML itself and the design's choice must reach it without the site doing anything: `band.css` reads it by a style query, and at `true` two adjacent bands on one background each keep their `band` space with a hairline between them (page.md, point 3). A file resolved before it, with no `band-line`, gets `false`, the shared space.
 
 Optional `inputs.tabs` passes with its default to `resolved.tabs` too (2026-11-12). Unlike the frame's settings it is written in the core CSS, since a site writes the tabs' HTML itself, from the directives, and the design's choice must reach it without the site writing anything: `--kn-tabs-rule-place` on `:root` is `tabs.rule-place`, `below` or `above`, or `below` where a file resolved before 0.5.0 has no `tabs`, and `tabs.css` reads it by a style query (directives.md, `tabs`).
 

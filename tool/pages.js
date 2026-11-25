@@ -576,6 +576,9 @@ function pagePage(copy) {
         ${textField('Light mode', 'inputs.page.fill-light', 'A colour or gradient, as in CSS: #f8f8f6, or linear-gradient(#fff, #eee). Empty, it is the page colour.')}
         ${textField('Dark mode', 'inputs.page.fill-dark', 'A colour or gradient for dark mode, set on its own. Empty, it is the page colour.')}
       </div>`)}
+    ${setting('Between bands', flags([
+      ['page.band-line', 'Line between bands', 'A thin line between two bands of one colour, as wide as the content. Each band then keeps its full space, as at a change of colour; without it, the two share one band\'s space. Never between two colours.'],
+    ]))}
     <div class="page-sketch ui" data-page-sketch></div>
     ${next('page', copy)}`;
 }

@@ -52,7 +52,8 @@ function layoutBand(name, band, { fill, horizontalRules, verticalRule }) {
 export function layoutFooter({ upper, lower, fill = 'column', horizontalRules = false, verticalRule = false } = {}) {
   const options = { fill, horizontalRules, verticalRule };
   const bands = [layoutBand('upper', upper, options), layoutBand('lower', lower, options)].filter((band) => band.cells.length);
-  // Two bands on one colour close up, as any two Bands do, and only there can a line part them.
+  // Two bands on one colour stand closer than at a change of colour, twice the component gap apart (footer.css), and
+  // only there can a line part them.
   if (bands.length === 2 && bands[0].surface === bands[1].surface) {
     bands.forEach((band) => { band.joined = true; });
     bands[1].join = horizontalRules;

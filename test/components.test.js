@@ -34,7 +34,8 @@ test('component CSS uses only logical properties, role reads and permitted drawi
     // A plate's roles never depend on one (plates.md, point 7). A card's rise under the pointer reads whether the design
     // casts a box shadow (components.md, The owner's review of a site built with the components, 2026-11-12), and the tabs
     // read where the design puts their line, which the core writes, since a site writes the tabs' HTML (the same day).
-    if (!['header.css', 'page.css'].includes(name)) assert.doesNotMatch(source.replace('@container style(--kn-reading-columns: 2)', '').replaceAll('@container not style(--kn-shadow-box: none)', '').replaceAll('@container style(--kn-tabs-rule-place: above)', ''), /\b(?:if|style)\(/, name);
+    // Bands read whether the design parts two on one background with a hairline, for the same reason (2026-11-25).
+    if (!['header.css', 'page.css'].includes(name)) assert.doesNotMatch(source.replace('@container style(--kn-reading-columns: 2)', '').replaceAll('@container not style(--kn-shadow-box: none)', '').replaceAll('@container style(--kn-tabs-rule-place: above)', '').replace('@container style(--kn-page-band-line: true)', ''), /\b(?:if|style)\(/, name);
     for (const [, role] of source.matchAll(/var\(\s*(--kn-[\w-]+)/g)) assert.ok(emitted.has(role) || shared.has(role) || local.has(role), `${name}: unknown role ${role}`);
     walk(ast, { visit: 'Declaration', enter(declaration) {
       assert.ok(!physical.test(declaration.property), `${name}: physical property ${declaration.property}`);
@@ -102,15 +103,19 @@ test('every component has a typed wrapper; only the declared client entries, the
   assert.match(await readFile(new URL('LICENSE-tabler.txt', directory), 'utf8'), /MIT License/);
 });
 
-test('bands join each supported identical Surface with CSS adjacency in both directions', async () => {
+// Every Surface kind a band may take, and none, meets its own kind by the rule (band-space.test.js measures it).
+test('bands share one band\'s space on each supported identical Surface, and the hairline parts each', async () => {
   const source = await readFile(new URL('band.css', directory), 'utf8');
-  for (const kind of ['page', 'raised', 'tint', 'tint-secondary', 'tint-tertiary', 'brand', 'brand-secondary', 'brand-tertiary', 'inverse', 'accent', 'accent-secondary', 'accent-tertiary', 'picture-light', 'picture-dark', 'status-info', 'status-success', 'status-warning', 'status-error']) {
-    const selector = `.kn-band[data-kn-surface="${kind}"]`;
-    assert.ok(source.includes(`${selector}:has(+ ${selector}) { padding-block-end: 0; }`));
-    assert.ok(source.includes(`${selector} + ${selector} { padding-block-start: var(--kn-space-band-run); }`));
+  const [plain, parted] = source.split('@container style(--kn-page-band-line: true)');
+  assert.ok(parted, 'the hairline reads the design\'s choice');
+  for (const kind of [undefined, 'page', 'raised', 'tint', 'tint-secondary', 'tint-tertiary', 'brand', 'brand-secondary', 'brand-tertiary', 'inverse', 'accent', 'accent-secondary', 'accent-tertiary', 'picture-light', 'picture-dark', 'status-info', 'status-success', 'status-warning', 'status-error']) {
+    const on = (base) => (kind ? `${base}[data-kn-surface="${kind}"]` : `${base}:not([data-kn-surface])`);
+    assert.ok(plain.includes(`${on('.kn-band')}:has(+ ${on('.kn-band')}) { padding-block-end: 0; }`), kind);
+    assert.ok(plain.includes(`${on('.kn-hero')} + ${on('.kn-band')},`) || plain.includes(`${on('.kn-hero')} + ${on('.kn-band')}\n`), kind);
+    assert.ok(parted.includes(`${on('.kn-band')}:has(+ ${on('.kn-band')})`), kind);
+    assert.ok(parted.includes(`${on('.kn-band')} + ${on('.kn-band')}`), kind);
   }
-  assert.match(source, /:not\(\[data-kn-surface\]\):has\(\+ /);
-  assert.match(source, /:not\(\[data-kn-surface\]\) \+ /);
+  assert.doesNotMatch(source, /band-run/);
 });
 
 test('Body Text leaves headings with an explicit visual type alone', async () => {

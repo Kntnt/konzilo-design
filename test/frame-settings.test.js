@@ -198,6 +198,25 @@ test('a design says where the line across its tabs stands, and the core CSS carr
   assert.match(coreCss(before), /^  --kn-tabs-rule-place: below;$/m);
 });
 
+// A hairline between two bands on one background (issue #30, the owner, 2026-11-25): the design's, off by default, and
+// written by the core, since a site writes its bands' HTML itself.
+test('a design may part two bands on one background with a hairline, and the core CSS carries it', () => {
+  assert.equal(defaultInputs().page['band-line'], false);
+  assert.equal(derive(inputs()).page['band-line'], false, 'off unless told otherwise');
+  const parted = derive(inputs({ page: { 'band-line': true } }));
+  assert.equal(parted.page['band-line'], true);
+  assert.equal(parted.page.shadow, false, 'what is not set keeps its default');
+  assert.throws(() => validateInputs(inputs({ page: { 'band-line': 'yes' } })), /inputs\.page\.band-line/);
+  assert.match(coreCss(parted), /^  --kn-page-band-line: true;$/m);
+  assert.match(coreCss(derive(inputs())), /^  --kn-page-band-line: false;$/m);
+  // A file resolved before the input existed has no key, and its bands meet with no hairline, as before.
+  const { 'band-line': line, ...before } = parted.page;
+  assert.match(coreCss({ ...parted, page: before }), /^  --kn-page-band-line: false;$/m);
+  // The smaller space of a run of bands is gone with the run: nothing reads it.
+  assert.equal(parted.space.roles['band-run'], undefined);
+  assert.doesNotMatch(coreCss(parted), /--kn-space-band-run/);
+});
+
 test('a design says how its hero opens a page', () => {
   const defaults = defaultInputs().hero;
   assert.deepEqual(defaults, { picture: 'behind', surface: 'none', overlay: 'dark', height: 'two-thirds', place: 'bottom', align: 'start', type: 'heading-1', h1: 'hero' });

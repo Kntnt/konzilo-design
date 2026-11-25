@@ -60,6 +60,7 @@ The assistant reads the owner's "or" as a design choice (2026-11-05, ***approved
 - **Bands of different colours** each keep their own space, as before: the `band` space at the upper band's end, and 1.25rem at the lower band's start.
 - **Bands of one colour** stand twice the component gap apart, 2.5rem at a wide window, from the upper band's last row to the lower band's first, with or without the rules: the upper band keeps no end space, and the lower starts with that. With the rules, the hairline that parts them stands in the middle, 1.25rem from the content on either side. Until then the lower band started with `band-run`, the hairline in the middle of it.
 - **On a narrow screen,** where the cells stack and no hairline is drawn (On narrow screens, above), stacked cells stand one row gap apart with the rules too, since no line needs room there: 1.125rem in the upper band at the narrowest window, where they stood 2.1875rem apart. Bands of one colour stand 2.25rem apart there.
+- **Built** in `footer.css`: `--kn-footer-row-space` is a band's row gap, the component gap or 0.5rem, and `--kn-footer-row-gap` is the gap its grid uses, twice that in a band with a hairline between its rows, on a wide screen; a joined lower band starts with twice the component gap. Nothing in the footer reads `--kn-space-band-run`. `test/band-space.test.js` measures it in Gecko, WebKit and Chromium.
 
 ### Attachment
 

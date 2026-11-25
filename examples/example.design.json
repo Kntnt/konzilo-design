@@ -1792,11 +1792,6 @@
           "max": 80,
           "css": "clamp(3.125rem, 2.5893rem + 2.6786vw, 5rem)"
         },
-        "band-run": {
-          "min": 35,
-          "max": 40,
-          "css": "clamp(2.1875rem, 2.0982rem + 0.4464vw, 2.5rem)"
-        },
         "plate": {
           "min": 25,
           "max": 30,
@@ -1878,7 +1873,8 @@
     },
     "page": {
       "shadow": false,
-      "edge-line": false
+      "edge-line": false,
+      "band-line": false
     },
     "breadcrumbs": {
       "show": true,

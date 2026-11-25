@@ -45,7 +45,7 @@ export const footerVariants: { title: string; props: FooterProps }[] = [
   { title: 'Two diagonally / fill by row', props: { upper: only('a1', 'b2'), fill: 'row' } },
   { title: 'Three cells / fill by column', props: { upper: only('a2', 'b1', 'b2') } },
   { title: 'Three cells / fill by row', props: { upper: only('a2', 'b1', 'b2'), fill: 'row' } },
-  { title: 'One colour / the bands close up', props: { upper, lower: { surface: 'brand', cells: lowerCells } } },
+  { title: 'One colour / the bands twice the component gap apart', props: { upper, lower: { surface: 'brand', cells: lowerCells } } },
   { title: 'Both hairlines / content extent', props: { upper, lower: { surface: 'brand', cells: lowerCells }, horizontalRules: true, verticalRule: true } },
   { title: 'Both hairlines / full extent, through a tall cell and between two colours', props: { upper: only('a2', 'b1', 'b2'), lower, rules: 'full', horizontalRules: true, verticalRule: true } },
 ];

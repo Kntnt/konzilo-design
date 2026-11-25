@@ -87,9 +87,11 @@ test('eight density-scaled steps and shared corner profile preserve comparable g
   const space = spacing(35);
   assert.deepEqual(Object.values(space.steps).map(({ min, max }) => [min, max]), [[5, 7], [9, 10], [12, 14], [17, 20], [24, 27], [27, 34], [31, 41], [34, 54]]);
   assert.deepEqual(space.roles['column-gap'], space.steps[6]);
-  // A plate's inner space is step 4, between the gap inside a component and the run of bands (owner, 2026-11-12).
+  // A plate's inner space is step 4, between the gap inside a component and the column gap (owner, 2026-11-12).
   assert.deepEqual(space.roles.plate, space.steps[4]);
-  assert.ok(space.roles['component-gap'].max < space.roles.plate.min && space.roles.plate.max < space.roles['band-run'].min);
+  assert.ok(space.roles['component-gap'].max < space.roles.plate.min && space.roles.plate.max < space.roles['column-gap'].min);
+  // The space roles a component reads; band-run, a run of bands' smaller space, is retired (2026-11-25).
+  assert.deepEqual(Object.keys(space.roles), ['component-gap', 'column-gap', 'band', 'plate']);
   assert.ok(spacing(75).roles.band.min > spacing(50).roles.band.min);
   assert.deepEqual(radii(0), { control: 0, card: 0 });
   assert.deepEqual(radii(25), { control: 3, card: 3 });
@@ -192,6 +194,17 @@ test('checked-in neutral example is current, schema-valid and fully reproducible
   const { 'generator-version': written, ...stored } = example.resolved;
   assert.deepEqual(resolved, stored);
   assert.match(written, /^\d+\.\d+\.\d+$/);
+});
+
+// band-run was retired on 2026-11-25. A site's file resolved before it holds it still, and a site reads the file as it is,
+// so the file stays valid and needs no new resolve; its CSS writes the role, which nothing reads.
+test('a file resolved before band-run was retired still holds a design a site can read', async () => {
+  const example = JSON.parse(await readFile(new URL('../examples/example.design.json', import.meta.url), 'utf8'));
+  example.resolved.space.roles['band-run'] = { min: 35, max: 40, css: 'clamp(2.1875rem, 2.0982rem + 0.4464vw, 2.5rem)' };
+  delete example.resolved.page['band-line'];
+  validateDesignFile(example);
+  const css = await emitCss(example);
+  assert.match(css, /--kn-page-band-line: false;/);
 });
 
 test('an input may choose a further colour\'s plate only where the design has that colour', () => {

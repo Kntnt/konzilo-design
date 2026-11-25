@@ -800,6 +800,10 @@
         "edge-line": {
           "type": "boolean"
         },
+        "band-line": {
+          "type": "boolean",
+          "description": "A hairline between two adjacent bands on one background, each then keeping its full band space; off by default. Written by the core CSS as --kn-page-band-line."
+        },
         "fill-light": {
           "type": "string",
           "pattern": "^[-#(),.%/ a-zA-Z0-9]+$"
@@ -1274,7 +1278,8 @@
                   "$ref": "#/$defs/fluid"
                 },
                 "band-run": {
-                  "$ref": "#/$defs/fluid"
+                  "$ref": "#/$defs/fluid",
+                  "description": "Retired since 2026-11-25: no longer resolved and read by nothing. A file resolved before keeps it and stays valid."
                 },
                 "plate": {
                   "$ref": "#/$defs/fluid"
@@ -1284,7 +1289,6 @@
                 "component-gap",
                 "column-gap",
                 "band",
-                "band-run",
                 "plate"
               ],
               "additionalProperties": false

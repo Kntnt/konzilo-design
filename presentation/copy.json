@@ -156,6 +156,8 @@
   "page.aside-none": "Centred, without an Aside",
   "page.columns": "Text and Aside side by side from a window of {from}",
   "page.sketch-note": "Widths are to scale, heights are not. The header's, the footer's and every band's content align to the content width: {wide} at most, and in a narrower window the window less a side margin of {margin} on each side. Their backgrounds run edge to edge. Text keeps to the reading width, {narrow}. Beside it the Aside takes the rest less a gap of {gap}, and needs at least {min}; where there is no room for both, they share one column, the Aside before or after the text.",
+  "page.bands-shared": "Two bands on one background share one band's space between them, {band}; at a change of background each keeps its own.",
+  "page.bands-parted": "Two bands on one background are parted by a thin line, each keeping its own space, {band}, as at a change of background. No line stands between two backgrounds.",
   "breadcrumbs.title": "Breadcrumbs",
   "breadcrumbs.lead": "A trail directly above a page's first heading shows where it lies in the site, and the way back up.",
   "breadcrumbs.place": "The trail stands directly above the page's H1, wherever that is: in the hero, or in the section under it. A page without a hero has it directly above its first heading. The start page has none.",

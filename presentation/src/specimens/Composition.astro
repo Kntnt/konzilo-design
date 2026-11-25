@@ -91,11 +91,19 @@ const below = resolved.hero.h1 === 'below';
       {trail && !below && <Breadcrumbs slot="before" {...trail} />}
       <Button href="#contact">{sample.action}</Button>
     </Hero>
-    <Band>
+    {/* Two bands on the page, and two on tint below, show how bands on one background meet: one band's space between
+        them, or each its own round the design's hairline (page.md, point 3). The Page page scrolls to the first pair. */}
+    <Band data-preview-section="bands">
       {trail && below && <Breadcrumbs {...trail} />}
       <HeadingGroup {...nextHeadingProps(resolved.hero)} heading="Clear next steps" deck="Practical help when you need it." />
       <BodyText>
         <p>Plans, drawings and file names like <code>delivery-plan.pdf</code> stay easy to tell apart.</p>
+      </BodyText>
+    </Band>
+    <Band>
+      <HeadingGroup heading="What happens first" type="heading-3" />
+      <BodyText>
+        <p>A short call to hear what you need, then a written outline of the plan within a week.</p>
       </BodyText>
     </Band>
     <Band surface="raised" data-preview-section="surfaces">
@@ -143,6 +151,12 @@ const below = resolved.hero.h1 === 'below';
           ))}
         </CardGrid>
       </div>
+    </Band>
+    <Band surface="tint">
+      <HeadingGroup heading="Every plan is reviewed together" type="heading-3" />
+      <BodyText>
+        <p>Before any work starts, we go through the plan with you and change what does not fit.</p>
+      </BodyText>
     </Band>
     <Band surface="page">
       <BodyText>

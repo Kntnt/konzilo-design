@@ -14,8 +14,10 @@ const note = t('page.sketch-note', {
   gap: range(resolved.space.roles['column-gap']),
   min: px(layout['aside-min']),
 });
+// How two bands on one background meet, as the design has it (page.md, point 3).
+const bands = t(resolved.page?.['band-line'] ? 'page.bands-parted' : 'page.bands-shared', { band: range(resolved.space.roles.band) });
 ---
 <figure class="page-sketch" data-page-sketch>
   <Fragment set:html={pageSketch(resolved, { t, num: whole })} />
-  <figcaption data-kn-type="small">{note}</figcaption>
+  <figcaption data-kn-type="small">{note} {bands}</figcaption>
 </figure>

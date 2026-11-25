@@ -18,7 +18,8 @@ const FOLLOW = {
   shadow: '[data-preview-section="services"]',
   header: 0,
   footer: 'end',
-  page: 0,
+  // The first pair of bands on one background, which the Page page's line between bands parts.
+  page: '[data-preview-section="bands"]',
   breadcrumbs: 0,
 };
 // Each component page has a preview of its own, with its own components and nothing else.

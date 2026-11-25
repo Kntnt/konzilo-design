@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- A design may part two adjacent bands on one background with a hairline: `page.band-line`, `true` or `false`, off by default, which the core CSS writes as `--kn-page-band-line`. With it each band keeps its full band space, as at a change of background, 5 + 5rem at a wide window, and a 1 px hairline in the Surface's `border` colour stands where they meet, as wide as the content area. No hairline ever stands between two backgrounds (page.md, point 3). This builds issue #30.
+- The tool sets it with Line between bands, under Between bands on its Page page, whose preview opens on the sample page's two bands on the page, with two on tint further down. DESIGN.md and the presentation's Page page say how bands on one background meet, and the gallery's design controls can turn the line on.
+
+### Changed
+
+- **A site that overrides `--kn-space-band-run` in its own CSS sees no effect:** the core no longer writes it, and nothing reads it. A design file resolved before keeps `band-run` among its space roles and stays valid.
+- Two adjacent bands on the same background share one band's space between them, 5rem at a wide window and 3.125rem in the narrowest at the default density: the first keeps no end space, and the second starts with its own band space. Until now the second started with the smaller `band-run`, 2.5rem at a wide window, so they stood closer than at a change of background (the owner, 2026-11-25; page.md, point 3). It holds on every Surface, a tint after a tint too. A band after a Hero on its background starts with no space of its own, so the Hero's end space stands between them, where it started with `band-run`. A band of logos alone keeps its even space on both sides by the same rule, and its own rules are gone.
+- The footer's rows stand closer: in the upper band the component gap apart, 1.25rem at a wide window and 1.125rem in the narrowest, where they stood `band-run` apart, 2.5rem and 2.1875rem. With the design's horizontal rules a wide footer's rows stand twice their gap apart, the hairline in the middle: 2.5rem in the upper band, as before, and 1rem in the lower, where they stood 0.5rem apart. Two bands of one colour stand twice the component gap apart, with or without the hairline that may part them in the middle: 2.5rem at a wide window, as before, and 2.25rem in the narrowest, where the lower band started with `band-run`, 2.1875rem. Bands of different colours keep their spaces (the owner, 2026-11-25; footer.md, The space in the footer).
+
 ## [0.15.0] – 2026-11-25
 
 ### Added

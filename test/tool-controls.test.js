@@ -840,7 +840,44 @@ test('the footer is said to be fixed to the end of the page or the bottom of the
   const titles = await page.locator('[data-page="footer"] .setting-title').allTextContents();
   assert.equal(titles[titles.indexOf('Attachment') + 1], 'Where the page meets the footer');
   assert.equal(await page.locator('[data-page="footer"] [data-flag="inputs.page.shadow"], [data-page="footer"] [data-flag="inputs.page.edge-line"]').count(), 2);
-  assert.equal(await page.locator('[data-page="page"] [data-flag^="inputs.page."]').count(), 0);
+  assert.deepEqual(await page.locator('[data-page="page"] [data-flag^="inputs.page."]').evaluateAll((flags) => flags.map((flag) => flag.dataset.flag)), ['inputs.page.band-line']);
+  await page.context().close();
+});
+
+// Issue #30 (the owner, 2026-11-25): the sample page holds two bands on the page and two on tint, which share one band's
+// space, and the Page page's Line between bands parts them, live, and saves.
+test('the Page page parts two bands on one background with a hairline, live in the preview, and saves it', { timeout: 120000 }, async () => {
+  const page = await opened();
+  await turnTo(page, 'frame', 'page');
+  const preview = await (await page.locator('#preview').elementHandle()).contentFrame();
+  const flag = page.locator('[data-page="page"] [data-flag="inputs.page.band-line"]');
+  assert.equal((await flag.textContent()).trim(), 'Line between bands');
+  assert.match(await page.locator(`#${await flag.getAttribute('data-g-tooltip')}`).textContent(), /share one band's space/);
+  // Each pair in the sample page: the space between their contents, and whether a hairline stands where they meet.
+  const pairs = () => preview.evaluate(() => {
+    const bands = [...document.querySelectorAll('.kn-page-main > .kn-band')];
+    const kind = (band) => band.dataset.knSurface ?? 'none';
+    return bands.slice(1).flatMap((band, i) => (kind(band) === kind(bands[i]) ? [{
+      kind: kind(band),
+      space: band.querySelector('.kn-band-content').getBoundingClientRect().top - bands[i].querySelector('.kn-band-content').getBoundingClientRect().bottom,
+      line: getComputedStyle(band, '::before').borderTopStyle === 'solid',
+    }] : []));
+  });
+  // The band space at the preview's window, as a band between two others of other colours has it.
+  const band = await preview.evaluate(() => parseFloat(getComputedStyle(document.querySelector('[data-preview-section="surfaces"]')).paddingBlockStart));
+  assert.ok(band >= 50, `the band space, ${band}`);
+  const off = await pairs();
+  assert.deepEqual(off.map(({ kind }) => kind).sort(), ['none', 'tint'], 'two bands on the page, and two on tint');
+  for (const pair of off) assert.ok(Math.abs(pair.space - band) < 1.5 && !pair.line, `${pair.kind}: one band's space, ${pair.space}`);
+  assert.equal(await flag.getAttribute('aria-pressed'), 'false');
+  await flag.click();
+  assert.equal(await flag.getAttribute('aria-pressed'), 'true');
+  await preview.waitForFunction(() => getComputedStyle(document.documentElement).getPropertyValue('--kn-page-band-line').trim() === 'true');
+  for (const pair of await pairs()) assert.ok(Math.abs(pair.space - 2 * band) < 1.5 && pair.line, `${pair.kind}: each its own space, with a hairline`);
+  assert.equal((await onDiskSoon(page)).inputs.page['band-line'], true);
+  await flag.click();
+  assert.equal((await onDiskSoon(page)).inputs.page['band-line'], false);
+  assert.deepEqual(page.errors, []);
   await page.context().close();
 });
 

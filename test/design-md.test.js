@@ -247,6 +247,27 @@ test('DESIGN.md writes the overlay\'s fade and ceiling one way only, and the pag
   assert.match(exported(DESIGNS[0], { name: 'Example', logo: base64(SVG) }).body, /A logo's own colours are part of the logo, not of the palette/);
 });
 
+// Issue #30 (the owner, 2026-11-25): two Bands on one background share one Band's space, or each keeps its own round
+// the design's hairline; the footer has spacing of its own.
+test('DESIGN.md says how two Bands on one background meet, with the design\'s hairline or without, and the footer\'s own spacing', () => {
+  for (const line of [false, true]) {
+    const { resolved: r, body } = exported({ ...DESIGNS[0], page: { 'band-line': line } });
+    assert.doesNotMatch(body, /band-run/);
+    assert.match(body, /\*\*Between two Bands on the same Surface\*\*/);
+    if (line) {
+      assert.match(body, /each keeps its `band` space, as at a change of Surface, and a 1 px hairline in that Surface's `border` stands where they meet, as wide as the content area/);
+      assert.match(body, /- \*\*Page:\*\*[^\n]*two Bands on one Surface are parted by a 1 px `border` hairline/);
+      assert.match(body, /never between two Surfaces\. A Hero[^\n]*unless the hairline parts them\./);
+    } else {
+      assert.match(body, /they share one `band` space \(`[^`]+`\): the first keeps no end space, and the second has its own\. At a change of Surface each keeps its own\./);
+      assert.match(body, /- \*\*Page:\*\*[^\n]*two Bands on one Surface share one `band` space, with no line between them/);
+    }
+    assert.match(body, /A Hero keeps the `band` space under its text, so the Band after it on the Hero's Surface starts with none of its own/);
+    assert.match(body, /The upper band has the `band` space above and below and the component gap \(`component-gap`\) between its rows; the lower band has 1\.25rem above and below and 0\.5rem between its rows\. Where a hairline parts two rows, they stand twice their gap apart, the line in the middle\. Two bands on one Surface stand twice the component gap apart, with or without the line that may part them, the upper band keeping no end space: unlike the Bands of the page, they never take a `band` space from each other\./);
+    assert.ok(body.includes(`(\`band\`): \`${r.space.roles.band.css}\``));
+  }
+});
+
 test('DESIGN.md names each icon a component uses and a direct download for it and for each typeface', async () => {
   const { ICONS } = await import('../src/design-md/components.js');
   const { TYPEFACES } = await import('../src/fonts/catalog.js');
