@@ -78,7 +78,7 @@ test('DESIGN.md gives every Surface in both modes, with the picture Surfaces\' o
     const { color, opacity } = r.surfaces['picture-dark'].light.scrim;
     assert.match(front, new RegExp(`^  picture-dark-scrim: "rgb\\([\\d ]+ / ${opacity}\\)"$`, 'm'));
     assert.ok(body.includes(`${color} at ${opacity} opacity`), 'the hero\'s overlay, in colour and strength');
-    assert.ok(body.includes('`clamp(6rem, 24svh, 16rem)`'), 'how far the overlay fades');
+    assert.ok(body.includes('`clamp(8rem, 36svh, 32rem)`'), 'how far the overlay fades');
   }
 });
 
@@ -229,8 +229,10 @@ test('DESIGN.md gives the status colours of every Surface, and says the componen
 
 test('DESIGN.md writes the overlay\'s fade and ceiling one way only, and the page, footer and trail exactly', () => {
   const { body } = exported(DESIGNS[0]);
-  assert.match(body, /going up from the text's top edge it has 84% of its strength a quarter of the way, 50% halfway, 16% at three quarters and nothing at the end/);
-  assert.match(body, /wherever text stands the layer has exactly that strength, and nowhere is it stronger/);
+  assert.match(body, /full strength from the hero's bottom edge up to the top edge of the main heading, or of the text block in a hero without one/);
+  assert.match(body, /going up from the heading's top edge it has 84% of its strength a quarter of the way, 50% halfway, 16% at three quarters and nothing at the end/);
+  assert.match(body, /The trail and the eyebrow above the heading stand in the fade, so their contrast over a bright picture is not checked; the checks hold from the heading down/);
+  assert.match(body, /wherever checked text stands the layer has exactly that strength, and nowhere is it stronger/);
   assert.doesNotMatch(body, /darker than that/);
   assert.match(body, /Header, page and footer together fill at least the window's height/);
   assert.match(body, /\*\*Where page and footer meet\.\*\*[^\n]*under either attachment[^\n]*the same as the footer's first band/);

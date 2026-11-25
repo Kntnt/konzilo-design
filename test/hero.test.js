@@ -94,6 +94,12 @@ const measureHero = (node) => {
   const box = rect(node);
   const inside = rect(content);
   const text = rect(node.querySelector('.kn-hero-text'));
+  // The fade's reach as the hero computes it: a custom property gives back only what it was written as.
+  const probe = document.createElement('div');
+  probe.style.cssText = 'position: absolute; block-size: var(--kn-scrim-fade-length, 0);';
+  node.append(probe);
+  const fadeLength = probe.getBoundingClientRect().height;
+  probe.remove();
   return {
     hero: box,
     text,
@@ -106,7 +112,7 @@ const measureHero = (node) => {
     // Where the pseudo-element's edges stand, from the offsets it was given.
     pseudoTop: inside.top + parseFloat(before.top),
     pseudoBottom: inside.bottom - parseFloat(before.bottom),
-    fadeLength: parseFloat(getComputedStyle(node).getPropertyValue('--kn-scrim-fade-length')) || 0,
+    fadeLength,
     paddingTop: parseFloat(getComputedStyle(node).paddingBlockStart),
     paddingBottom: parseFloat(getComputedStyle(node).paddingBlockEnd),
     image: getComputedStyle(node).backgroundImage,
@@ -211,7 +217,10 @@ test('the tool chooses the design\'s hero with nothing disabled, and the overlay
       assert.doesNotMatch(bottom.image, /linear-gradient/, `${height}: at the bottom the even overlay is gone`);
       assert.doesNotMatch(bottom.mask, /^linear-gradient\((?:to top|0deg)/, `${height}: at the bottom it fades in going down`);
       assert.match(bottom.scrim, /0\.57\)/, `${height}: to the Surface's tested strength`);
-      assert.ok(bottom.pseudoTop + bottom.fadeLength <= bottom.text.top + 1, `${height}: full strength by the top line`);
+      // The reach is 36% of the screen the sample stands for, not of the preview's frame, which is taller.
+      assert.ok(Math.abs(bottom.fadeLength - Math.min(Math.max(0.36 * screen, 128), 512)) < 1, `${height}: a fade of 36% of the screen, not ${bottom.fadeLength}`);
+      assert.ok(Math.abs(bottom.pseudoTop + bottom.fadeLength - bottom.heading.top) < 1, `${height}: full strength from the heading's top`);
+      assert.ok(bottom.heading.top > bottom.text.top + 10, `${height}: and the trail and the eyebrow above it stand in the fade`);
       assert.ok(bottom.pseudoBottom >= bottom.hero.bottom - 1, `${height}: and on to the hero's bottom`);
       assert.ok(bottom.hero.bottom - bottom.text.bottom < bottom.text.top - bottom.hero.top, `${height}: the text stands at the bottom`);
 
@@ -233,8 +242,8 @@ test('the tool chooses the design\'s hero with nothing disabled, and the overlay
     const original = await deck.textContent();
     await deck.evaluate((node) => { node.textContent = node.textContent.repeat(8); });
     const long = await measure();
-    assert.ok(long.text.top < short.text.top - 20);
-    assert.ok(long.pseudoTop + long.fadeLength <= long.text.top + 1);
+    assert.ok(long.heading.top < short.heading.top - 20);
+    assert.ok(Math.abs(long.pseudoTop + long.fadeLength - long.heading.top) < 1);
     await choose({ picture: 'behind', height: 'full', place: 'top' });
     const longTop = await measure();
     assert.ok(longTop.pseudoBottom - longTop.fadeLength >= longTop.text.bottom - 1);

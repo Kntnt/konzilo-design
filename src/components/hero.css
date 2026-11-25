@@ -82,7 +82,13 @@
      It is one layer in the overlay's colour, and its masks say where it shows. Masks add up to at most the whole layer,
      so nothing laid on the fade can darken the picture past the tested strength. */
   .kn-hero:is([data-kn-place="top"], [data-kn-place="bottom"])[data-kn-surface^="picture-"] {
-    --kn-scrim-fade-length: clamp(6rem, 24svh, 16rem);
+    /* The fade's reach follows the window's height, so it softens the picture rather than drawing an edge across a tall
+       window, as the 16rem cap of 24svh did at 2560 × 1300; 48svh darkened too much of the picture at 1512 × 900, so
+       36svh, about 20rem there, and 8rem to 32rem around it (the owner, 2026-11-25, from a site that tried it). The window
+       is a property of its own, since a sample in the presentation stands for a screen its frame is not as tall as. */
+    --kn-hero-window: 100svh;
+    --kn-scrim-fade-length: clamp(8rem, calc(var(--kn-hero-window) * 0.36), 32rem);
+    anchor-scope: --kn-hero-heading;
     background-image: var(--kn-picture-image, none);
     isolation: isolate;
     overflow: clip;
@@ -96,8 +102,14 @@
     background: var(--kn-scrim);
     mask-image: var(--kn-scrim-fade);
   }
+  /* With the text at the bottom the overlay is whole from the top of the main heading down, and the trail and the eyebrow
+     above it stand in the fade, where their contrast over a bright picture is not checked (the owner, 2026-11-25): the
+     heading is where the checks hold. The heading is the group's, a paragraph in its look where the H1 stands under the
+     hero. A hero without a heading, and a browser without anchor positioning, have it whole from the text's first line. */
+  .kn-hero[data-kn-place="bottom"][data-kn-surface^="picture-"] > .kn-hero-content > .kn-hero-text > .kn-heading-group > .kn-heading-group-heading { anchor-name: --kn-hero-heading; }
   .kn-hero[data-kn-place="bottom"][data-kn-surface^="picture-"] > .kn-hero-content::before {
     inset-block: calc(-1 * var(--kn-scrim-fade-length)) calc(-1 * var(--kn-space-band));
+    inset-block-start: calc(anchor(--kn-hero-heading start, 0rem) - var(--kn-scrim-fade-length));
   }
   /* The mirror: full strength from the hero's top, past any header over it, down to the text's last line. */
   .kn-hero[data-kn-place="top"][data-kn-surface^="picture-"] { --kn-scrim-fade-direction: to top; }
@@ -105,16 +117,18 @@
     inset-block: calc(-1 * (var(--kn-space-band) + var(--kn-header-height))) calc(-1 * var(--kn-scrim-fade-length));
   }
   /* A transparent header's words lie on the picture too, so they keep the overlay's strength. With the text at the top
-     they already stand on the full overlay. With it at the bottom the header gets a mask of its own, and the layer starts
-     far enough above the text to hold it, past the hero's top wherever the text leaves that. Both masks stand on the layer's
-     bottom, the hero's: the fade's as tall as the text and its own length, and the header's as tall as the hero, which is its
-     chosen height or, with more text, the layer less the chosen height. */
+     they already stand on the full overlay. With it at the bottom the header gets a mask of its own, and each mask stands
+     on an edge of the layer that it knows. The header's stands on the top, the hero's: its chosen height above its bottom,
+     or with more text, the header and the band's space above the text. The fade's stands on the bottom, which lies a set
+     length below the heading's top, past the hero's bottom, where the hero clips it: 100rem is more than any hero's text
+     below its heading, and the layer never ends above the hero's bottom. */
   .kn-page:has(> .kn-header[data-kn-attachment="sticky"][data-kn-start="under"]) > .kn-page-main > .kn-hero:first-child[data-kn-place="bottom"][data-kn-surface^="picture-"] > .kn-hero-content::before {
-    --kn-scrim-reach: calc(var(--kn-hero-height, 0rem) + var(--kn-header-height) + var(--kn-space-band));
-    inset-block-start: calc(-1 * var(--kn-scrim-reach));
+    --kn-scrim-below: 100rem;
+    inset-block: min(calc(100% + var(--kn-space-band) - var(--kn-hero-height, 0rem)), calc(-1 * (var(--kn-header-height) + var(--kn-space-band)))) min(calc(100% - var(--kn-scrim-below)), calc(-1 * var(--kn-space-band)));
+    inset-block-end: min(calc(anchor(--kn-hero-heading start, 100%) - var(--kn-scrim-below)), calc(-1 * var(--kn-space-band)));
     mask-image: var(--kn-scrim-fade), var(--kn-scrim-header);
-    mask-position: bottom;
+    mask-position: bottom, top;
     mask-repeat: no-repeat;
-    mask-size: 100% calc(100% - var(--kn-scrim-reach) + var(--kn-scrim-fade-length)), 100% max(var(--kn-hero-height, 0rem), calc(100% - var(--kn-hero-height, 0rem)));
+    mask-size: 100% calc(var(--kn-scrim-below) + var(--kn-scrim-fade-length)), 100% 100%;
   }
 }

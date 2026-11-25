@@ -625,7 +625,7 @@ const HERO_PICTURES = [
 const HERO_PLACES = [
   ['top', 'Top', 'The text at the top. Over a picture behind it, the overlay is strongest at the top and fades away below the text.'],
   ['center', 'Middle', 'The text in the middle. Over a picture behind it, the overlay covers all of the picture.', 'middle'],
-  ['bottom', 'Bottom', 'The text at the bottom. Over a picture behind it, the overlay fades in above the text and is at full strength where the text begins.'],
+  ['bottom', 'Bottom', 'The text at the bottom. Over a picture behind it, the overlay fades in above the heading and is at full strength from the heading down, so the trail and the eyebrow stand in the fade.'],
 ];
 const HERO_ALIGNS = [
   ['start', 'Left', 'The text at the left of the content width. A picture at the side already gives the text its half.', 'align-start'],
