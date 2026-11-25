@@ -77,6 +77,13 @@ the source. The former PDF command and renderer are removed. The default ZIP is
 It contains only `<project-name-slug>-<document.filename>.html`; the final filename
 word is a copy key. All assets are inline and the build needs no browser.
 
+***Built* 2026-11-25, for issue #10 (the assistant's choice where the issue left it open):** the command
+only reads the checkout. Each run builds in a folder of its own in the system's temporary folder and
+removes it afterwards, so two presentations made at once never share a folder and a checkout that may
+not be written to makes one. No cache is kept between runs, under the owner's rule that a command keeps
+no hidden state from earlier runs: Astro's held nothing a static build reads back, and a build was no
+faster with it. `tool/README.md` gives the details and the measurement.
+
 The reader has 23 pages: Start, two colour pages, four typography pages, three
 space/shape pages, eleven component pages, Details and Comments. Hash routing
 preserves history. The desktop sidebar is 260 px; a menu replaces it below 900 px.
