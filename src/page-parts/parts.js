@@ -13,6 +13,7 @@
 // - readMore(): a section of teasers under a heading, and a lone main action to the rest.
 import { DECK_LINE, sectionParts } from '../directives/section.js';
 import { heroAttributes } from '../components/hero-attributes.js';
+import { pictureImage } from '../components/picture-image.js';
 import { contactOf } from '../directives/cards.js';
 import { serviceOf } from '../directives/actions.js';
 import { iconHtml } from '../directives/icons.js';
@@ -377,7 +378,8 @@ export function articleOpening(ctx, { data = {}, eyebrow, picture, metaLine = []
     class: 'kn-band kn-hero kn-article-opening',
     'data-kn-surface': ground && ground !== 'page' ? ground : undefined,
     ...heroAttributes({ side, height: settings.height, place: settings.place, align: settings.align }),
-    style: behind ? `--kn-picture-image:url(${JSON.stringify(String(picture.src))})` : undefined,
+    // The main image behind is the band's, as Band writes it; a relative address stops the build (picture-image.js).
+    style: behind ? `--kn-picture-image:${pictureImage(picture.src)}` : undefined,
   }, tag('div', { class: 'kn-band-content kn-hero-content' },
     tag('div', { class: 'kn-hero-text' },
       breadcrumbsHtml(ctx),

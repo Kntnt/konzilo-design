@@ -476,7 +476,7 @@ The class grammar and selectors are shared by Astro and the plain HTML export.
 | `--kn-footer-inner`, `--kn-footer-side` | Local grid relations for the shared content rail and its margins. |
 | `--kn-footer-separator` | Local width of the footer link list’s bullet strip, in em. |
 | `--kn-reading-sticky-inset` | Existing Reading Area inset, now the visible sticky header height plus component gap. |
-| `--kn-hero-screen`, `--kn-hero-height` | What a Hero's height is a share of, and the share chosen by `data-kn-height`. |
+| `--kn-hero-screen`, `--kn-hero-height` | What a Hero's height is a share of, which a frame may set and DESIGN.md names (2026-11-25, issue #21), and the share chosen by `data-kn-height`. |
 | `--kn-scrim` | A picture Surface's scrim as one colour at its checked opacity, for a layer that masks say where to show. |
 | `--kn-scrim-fade`, `--kn-scrim-fade-length` | That layer's mask where text stands on part of the picture, from clear to whole over the length. |
 | `--kn-scrim-header` | That layer's mask behind a transparent header, whole over the header's height and then clearing. |
