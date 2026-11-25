@@ -110,7 +110,7 @@ The names in code, the custom properties, classes, attributes and design-file ke
 
 **Layer**: One of the three layers, from the top: the header with the panels it opens, the page, and the footer. The upper layer casts the shadow on the lower, never the reverse.
 
-**Band**: A strip of the page from edge to edge, with the Content area inside it, that owns the space above and below its content and may have a Surface of its own. The main content is Bands only. Adjacent Bands on the same background get less space between them than at a change of background. _Avoid_: section, for any band; row, strip.
+**Band**: A strip of the page from edge to edge, with the Content area inside it, that owns the space above and below its content and may have a Surface of its own. The main content is Bands only. Two adjacent Bands on the same background share one Band's space between them, unless the design parts them with a hairline, when each keeps its own, as at a change of background. _Avoid_: section, for any band; row, strip.
 
 **Width**: How wide an element is: `narrow`, `wide`, `full`, or one-sided, `bleed-start` and `bleed-end`, from the Content area's edge to the window's on one side. _Avoid_: rail.
 

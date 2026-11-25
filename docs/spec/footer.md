@@ -31,7 +31,7 @@ The assistant reads the owner's "or" as a design choice (2026-11-05, ***approved
 **What stays of the model of 2026-10-31:**
 
 - Optional hairlines, never between two colours or through a merged cell, stopping at the content by default. A hairline over column B alone therefore starts at the start edge of B's widest content box, not at the column's (*decided* 2026-11-02, the owner found it running too far past the text). The owner did not ask to remove them on 2026-11-05, and approved the footer with them on 2026-11-10.
-- Adjacent bands with the same background get less space between them than at a change of background: section space at their outer edges and a smaller gap inside. Footer bands on one colour close up in the same way, and only there can a hairline part them.
+- Two footer bands on one colour stand closer than at a change of colour, and only there can a hairline part them. *(Changed 2026-11-25, by the owner, issue #30: this said they close up as any two Bands on one background do, the band space at their outer edges and a smaller gap inside; the page's Bands now share one band's space (page.md, point 3), and the footer has spaces of its own, The space in the footer, below.)*
 
 **Replaced 2026-11-05, no longer in force:** up to four bands, cells merged by hand over rows or both columns, same-colour runs of more than two bands, B's content pushed to the end as one shared block, and the design file's `model`, `surface` and `second-surface` with the six models (2026-11-03). Old keys have no migration: validation refuses them.
 
@@ -49,6 +49,17 @@ The assistant reads the owner's "or" as a design choice (2026-11-05, ***approved
 **The brand follows the header** (the owner, 2026-11-05): what is chosen in the header holds in the footer too. A1 of the upper band shows what `header.identity` says, logo only, name only, or logo and name, following `brand-axis` too and optically centred as in the header (header.md, point 13), with no slogan. It has the header's sizes, the logo the design's `header.logo-height` among them (2026-11-23), and the logo for the band's Surface: a band dark in both modes takes the dark logo, and one that follows the mode holds both, for CSS to choose. Changing them changes the preview's footer where it stands. A site gets the same from `footerBrand` in `src/components/brand.js`, as a cell's `content`.
 
 **The tool's control** (the owner): a miniature of this structure, in which one clicks the cells to turn them on and off and sees the result in the preview. Eight cells in all.
+
+### The space in the footer
+
+***Decided* by the owner, 2026-11-25 (issue #30)**, after full-scale sketches with measured spacing. It replaces the footer's use of `band-run`, the smaller space of a run of bands, which went with the run (page.md, point 3). Unlike the Bands of the page, the footer's two bands never take a band's space from each other.
+
+- **Columns share rows,** as before.
+- **The upper band** has the `band` space above and below, and its rows stand the component gap apart, `--kn-space-component-gap`, 1.25rem at a wide window at the default density, where they stood `band-run` apart, 2.5rem. With the design's horizontal rules, two rows stand twice that apart, 2.5rem, the hairline in the middle.
+- **The lower band** has 1.25rem above and below, and its rows stand 0.5rem apart, as before; with the rules, 1rem, the hairline in the middle.
+- **Bands of different colours** each keep their own space, as before: the `band` space at the upper band's end, and 1.25rem at the lower band's start.
+- **Bands of one colour** stand twice the component gap apart, 2.5rem at a wide window, from the upper band's last row to the lower band's first, with or without the rules: the upper band keeps no end space, and the lower starts with that. With the rules, the hairline that parts them stands in the middle, 1.25rem from the content on either side. Until then the lower band started with `band-run`, the hairline in the middle of it.
+- **On a narrow screen,** where the cells stack and no hairline is drawn (On narrow screens, above), stacked cells stand one row gap apart with the rules too, since no line needs room there: 1.125rem in the upper band at the narrowest window, where they stood 2.1875rem apart. Bands of one colour stand 2.25rem apart there.
 
 ### Attachment
 
