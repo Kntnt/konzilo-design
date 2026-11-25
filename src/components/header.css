@@ -282,7 +282,8 @@
 
   /* ---------- Panels ----------
      The megamenu and the search box are modal dialogs, the language list a popover. In the top layer each is placed
-     absolutely, by the bar as its anchor: a fixed one sits at its anchor's unscrolled place in Firefox. */
+     absolutely, by the bar or the globe as its anchor: a fixed one sits at its anchor's unscrolled place in Firefox.
+     Under a sticky header the two dialogs are fixed to the window instead, with no anchor (below). */
   .kn-header-panel { border: 0; margin: 0; padding: 0; color: var(--kn-text); box-shadow: var(--kn-shadow-panel); }
   .kn-header-panel:is([open], :popover-open) { animation: kn-header-panel-in var(--kn-duration-feedback) var(--kn-easing-standard); }
   .kn-header-panel::backdrop { background: transparent; }
@@ -316,7 +317,9 @@
   .kn-megamenu-links a { display: grid; gap: 0.0625rem; }
   .kn-megamenu-above { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; }
   .kn-megamenu-below { display: flex; flex-wrap: wrap; gap: 0.5rem 1.75rem; padding-block-start: 1.25rem; border-block-start: 1px solid var(--kn-border); font-size: var(--kn-type-small-size); color: var(--kn-text-muted); }
-  /* The globe's list hangs under the globe, its end edge on the globe's, by the popover's own anchor. */
+  /* The globe's list hangs under the globe, its end edge on the globe's, by the popover's own anchor, under a sticky
+     header too: a released Firefox keeps it there as the page scrolls (Firefox 161, 2026-11-25), as Chromium and
+     WebKit do; only Playwright's Firefox 157 leaves it behind. */
   .kn-header-language { position: relative; }
   .kn-header .kn-header-language-list:popover-open {
     position: absolute; inset: auto; position-area: block-end span-inline-start; margin: 0; margin-block-start: 0.625rem;
@@ -330,6 +333,13 @@
     inline-size: 100%; block-size: calc(100dvh - var(--kn-header-height)); max-inline-size: none; max-block-size: none; margin: 0;
     padding: 1.5rem var(--kn-layout-side-margin); background: transparent; overflow-y: auto;
   }
+  /* Under a sticky header the two dialogs are fixed to the window, their top at the header's height, with no anchor
+     (issue #27). By the sticky bar as their anchor, Firefox 160 and later placed them at the bar's unscrolled place, the
+     document's top, and opening one scrolled the page there; Playwright's Firefox 157 and Chromium 156 left the panel
+     behind once the page scrolled; and with a header that had slid away, the anchor lay above the window, and Chromium
+     and WebKit scrolled the page towards it. The header comes back while a panel is open, so its bar ends at its
+     height. */
+  .kn-header[data-kn-attachment="sticky"] :is(.kn-megamenu, .kn-header-search-overlay):modal { position: fixed; inset-block-start: var(--kn-header-height); }
   /* Everything behind the box fades, and is blurred where the design says so, the header bar and the footer with the
      rest (the owner, 2026-11-11): the dialog's backdrop blurs the whole window, and a layer fixed to the window, which
      a click passes through, fades it. Both come in with a fade while the box slides down, since a dialog that moved

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- A sticky header's megamenu and search box open under the bar wherever the page is, and stay under it if the page then scrolls: they are fixed to the window, their top at the header's height. Anchored to the sticky bar, they were misplaced once the page had scrolled. In Firefox 160 and later, opening either on a scrolled page scrolled it to the top in one jump, from 1500 px down to 0, with every sticky header at every width. In Firefox 157 and Chromium the panel was left behind when the page scrolled under it. Opened while the header had slid away, it scrolled the page in Chromium, from 1500 to 1053 px with the panel 437 px from the window's top, and in WebKit, from 1500 to 1458 px. A header in the flow and the language list are as before. This fixes issue #27.
+
 ## [0.15.0] – 2026-11-25
 
 ### Added
