@@ -79,10 +79,12 @@ test('the default design\'s resolved JSON and core CSS change only on purpose', 
   // the design's tabs pass to resolved and the core writes where their line stands (generator.md), and the footer says how
   // column B's text is aligned (footer.md); each Surface declares its kind, and a part on a ground of its own kind takes
   // its other plate (plates.md, A plate finds its ground). Changed on purpose 2026-11-23: the header's logo height passes to
-  // resolved and the core writes it, 2.25rem by default (header.md, point 13); nothing else moves.
+  // resolved and the core writes it, 2.25rem by default (header.md, point 13); nothing else moves. Changed on purpose
+  // 2026-11-25: a hero takes half of the screen by default, where it took two thirds (directives.md, hero); the core CSS
+  // does not move.
   assert.equal(
     hash(JSON.stringify({ ...r, 'generator-version': '' })),
-    '13ed7ccdeacb0342557baaad6a9175cfdaf896184cdb31aa1d1d33e97628dabd',
+    'af71d342a8be10c5d3bae5879dc633db5548076a7de3c05c0ebe2feb561e1ea1',
   );
   assert.equal(
     hash(coreCss(r)),
@@ -221,6 +223,8 @@ test('a new design is plain: one typeface, one colour, no shadows, square corner
   assert.equal(inputs.shadow.strength, 0);
   assert.equal(inputs.frame.width, 0);
   assert.equal(inputs['corner-profile'], 0);
+  // Its hero takes half of the screen, since 2026-11-25 (the owner, issue #31); it was two thirds.
+  assert.equal(inputs.hero.height, 'half');
   assert.equal(project.name, 'Placeholdr');
   for (const key of ['logo', 'logo-dark']) {
     const svg = Buffer.from(project[key].split(',')[1], 'base64').toString();

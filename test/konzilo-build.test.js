@@ -632,7 +632,9 @@ test('the core\'s body check reads the package\'s declarations and runs its chec
 - **[Two](/two/)**
 
 :::`), ['A styled list of actions has at most one main action, the one link in bold, and this has 2.']);
-  assert.match(reasons('::::section{surface="green"}\n\nWords.\n\n::::').join(), /A section stands on page, raised, inverse, tint, brand or accent, not on green\./);
+  assert.match(reasons('::::section{surface="green"}\n\nWords.\n\n::::').join(), /A section stands on page, raised, inverse, tint, brand or accent, or on tint, brand or accent in the second or third colour, such as tint-secondary or brand-tertiary, not on green\./);
+  assert.match(reasons('::::hero{height="tall"}\n\nWords.\n\n::::').join(), /An opening's height is third, half, two-thirds or full, its share of the screen, not tall\. Leave it out for the design's own\./);
+  for (const height of ['third', 'half', 'two-thirds', 'full']) assert.deepEqual(reasons(`::::hero{height="${height}"}\n\nWords.\n\n::::`), [], height);
   assert.match(reasons(':::section{body="split"}\n\nWords.\n\n:::').join(), /A section's body is columns, or stacked where this is left out, not split\./);
   assert.match(reasons(':::section{body="columns"}\n\n> Only a quotation.\n\n:::').join(), /one post list with presentation="cards" and one quotation/);
 });

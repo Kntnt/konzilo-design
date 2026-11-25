@@ -137,6 +137,16 @@ Words.
   assert.throws(() => renderMarkdown(own, { title: undefined }), /designPage\(Astro, \{ title \}\)/);
 });
 
+test('a hero takes the height its editor writes, and the design\'s where none is written', () => {
+  const design = testDesign({ hero: { picture: 'none', height: 'two-thirds' } });
+  const opening = (attributes) => page(`::::hero${attributes}\n\nWords.\n\n::::`, { design });
+  assert.match(opening(''), /^<section class="kn-band kn-hero" data-kn-height="two-thirds"[ >]/);
+  assert.match(opening('{height="full"}'), /^<section class="kn-band kn-hero" data-kn-height="full"[ >]/);
+  assert.match(opening('{height="third" surface="tint"}'), /^<section class="kn-band kn-hero" data-kn-surface="tint" data-kn-height="third"[ >]/);
+  // A value the core would have refused never reaches the stylesheet as a height it has no rule for.
+  assert.match(opening('{height="tall"}'), /^<section class="kn-band kn-hero" data-kn-height="two-thirds"[ >]/);
+});
+
 test('a section draws its media, its head and its body by the six rules\' groups, and its own id wins over its heading\'s', () => {
   const html = page(md`:::::section{surface="tint" anchor="plans"}
 

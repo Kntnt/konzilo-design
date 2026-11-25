@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- A page's opening chooses its own height. The `hero` directive takes `height`: `third`, `half`, `two-thirds` or `full`, each the same share of the screen as the design's height of that value, under a covering header or a sticky one the page starts under, and written as the same `data-kn-height`. Left out, the opening takes the design's height. Any other value is refused when the post is checked: "An opening's height is third, half, two-thirds or full, its share of the screen, not tall. Leave it out for the design's own." An opening with its picture behind takes its height the same way; the overlay keeps the least strength at which the text passes its check (directives.md, `hero`; issue #31).
+- DESIGN.md says that a page may give its hero another of the four heights, the presentation's Opening a page says the design's height and that a page may choose another, and the gallery shows an opening a third of the screen high beside one of two thirds.
+
+### Changed
+
+- **A new design's opening takes half of the screen**, where it took two thirds (the owner, 2026-11-25). So does a design file whose `inputs.hero` has no `height`, once it is resolved or saved again: the example design and a file written by hand may lack the key, while one saved by the tool has it and keeps its height. A file keeps the height it was resolved with until then, since a site reads `resolved.hero`. To keep two thirds, set `inputs.hero.height` to `two-thirds`.
+
 ## [0.15.0] – 2026-11-25
 
 ### Added

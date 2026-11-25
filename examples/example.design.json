@@ -1891,7 +1891,7 @@
       "picture": "behind",
       "surface": "none",
       "overlay": "dark",
-      "height": "two-thirds",
+      "height": "half",
       "place": "bottom",
       "align": "start",
       "type": "heading-1",

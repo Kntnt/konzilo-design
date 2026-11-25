@@ -9,6 +9,12 @@
         "label": "Surface",
         "values": ["page", "raised", "inverse", "tint", "brand", "accent", "tint-secondary", "brand-secondary", "accent-secondary", "tint-tertiary", "brand-tertiary", "accent-tertiary"],
         "refusal": "An opening stands on page, raised, inverse, tint, brand or accent, or on tint, brand or accent in the second or third colour, such as tint-secondary or brand-tertiary, not on {value}. Leave it out for the design's own."
+      },
+      "height": {
+        "type": "string",
+        "label": "Height",
+        "values": ["third", "half", "two-thirds", "full"],
+        "refusal": "An opening's height is third, half, two-thirds or full, its share of the screen, not {value}. Leave it out for the design's own."
       }
     }
   },

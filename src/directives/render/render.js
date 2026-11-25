@@ -185,6 +185,10 @@ function renderNested(node, ctx) {
 
 // ---------- hero ----------
 
+// The shares of the screen a hero's height takes (components.json, hero). Another value, which the core refuses, leaves
+// the design's height, so a hero never stands without one.
+const HERO_HEIGHTS = ['third', 'half', 'two-thirds', 'full'];
+
 function hero(attrs, blocks, ctx) {
   const settings = ctx.design.resolved.hero ?? {};
   if (typeof ctx.title !== 'string' || ctx.title === '') throw new Error('A hero draws the post\'s title as its heading: give it to designPage(Astro, { title }).');
@@ -211,7 +215,7 @@ function hero(attrs, blocks, ctx) {
   return tag('section', {
     class: 'kn-band kn-hero',
     'data-kn-surface': surface === 'page' ? undefined : surface,
-    ...heroAttributes({ side, height: settings.height, place: settings.place, align: settings.align }),
+    ...heroAttributes({ side, height: HERO_HEIGHTS.includes(attrs.height) ? attrs.height : settings.height, place: settings.place, align: settings.align }),
     // A picture behind is the band's, as Band writes it: the one inline style of a directive (directives.md).
     style: behind ? `--kn-picture-image:url(${JSON.stringify(String(source))})` : undefined,
   }, tag('div', { class: 'kn-band-content kn-hero-content' },

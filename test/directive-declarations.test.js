@@ -56,8 +56,9 @@ test('each declaration has the shape the core reads a component in', () => {
       if (setting.values || setting.pattern) assert.match(setting.refusal ?? '', /\{value\}/, at);
     }
   }
-  // A hero's Surface has no default: left out, it is the design's own.
+  // A hero's Surface and height have no default: left out, each is the design's own.
   assert.equal(Object.hasOwn(components.hero.attributes.surface, 'default'), false);
+  assert.equal(Object.hasOwn(components.hero.attributes.height, 'default'), false);
 });
 
 test('only the list is named as an element of the core\'s, so its element is list-directive', () => {

@@ -476,6 +476,9 @@ test('the directive chapters show every directive and variant as the contract wr
   assert.equal(hero.attributes['data-kn-surface'], 'accent');
   for (const part of ['.kn-breadcrumbs[data-kn-current="false"]', '.kn-hero-logo', '.kn-heading-group-deck a', '.kn-actions', '.kn-fine-print', '.kn-hero-media img']) assert.ok(one(hero, part), part);
   assert.equal(one(one(tree, '#directive-hero-text'), '.kn-hero-media'), undefined);
+  // A hero of its own height, as height="third" writes it, beside one of the design's.
+  assert.equal(hero.attributes['data-kn-height'], 'two-thirds');
+  assert.equal(one(tree, '#directive-hero-text').attributes['data-kn-height'], 'third');
   // Each of the six rules, with the content that triggers it.
   some('rule 1', (section) => has(section, '.kn-section-media', '.kn-section-badges img'));
   some('rule 1 with a form', (section) => one(section, '.kn-section-media') && one(section, '.kn-section-body > form'));

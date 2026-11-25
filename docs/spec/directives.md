@@ -114,7 +114,7 @@ Records the HTML contract between the directive list Konzilo defines and this de
 
 | Directive | Element | Form | Label | Attributes |
 |---|---|---|---|---|
-| `hero` | `hero` | container, blocks | Opening | `surface`: `page`, `raised`, `inverse`, `tint`, `brand` or `accent`, or a further colour's `tint-secondary`, `brand-secondary`, `accent-secondary`, `tint-tertiary`, `brand-tertiary` or `accent-tertiary`, no default, the design's own where it is left out |
+| `hero` | `hero` | container, blocks | Opening | `surface`: `page`, `raised`, `inverse`, `tint`, `brand` or `accent`, or a further colour's `tint-secondary`, `brand-secondary`, `accent-secondary`, `tint-tertiary`, `brand-tertiary` or `accent-tertiary`, no default, the design's own where it is left out; `height`: `third`, `half`, `two-thirds` or `full`, no default, the design's own where it is left out |
 | `section` | `section` | container, blocks | Section | `surface`: `page`, `raised`, `inverse`, `tint`, `brand` or `accent`, or a further colour's `tint-secondary`, `brand-secondary`, `accent-secondary`, `tint-tertiary`, `brand-tertiary` or `accent-tertiary`, default `page`; `anchor`: the section's id, of lowercase letters `a` to `z`, digits, hyphens and underscores; `body`: `columns`, no default, a stacked body where it is left out |
 | `aside` | `aside` | container, blocks | Fact box | `anchor`: the fact box's id, as a section's |
 | `list` | `list-directive` | container, blocks | Styled list | `type`: `description`, `values`, `logos` or `actions`, no default, a list with the design's bullets or markers where it is left out; `markers`: a value for each level, apart by `/` (List, below) |
@@ -224,6 +224,7 @@ No directive has a runtime (2026-11-10): a site's layout imports no script for a
 - The first paragraph is the deck. The last picture is the hero's picture, in `.kn-hero-media`; a picture before the text is a logo, `.kn-hero-logo`, first after the trail, at its own proportions, at most 4rem high and 16rem wide, as a section's badges are at most 4rem high and 8rem wide (the assistant's choice, 2026-11-10). ***Decided* by the owner (2026-11-11):** 4rem is a largest height, not a set one, so a small raster logo is never drawn past its own size and blurred; an SVG, whose `src` ends in `.svg` or which is an SVG data address, is drawn 4rem high, since one with only a `viewBox` has no size of its own. Everything else follows the heading group in the order written.
 - Where the design's `inputs.hero.picture` is `none` and the hero holds a picture, it stands at `end`, Hero's default side, since content the editor chose is never dropped.
 - `surface` takes `page` (no attribute), `raised`, `inverse`, `tint`, `brand` or `accent`, or a further colour's tint, brand band or accent band, such as `brand-secondary` (since 2026-11-24; plates.md, Every brand colour's plates). The core checks a directive without the design, so one in a colour the design does not have passes its check; it stands on the primary's kind it repeats, `brand` for `brand-secondary`, and the build warns. The same holds for a section. Left out, the hero stands on the design's own, `inputs.hero.surface`, as `resolved.hero.surface` holds it, which `none` leaves without a Surface. *(Changed 2026-11-12, the assistant's choice: the directive's default was `raised`, which overrode the design's choice on every page; with no default, a page departs from the design only where its editor writes a Surface.)*
+- `height` takes `third`, `half`, `two-thirds` or `full`, written as `data-kn-height` as the design's height is, and meaning the same: a share of what a covering header leaves of the window, or of the whole window where the page starts under a sticky header, which taller content grows past. Left out, the hero takes the design's height, `inputs.hero.height`, as `resolved.hero.height` holds it. The core refuses any other value by the declaration, and the renderer writes the design's height for one that reaches it all the same. ***Decided* by the owner (2026-11-25, issue #31):** a hero chooses its height among the four and no others, the design's height stays the standard for a hero without the attribute, and a new design's height is `half`, where it was `two-thirds`. A hero with its picture behind gets a height of its own from this attribute too, so a design has no separate height for one, and its overlay keeps the least strength at which the text passes its check, with no input to raise it. ***Built* 2026-11-25.**
 - The page's title comes from the page's context, since a hero's body holds no heading: the post's title is its H1 (the core's content format: a body's headings are at levels 2 to 6). A hero whose page gives no title stops the build. Where the design puts the H1 below the hero, the hero draws no trail, and `PageBody` gives the band after it the trail and the H1 (The page parts).
 
 **Markdown.**
@@ -255,7 +256,19 @@ Start small, and let the beds widen year by year.
 
 The trail first, where the page has one; a picture before the text is the logo; eyebrows; the first paragraph is the deck; actions and small print in the order written; the last picture is the hero's.
 
-**Read from content.** *(CSS)* Fine print right after the actions is a note under them. A hero without a picture has no `.kn-hero-media`, and its text takes the content width as Hero's choices say. It keeps the design's height, two thirds of the window by default, as a hero with a picture does (***decided*** by the owner, 2026-11-13, after a site built with the components asked whether such an opening should be only as tall as its text).
+An opening of its own height, here all of the screen, whatever the design's:
+
+```markdown
+::::hero{height="full"}
+
+Start small, and let the beds widen year by year.
+
+![Raised beds in the spring](../media/beds.webp)
+
+::::
+```
+
+**Read from content.** *(CSS)* Fine print right after the actions is a note under them. A hero without a picture has no `.kn-hero-media`, and its text takes the content width as Hero's choices say. It keeps its height, the design's or its own `height`, as a hero with a picture does (***decided*** by the owner, 2026-11-13, after a site built with the components asked whether such an opening should be only as tall as its text). *(Changed 2026-11-25: the design's height was two thirds of the window by default; a new design's is half, and a hero may choose its own.)*
 
 **Behaviour.** None.
 

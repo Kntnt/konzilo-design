@@ -142,6 +142,7 @@ test('copy has no unused keys and all values are strings', async () => {
     ...['page', 'raised', 'tint', 'tint-secondary', 'tint-tertiary', 'brand', 'brand-secondary', 'brand-tertiary', 'inverse', 'accent', 'accent-secondary', 'accent-tertiary', 'picture-light', 'picture-dark', 'status-info', 'status-success', 'status-warning', 'status-error'].map((name) => `surface.${name}`),
     ...['primary', 'secondary', 'tertiary', 'gray'].map((name) => `colour.${name}`),
     ...['primary', 'secondary', 'tertiary'].map((name) => `colour.${name}.job`),
+    ...['third', 'half', 'two-thirds', 'full'].map((name) => `opening.height.${name}`),
     ...['display', 'heading-1', 'heading-2', 'heading-3', 'heading-4', 'heading-5', 'heading-6', 'lead', 'body', 'small', 'label', 'before', 'after'].map((name) => `type.${name}`),
     ...['main', 'heading', 'heading-1', 'display', 'label', 'monospace'].map((name) => `role.${name}`),
     ...[100, 200, 300, 400, 500, 600, 700, 800, 900].map((name) => `weight.${name}`),
@@ -179,8 +180,11 @@ test('offline ZIP reader works from file URLs for normal, primary-only and stres
         model.inputs['brand-colors'].secondary = '#7a3e9d';
         model.inputs.shadow.strength = 50;
       }
-      // Other widths than the example's, which the Page page's sketch must follow.
-      if (fixture === 'primary-only') model.inputs.layout = { wide: 1040, narrow: 640 };
+      // Other widths than the example's, which the Page page's sketch must follow, and an opening of a design that sets its height.
+      if (fixture === 'primary-only') {
+        model.inputs.layout = { wide: 1040, narrow: 640 };
+        model.inputs.hero = { height: 'full' };
+      }
       // Three colours that keep accent and focus in the primary.
       if (fixture === 'stress') model.inputs['accent-color'] = 'primary';
       model.project.introduction = 'A short introduction.\n\nA second paragraph with <literal> text.';
@@ -197,6 +201,9 @@ test('offline ZIP reader works from file URLs for normal, primary-only and stres
       // Each brand colour says what it does, and the one that takes accents and focus says so.
       const jobs = fixture === 'stress' ? ['colour.primary.job-accent-primary', 'colour.secondary.job-accent-primary'] : ['colour.primary.job', ...(fixture === 'example' ? ['colour.secondary.job'] : [])];
       for (const key of jobs) assert.ok(copy[key] && html.includes(copy[key]), `${fixture}: ${key}`);
+      // The opening says the design's height, half where the file sets none, and that a page may choose its own.
+      const height = `opening.height.${fixture === 'primary-only' ? 'full' : 'half'}`;
+      assert.ok(copy[height] && html.includes(copy[height]), `${fixture}: ${height}`);
       assert.equal((html.match(/data:font\/woff2;base64/g) || []).length, shippedIn(derive(model.inputs).typefaces).flatMap((face) => [face.upright, face.italic].filter(Boolean)).length);
       try {
         await exec('unzip', ['-t', zip]);

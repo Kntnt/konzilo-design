@@ -157,7 +157,7 @@ test('an article\'s opening is a Hero of its main image, its headline in three p
   const picture = { src: '/_astro/soil.webp', srcset: '/_astro/soil-800.webp 800w', sizes: '100vw', width: 1600, height: 1000, alt: 'A spade in soil' };
   const beside = tight(articleOpening(context({ design: { hero: { picture: 'end', surface: 'none' } } }), { data, eyebrow: 'Guides', picture, metaLine: [{ text: 'Guides', variable: 'category', url: '/category/guides/', datetime: null }], topics: [], after: '<p class="kn-fine-print" data-kn-type="small">A note.</p>' }));
   assert.equal(beside, [
-    '<section class="kn-band kn-hero kn-article-opening" data-kn-picture="end" data-kn-height="two-thirds" data-kn-place="bottom"><div class="kn-band-content kn-hero-content"><div class="kn-hero-text">',
+    '<section class="kn-band kn-hero kn-article-opening" data-kn-picture="end" data-kn-height="half" data-kn-place="bottom"><div class="kn-band-content kn-hero-content"><div class="kn-hero-text">',
     TRAIL_HTML,
     '<hgroup class="kn-heading-group"><p class="kn-heading-group-eyebrow" data-kn-type="label">Guides</p><h1 class="kn-heading-group-heading" data-kn-type="heading-1">Know your soil</h1><p class="kn-heading-group-subheadline">What lies below</p><p class="kn-heading-group-deck" data-kn-type="lead">Dig first, plant later.</p></hgroup>',
     '<p class="kn-article-meta" data-kn-type="small"><span class="kn-article-line"><a class="kn-article-category" href="/category/guides/">Guides</a></span></p>',

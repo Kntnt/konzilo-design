@@ -638,7 +638,7 @@ const heroChoice = (label, name, choices) => `<div class="picks-labelled ui" rol
   </div>`;
 function heroPage(copy) {
   return `${head('opening', copy)}
-    <p class="component-note ui">These settings are the opening every page gets, unless the page itself chooses otherwise.</p>
+    <p class="component-note ui">These settings are the opening every page gets, unless the page itself chooses otherwise, such as a size of its own.</p>
     ${setting('Size', `<div class="picks picks-four ui">${HERO_SIZES.map((item) => heroPick('height', item)).join('')}</div>`)}
     ${setting('Picture', `<div class="picks picks-six ui">${HERO_PICTURES.map((item) => heroPick('picture', item)).join('')}</div>`)}
     ${setting('Text', `<div class="picks picks-three ui">${HERO_PLACES.map((item) => heroPick('place', item)).join('')}</div>

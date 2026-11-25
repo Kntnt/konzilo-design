@@ -158,11 +158,13 @@ function heroRecipe(r) {
     return s ? `${s.color} at ${s.opacity} opacity` : null;
   };
   const dark = scrim('dark'), light = scrim('light');
+  // A file resolved before the design had a hero says only that the share is the design's.
+  const share = HERO_SHARES[r.hero?.height] ? `, ${HERO_SHARES[r.hero.height]} of the screen,` : '';
   return `### Hero
 
 **What a hero can be.** The design sets the default and a page may depart from it: the picture none, behind the text under an overlay, or beside it at the inline start or end, inside the content width or bleeding to the window's edge; for no picture or one beside, the background none or a Surface; for a picture behind, a dark or a light overlay; a height of a third, half, two thirds or all of the screen; the text at the top, in the middle or at the bottom, and, with no picture beside it, at the start, centre or end of the content width; the heading in the h1 or the display style; and the page's H1 in the hero or first in the next section. This design's choices are under This design's frame.
 
-**The band.** A hero is a Band with the \`band\` space above and below its text, and it keeps its end space even where the next Band has its Surface, so the middle is the true middle. Its height is at least its share of what the header leaves of the window, \`100svh\` less the header's height, or of all \`100svh\` when the page starts under the header; taller content makes it taller.
+**The band.** A hero is a Band with the \`band\` space above and below its text, and it keeps its end space even where the next Band has its Surface, so the middle is the true middle. Its height is at least its share of what the header leaves of the window, \`100svh\` less the header's height, or of all \`100svh\` when the page starts under the header; taller content makes it taller. The share is the design's${share} unless the page gives its hero another of the four: a third, half, two thirds or all of it.
 
 **The text.** From the top: the trail, when the H1 is here; a logo, where a picture stands before the text, at its own proportions, at most 16rem wide and 4rem tall, the column gap below it; the eyebrow in the label style, \`text-muted\`; the heading in the chosen style, and an article's subheadline under it; the deck in the lead style, \`text-muted\`; then the actions (Actions), the column gap below the deck, with fine print under them as their note, the component gap apart. The last picture a hero holds is its picture; where the design has no picture but the hero holds one, it stands beside the text at the end. Heading, subheadline and deck are at most the Narrow measure wide, a display heading at most 14em. With no picture beside it, the text block is as wide as its words and moves across the content width; its lines stay start-aligned.
 

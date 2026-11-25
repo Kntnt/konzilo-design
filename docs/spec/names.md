@@ -325,7 +325,7 @@ The reusable repository stores no actual presentation identity or project-specif
 | `inputs.hero.picture` | Where the picture stands: `none`, `behind` (default), `start`, `end`, `start-bleed` or `end-bleed` | components.md, Band compositions | *Decided* 2026-11-05 | The values are logical, so right-to-left works; the tool says Left and Right. |
 | `inputs.hero.surface` | The Surface without a picture behind: `none` (default), `page`, `raised`, `tint`, `brand`, `inverse` or `accent`, or since 2026-11-24 a further colour's `tint-secondary`, `tint-tertiary`, `brand-secondary`, `brand-tertiary`, `accent-secondary` or `accent-tertiary` where the design has that colour | components.md, Band compositions | *Decided* 2026-11-05 | Reuses the Surface kinds; `none` lets what lies beneath show. |
 | `inputs.hero.overlay` | The scrim over a picture behind: `dark` (default) or `light` | components.md, Band compositions | *Decided* 2026-11-05 | Selects `picture-dark` or `picture-light`. |
-| `inputs.hero.height` | Share of the screen: `third`, `half`, `two-thirds` (default) or `full` | components.md, Band compositions | *Decided* 2026-11-05 | Written as `data-kn-height`. |
+| `inputs.hero.height` | Share of the screen: `third`, `half` (default), `two-thirds` or `full`. A hero's own `height` overrides it on its page | components.md, Band compositions; directives.md, `hero` | *Decided* 2026-11-05; the default `half`, where it was `two-thirds`, *decided* by the owner 2026-11-25 (issue #31) | Written as `data-kn-height`, as the directive's `height` is. |
 | `inputs.hero.place` | The text up and down: `top`, `center` or `bottom` (default) | components.md, Band compositions | *Decided* 2026-11-05 | Written as `data-kn-place`. |
 | `inputs.hero.align` | The text block across: `start` (default), `center` or `end` | components.md, Band compositions | *Decided* 2026-11-05 | Written as `data-kn-align`. |
 | `inputs.hero.type` | The look of the hero's heading: `heading-1` (default) or `display` | components.md, Band compositions | *Decided* 2026-11-05 | Reuses the text styles' words. |
@@ -491,7 +491,7 @@ The class grammar and selectors are shared by Astro and the plain HTML export.
 | `data-kn-align="center|end"` | On a Hero, where its text block stands across the content width; `start`, the default, writes no attribute. |
 | `data-kn-picture="start|end|start-bleed|end-bleed"` | A Hero's picture beside its text: on that side inside the content width, or out to the window's edge and the hero's top and bottom. Absent with no such picture. |
 | `data-kn-place="top|bottom"` | Where a Hero's text stands up and down; `center`, the default, writes no attribute. |
-| `data-kn-height="third|half|two-thirds|full"` | A Hero's minimum share of the screen; tall text grows past it. |
+| `data-kn-height="third|half|two-thirds|full"` | A Hero's minimum share of the screen; tall text grows past it. The design's `inputs.hero.height`, or the `hero` directive's own `height` (2026-11-25). |
 | `data-kn-steps` on `.kn-header` | The giving-way steps this header can take, in order, space-separated, for `header-fit.js` (2026-11-11). |
 | `data-kn-step` on `.kn-header` | The step `header-fit.js` chose: `none`, the last step taken, or `scale`, the last resort. Absent without script, where the bar shows its narrowest step. |
 | `data-kn-header-fit`, `data-kn-footer-fit` | On the inline `header-fit.js` in each header and the element that loads `footer-fit.js`, for an offline build to find them. |
