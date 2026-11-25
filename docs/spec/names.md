@@ -592,6 +592,7 @@ Consent adds `.kn-consent-actions`, `.kn-consent-settings-header`, `.kn-consent-
 |---|---|
 | `data-kn-deck="long"` | On a deck: its text is longer than a line beside its heading holds, `DECK_LINE`. A fact, not a layout. |
 | `data-kn-body="columns"` | On a section: the editor pairs a list of teasers and a quotation in its body (directives.md, A quotation beside its teasers). An explicit body arrangement, the exception to reading layout from content. |
+| `data-kn-align="center"` | On a section: the editor centres it, its head in the middle and its body in a column of Narrow's width in the middle (directives.md, A centred section). Absent for `start`, the default. An explicit alignment, which centres only a section whose parts stack; what a section holds centres it no more (the owner, 2026-11-25). |
 | `data-kn-numbering="decimal\|lower-latin\|upper-latin\|lower-roman\|upper-roman\|lower-greek\|double-latin"` | On an `<ol>` or a Timeline: the numbering of that level, named as CSS names its own counter styles where one matches. |
 | `data-kn-punctuation="period\|parenthesis\|brackets"` | With a numbering: a full stop after it, a closing parenthesis after it, or both brackets around it; absent for none. |
 | `data-kn-dotted` | With a numbering below the first level: the number of the item above stands before its own. |

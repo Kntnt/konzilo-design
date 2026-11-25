@@ -348,7 +348,11 @@ test('DESIGN.md draws the directives\' components by recipe: sections, series, q
   assert.match(body, /A caption the editor gave the picture stands under it, the component gap below it, in small type and `text-muted`/);
   assert.match(body, /A hero's, a card's and a logo's picture, and a section's badges, show no caption/);
   assert.match(body, /from 60rem, the head beside the accordion at 2:3/);
-  assert.doesNotMatch(body, /none of these: [^\n]*\b(tabs|timeline)\b/, 'tabs and a timeline are components now');
+  // Content centres no section, the editor does (the owner, 2026-11-25).
+  assert.match(body, /What a section holds never centres it: only its editor does, by `align="center"`, and only where its parts stack/);
+  assert.match(body, /^  3\. \*\*Another form, or a choice:\*\* the head and the body at the start edge, in a column at most Narrow wide\.$/m);
+  assert.doesNotMatch(body, /the whole section centred/);
+  assert.doesNotMatch(body, /none of these:[^\n]*\b(tabs|timeline)\b/, 'tabs and a timeline are components now');
   assert.match(body, /^- `brand-instagram`: /m);
   assert.match(body, /^- `brand-x`: /m);
   // Where the line across the tabs stands is the design's (the owner, 2026-11-12), and the recipe gives that one alone.

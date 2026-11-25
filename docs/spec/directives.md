@@ -30,7 +30,9 @@ Records the HTML contract between the directive list Konzilo defines and this de
 
 **A Surface is an exception.** A Surface is an attribute (names.md, decision 3), and a stylesheet cannot put one on an element. Where the design puts a part on a plate of its own, the site writes the Surface that `surfaceOf` returns, so that choice too stays in this package. Where the site does not know the ground the part stands on, as when the core draws a nested part or a post list's teasers into a band, it gives `surfaceOf` none and writes what it returns: the stylesheet then finds the ground, and a part that stands on a ground of its own kind takes the Surface `surfaceOf` gives on that ground, the third column of the table below, at any depth (since 2026-11-12; plates.md, A plate finds its ground).
 
-**An explicitly paired body** (issue #22, 2026-11-13) is the other exception: `body="columns"` on a section pairs a list of teasers with a quotation, and the section writes `data-kn-body="columns"`. The editor states that the two belong together; the design chooses their widths and when they stack. An ordinary body still follows the readings below.
+**An explicitly paired body** (issue #22, 2026-11-13) is another exception: `body="columns"` on a section pairs a list of teasers with a quotation, and the section writes `data-kn-body="columns"`. The editor states that the two belong together; the design chooses their widths and when they stack. An ordinary body still follows the readings below.
+
+**An editor's centring** (issue #32, the owner, 2026-11-25) is the last: `align="center"` on a section writes `data-kn-align="center"`, and the design centres it. What a section holds no longer centres it (`section`, A centred section).
 
 ### The module
 
@@ -115,7 +117,7 @@ Records the HTML contract between the directive list Konzilo defines and this de
 | Directive | Element | Form | Label | Attributes |
 |---|---|---|---|---|
 | `hero` | `hero` | container, blocks | Opening | `surface`: `page`, `raised`, `inverse`, `tint`, `brand` or `accent`, or a further colour's `tint-secondary`, `brand-secondary`, `accent-secondary`, `tint-tertiary`, `brand-tertiary` or `accent-tertiary`, no default, the design's own where it is left out; `height`: `third`, `half`, `two-thirds` or `full`, no default, the design's own where it is left out |
-| `section` | `section` | container, blocks | Section | `surface`: `page`, `raised`, `inverse`, `tint`, `brand` or `accent`, or a further colour's `tint-secondary`, `brand-secondary`, `accent-secondary`, `tint-tertiary`, `brand-tertiary` or `accent-tertiary`, default `page`; `anchor`: the section's id, of lowercase letters `a` to `z`, digits, hyphens and underscores; `body`: `columns`, no default, a stacked body where it is left out |
+| `section` | `section` | container, blocks | Section | `surface`: `page`, `raised`, `inverse`, `tint`, `brand` or `accent`, or a further colour's `tint-secondary`, `brand-secondary`, `accent-secondary`, `tint-tertiary`, `brand-tertiary` or `accent-tertiary`, default `page`; `anchor`: the section's id, of lowercase letters `a` to `z`, digits, hyphens and underscores; `body`: `columns`, no default, a stacked body where it is left out; `align`: `start` or `center`, default `start` |
 | `aside` | `aside` | container, blocks | Fact box | `anchor`: the fact box's id, as a section's |
 | `list` | `list-directive` | container, blocks | Styled list | `type`: `description`, `values`, `logos` or `actions`, no default, a list with the design's bullets or markers where it is left out; `markers`: a value for each level, apart by `/` (List, below) |
 | `cards` | `cards` | container, blocks | Cards | `type`: `navigation`, no default; `markers`: one value, a sign or a numbering; `picture`: `behind`, no default; `symbol`: `item` or `heading`, no default |
@@ -138,7 +140,7 @@ Records the HTML contract between the directive list Konzilo defines and this de
 | Directive | Refused |
 |---|---|
 | `hero` | A heading, which the post's title stands in for; a gallery; more than two pictures, a logo and its own |
-| `section` | With `body="columns"`, anything but one post list with `presentation="cards"` and one plain quotation, in either order, after its head |
+| `section` | With `body="columns"`, anything but one post list with `presentation="cards"` and one plain quotation, in either order, after its head; with `align="center"`, a layout that sets parts side by side: a picture first, a heading with a form right after it, a head with an accordion alone or with paragraphs alone, or a body in columns |
 | `list` | Anything but exactly one Markdown list; with `type="actions"`, an item that is more than one link, in bold or not, and a second main action; with `values` or `description`, an item without its value or description under it; with `logos`, an item that is no picture or linked picture |
 | `cards`, `accordion`, `tabs`, `toc`, `choice` | No heading to begin an item at; a choice of one answer; in a table of contents, more than one paragraph before the first heading |
 | `cards` | With `type="navigation"`, a heading that is not one link, or another link in the card; with `symbol`, a card without a picture; a numbering in `markers` with `picture` or `symbol` |
@@ -156,7 +158,7 @@ Records the HTML contract between the directive list Konzilo defines and this de
 | `ArticleOpening` | `entry`, the post's entry; `metaLine`, the core's `metaLine()` pieces; `topics`, each `{ name, url }`; `eyebrow`, the category's name by default; `surface`; the slot `after` | An article's opening (An article, The opening) |
 | `ArticleBody` | The body, as its slot; `label`; `menu={false}`; the slot `aside` | An article's body and its following menu (An article, The body and its following menu) |
 | `ReadMore` | `posts`, as the core's `relatedPosts()` gives them; `heading`; `more`, `{ label, href }`; `surface` | "Read more" (An article, "Read more"), nothing without posts |
-| `Section` | `surface`, `anchor`, `eyebrow`, `heading`, `level` (2 by default), `headingId`, `deck` or the slot `deck`, `actions` (links, as `Actions` takes them), and its body as the default slot | A section a template writes itself, with the markup a `:::section` in a body gets (`section`, above) |
+| `Section` | `surface`, `anchor`, `align` (`center` centres it, `start` by default), `eyebrow`, `heading`, `level` (2 by default), `headingId`, `deck` or the slot `deck`, `actions` (links, as `Actions` takes them), and its body as the default slot | A section a template writes itself, with the markup a `:::section` in a body gets (`section`, above) |
 | `ValueList` | `items`, each `{ label, value }`, the value HTML the template has written safe; `label` | A value list, as `:::list{type="values"}` draws it, an address alone in a value breaking as there; nothing for no value |
 | `Actions` | `links`, each `{ label, href, main }`, the first the main action unless one says `main`; `label` | Actions, as `:::list{type="actions"}` draws them, a known service's link as its icon; nothing for no link |
 | `SmallPrint` | its words as the slot | Small print, as `::small` draws it |
@@ -169,7 +171,7 @@ Records the HTML contract between the directive list Konzilo defines and this de
 
 **A term's page** shows its posts with `Filtered` (`::post-list`, `presentation="filtered"`), in a body of its own: `PageBody` puts the list in a section, under the term's opening.
 
-**A section a template writes itself** (***built* 2026-11-13**, for the bands a template adds that no post holds, such as a band that closes a case study, the other vacancies under a vacancy and a term page's newsletter): `Section` reads its eyebrows, heading, deck, actions and body together by the section's rules, as one blocks list, so that it writes what the same `:::section` in a body writes. A deck before a form, or followed by nothing but paragraphs, is no deck and stands in the body; actions right after the heading or the deck stand in the head, and after anything else in the body; a body of paragraphs alone stands beside the head. Its heading takes its id from its words, as a body's heading's, and the section's `anchor` wins over an id of the same name. Inside it, and wherever else a template needs them, `ValueList`, `Actions` and `SmallPrint` write what `:::list{type="values"}`, `:::list{type="actions"}` and `::small` write, from the pairs, links and words a template has; a post list goes in its body as the presentation's own component, and a form as the core's `Form`.
+**A section a template writes itself** (***built* 2026-11-13**, for the bands a template adds that no post holds, such as a band that closes a case study, the other vacancies under a vacancy and a term page's newsletter): `Section` reads its eyebrows, heading, deck, actions and body together by the section's rules, as one blocks list, so that it writes what the same `:::section` in a body writes. A deck before a form, or followed by nothing but paragraphs, is no deck and stands in the body; actions right after the heading or the deck stand in the head, and after anything else in the body; a body of paragraphs alone stands beside the head. `align="center"` centres it as it does a `:::section`, unchecked, so a template's section whose parts stand side by side keeps the start edge. Its heading takes its id from its words, as a body's heading's, and the section's `anchor` wins over an id of the same name. Inside it, and wherever else a template needs them, `ValueList`, `Actions` and `SmallPrint` write what `:::list{type="values"}`, `:::list{type="actions"}` and `::small` write, from the pairs, links and words a template has; a post list goes in its body as the presentation's own component, and a form as the core's `Form`.
 
 ## The body of a page
 
@@ -276,7 +278,7 @@ Start small, and let the beds widen year by year.
 
 ## `section`
 
-**Markup.** A Band with the class `kn-section`, its `surface` and its `anchor` as `id`. Its content is up to three groups, in this order, as `sectionParts` gives them; a group with nothing in it is not written.
+**Markup.** A Band with the class `kn-section`, its `surface`, its `anchor` as `id`, and `data-kn-align="center"` where the editor centres it (A centred section, below). Its content is up to three groups, in this order, as `sectionParts` gives them; a group with nothing in it is not written.
 
 ```html
 <section class="kn-band kn-section" id="plans" data-kn-surface="tint">
@@ -357,13 +359,13 @@ The section's pictures first, each a paragraph of its own: the first is its pict
 |---|---|---|---|
 | 1 | A picture first | `C:has(> .kn-section-media)` | The picture beside the head and body, its badges with it. A head and body shorter than the picture stand in the middle of its height; where they are taller, the picture grows to their height and is cropped to fill it (`object-fit: cover`), never short of its own proportions, up to a square and `85svh`; beside text longer still it keeps that size and stays at the top of the window as the text scrolls by, as a following menu does. With badges, the picture and its badges stay together at their own size and follow together (***decided*** by the owner, 2026-11-11). With a form in the body, `C:has(> .kn-section-body > form)`, the picture is what the form offers. A caption stands under the picture, the component gap below it, in `text-muted` on the section's Surface, and above the head on a narrow window; the picture with its caption grows, is cropped and follows as the picture alone does, the two together a square at the most and within `85svh`, so the caption stays in the window (the owner, 2026-11-25; the measure of the two together is the assistant's choice). With badges, the caption stands between the picture and its badges; under the picture a form offers it is no wider than the room the picture has. |
 | 2 | A heading with a form right after it | A head with neither deck nor actions, and `.kn-section-body > form:first-child` | The form beside the heading, with any fine print under the form. |
-| 3 | Another form or a choice | `C:has(> .kn-section-body > :is(form, .kn-choice))` | The whole section centred, as a page's end. A form, its button and its terms after it, and what a chosen answer shows, keep the start edge, so labels, fields and the button read down one edge (the assistant's choice, 2026-11-10). |
+| 3 | Another form or a choice | `C:has(> .kn-section-body > :is(form, .kn-choice))` | The head and body in a column of Narrow's width at the start edge (***decided*** by the owner, 2026-11-25: what a section holds centres it no more; this rule centred the whole section, as a page's end, and the editor now centres one with `align="center"`, A centred section, below). |
 | 4 | A head, its actions and an accordion | A head, and `.kn-section-body > .kn-accordion:only-child` | The head beside the accordion, staying in view as the page scrolls. |
 | 5 | A head and paragraphs only | A head, and a body of `p` elements only | The paragraphs beside the head. |
-| 6 | A head and a series | A head, and a series in the body; the first series decides | The head at the start edge, as every other head (***decided*** by the owner, 2026-11-13: a section's head over a series always keeps the start edge; it was centred over `.kn-reasons`, over cards without a `.kn-card-picture` or `.kn-card-symbol`, and over exactly two cards). The heading beside its deck where the deck has `data-kn-deck="long"`, and the series has pictures and five cards or more, which is more than one row at three or four columns. Otherwise the head above. |
+| 6 | A head and a series | A head, and a series in the body; the first series decides | The head at the start edge, as every other head (***decided*** by the owner, 2026-11-13: a section's head over a series always keeps the start edge; it was centred over `.kn-reasons`, over cards without a `.kn-card-picture` or `.kn-card-symbol`, and over exactly two cards). The heading beside its deck where the deck has `data-kn-deck="long"`, and the series has pictures and five cards or more, which is more than one row at three or four columns, unless the section is centred. Otherwise the head above. |
 | – | Anything else | | The head above the body. |
 
-On a narrow window everything beside stands above and below in document order. Rule 2 lets eyebrows stand over the heading, which the directive list's wording allows; rule 4 also holds with no actions, which is how the directive list's own build reads it.
+On a narrow window everything beside stands above and below in document order. The editor's `align="center"` centres a section whose parts stack, and the check refuses it where rules 1, 2, 4 and 5 or `body="columns"` set them side by side (A centred section, below). Rule 2 lets eyebrows stand over the heading, which the directive list's wording allows; rule 4 also holds with no actions, which is how the directive list's own build reads it.
 
 **Behaviour.** *(CSS)* Rule 4's head stays in view under the header as the page scrolls, by `position: sticky` at `--kn-reading-sticky-inset`. It is at most as tall as the window below that inset less the component gap, and a head taller than that scrolls inside itself, so it never hides its own end (the assistant's choice, 2026-11-10, replacing `section.js`, which let a head too tall for the window scroll with the page).
 
@@ -392,6 +394,42 @@ The post list's type and selection are the site's own. A deck and actions may st
 **Markup and layout.** The section adds `data-kn-body="columns"` to its band; its head and body have the same markup as above. The body is a grid of two equal columns with the column gap between them, each at least 18rem wide where that fits; otherwise the two stack in document order, at the same gap. The blocks stand in the middle of each other's height. A lone teaser fills its own column here; a series elsewhere keeps its existing columns, leaving issue #17 otherwise unchanged. A quotation keeps Body Text's own look and source, with no new plate, type recipe or script.
 
 **Why this choice.** The editor explicitly pairs two related blocks under one head, so an ordinary list followed by an independent quotation keeps stacking. A body arrangement leaves the list's presentation responsible for its own posts, and lets the core keep rendering it as it does every other list. Text and Image gives its picture a media role, with cropping, badges and sticky behaviour that a quotation should not take. A post-list presentation that leaves room for its next sibling would make a list responsible for content outside it. A general columns container with arbitrary content would need to group the core's multiple-root blocks into columns; this option supports only the pair this issue needs, whose blocks each have one root.
+
+### A centred section
+
+***Built* 2026-11-25, for issue #32 (decided by the owner, 2026-11-25; where it meets a layout that sets parts side by side, the assistant's choices of the same day, which the owner may veto):** `align="center"` centres a section, whatever it holds; `start`, the default, keeps the start edge, as a section without the attribute does. What a section holds no longer centres it: rule 3 centred a section with a form or a choice, as a page's end, and now keeps it at the start edge (Read from content, above).
+
+```markdown
+::::section{align="center" surface="brand"}
+
+## Ready for the first bed?
+
+Tell us where you live, and we will send what grows there.
+
+:::list{type="actions"}
+
+- **[Start a garden](/start/)**
+- [Compare the plans](/plans/)
+
+:::
+
+::::
+```
+
+**Markup and layout.** The section adds `data-kn-align="center"` to its band; `start` writes nothing, so a section without the attribute keeps its markup. Its head and body have the same markup as above. The head stands in the middle, its eyebrows, heading, deck and actions centred, and the body stands in a column of Narrow's width in the middle, its running text centred, as rule 3 drew a section with a form until 2026-11-25. A form, its button and its terms after it, and what a chosen answer shows, keep the start edge inside that column, so labels, fields and the button read down one edge (the assistant's choice, 2026-11-10, moved here from rule 3). A fact box stands in the middle of the column, as the text does (`aside`). On a window narrower than Narrow the column is the content's width.
+
+What that means for what a section holds:
+
+- **A series** in a centred section stands in the column of Narrow's width, as the whole body did under the old rule 3, and not across the content width. Its head stands in the middle over it, and rule 6 gives way: a long deck stays under its heading, never beside it.
+- **A heading and one paragraph cannot be centred.** The paragraph is no deck, since nothing but paragraphs follows the heading, so rule 5 sets it beside the head, and the check refuses `align="center"`. The way round is actions after the paragraph, as in the example: the paragraph is then the deck, the actions stand in the head, and the section stacks.
+- **Where a rule sets parts side by side**, a picture first (rule 1), a heading with a form right after it (rule 2), a head with an accordion alone (rule 4) or with paragraphs alone (rule 5), or `body="columns"`, the check refuses `align="center"`, its reason naming the layout and what to write instead (The checks, above). Where such a section reaches the stylesheet with the attribute all the same, it keeps the start edge at every width, its parts side by side as without it.
+- **A template's `Section`** takes `align` too (The page parts, above), so a band a template adds, such as a newsletter at the page's end, can be centred as the same `:::section` is. No check reads a template's section, so there the stylesheet's start edge is what holds a side-by-side layout.
+
+**Why these choices** (the assistant's, 2026-11-25, which the owner may veto):
+
+- *The check refuses the attribute where parts stand side by side, and the layout keeps the start edge where it comes all the same.* A head beside a picture, a form, an accordion or paragraphs stands in a column of its own, half the content or less, and has no middle of the section to stand in. Stacking such a section to centre it would let the attribute overrule the layout its content chose, which the owner's decision did not ask for. Ignoring the attribute without a word would leave an editor who asked for a centred section with one that is not, and no reason why; the checks exist to say what a page would otherwise drop. The stylesheet keeps the start edge as well, since a section can reach it unchecked, as a template's does.
+- *Rule 6's deck gives way.* Whether the deck stands beside the heading depends on how many cards a post list shows, which only the build knows, so no check can refuse it ahead; and a heading with its deck in a second column has no middle to stand in. The deck stays under its heading, and the head stands in the middle as one.
+- *The page parts' `Section` takes `align`.* A template writes the same markup as a `:::section`, and the bands it adds are the ones most likely to close a page, as a newsletter does; without the prop a template could not centre what an editor can.
 
 ## `aside`
 
