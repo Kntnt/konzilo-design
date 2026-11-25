@@ -59,10 +59,31 @@ function hero(blocks) {
   return reasons;
 }
 
+// A block the core draws as a paragraph, <p>, in a section's body: a paragraph, small print, or an eyebrow with no
+// heading after it, which stands as a label.
+const drawnAsParagraph = (block) => block.type === 'paragraph' || isDirective(block, 'small') || isDirective(block, 'eyebrow');
+
+// Where section.css sets a section's parts side by side, by its rules 1, 2, 4 and 5 and body="columns", the reason
+// align="center" cannot centre it; none where the parts stack. The stylesheet reads the same from the HTML, and keeps a
+// side-by-side layout at the start edge where the attribute reaches it all the same (directives.md, A centred section).
+function besideReason(attributes, parts, blocks) {
+  const head = parts.head.map((at) => blocks[at]);
+  const body = parts.body.map((at) => blocks[at]);
+  if (parts.media.length) return 'A section that begins with a picture sets the picture beside its head and body, so it cannot be centred. Leave out align="center", or write the picture after the heading.';
+  if (attributes.body === 'columns') return 'A section with its body in columns sets its two blocks side by side, so it cannot be centred. Leave out align="center" or body="columns".';
+  if (!head.length || !body.length) return null;
+  if (parts.deck === null && !head.some((block) => isDirective(block, 'list')) && isDirective(body[0], 'form')) {
+    return 'A section with a form right after its heading sets the form beside the heading, so it cannot be centred. Leave out align="center", or write a paragraph between the heading and the form.';
+  }
+  if (body.length === 1 && isDirective(body[0], 'accordion')) return 'A section with a heading and an accordion alone sets the accordion beside the heading, so it cannot be centred. Leave out align="center".';
+  if (body.every(drawnAsParagraph)) return 'A section with a heading and paragraphs alone sets the paragraphs beside the heading, so it cannot be centred. Leave out align="center".';
+  return null;
+}
+
 // Columns pair a list of teasers with the words about it. Both are single roots in the core's slot, so neither needs
 // drawing again from its tree, and a list that is empty or has a pager stays one column beside the quotation.
 function section(attributes, blocks) {
-  if (attributes.body !== 'columns') return [];
+  if (attributes.body !== 'columns' && attributes.align !== 'center') return [];
   const parts = sectionParts(blocks.map((block) => ({
     kind: kindOf(block) ?? (isHeading(block) && block.level === 2 ? 'heading'
       : block.type === 'paragraph' ? 'paragraph'
@@ -70,10 +91,15 @@ function section(attributes, blocks) {
       : isDirective(block, 'form') ? 'form' : isDirective(block, 'choice') ? 'choice' : 'other'),
     text: textOf(block.children),
   })));
+  const reasons = [];
   const body = parts.body.map((at) => blocks[at]);
   const list = body.find((block) => isDirective(block, 'post-list'));
-  return body.length === 2 && body.some((block) => block.type === 'quote') && list?.attributes?.presentation === 'cards' ? []
-    : ['A section with its body in columns holds one post list with presentation="cards" and one quotation, in either order, after its head. Put other blocks in a section of their own, or leave out body="columns" to stack them.'];
+  if (attributes.body === 'columns' && !(body.length === 2 && body.some((block) => block.type === 'quote') && list?.attributes?.presentation === 'cards')) {
+    reasons.push('A section with its body in columns holds one post list with presentation="cards" and one quotation, in either order, after its head. Put other blocks in a section of their own, or leave out body="columns" to stack them.');
+  }
+  const beside = attributes.align === 'center' ? besideReason(attributes, parts, blocks) : null;
+  if (beside) reasons.push(beside);
+  return reasons;
 }
 
 // A list item's text, for a reason to name it.

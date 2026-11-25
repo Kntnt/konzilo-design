@@ -32,14 +32,14 @@ const trail = (steps: string[]) => breadcrumbProps(design.breadcrumbs, project, 
     <div class="kn-hero-media"><img src={landscape} alt="Invented green hills beneath a golden sun"></div>
   </div>
 </section>
-<section class="kn-band kn-hero" id="directive-hero-text">
+<section class="kn-band kn-hero" id="directive-hero-text" {...heroAttributes({ height: 'third' })}>
   <div class="kn-band-content kn-hero-content">
     <div class="kn-hero-text">
       <Breadcrumbs {...trail(['Workshops', 'Evening walks', 'The orchard path'])} label="Breadcrumbs" />
       <hgroup class="kn-heading-group">
-        <p class="kn-heading-group-eyebrow" data-kn-type="label">46 / Hero · No picture, on the page</p>
+        <p class="kn-heading-group-eyebrow" data-kn-type="label">46 / Hero · No picture, on the page, a height of its own</p>
         <h1 class="kn-heading-group-heading" data-kn-type="heading-1">The orchard path after dark</h1>
-        <p class="kn-heading-group-deck" data-kn-type="lead">A hero without a picture has no media, and its text takes the content width. Its trail shows every level.</p>
+        <p class="kn-heading-group-deck" data-kn-type="lead">A hero without a picture has no media, and its text takes the content width. Its trail shows every level. It takes a third of the screen, as height="third" asks, where the hero above takes two thirds.</p>
       </hgroup>
       <Actions items={[{ label: 'Join the walk', href: '#directive-sections', main: true }, { label: 'Juniper Atlas on Instagram', href: 'https://www.instagram.com/example' }]} />
       <p class="kn-fine-print" data-kn-type="small">Walks leave at seven and take about an hour.</p>

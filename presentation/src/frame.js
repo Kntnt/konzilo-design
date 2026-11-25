@@ -1,10 +1,10 @@
-// The frame's content in the tool's preview and the presentation: a design's own menu and footer words where its
-// `project` has them, and the sample's otherwise. What a design's settings mean is general, and stands in the
+// The frame's content in the tool's preview and the presentation: a design's own menu, call to action and footer words
+// where its `project` has them, and the sample's otherwise. What a design's settings mean is general, and stands in the
 // library's design-props.js.
 import { icons } from '../../src/components/icons.js';
 import { escapeHtml } from '../../src/components/footer-html.js';
 import { footerBrand, footerFromDesign, breadcrumbProps as trailProps, headerProps as frameHeaderProps, heroProps as pictureHeroProps, identityProps as frameIdentityProps } from '../../src/components/design-props.js';
-import { menu as sampleMenu, footer as sampleFooter, search, languages, cta, anchor, SOCIAL_NETWORKS } from './samples.js';
+import { menu as sampleMenu, footer as sampleFooter, search, languages, cta as sampleCta, anchor, SOCIAL_NETWORKS } from './samples.js';
 
 export { nextHeadingProps, pageProps } from '../../src/components/design-props.js';
 
@@ -21,8 +21,16 @@ export function menuOf(project = {}) {
     return { label: item.label, href: anchor(item.label), ...(item.description && { description: item.description }), ...(children.length && { children }) };
   });
 }
+// The call to action shown: the design's own, `project.cta`, where it has one, and the sample's otherwise, its words and
+// its address each. Words without an address lead to a fragment named for them, as the menu's do.
+export function ctaOf(project = {}) {
+  const { label, href } = project.cta ?? {};
+  if (!label && !href) return sampleCta;
+  const words = label || sampleCta.label;
+  return { label: words, href: href || anchor(words) };
+}
 export const identityProps = (settings, project) => frameIdentityProps(settings, project, { href: HOME });
-export const headerProps = (settings, project) => frameHeaderProps(settings, project, { menu: menuOf(project), search, languages, cta, home: HOME });
+export const headerProps = (settings, project) => frameHeaderProps(settings, project, { menu: menuOf(project), search, languages, cta: ctaOf(project), home: HOME });
 export const heroProps = (settings, images) => pictureHeroProps(settings, { behind: images.hero, side: images.landscapes[0] });
 
 // A network with an icon in the library shows as its icon, and any other by its name.

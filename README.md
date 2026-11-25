@@ -131,8 +131,8 @@ bin/design-md <design-file> [-o out.zip | -o out.md]
 
 The command writes `name-design-md.zip` beside the design file. It holds:
 
-- `DESIGN.md`, in Google Labs' open format: every token, every surface in both modes, and a recipe
-  for every component;
+- `DESIGN.md`, in Google Labs' open format: every token, every surface in both modes, a recipe
+  for every component, and how to draw a figure with text in it for the design's column;
 - the logos;
 - the font files, with their licences and `fonts.css`;
 - the icons the components use, with their licences.

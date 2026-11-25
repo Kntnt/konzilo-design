@@ -219,9 +219,9 @@ test('a design may part two bands on one background with a hairline, and the cor
 
 test('a design says how its hero opens a page', () => {
   const defaults = defaultInputs().hero;
-  assert.deepEqual(defaults, { picture: 'behind', surface: 'none', overlay: 'dark', height: 'two-thirds', place: 'bottom', align: 'start', type: 'heading-1', h1: 'hero' });
-  assert.equal(derive(inputs({ hero: { height: 'half' } })).hero.height, 'half');
-  assert.equal(derive(inputs({ hero: { height: 'half' } })).hero.place, 'bottom', 'what is left out keeps its default');
+  assert.deepEqual(defaults, { picture: 'behind', surface: 'none', overlay: 'dark', height: 'half', place: 'bottom', align: 'start', type: 'heading-1', h1: 'hero' });
+  assert.equal(derive(inputs({ hero: { height: 'two-thirds' } })).hero.height, 'two-thirds', 'a design that sets its height keeps it');
+  assert.equal(derive(inputs({ hero: { height: 'two-thirds' } })).hero.place, 'bottom', 'what is left out keeps its default');
   assert.throws(() => validateInputs(inputs({ hero: { height: 'quarter' } })));
   for (const picture of ['none', 'behind', 'start', 'end', 'start-bleed', 'end-bleed']) validateInputs(inputs({ hero: { picture } }));
   for (const place of ['top', 'center', 'bottom']) validateInputs(inputs({ hero: { place } }));
@@ -234,7 +234,7 @@ test('a design says how its hero opens a page', () => {
   assert.equal(derive(inputs({ hero: { h1: 'below' } })).hero.h1, 'below');
   assert.throws(() => validateInputs(inputs({ hero: { h1: 'above' } })), /unsupported value/);
   const images = { hero: '/behind.webp', landscapes: ['/beside.webp'] };
-  assert.deepEqual(heroProps(defaults, images), { level: 1, surface: 'picture-dark', picture: '/behind.webp', side: undefined, alt: undefined, type: 'heading-1', height: 'two-thirds', place: 'bottom', align: 'start' });
+  assert.deepEqual(heroProps(defaults, images), { level: 1, surface: 'picture-dark', picture: '/behind.webp', side: undefined, alt: undefined, type: 'heading-1', height: 'half', place: 'bottom', align: 'start' });
   for (const side of ['start', 'end', 'start-bleed', 'end-bleed']) {
     const beside = heroProps({ ...defaults, picture: side, surface: 'brand' }, images);
     assert.deepEqual([beside.surface, beside.picture, beside.side, beside.alt], ['brand', '/beside.webp', side, '']);
@@ -243,10 +243,13 @@ test('a design says how its hero opens a page', () => {
   assert.deepEqual([plain.surface, plain.picture, plain.side], [undefined, undefined, undefined]);
   assert.equal(heroProps({ ...defaults, height: 'third' }, images).place, 'bottom', 'at a third the place is honoured like everywhere else');
   const words = (hero) => designMd({ inputs: settings(), project: { name: 'Name' }, resolved: derive(inputs({ hero })) }, 'name.design.json');
-  assert.match(words({}), /\*\*Hero:\*\* by default a picture behind the text, under a dark overlay, taking two thirds of the screen, with its text at the bottom/);
+  assert.match(words({}), /\*\*Hero:\*\* by default a picture behind the text, under a dark overlay, taking half of the screen, with its text at the bottom/);
   assert.match(words({ picture: 'end', surface: 'tint', height: 'third', place: 'top', type: 'display' }), /a picture at the inline end, inside the content width, with the text opposite, on the tint Surface, taking a third of the screen, with its text at the top and its heading in the display style/);
   assert.match(words({ picture: 'start-bleed' }), /a picture at the inline start, bleeding to the window's edge and the hero's top and bottom, with the text opposite, on no background of its own/);
-  assert.match(words({ picture: 'none', place: 'center', align: 'center' }), /no background of its own, taking two thirds of the screen, with its text in the middle, in the centre of the content width/);
+  assert.match(words({ picture: 'none', place: 'center', align: 'center' }), /no background of its own, taking half of the screen, with its text in the middle, in the centre of the content width/);
   assert.match(words({}), /The page's H1 is the hero's heading, with the trail first in its text, above the eyebrow, and the next section's heading is an H2\./);
+  // Where DESIGN.md says what a hero's height is, it says that a page's hero may choose its own of the four.
+  assert.match(words({}), /taller content makes it taller\. The share is the design's, half of the screen, unless the page gives its hero another of the four: a third, half, two thirds or all of it\./);
+  assert.match(words({ height: 'full' }), /The share is the design's, all of the screen, unless/);
   assert.match(words({ h1: 'below', type: 'display' }), /its heading in the display style\. The page's H1 stands under the hero: first in the next section, with the trail directly above it, in the first heading style\. The hero's text keeps its look as a plain paragraph/);
 });

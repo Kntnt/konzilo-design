@@ -56,11 +56,15 @@ async function inline(source) {
     if (/\bimport\s*\(/.test(js)) throw new Error('Client script is not fully bundled');
     return `<script${before}${after}>${js.replace(/<\/script/gi, '<\\/script')}</script>`;
   });
-  // A header's polyfill loader fetches its polyfill by address: here the polyfill itself goes in, testing for its
-  // feature as the loader did.
+  // A polyfill loader, a header's or a following menu's, fetches its polyfill by address: here the polyfill itself goes
+  // in, testing for its feature as the loader did, and once, at its first loader, as a module runs once however many
+  // loaders import it.
+  const inlined = new Set();
   await replace(/<script\b[^>]*\bdata-kn-polyfill\b[^>]*>([\s\S]*?)<\/script>/gi, async ([, code]) => {
     const path = code.match(/const src = "([^"]+)"/)?.[1];
     if (!path) throw new Error('Polyfill loader has no address');
+    if (inlined.has(path)) return '';
+    inlined.add(path);
     const bundle = await rolldown({ input: fileURLToPath(localAsset(path)), logLevel: 'silent' });
     const { output } = await bundle.generate({ format: 'iife', minify: true });
     await bundle.close();

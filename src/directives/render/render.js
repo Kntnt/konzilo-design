@@ -60,6 +60,15 @@ function picture(block, values = {}) {
   return voidTag('img', { class: classes, src, ...rest, alt: rest.alt ?? '', ...extra, ...markOf(block) });
 }
 
+// A section's photo, its caption under it as a Figure's where the editor gave it one, and otherwise the bare picture. The
+// block's mark stays on the picture, as on a picture without a caption (directives.md, Pictures).
+function photo(block) {
+  const image = picture(block, { class: 'kn-section-picture' });
+  const caption = isElement(block, 'figure') ? blocksOf(block.children).find((part) => isElement(part, 'figcaption')) : undefined;
+  if (!caption) return image;
+  return tag('figure', { class: 'kn-section-figure' }, image, tag('figcaption', { class: 'kn-section-caption', 'data-kn-type': 'small' }, inner(caption)));
+}
+
 const isActions = (node) => directiveOf(node) === 'list' && attributesOf(node).type === 'actions';
 const isEyebrow = (node) => directiveOf(node) === 'eyebrow';
 
@@ -185,6 +194,10 @@ function renderNested(node, ctx) {
 
 // ---------- hero ----------
 
+// The shares of the screen a hero's height takes (components.json, hero). Another value, which the core refuses, leaves
+// the design's height, so a hero never stands without one.
+const HERO_HEIGHTS = ['third', 'half', 'two-thirds', 'full'];
+
 function hero(attrs, blocks, ctx) {
   const settings = ctx.design.resolved.hero ?? {};
   if (typeof ctx.title !== 'string' || ctx.title === '') throw new Error('A hero draws the post\'s title as its heading: give it to designPage(Astro, { title }).');
@@ -211,7 +224,7 @@ function hero(attrs, blocks, ctx) {
   return tag('section', {
     class: 'kn-band kn-hero',
     'data-kn-surface': surface === 'page' ? undefined : surface,
-    ...heroAttributes({ side, height: settings.height, place: settings.place, align: settings.align }),
+    ...heroAttributes({ side, height: HERO_HEIGHTS.includes(attrs.height) ? attrs.height : settings.height, place: settings.place, align: settings.align }),
     // A picture behind is the band's, as Band writes it: the one inline style of a directive (directives.md).
     style: behind ? `--kn-picture-image:url(${JSON.stringify(String(source))})` : undefined,
   }, tag('div', { class: 'kn-band-content kn-hero-content' },
@@ -303,7 +316,7 @@ function section(attrs, blocks, ctx, { body } = {}) {
   if (parts.media.length) {
     const [first, ...badges] = parts.media.map((at) => blocks[at]);
     out.push(tag('div', { class: 'kn-section-media' },
-      picture(first, { class: 'kn-section-picture' }),
+      photo(first),
       badges.length ? tag('ul', { class: 'kn-section-badges', role: 'list' }, badges.map((badge) => tag('li', {}, picture(badge)))) : ''));
   }
   if (parts.head.length) {
@@ -321,7 +334,10 @@ function section(attrs, blocks, ctx, { body } = {}) {
   const drawn = parts.media.length + parts.head.length;
   const rest = body === undefined ? renderBlocks(blocks.slice(drawn), band) : groupEyebrows(bodyFromSlot(body, blocks, drawn, band)).trim();
   if (rest !== '') out.push(tag('div', { class: 'kn-section-body kn-body-text' }, rest));
-  return tag('section', { class: 'kn-band kn-section', id: attrs.anchor || undefined, 'data-kn-surface': surface, 'data-kn-body': attrs.body === 'columns' ? 'columns' : undefined }, tag('div', { class: 'kn-band-content' }, out));
+  return tag('section', {
+    class: 'kn-band kn-section', id: attrs.anchor || undefined, 'data-kn-surface': surface,
+    'data-kn-body': attrs.body === 'columns' ? 'columns' : undefined, 'data-kn-align': attrs.align === 'center' ? 'center' : undefined,
+  }, tag('div', { class: 'kn-band-content' }, out));
 }
 
 // ---------- aside ----------
@@ -526,7 +542,7 @@ function tabs(attrs, blocks, ctx) {
     }));
 }
 
-function toc(attrs, blocks, ctx) {
+function toc(attrs, blocks, ctx, { loader = '' } = {}) {
   const { intro, items } = itemsOf(blocks);
   const id = ctx.id('toc');
   const label = intro.length ? intro[0] : null;
@@ -536,7 +552,8 @@ function toc(attrs, blocks, ctx) {
       tag('nav', { class: 'kn-toc', 'aria-labelledby': label ? id : undefined, 'aria-label': label ? undefined : ctx.words.contents, 'data-kn-type': 'small', 'data-kn-follow': '' },
         label ? tag('p', { class: 'kn-toc-label', id, 'data-kn-type': 'heading-6', ...markOf(label) }, isElement(label, 'p') ? inner(label) : escapeText(textOf(label))) : '',
         tag('ol', { role: 'list' }, items.filter((item) => item.heading.properties?.id !== undefined)
-          .map((item) => tag('li', {}, tag('a', { href: `#${item.heading.properties.id}` }, escapeText(textOf(item.heading).trim())))))))),
+          .map((item) => tag('li', {}, tag('a', { href: `#${item.heading.properties.id}` }, escapeText(textOf(item.heading).trim()))))),
+        loader))),
     tag('div', { class: 'kn-reading-area-flow' }, items.map((item) => outer(item.heading) + renderBlocks(item.blocks, ctx))));
 }
 
@@ -597,13 +614,14 @@ const RENDERERS = {
  * @param {object} attributes Its attributes, as the core hands its component them: typed, with their defaults.
  * @param {object | undefined} content Its body as the core's tree, a hast root; none for `breadcrumbs`.
  * @param {object} ctx The page's context (context.js).
- * @param {{ body?: string, block?: string }} [options] `body`: a section's slot, as the core drew it; `block`: the
- *   directive's mark in the live preview, which its root takes.
+ * @param {{ body?: string, block?: string, loader?: string }} [options] `body`: a section's slot, as the core drew it;
+ *   `block`: the directive's mark in the live preview, which its root takes; `loader`: for `toc`, the polyfill's loader
+ *   its following menu ends with, which only a component can give, having the polyfill's address (Toc.astro).
  * @returns {string} Its HTML.
  */
-export function renderDirective(name, attributes, content, ctx, { body, block } = {}) {
+export function renderDirective(name, attributes, content, ctx, { body, block, loader } = {}) {
   if (!Object.hasOwn(RENDERERS, name)) throw new Error(`@kntnt/konzilo-design draws no directive ${name}; it draws ${DIRECTIVES.join(', ')}.`);
   const nodes = content?.children ?? [];
   const children = name === 'eyebrow' || name === 'small' ? nodes : blocksOf(nodes);
-  return withMark(RENDERERS[name](attributes ?? {}, children, ctx, { body }), block);
+  return withMark(RENDERERS[name](attributes ?? {}, children, ctx, { body, loader }), block);
 }

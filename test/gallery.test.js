@@ -482,11 +482,18 @@ test('the directive chapters show every directive and variant as the contract wr
   assert.equal(hero.attributes['data-kn-surface'], 'accent');
   for (const part of ['.kn-breadcrumbs[data-kn-current="false"]', '.kn-hero-logo', '.kn-heading-group-deck a', '.kn-actions', '.kn-fine-print', '.kn-hero-media img']) assert.ok(one(hero, part), part);
   assert.equal(one(one(tree, '#directive-hero-text'), '.kn-hero-media'), undefined);
+  // A hero of its own height, as height="third" writes it, beside one of the design's.
+  assert.equal(hero.attributes['data-kn-height'], 'two-thirds');
+  assert.equal(one(tree, '#directive-hero-text').attributes['data-kn-height'], 'third');
   // Each of the six rules, with the content that triggers it.
   some('rule 1', (section) => has(section, '.kn-section-media', '.kn-section-badges img'));
   some('rule 1 with a form', (section) => one(section, '.kn-section-media') && one(section, '.kn-section-body > form'));
+  some('rule 1, a photo with its caption', (section) => has(section, '.kn-section-media', '.kn-section-figure', 'img.kn-section-picture') && has(section, '.kn-section-figure', 'figcaption.kn-section-caption'));
   some('rule 2', (section) => one(section, '.kn-section-head') && !one(section, '.kn-heading-group-deck') && !one(section, '.kn-section-head > .kn-actions') && elements(body(section))[0]?.name === 'form');
-  some('rule 3, on brand', (section) => section.attributes['data-kn-surface'] === 'brand' && one(section, '.kn-section-body > form'));
+  some('rule 3, on brand, at the start edge', (section) => section.attributes['data-kn-surface'] === 'brand' && one(section, '.kn-section-body > form') && !section.attributes['data-kn-align']);
+  // The editor's align="center": a form centred, and a head with no form.
+  some('align="center" with a form', (section) => section.attributes['data-kn-align'] === 'center' && one(section, '.kn-section-body > form'));
+  some('align="center" without a form', (section) => section.attributes['data-kn-align'] === 'center' && has(section, '.kn-section-head', '.kn-heading-group-deck') && one(section, '.kn-section-head > .kn-actions') && !one(section, 'form'));
   some('rule 4', (section) => { const kids = elements(body(section)); return one(section, '.kn-section-head > .kn-actions') && kids.length === 1 && kids[0].attributes.class === 'kn-accordion'; });
   some('rule 5', (section) => { const kids = elements(body(section)); return one(section, '.kn-section-head') && kids.length > 1 && kids.every((node) => node.name === 'p'); });
   some('rule 6, reasons', (section) => one(section, '.kn-section-body > .kn-reasons'));
@@ -553,6 +560,12 @@ test('the directive chapters show every directive and variant as the contract wr
   const bundle = [...html.matchAll(/<script\b[^>]*type="module"[^>]*>([\s\S]*?)<\/script>/gi)].map(([, js]) => js).join('\n');
   // No runtime for tabs, a choice, a section's head or a Reading Area (principles.md).
   for (const gone of ['setupTabs', 'setupChoices', 'setupSections', 'setupReadingAreas', 'konzilo-preview-show']) assert.ok(!bundle.includes(gone), gone);
-  // Neither the following menu nor Visitor Filters runs a script (principles.md).
+  // Visitor Filters runs no script, and the following menu only its polyfill, where a browser lacks CSS scroll markers
+  // (principles.md; directives.md, `toc`): the menu's loader is gone, the polyfill itself in its place, once.
   for (const gone of ['setupFollowingMenus', 'setupVisitorFilters', 'data-kn-follow]']) assert.ok(!bundle.includes(gone), gone);
+  assert.doesNotMatch(html, /data-kn-polyfill/);
+  const polyfills = [...html.matchAll(/<script>([\s\S]*?)<\/script>/gi)].map(([, js]) => js).filter((js) => js.includes('.kn-toc[data-kn-follow]'));
+  assert.equal(polyfills.length, 1);
+  assert.match(polyfills[0], /^\(function\(\)\{if\(!CSS\.supports\(`scroll-target-group: auto`\)\)\{/);
+  assert.match(html, /<\/ol><script>\(function\(\)\{if\(!CSS\.supports\(`scroll-target-group: auto`\)\)/);
 });

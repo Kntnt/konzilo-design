@@ -7,20 +7,23 @@ interface Props {
   id?: string;
   surface?: string;
   body?: 'columns';
-  picture?: { src: string; alt: string };
+  align?: 'center';
+  picture?: { src: string; alt: string; caption?: string };
   badges?: { src: string; alt: string }[];
   eyebrows?: string[];
   heading?: string;
   deck?: string;
   actions?: { label: string; href: string; main?: boolean }[];
 }
-const { id, surface = 'page', body, picture, badges = [], eyebrows = [], heading, deck, actions } = Astro.props;
+const { id, surface = 'page', body, align, picture, badges = [], eyebrows = [], heading, deck, actions } = Astro.props;
 const deckLong = deck !== undefined && sectionParts([{ kind: 'heading' }, { kind: 'paragraph', text: deck }, { kind: 'other' }]).deckLong;
 ---
-<section class="kn-band kn-section" id={id} data-kn-surface={surface === 'page' ? undefined : surface} data-kn-body={body}>
+<section class="kn-band kn-section" id={id} data-kn-surface={surface === 'page' ? undefined : surface} data-kn-body={body} data-kn-align={align}>
   <div class="kn-band-content">
     {picture && <div class="kn-section-media">
-      <img class="kn-section-picture" src={picture.src} alt={picture.alt}>
+      {picture.caption
+        ? <figure class="kn-section-figure"><img class="kn-section-picture" src={picture.src} alt={picture.alt}><figcaption class="kn-section-caption" data-kn-type="small">{picture.caption}</figcaption></figure>
+        : <img class="kn-section-picture" src={picture.src} alt={picture.alt}>}
       {badges.length > 0 && <ul class="kn-section-badges" role="list">{badges.map((item) => <li><img src={item.src} alt={item.alt}></li>)}</ul>}
     </div>}
     {heading && <header class="kn-section-head">

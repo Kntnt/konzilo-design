@@ -70,6 +70,23 @@ A garden for the people around it.
   assert.doesNotMatch(page(markdown.replace('body="columns" ', '')), /data-kn-body/);
 });
 
+test('a section with align="center" says so on its band, and one at the start edge writes nothing', () => {
+  const markdown = md`:::section{align="center" surface="brand"}
+
+## Ready for the first bed?
+
+Tell us where you live, and we will send what grows there.
+
+::form{name="start"}
+
+:::`;
+  assert.match(page(markdown), /^<section class="kn-band kn-section" data-kn-surface="brand" data-kn-align="center"><div class="kn-band-content"><header class="kn-section-head">/);
+  // The core hands a section its default, start, where the editor writes none.
+  for (const start of [markdown.replace('align="center" ', ''), markdown.replace('"center"', '"start"')]) {
+    assert.match(page(start), /^<section class="kn-band kn-section" data-kn-surface="brand"><div class="kn-band-content">/);
+  }
+});
+
 test('the serialiser writes the core\'s tree as HTML: classes, labels, data and aria, booleans, SVG, void elements, a template\'s content and escaping', () => {
   const html = '<p class="a b" data-konzilo-block="1.2" aria-label="x &amp; y" tabindex="0">A &lt;b&gt; &amp; <b>c</b><br>d</p><label for="q">L</label><details open name="n"><summary>S</summary></details><svg viewBox="0 0 24 24" stroke-width="2" class="i"><path d="M1"></path></svg><template><iframe src="https://example.com/e" allowfullscreen title="v"></iframe></template><img src="a.webp" srcset="a.webp 1x, b.webp 2x" sizes="100vw" width="10" height="20" loading="lazy" decoding="async" alt=""><input type="checkbox" checked disabled><a href="x" rel="prev next">A</a>';
   const written = toHtml(htmlToHast(html, { fragment: true }));
@@ -135,6 +152,16 @@ Words.
   assert.match(page(own, { design: testDesign({ hero: { h1: 'below', type: 'display', picture: 'none' } }) }), /<div class="kn-heading-group"><p class="kn-heading-group-heading" data-kn-type="display">Planning a garden<\/p><p class="kn-heading-group-deck" data-kn-type="lead">Words\.<\/p><\/div>/);
   // A hero needs the post's title, which only the page's template knows.
   assert.throws(() => renderMarkdown(own, { title: undefined }), /designPage\(Astro, \{ title \}\)/);
+});
+
+test('a hero takes the height its editor writes, and the design\'s where none is written', () => {
+  const design = testDesign({ hero: { picture: 'none', height: 'two-thirds' } });
+  const opening = (attributes) => page(`::::hero${attributes}\n\nWords.\n\n::::`, { design });
+  assert.match(opening(''), /^<section class="kn-band kn-hero" data-kn-height="two-thirds"[ >]/);
+  assert.match(opening('{height="full"}'), /^<section class="kn-band kn-hero" data-kn-height="full"[ >]/);
+  assert.match(opening('{height="third" surface="tint"}'), /^<section class="kn-band kn-hero" data-kn-surface="tint" data-kn-height="third"[ >]/);
+  // A value the core would have refused never reaches the stylesheet as a height it has no rule for.
+  assert.match(opening('{height="tall"}'), /^<section class="kn-band kn-hero" data-kn-height="two-thirds"[ >]/);
 });
 
 test('a section draws its media, its head and its body by the six rules\' groups, and its own id wins over its heading\'s', () => {
@@ -228,6 +255,76 @@ Or write to us.
   const preview = page(markdown, { preview: true });
   assert.equal(unmarked(preview), html);
   assert.match(part(preview, 'kn-section-body'), /^<div class="kn-section-body kn-body-text"><div class="test-post-list" data-konzilo-block="0\.4"/);
+});
+
+test('a section\'s photo keeps the caption the editor gave it, under the picture, and a photo without one is the bare picture', () => {
+  const markdown = md`:::::section
+
+![A shed with tools](/media/shed.webp)\
+The shed in May, *before* the [beds](/beds/).
+
+![Award one](/media/award-1.svg)\
+A caption a badge drops.
+
+## Plans
+
+Each shed holds what a garden of its size needs.
+
+![A bed](/media/bed.webp)\
+A picture in the body keeps the core's caption.
+
+:::::`;
+  const html = page(markdown);
+  assert.equal(tight(part(html, 'kn-section-media')), [
+    '<div class="kn-section-media"><figure class="kn-section-figure"><img class="kn-section-picture" src="/media/shed.webp" alt="A shed with tools">',
+    '<figcaption class="kn-section-caption" data-kn-type="small">The shed in May, <em>before</em> the <a href="/beds/">beds</a>.</figcaption></figure>',
+    '<ul class="kn-section-badges" role="list"><li><img src="/media/award-1.svg" alt="Award one"></li></ul></div>',
+  ].join(''));
+  // The body begins after the media and the head, its deck with it, and keeps the core's own figure and caption.
+  assert.match(part(html, 'kn-section-body'), /^<div class="kn-section-body kn-body-text"><figure><img src="\/media\/bed\.webp" alt="A bed"><figcaption>A picture in the body keeps the core's caption\.<\/figcaption><\/figure><dialog/);
+  // In the live preview the block's mark stays where it stood, on the picture, and the page is the same less the marks.
+  const preview = page(markdown, { preview: true });
+  assert.equal(unmarked(preview), html);
+  assert.match(part(preview, 'kn-section-media'), /<figure class="kn-section-figure"><img class="kn-section-picture" src="\/media\/shed\.webp" alt="A shed with tools" data-konzilo-block="0\.0"><figcaption class="kn-section-caption" data-kn-type="small">/);
+  assert.match(part(preview, 'kn-section-body'), /^<div class="kn-section-body kn-body-text"><figure data-konzilo-block="0\.4">/);
+  // Without a caption the photo is drawn exactly as before.
+  const bare = page(markdown.replace('\\\nThe shed in May, *before* the [beds](/beds/).', ''));
+  assert.match(bare, /<div class="kn-section-media"><img class="kn-section-picture" src="\/media\/shed\.webp" alt="A shed with tools"><ul class="kn-section-badges"/);
+  assert.doesNotMatch(part(bare, 'kn-section-media'), /figure|caption/);
+});
+
+test('a hero, a card and a band of logos drop a picture\'s caption without a warning', () => {
+  const warnings = [];
+  const warn = (message) => warnings.push(message);
+  const hero = page(md`::::hero
+
+Words.
+
+![Raised beds in the spring](/media/beds.webp)\
+A caption from the library.
+
+::::`, { design: testDesign({ hero: { picture: 'end' } }), warn });
+  assert.match(hero, /<div class="kn-hero-media"><img src="\/media\/beds\.webp" alt="Raised beds in the spring" loading="eager"><\/div>/);
+  const cards = page(md`::::cards
+
+![A balcony box](/media/box.webp)\
+A caption from the library.
+
+### A balcony
+
+For a small space.
+
+::::`, { warn });
+  assert.match(cards, /<article class="kn-card"><img class="kn-card-picture" src="\/media\/box\.webp" alt="A balcony box"[^>]*><h3/);
+  const logos = page(md`:::list{type="logos"}
+
+- ![A name](/media/a.svg)\
+  A caption from the library.
+
+:::`, { warn });
+  assert.match(logos, /<li><img src="\/media\/a\.svg" alt="A name"><\/li>/);
+  for (const html of [hero, cards, logos]) assert.doesNotMatch(html, /figcaption|A caption from the library/);
+  assert.deepEqual(warnings, []);
 });
 
 test('bodyFromSlot counts the core\'s elements where no marks are, and finds the first block\'s mark where they are', () => {
