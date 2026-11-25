@@ -1,6 +1,6 @@
-import { readFile, writeFile, mkdir, mkdtemp, rm } from 'node:fs/promises';
+import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { resolve, dirname, basename, extname, join } from 'node:path';
-import { buildPresentation, repo } from './build.js';
+import { buildPresentation } from './build.js';
 import { zipFile } from './archive.js';
 import { readCopyOverride } from '../presentation/copy-override.mjs';
 
@@ -19,19 +19,12 @@ export async function createPresentation(designFile, output, options = {}) {
   const path = resolve(output || defaultPresentationPath(designFile, date));
   // A copy file the build would refuse is named here, with its key, rather than in the build's whole log.
   await readCopyOverride(resolve(designFile));
-  const cache = join(repo, 'node_modules/.cache/konzilo-presentation');
-  await mkdir(cache, { recursive: true });
-  const directory = await mkdtemp(join(cache, 'build-'));
-  try {
-    const { html } = await buildPresentation({ designFile: resolve(designFile), output: directory, date });
-    const source = JSON.parse(await readFile(designFile, 'utf8'));
-    const data = JSON.parse(html.match(/<script id="kn-document-data"[^>]*>([\s\S]*?)<\/script>/)[1]);
-    const filename = `${slug(source.project?.name || 'Example')}-${slug(data.filename)}.html`;
-    const bytes = zipFile(filename, html, new Date(`${date}T12:00:00Z`));
-    await mkdir(dirname(path), { recursive: true });
-    await writeFile(path, bytes);
-    return { path, filename, bytes: bytes.length, htmlBytes: Buffer.byteLength(html), ...(options.includeHtml ? { html } : {}) };
-  } finally {
-    await rm(directory, { recursive: true, force: true });
-  }
+  const { html } = await buildPresentation({ designFile: resolve(designFile), date });
+  const source = JSON.parse(await readFile(designFile, 'utf8'));
+  const data = JSON.parse(html.match(/<script id="kn-document-data"[^>]*>([\s\S]*?)<\/script>/)[1]);
+  const filename = `${slug(source.project?.name || 'Example')}-${slug(data.filename)}.html`;
+  const bytes = zipFile(filename, html, new Date(`${date}T12:00:00Z`));
+  await mkdir(dirname(path), { recursive: true });
+  await writeFile(path, bytes);
+  return { path, filename, bytes: bytes.length, htmlBytes: Buffer.byteLength(html), ...(options.includeHtml ? { html } : {}) };
 }
