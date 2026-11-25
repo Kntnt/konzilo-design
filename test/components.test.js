@@ -4,6 +4,7 @@ import { readFile, readdir } from 'node:fs/promises';
 import { execFileSync } from 'node:child_process';
 import { parse, walk, lexer, generate } from 'css-tree';
 import { derive, defaultInputs } from '../src/generator/index.js';
+import { kindsFor } from '../src/generator/surface.js';
 import { coreCss } from '../src/css/index.js';
 import { componentsCss } from '../src/css/components.js';
 import { icons } from '../src/components/icons.js';
@@ -129,7 +130,23 @@ test('bands share one band\'s space on each supported identical Surface, and the
   const source = await readFile(new URL('band.css', directory), 'utf8');
   const [plain, parted] = source.split('@container style(--kn-page-band-line: true)');
   assert.ok(parted, 'the hairline reads the design\'s choice');
-  for (const kind of [undefined, 'page', 'raised', 'tint', 'tint-secondary', 'tint-tertiary', 'brand', 'brand-secondary', 'brand-tertiary', 'inverse', 'accent', 'accent-secondary', 'accent-tertiary', 'picture-light', 'picture-dark', 'status-info', 'status-success', 'status-warning', 'status-error']) {
+  // Every kind the generator makes, with all three brand colours, and none.
+  const kinds = [undefined, ...kindsFor({ secondary: true, tertiary: true })];
+  // band.css writes the kinds out in six lists, one selector per line: the plain rules and each :is(). Each list holds
+  // every kind once and no other, the same kind on both bands of a line, so a new kind fails here until every list has it.
+  const lists = source.split('\n').reduce((found, line, at, all) => {
+    const named = [...line.matchAll(/(\.kn-(?:band|hero))(?:\[data-kn-surface="([\w-]+)"\]|:not\(\[data-kn-surface\]\))/g)];
+    if (!named.length) return found;
+    if (!all[at - 1]?.match(/data-kn-surface/)) found.push([]);
+    found.at(-1).push(named.map(([, , kind]) => kind));
+    return found;
+  }, []);
+  assert.equal(lists.length, 6, 'six lists of kinds');
+  for (const [at, list] of lists.entries()) {
+    for (const line of list) assert.equal(new Set(line).size, 1, `list ${at + 1}: one kind on both bands, ${line}`);
+    assert.deepEqual(list.map(([kind]) => kind ?? '').sort(), kinds.map((kind) => kind ?? '').sort(), `list ${at + 1} holds every kind once`);
+  }
+  for (const kind of kinds) {
     const on = (base) => (kind ? `${base}[data-kn-surface="${kind}"]` : `${base}:not([data-kn-surface])`);
     assert.ok(plain.includes(`${on('.kn-band')}:has(+ ${on('.kn-band')}) { padding-block-end: 0; }`), kind);
     assert.ok(plain.includes(`${on('.kn-hero')} + ${on('.kn-band')},`) || plain.includes(`${on('.kn-hero')} + ${on('.kn-band')}\n`), kind);
