@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- A section's photo shows the caption the editor gave it. Where the first picture of a `:::section` has a caption, the line after the picture behind a hard line break, as the core reads a caption anywhere and as the image library fills in, the section draws it under the picture as a Figure's caption: small, in `text-muted` on the section's Surface, the component gap below the picture. On a wide window it stands in the media column; where the picture grows to the text's height and is cropped, the picture takes that height less the caption, and where it stays in view beside long text, the caption follows with it, the two together a square at the most and within 85svh. On a narrow window it stands under the picture, above the head. With badges it stands between the picture and its badges, and under the picture a form offers it stands the same way. The markup is `.kn-section-figure` around `.kn-section-picture` and `.kn-section-caption` (directives.md, `section`); a run of loose blocks at the top of a body keeps the caption too. DESIGN.md says so, and the gallery shows a section with a captioned photo.
+- Nothing changes for a section whose photo has no caption: its HTML is exactly what it was; a page whose section photo has one shows it from this version on. A hero's, a card's and a logo's picture, and a section's badges, still drop a caption, without a warning, since one would fire nearly every time an image from the library is used there. This builds issue #35.
+
 ## [0.15.0] – 2026-11-25
 
 ### Added

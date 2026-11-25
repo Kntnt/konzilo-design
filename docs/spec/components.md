@@ -109,6 +109,8 @@ The directive list Konzilo defines needs two components that stood under "Not no
 
 ***Built* 2026-11-13, for issue #22:** a section's `body="columns"` pairs a post list in `cards` and a plain quotation, under its head at the start edge. Two equal columns stack in reading order when each can no longer have 18rem. A lone teaser fills its column only in this arrangement; the quotation keeps Body Text's look and its source. The declarations and checks name the pair (directives.md, A quotation beside its teasers).
 
+***Built* 2026-11-25, for issue #35 (the owner's decision):** a section's photo keeps the caption the editor gave it, under the picture as a Figure's caption, small, `text-muted` and the component gap below it, beside the head and body on a wide window and above the head on a narrow one; where the picture grows to the text's height and follows it, the caption stays under it. A hero's, a card's and a logo's picture, and a section's badges, drop a caption without a warning (directives.md, Rules for every directive, Pictures).
+
 ## On the site
 
 What only one site needs stays on that site (tool.md, point 1), such as views fed by its own business data.
