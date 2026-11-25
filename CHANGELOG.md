@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- A design file holds the client's own call to action, the button the header ends with: `project.cta`, its words in `label` and where it leads in `href`, each optional. The tool's preview and the presentation show it in place of the sample's, `Contact` to `#contact`, in the bar and in the large menu, wherever the design's header has a CTA button. Words without an address lead to a fragment named for them, as the menu's links do, and an address alone keeps the sample's words. Like the menu and footer words, it is not design: no input, fingerprint, CSS or site reads it. This builds issue #8.
+- The tool's Start page has a **Call to action** section between the menu and the footer, with a field for the words and one for the address. Each shows the sample's in grey, and its head says whether the client's or the sample's show, or that the header shows none while the Header page has the CTA button off. The preview now follows no link but a fragment, as the presentation's reader already did, so the client's address never takes the preview away from the sample page.
+- Nothing changes for an existing design: a file without `project.cta` shows the sample's button, as before.
+
 ### Changed
 
 - A table in a fact box, a tab, a choice's panel or a table of contents' flow stands off the paragraphs round it as in body text, bare or in the wrapper the Konzilo core is asked to write, `<div class="konzilo-table">`, and wherever the part stands, in an answer or another part too: one and a half times its own size above and below it, 1.40625rem at the default type sizes. It had no space of its own there, so the paragraph after it started at its last line and the one before it stood a paragraph's 1em above it. A table first or last in a fact box, a tab or a choice's panel still stands at the part's edge, and in a card the card's gap still stands round it (the assistant's choice, 2026-11-25; components.md, Tables). This builds issue #19.

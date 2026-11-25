@@ -276,6 +276,7 @@ Top-level sections `format`, `inputs`, `project` and `resolved` are already deci
 | `project.name` | Presentation name | tool.md §5; proposed here | Proposed here | Uses the spec's simple identity word without naming any actual project. |
 | `project.logo` | Presentation logo reference | tool.md §5; proposed here | Proposed here | Keeps the same identity term as the tool. |
 | `project.logo-dark` | Optional logo for dark Surfaces | Tool implementation, 2026-11-02 | Built | Both logo fields accept data URIs or paths relative to the design file. |
+| `project.cta` | The client's own call to action, the button the header ends with where `inputs.header.cta` is on, which the tool's preview and the presentation show and no site reads: `label`, its words, and `href`, where it leads, each optional; left out, the sample's `Contact`, and a fragment named for the words | tool.md, The client's own call to action; issue #8 | *Built* 2026-11-25, the assistant's choice | `cta` is the word `inputs.header.cta`, which shows the button, Header's `cta` prop, which draws it, and `.kn-header-cta` already use; `label` and `href` are that prop's own keys, so the preview and the presentation give it to Header as it stands. At the top of `project`, beside `menu`, as the header's other words are. |
 
 The reusable repository stores no actual presentation identity or project-specific reference in this draft.
 

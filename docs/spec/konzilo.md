@@ -129,7 +129,7 @@ The core gives a menu as plain data, entries of `{ title, url, items }` and, whe
 - `linkMenu(entry, index)` says which top entries stand in the link menu, all by default. An entry with no address only holds others and never stands there.
 - Header's `children` are one level, so lower entries follow theirs in order, and a child with no address gives way to the entries it holds.
 
-The design file's `project.menu` and `project.footer` are a client's own menu and footer words for the design tool's preview and the presentation, so the client sees the content agreed (tool.md, The client's own menu and footer). They are not design: `fromDesign`, `design-props` and the CSS read neither, they never enter the fingerprint, and a site's menus and footer come from the site, as here.
+The design file's `project.menu`, `project.cta` and `project.footer` are a client's own menu, call to action and footer words for the design tool's preview and the presentation, so the client sees the content agreed (tool.md, The client's own menu and footer, and The client's own call to action). They are not design: `fromDesign`, `design-props` and the CSS read none of them, they never enter the fingerprint, and a site's menus, call to action and footer come from the site, as here.
 
 ## How a site takes its design
 

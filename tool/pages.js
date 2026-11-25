@@ -3,7 +3,7 @@
 import { SYSTEM_SANS, SYSTEM_MONOSPACE, SYSTEM_SERIF } from '/src/generator/defaults.js';
 import { TYPEFACES, CATEGORIES } from '/src/fonts/catalog.js';
 import { scales, LINE, COMMON_WIDTHS, lineShare, menuText, ownText } from './logic.js';
-import { menu as sampleMenu, footer as sampleFooter } from '/presentation/src/samples.js';
+import { menu as sampleMenu, footer as sampleFooter, cta as sampleCta } from '/presentation/src/samples.js';
 import { COMPONENT_GROUPS } from '/src/design-md/components.js';
 import { CATALOGUE, sectionName } from '/presentation/src/catalogue.js';
 
@@ -112,9 +112,9 @@ const PICTURE_TILES = [
   ['person-3', 'Person 3', 'A person’s card.'],
   ['person-4', 'Person 4', 'A person’s card.'],
 ];
-// The client's own menu and footer, which the preview and the presentation show in place of the samples. Each field
-// takes words, which the design file keeps as what they come to (logic.js), and its grey text is what shows while it is
-// empty: the sample, which also shows how to write it.
+// The client's own menu, call to action and footer, which the preview and the presentation show in place of the samples.
+// Each field takes words, which the design file keeps as what they come to (logic.js), and its grey text is what shows
+// while it is empty: the sample, which also shows how to write it.
 const sampleTree = (items) => items.map(({ label, description, children }) => ({ label, ...(description && { description }), ...(children && { items: sampleTree(children) }) }));
 const MENU_HELP = 'The client’s menu, one item a line. A line set in under another, by spaces or a tab, is its child: the top level is the link menu and the large menu’s headings, and the next level the links under each. A dash with a space on each side begins an item’s short description, as in Compact series - For where space is short. Bullets and numbers count as setting in, so an outline or a site map pasted from a document or a site keeps its levels. Left empty, the sample menu shows, as in grey here.';
 const OWN_CELLS = {
@@ -141,8 +141,17 @@ function ownCell(band, bandName, cell) {
   return `<label class="own-cell ui"><span class="own-head"><span><b>${cell.toUpperCase()}</b> ${escapeHtml(name)}</span><span class="own-state" data-own-state="${path}"></span></span>
     <textarea class="own-field" data-own="${path}" data-own-kind="${kind}" aria-label="${escapeHtml(`${bandName}, ${cell.toUpperCase()}: ${name}`)}" placeholder="${escapeHtml(ownText(kind, sampleFooter[band][cell]))}" ${tip(`${help}${empty}`)}></textarea></label>`;
 }
+// The call to action the header ends with, where the design has one: its words and where it leads, a line each. The
+// address's grey text follows the words, as the address the preview gives the button does (app.js).
+const OWN_CTA = [
+  ['label', 'Words', 'The words on the button the header ends with, such as Book a visit. It shows where the Header page has the CTA button on. Left empty, the sample’s show, as in grey here.'],
+  ['href', 'Address', 'Where the button leads, such as /contact or a full address. The preview and the presentation do not go there, but a browser shows it where the pointer rests on the button. Left empty, a fragment named for the words, as in grey here.'],
+];
+const ownLine = ([key, name, help]) => `<label class="field ui">${escapeHtml(name)}<input class="input own-line" type="text" data-own="cta.${key}" data-own-kind="text" spellcheck="${key === 'label'}" aria-label="${escapeHtml(`Call to action: ${name}`)}" placeholder="${escapeHtml(sampleCta[key])}" ${tip(help)}></label>`;
 const ownContent = () => `<section class="setting"><h2 class="why-head ui"><b>Menu</b><span data-own-state="menu"></span></h2>
       <textarea class="own-field own-menu" data-own="menu" data-own-kind="menu" aria-label="Menu" placeholder="${escapeHtml(menuText(sampleTree(sampleMenu)))}" ${tip(MENU_HELP)}></textarea></section>
+    <section class="setting"><h2 class="why-head ui"><b>Call to action</b><span data-own-state="cta"></span></h2>
+      <div class="fields">${OWN_CTA.map(ownLine).join('')}</div></section>
     <section class="setting"><h2 class="why-head ui"><b>Footer</b><span>The client’s words, cell by cell, as on the Footer page</span></h2>
       ${FOOTER_BANDS.map(([band, bandName]) => `<div class="own-band"><h3 class="own-band-name ui">${bandName}</h3>
         <div class="own-cells">${['a1', 'b1', 'a2', 'b2'].map((cell) => ownCell(band, bandName, cell)).join('')}</div></div>`).join('')}</section>`;

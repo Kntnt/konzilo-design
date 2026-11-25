@@ -37,7 +37,7 @@ import { capture, thaw, createHistory, historyAction, isSlider, isTextField, TYP
 import { CHAPTERS, PAGES, MOVED_PAGES, ROLES, SECONDARY_JOBS, STEP_ROWS, SCALE_ROWS, axesMarkup, documentMarkup, pageName, tip, tipOnce, takeTips, escapeHtml } from './pages.js';
 import { setupPreview, paint, measure, followPage } from './preview.js';
 import { setupTooltips } from '/gallery/src/tooltips.js';
-import { pictures, flatPictures, PICTURE_SLOTS, menu as sampleMenu } from '/presentation/src/samples.js';
+import { pictures, flatPictures, PICTURE_SLOTS, menu as sampleMenu, cta as sampleCta, anchor } from '/presentation/src/samples.js';
 // The Page page's drawing of the widths is not a control: it is fetched apart from the rest, and the tool runs without it.
 const { pageSketch } = await import('/presentation/src/page-sketch.js').catch(() => ({}));
 
@@ -324,8 +324,8 @@ function writeForm() {
   }
   writeOwn();
 }
-// The client's own menu and footer: each field shows what the design file holds, in its words, but stays as typed
-// while it comes to the same, so its caret, the browser's own text undo and the way it was written stay.
+// The client's own menu, call to action and footer: each field shows what the design file holds, in its words, but stays
+// as typed while it comes to the same, so its caret, the browser's own text undo and the way it was written stay.
 function writeOwn() {
   for (const field of form.querySelectorAll('[data-own]')) {
     const { own: path, ownKind: kind } = field.dataset;
@@ -334,21 +334,28 @@ function writeOwn() {
   }
   writeOwnStates();
 }
-// Each part says whether the client's words or the sample's show. The links for navigation, left empty, are the top
-// level of the menu shown, so their grey text follows the menu.
+// Each part says whether the client's words or the sample's show, and the call to action whether the header has one
+// at all. The links for navigation, left empty, are the top level of the menu shown, so their grey text follows the menu,
+// and the call to action's address, left empty, a fragment named for its words, so its grey text follows them.
 function writeOwnStates() {
   const menu = model.project.menu?.length ? model.project.menu : sampleMenu;
+  const cta = model.project.cta ?? {};
   for (const state of form.querySelectorAll('[data-own-state]')) {
     const path = state.dataset.ownState;
     const own = ownValue(model.project, path);
-    const filled = Array.isArray(own) ? own.length > 0 : Boolean(own);
+    const filled = path === 'cta' ? Boolean(cta.label || cta.href) : Array.isArray(own) ? own.length > 0 : Boolean(own);
     state.textContent = path === 'menu'
       ? (filled ? 'The client’s own, in the header and the large menu' : 'The sample menu until the client’s own is written')
-      : filled ? 'Client’s' : path === 'footer.upper.b2' && menu !== sampleMenu ? 'From the menu' : 'Sample';
+      : path === 'cta'
+        ? (!model.inputs.header.cta ? 'None in the header while the Header page has the CTA button off' : filled ? 'The client’s own, in the header' : 'The sample until the client’s own is written')
+        : filled ? 'Client’s' : path === 'footer.upper.b2' && menu !== sampleMenu ? 'From the menu' : 'Sample';
   }
   const links = form.querySelector('[data-own="footer.upper.b2"]');
   const wanted = menu.map((item) => item.label).join('\n');
   if (links.placeholder !== wanted) links.placeholder = wanted;
+  const address = form.querySelector('[data-own="cta.href"]');
+  const fragment = anchor(cta.label || sampleCta.label);
+  if (address.placeholder !== fragment) address.placeholder = fragment;
 }
 function writeSliders(resolved) {
   for (const control of form.querySelectorAll('input[type="range"][data-path]')) {
@@ -366,6 +373,8 @@ function writeFrameControls() {
   for (const button of form.querySelectorAll('[data-pick]')) button.setAttribute('aria-pressed', String(getValue(button.dataset.pick) === button.dataset.value));
   const items = { identity: true, links: header['link-menu'], search: header.search, language: header.language, menu: header['menu-button'] !== 'off', cta: header.cta };
   for (const item of form.querySelectorAll('[data-mini]')) item.toggleAttribute('data-off', !items[item.dataset.mini]);
+  // The Start page's call to action says whether the header has one.
+  writeOwnStates();
   const sticky = header.attachment === 'sticky';
   form.querySelector('[data-path="inputs.header.start"]').disabled = !sticky;
   form.querySelector('[data-flag="inputs.header.autohide"]').disabled = !sticky;
@@ -1056,12 +1065,12 @@ form.addEventListener('focusout', (event) => {
     if (field.value !== words) field.value = words;
   });
 });
-// On the Start page the preview follows the field in use: the menu's takes the page to its top, where the header is,
-// and a footer cell's to its end. The large menu stands open under the page there all the time.
+// On the Start page the preview follows the field in use: the menu's and the call to action's take the page to its top,
+// where the header is, and a footer cell's to its end. The large menu stands open under the page there all the time.
 form.addEventListener('focusin', (event) => {
   const field = event.target.closest?.('[data-own]');
   if (!field || ui.page !== 'start') return;
-  const part = field.dataset.own === 'menu' ? 'menu' : 'footer';
+  const part = field.dataset.own.startsWith('footer.') ? 'footer' : 'menu';
   if (ui.part === part) return;
   ui.part = part;
   followPage(followed(), true);
