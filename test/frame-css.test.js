@@ -465,7 +465,8 @@ test('the search box fades and blurs the whole window behind it, the header bar 
     const { browser, tab } = await open(type, files);
     try {
       // The backdrop that blurs and the layer that fades lie over the whole window: what is under the bar's middle is
-      // the dialog, not the bar. The fading layer is the page's background, fixed to the window, which a click passes.
+      // the dialog, not the bar. The fading layer is the page's translucent background, fixed to the window, which a
+      // click passes (its opacity is held with the megamenu's, below).
       const behind = () => tab.evaluate(() => {
         const dialog = document.querySelector('.kn-header-search-overlay');
         const backdrop = getComputedStyle(dialog, '::backdrop');
@@ -474,7 +475,8 @@ test('the search box fades and blurs the whole window behind it, the header bar 
         return {
           blur: [backdrop.position, backdrop.top, backdrop.width === `${innerWidth}px`, backdrop.backdropFilter],
           fade: [fade.position, fade.top, fade.left, fade.opacity, fade.pointerEvents],
-          colour: fade.backgroundColor === getComputedStyle(document.documentElement).backgroundColor && fade.backgroundColor.match(/\d+/g).slice(0, 3).map(Number),
+          colour: fade.backgroundColor.match(/[\d.]+/g).map(Number),
+          page: getComputedStyle(document.documentElement).backgroundColor.match(/\d+/g).slice(0, 3).map(Number),
           overBar: document.elementFromPoint(bar.left + bar.width / 2, bar.top + bar.height / 2) === dialog,
         };
       });
@@ -486,12 +488,14 @@ test('the search box fades and blurs the whole window behind it, the header bar 
       await tab.click(trigger);
       await tab.waitForTimeout(400);
       const seen = await behind();
-      assert.deepEqual(seen.blur, ['fixed', '0px', true, 'blur(12px)'], `${name}: the whole window blurred`);
-      assert.deepEqual(seen.fade, ['fixed', '0px', '0px', '0.62', 'none'], `${name}: the whole window faded`);
-      assert.ok(seen.colour, `${name}: in the page's colour`);
+      assert.deepEqual(seen.blur, ['fixed', '0px', true, 'blur(16px)'], `${name}: the whole window blurred`);
+      assert.deepEqual(seen.fade, ['fixed', '0px', '0px', '1', 'none'], `${name}: the whole window faded`);
+      const [alpha] = seen.colour.slice(3);
+      assert.ok(alpha < 1, `${name}: by a translucent layer, ${seen.colour}`);
+      assert.deepEqual(seen.colour.slice(0, 3), seen.page, `${name}: in the page's colour`);
       assert.equal(seen.overBar, true, `${name}: the bar under it`);
       const faded = await pixel();
-      faded.forEach((value, i) => assert.ok(Math.abs(value - (0.62 * seen.colour[i] + 0.38 * band[i])) <= 4, `${name}: the bar faded to ${faded}, from ${band} towards ${seen.colour}`));
+      faded.forEach((value, i) => assert.ok(Math.abs(value - (alpha * seen.page[i] + (1 - alpha) * band[i])) <= 4, `${name}: the bar faded to ${faded}, from ${band} towards ${seen.page}`));
       await tab.mouse.click(300, 30);
       assert.equal(await isOpen(tab), false, `${name}: a click on the bar closes it`);
 
@@ -520,7 +524,7 @@ test('the search box fades and blurs the whole window behind it, the header bar 
       await tab.keyboard.press('Enter');
       await tab.waitForTimeout(400);
       assert.equal(await tab.evaluate(() => !document.querySelector('.kn-header-search-close') && document.activeElement.name), 'q', `${name}: no close button, and focus in the field`);
-      assert.deepEqual(await behind().then(({ blur, fade, overBar }) => [blur[3], fade[3], overBar]), ['none', '0.62', true], `${name}: only faded, the bar too`);
+      assert.deepEqual(await behind().then(({ blur, fade, overBar }) => [blur[3], fade[3], overBar]), ['none', '1', true], `${name}: only faded, the bar too`);
       assert.equal(await tab.evaluate(() => document.querySelector('.kn-header-search-overlay input[name="q"]').hasAttribute('placeholder')), false, `${name}: nothing in the field`);
       await tab.keyboard.press('Escape');
       assert.deepEqual([await isOpen(tab), await tab.evaluate(() => document.activeElement.dataset.knTrigger)], [false, 'search'], `${name}: Esc closes it, focus on the magnifier`);
@@ -532,6 +536,74 @@ test('the search box fades and blurs the whole window behind it, the header bar 
       await tab.waitForTimeout(400);
       await tab.mouse.click(300, 30);
       assert.equal(await isOpen(tab), false, `${name}: and a click on the bar`);
+    } finally { await browser.close(); }
+  }
+});
+
+test('the search box and a translucent header share one veil: the page Surface\'s translucent background, translucent or not, over the page blurred by one value, in light and dark mode, in every engine', { timeout: 240000 }, async () => {
+  // The owner, 2026-11-23 and 2026-11-25 (issue #26): the search box fades and blurs the page as a translucent megamenu
+  // does, and takes the translucent background whether or not the header is translucent. Headless Firefox and WebKit
+  // paint no backdrop-filter, so the blur is read from the computed style; the colours expected are the generator's.
+  const resolved = derive(defaultInputs());
+  const css = coreCss(resolved) + await componentsCss();
+  const bands = [];
+  for (let i = 0; i < 6; i++) bands.push(await render('Band', { id: `b${i}` }, { default: `<h2>Band ${i}</h2><p>Some words in band ${i}.</p>` }));
+  const doc = async (mode, props, style = '') => `<!doctype html><html lang="en" data-kn-mode="${mode}"><head><meta charset="utf-8"><title>Veil</title><style>${css}${style}</style></head><body>${await render('Page', {}, { header: await render('Header', { ...header, attachment: 'sticky', ...props }), default: bands.join(''), footer: await render('Footer', footer) })}</body></html>`;
+  const files = { '/wider.html': await doc('light', { translucent: true }, '.kn-header { --kn-header-veil-blur: 2rem; }') };
+  for (const mode of ['light', 'dark']) {
+    files[`/${mode}-translucent.html`] = await doc(mode, { translucent: true });
+    files[`/${mode}-opaque.html`] = await doc(mode, { translucent: false });
+    // A header and a search box on other Surfaces: the panels and the fade stay on the page's.
+    files[`/${mode}-brand.html`] = await doc(mode, { translucent: true, surface: 'brand', search: { action: '#search', surface: 'tint' } });
+  }
+  const veil = (kind, mode) => {
+    const { roles: { background }, translucent } = resolved.surfaces[kind][mode];
+    return [...[1, 3, 5].map((i) => parseInt(background.slice(i, i + 2), 16)), translucent];
+  };
+  const parts = (colour) => { const [r, g, b, a = 1] = colour.match(/[\d.]+/g).map(Number); return [r, g, b, Math.round(a * 100) / 100]; };
+  const read = (tab, selector, pseudo = null) => tab.$eval(selector, (element, pseudo) => {
+    const style = getComputedStyle(element, pseudo);
+    return { background: style.backgroundColor, opacity: style.opacity, blur: style.backdropFilter ?? style.webkitBackdropFilter };
+  }, pseudo);
+  const opened = async (tab, trigger, selector, pseudo) => {
+    await tab.click(`.kn-header-row [data-kn-trigger="${trigger}"]`);
+    await tab.waitForTimeout(400);
+    const seen = await read(tab, selector, pseudo);
+    await tab.keyboard.press('Escape');
+    return seen;
+  };
+  for (const [name, type] of ENGINES) {
+    const { browser, tab } = await open(type, files);
+    try {
+      for (const mode of ['light', 'dark']) {
+        const page = veil('page', mode);
+        for (const look of ['translucent', 'opaque', 'brand']) {
+          const what = `${name}, ${mode} mode, ${look}`;
+          await tab.goto(`${ORIGIN}/${mode}-${look}.html`);
+          await tab.waitForTimeout(300);
+          const bar = await read(tab, '.kn-header-bar');
+          const fade = await opened(tab, 'search', '.kn-header-search-overlay', '::before');
+          assert.deepEqual([parts(fade.background), fade.opacity], [page, '1'], `${what}: the search box fades the page in its translucent background, at full opacity`);
+          assert.equal((await opened(tab, 'search', '.kn-header-search-overlay', '::backdrop')).blur, 'blur(16px)', `${what}: over the page blurred by 1rem`);
+          const menu = await opened(tab, 'menu', '.kn-megamenu');
+          if (look === 'opaque') {
+            assert.deepEqual([parts(menu.background), menu.blur], [[...page.slice(0, 3), 1], 'none'], `${what}: the megamenu is opaque`);
+            continue;
+          }
+          assert.deepEqual([parts(menu.background), menu.blur], [page, 'blur(16px)'], `${what}: the megamenu is the same veil`);
+          const list = await opened(tab, 'language', '.kn-header-language-list');
+          assert.deepEqual([parts(list.background), list.blur], [page, 'blur(16px)'], `${what}: and the language list`);
+          assert.deepEqual([parts(bar.background), bar.blur], [veil(look === 'brand' ? 'brand' : 'page', mode), 'blur(16px)'], `${what}: the bar on its own Surface, blurred alike`);
+        }
+      }
+      // One value blurs them all: set once, it changes the search box's blur and the translucent bar's and panels'.
+      await tab.goto(`${ORIGIN}/wider.html`);
+      await tab.waitForTimeout(300);
+      const blurs = [(await read(tab, '.kn-header-bar')).blur];
+      blurs.push((await opened(tab, 'search', '.kn-header-search-overlay', '::backdrop')).blur);
+      blurs.push((await opened(tab, 'menu', '.kn-megamenu')).blur);
+      blurs.push((await opened(tab, 'language', '.kn-header-language-list')).blur);
+      assert.deepEqual(blurs, Array(4).fill('blur(32px)'), `${name}: one blur for the bar, the search box, the megamenu and the language list`);
     } finally { await browser.close(); }
   }
 });
