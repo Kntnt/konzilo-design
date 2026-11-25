@@ -4,6 +4,7 @@
 // every value and recipe an agent needs, since that is what decides the quality of what it makes.
 import { readFileSync } from 'node:fs';
 import { COMPONENT_GROUPS, ICONS, NOT_COMPONENTS } from './components.js';
+import { figureSection } from './figures.js';
 import { frameSections } from './frame.js';
 import { shownRole } from './surfaces.js';
 import { faceOf } from '../fonts/catalog.js';
@@ -479,6 +480,6 @@ ${yaml(tokens(file))}
 
 <!-- ${MARKER} from ${sourceName}. Change the design and export again rather than editing this file. -->
 
-${[overview(file), colourSection(file), typeSection(file), layoutSection(file), elevationSection(file), shapeSection(file), componentSection(file), rulesSection()].join('\n\n').replace(/\n{3,}/g, '\n\n')}
+${[overview(file), colourSection(file), typeSection(file), layoutSection(file), elevationSection(file), shapeSection(file), componentSection(file), figureSection(file), rulesSection()].join('\n\n').replace(/\n{3,}/g, '\n\n')}
 `;
 }
