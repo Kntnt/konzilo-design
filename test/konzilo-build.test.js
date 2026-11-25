@@ -643,4 +643,7 @@ test('the core\'s body check reads the package\'s declarations and runs its chec
   for (const height of ['third', 'half', 'two-thirds', 'full']) assert.deepEqual(reasons(`::::hero{height="${height}"}\n\nWords.\n\n::::`), [], height);
   assert.match(reasons(':::section{body="split"}\n\nWords.\n\n:::').join(), /A section's body is columns, or stacked where this is left out, not split\./);
   assert.match(reasons(':::section{body="columns"}\n\n> Only a quotation.\n\n:::').join(), /one post list with presentation="cards" and one quotation/);
+  assert.match(reasons(':::section{align="middle"}\n\nWords.\n\n:::').join(), /A section's alignment is start or center, and start where this is left out, not middle\./);
+  assert.deepEqual(reasons(':::section{align="center"}\n\n## Ready?\n\nTell us where you live.\n\n::form{name="contact"}\n\n:::'), []);
+  assert.deepEqual(reasons(':::section{align="center"}\n\n## Our story\n\nOne.\n\nTwo.\n\n:::'), ['A section with a heading and paragraphs alone sets the paragraphs beside the heading, so it cannot be centred. Leave out align="center".']);
 });

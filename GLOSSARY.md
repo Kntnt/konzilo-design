@@ -178,4 +178,4 @@ The names in code, the custom properties, classes, attributes and design-file ke
 
 **Post-list presentation**: How a post list is drawn, `cards`, `featured` or `filtered`: a component a site registers and declares in its site description, which the core hands the list's posts. _Avoid_: presentation, alone, which is the client's ZIP.
 
-**Following menu**: A table of contents that stays beside the text as the page scrolls, as an article's "In this article". It marks no section as the one being read, so it is the same in every browser. _Avoid_: scroll-spy.
+**Following menu**: A table of contents that stays beside the text as the page scrolls, as an article's "In this article", and marks the link of the section being read: by the browser's CSS scroll markers, or where a browser lacks them by a polyfill that marks the same link, so it is the same in every browser. Without script such a browser marks nothing. _Avoid_: scroll-spy.

@@ -1,6 +1,7 @@
 // Package D of the directives (docs/spec/directives.md): accordion, tabs, choice, toc, an article's following menu
 // and a fact box. Their facts and decisions in Node, and their markup and stylesheet in every engine Playwright has
-// here, with script and without: none of them runs one (docs/spec/principles.md).
+// here, with script and without: none of them runs one (docs/spec/principles.md), but the following menu's polyfill
+// where a browser lacks CSS scroll markers, which following-menu.test.js holds.
 import test, { after, before } from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync } from 'node:fs';
@@ -355,21 +356,24 @@ test('on paper every panel shows, each under its tab\'s or its answer\'s name', 
   }
 });
 
-test('the following menu runs no script and marks nothing, in every engine alike', { timeout: 120000 }, async () => {
+// The fixture is a page written by hand without the polyfill's loader: only a browser with CSS scroll markers marks
+// its menu, and nothing writes `aria-current` (the assistant's choice, 2026-11-25). The polyfill, and the mark in every
+// engine, are following-menu.test.js's.
+test('the following menu has no rule above it and its label stands level with the text; its mark moves no line', { timeout: 120000 }, async () => {
   const marked = (tab) => tab.$$eval('.kn-article-body .kn-toc a', (links) => links.filter((link) => getComputedStyle(link).borderInlineStartColor !== 'rgba(0, 0, 0, 0)').map((link) => link.getAttribute('href')));
   for (const [name, browser] of browsers) {
     // The page's other runtimes run, as on a site; none of them is the menu's.
     const { tab, close } = await open(browser, { width: 1440, height: 900 });
     const box = await tab.$eval('.kn-article-body .kn-toc', (menu) => menu.getBoundingClientRect().height);
-    // Chromium's scroll markers could mark the section being read, and no other engine's, so they are not used.
-    assert.equal(await tab.$eval('.kn-article-body .kn-toc', (menu) => getComputedStyle(menu).scrollTargetGroup ?? 'none'), 'none', name);
+    const markers = await tab.evaluate(() => CSS.supports('scroll-target-group: auto'));
+    assert.equal(await tab.$eval('.kn-article-body .kn-toc', (menu) => getComputedStyle(menu).scrollTargetGroup ?? 'none'), markers ? 'auto' : 'none', name);
     // No rule above it, and its label level with the text beside it (the owner, 2026-11-12).
     const block = await tab.$eval('.kn-article-body .kn-aside-block', (aside) => ({ line: getComputedStyle(aside).borderBlockStartWidth, top: aside.querySelector('.kn-toc-label').getBoundingClientRect().top, text: aside.closest('.kn-reading-area').querySelector('.kn-reading-area-flow > :first-child').getBoundingClientRect().top }));
     assert.equal(block.line, '0px', `${name}: no rule above the menu`);
     assert.ok(Math.abs(block.top - block.text) < 8, `${name}: the menu's label stands level with the text, ${block.top} and ${block.text}`);
     await tab.click('.kn-article-body .kn-toc a[href="#another-crosshead"]');
     await tab.waitForTimeout(300);
-    assert.deepEqual(await marked(tab), [], `${name}: no mark, and nothing in its place`);
+    assert.deepEqual(await marked(tab), markers ? ['#another-crosshead'] : [], `${name}: ${markers ? 'the link clicked, by the browser' : 'no mark, and nothing in its place'}`);
     assert.equal(await tab.$$eval('.kn-toc [aria-current]', (links) => links.length), 0, `${name}: nothing writes aria-current`);
     assert.equal(await tab.$eval('.kn-article-body .kn-toc', (menu) => menu.getBoundingClientRect().height), box, `${name}: the menu keeps its height`);
     await close();

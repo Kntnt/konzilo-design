@@ -503,7 +503,7 @@ The class grammar and selectors are shared by Astro and the plain HTML export.
 | `data-kn-moved="search|language|cta"` | Functional items at the megamenu’s top. |
 | `data-kn-close` | The search box's close control, where the design has one. |
 | `data-kn-placeholder="none|word|icon"` on `.kn-search-field` | What a header's empty search field shows: nothing, the site's word, or a magnifier that goes as the visitor types (2026-11-11). `.kn-search-field` wraps the field and that magnifier, on the page Surface without painting it. |
-| `data-kn-polyfill="scroll-timeline|scroll-state"` | On a header's inline loader, and a footer's at the edge of the screen: which polyfill it loads where the browser lacks the feature, the header's `scroll-timeline` also where the browser's style queries miss what it sets (since 0.6.1). An offline build puts the polyfill itself in its place. |
+| `data-kn-polyfill="scroll-timeline|scroll-state|scroll-markers"` | On a header's inline loader, a footer's at the edge of the screen and, since 2026-11-25, a following menu's, last in its `<nav>` (`scroll-markers`, directives.md, `toc`): which polyfill it loads where the browser lacks the feature, the header's `scroll-timeline` also where the browser's style queries miss what it sets (since 0.6.1). An offline build puts the polyfill itself in its place. |
 | `data-kn-scrolled="block-end|block-start"` | On the root, where the browser has no scroll-state queries: the direction of the last relative scroll, which `scroll-state-polyfill.js` writes and the parallel rules read. |
 | `data-kn-attachment="flow|reveal"` | Footer attachment. |
 | `data-kn-rules="content|full"` | Footer hairline extent. |
@@ -592,6 +592,7 @@ Consent adds `.kn-consent-actions`, `.kn-consent-settings-header`, `.kn-consent-
 |---|---|
 | `data-kn-deck="long"` | On a deck: its text is longer than a line beside its heading holds, `DECK_LINE`. A fact, not a layout. |
 | `data-kn-body="columns"` | On a section: the editor pairs a list of teasers and a quotation in its body (directives.md, A quotation beside its teasers). An explicit body arrangement, the exception to reading layout from content. |
+| `data-kn-align="center"` | On a section: the editor centres it, its head in the middle and its body in a column of Narrow's width in the middle (directives.md, A centred section). Absent for `start`, the default. An explicit alignment, which centres only a section whose parts stack; what a section holds centres it no more (the owner, 2026-11-25). |
 | `data-kn-numbering="decimal\|lower-latin\|upper-latin\|lower-roman\|upper-roman\|lower-greek\|double-latin"` | On an `<ol>` or a Timeline: the numbering of that level, named as CSS names its own counter styles where one matches. |
 | `data-kn-punctuation="period\|parenthesis\|brackets"` | With a numbering: a full stop after it, a closing parenthesis after it, or both brackets around it; absent for none. |
 | `data-kn-dotted` | With a numbering below the first level: the number of the item above stands before its own. |
@@ -603,7 +604,7 @@ Consent adds `.kn-consent-actions`, `.kn-consent-settings-header`, `.kn-consent-
 | `data-kn-symbol="item\|heading"` | On `.kn-cards`: the pictures are symbols, by the card or by its heading. |
 | `data-kn-questions` | On `.kn-accordion`: every item's heading is a question. |
 | `data-kn-presentation="cards\|featured\|filtered"` | On `.kn-post-list`: the presentation a site declares to the core, as Content Loop's attribute names its own. |
-| `data-kn-follow` | On `.kn-toc`: a following menu, on a rail. Nothing marks the section being read, neither a script (2026-11-10) nor Chromium's scroll markers (2026-11-11). |
+| `data-kn-follow` | On `.kn-toc`: a following menu, on a rail, which marks the link of the section being read (the owner, 2026-11-23): `scroll-target-group: auto`, so `:target-current` where the browser has CSS scroll markers, and where it lacks them `aria-current="location"`, which `scroll-markers-polyfill.js` sets, drawn alike. *(Changed 2026-11-25: nothing marked it, neither a script (2026-11-10) nor Chromium's scroll markers (2026-11-11).)* |
 
 | Export of `@kntnt/konzilo-design/directives` | What it is |
 |---|---|

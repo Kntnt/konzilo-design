@@ -242,6 +242,9 @@ test('DESIGN.md writes the overlay\'s fade and ceiling one way only, and the pag
   assert.match(body, /level-2 links [^\n]*in the body style[^\n]*0\.75 times the body size/);
   assert.match(body, /not in every browser \(not in Firefox\); what works everywhere/);
   assert.match(body, /a native popover \(`popovertarget`\), placed absolutely in the top layer by the globe as its anchor/);
+  // A sticky header's dialogs take no anchor, and DESIGN.md says why (issue #27).
+  assert.match(body, /\*\*Megamenu\.\*\*[^\n]*under a sticky header fixed to the window, its top at the header's height, with no anchor: [^\n]*unscrolled place/);
+  assert.match(body, /\*\*Search box\.\*\*[^\n]*placed in the top layer as the megamenu is/);
   // How to build the header and footer without a script, and where a polyfill may stand in.
   assert.match(body, /let a small script try them one after another in a single task, before the browser paints, so nothing flickers/);
   assert.match(body, /Without the script, show the narrowest step: the identity and the menu button/);
@@ -328,7 +331,7 @@ test('DESIGN.md carries every role the tool shows, the accent borders too, and t
   }
 });
 
-test('DESIGN.md draws the directives\' components by recipe: sections, series, questions, tabs, a choice and the following menu', () => {
+test('DESIGN.md draws the directives\' components by recipe: sections, series, questions, tabs, a choice and the following menu with its mark', () => {
   const { body } = exported(DESIGNS[0]);
   for (const words of [
     'three or four, whichever leaves the last row fuller, four where both do alike',
@@ -338,7 +341,11 @@ test('DESIGN.md draws the directives\' components by recipe: sections, series, q
     'An exclusive group of native disclosures (`<details name>`), the first open, drawn as tabs',
     'there are no arrow keys between tabs',
     'None is chosen beforehand, and no panel shows until one is',
-    'runs no script and marks no section as the one being read, so it is the same in every browser',
+    'stands on a rail and marks the link of the section being read, the same in every browser',
+    'A browser with CSS scroll markers marks it with no script: `scroll-target-group: auto` on the menu, `:target-current` on the link',
+    'Elsewhere a small polyfill sets `aria-current="location"` on the same link',
+    'The polyfill loads only where `CSS.supports(\'scroll-target-group: auto\')` is false',
+    'of the last target at or above the scroll position and the first less than half a window below it, the nearer is marked',
     'a logo, where a picture stands before the text',
     'with fine print under them as their note',
   ]) assert.ok(body.includes(words), words);
@@ -348,7 +355,11 @@ test('DESIGN.md draws the directives\' components by recipe: sections, series, q
   assert.match(body, /A caption the editor gave the picture stands under it, the component gap below it, in small type and `text-muted`/);
   assert.match(body, /A hero's, a card's and a logo's picture, and a section's badges, show no caption/);
   assert.match(body, /from 60rem, the head beside the accordion at 2:3/);
-  assert.doesNotMatch(body, /none of these: [^\n]*\b(tabs|timeline)\b/, 'tabs and a timeline are components now');
+  // Content centres no section, the editor does (the owner, 2026-11-25).
+  assert.match(body, /What a section holds never centres it: only its editor does, by `align="center"`, and only where its parts stack/);
+  assert.match(body, /^  3\. \*\*Another form, or a choice:\*\* the head and the body at the start edge, in a column at most Narrow wide\.$/m);
+  assert.doesNotMatch(body, /the whole section centred/);
+  assert.doesNotMatch(body, /none of these:[^\n]*\b(tabs|timeline)\b/, 'tabs and a timeline are components now');
   assert.match(body, /^- `brand-instagram`: /m);
   assert.match(body, /^- `brand-x`: /m);
   // Where the line across the tabs stands is the design's (the owner, 2026-11-12), and the recipe gives that one alone.

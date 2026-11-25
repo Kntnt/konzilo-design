@@ -33,8 +33,9 @@ test('the header and the footer keep only their build-time helpers, and each pol
     assert.doesNotMatch(source, /\b(?:document|window|addEventListener|ResizeObserver|requestAnimationFrame)\b/, `${name}.js touches no page`);
     assert.doesNotMatch(source, /schedule\.js/, `${name}.js schedules nothing`);
   }
-  // The scroll timelines' stands in also where the browser's style queries miss what they set, as Firefox's do.
-  for (const [file, guard] of [['scroll-timeline-polyfill.js', "const timelines = CSS.supports('animation-timeline: scroll()');\nif (!timelines || !follows()) {"], ['scroll-state-polyfill.js', "if (!CSS.supports('container-type: scroll-state')) {"]]) {
+  // The scroll timelines' stands in also where the browser's style queries miss what they set, as Firefox's do. The scroll
+  // markers' marks the link of the section being read in a following menu (directives.md, `toc`).
+  for (const [file, guard] of [['scroll-timeline-polyfill.js', "const timelines = CSS.supports('animation-timeline: scroll()');\nif (!timelines || !follows()) {"], ['scroll-state-polyfill.js', "if (!CSS.supports('container-type: scroll-state')) {"], ['scroll-markers-polyfill.js', "if (!CSS.supports('scroll-target-group: auto')) {"]]) {
     const source = await readFile(new URL(`../src/components/${file}`, import.meta.url), 'utf8');
     assert.match(source, /^\/\/ Polyfill for /, `${file} says what it stands in for`);
     assert.match(source, /Delete this file once every engine has/, `${file} says when it goes`);
