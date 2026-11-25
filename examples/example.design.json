@@ -1918,7 +1918,7 @@
     "easing": {
       "standard": "cubic-bezier(0.2, 0, 0, 1)"
     },
-    "generator-version": "0.13.0",
+    "generator-version": "0.15.0",
     "contrast-check": {
       "status": "passed",
       "matrix": {

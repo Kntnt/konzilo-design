@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.15.0] – 2026-11-25
+
 ### Added
 
 - A design with a second brand colour may keep accent and focus in the primary. A new input, `inputs.accent-color`, is `default`, which keeps today's rule, the secondary's accent and focus where there is one, or `primary`, which takes list markers, quotation rules, tab marks, the first heading's accent option and the focus ring from the primary on every Surface, the further colours' own plates included. The status Surfaces keep their own accent. The second colour still has its tint, brand band and accent band (plates.md, Every brand colour's plates).
