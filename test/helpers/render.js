@@ -18,6 +18,8 @@ export async function render(name, props = {}, slots, { locals } = {}) {
         // A file's text, as Vite gives it to a component that writes it inline.
         if (id.endsWith('?raw')) return `virtual:raw:${fileURLToPath(new URL(id.slice(0, -4), pathToFileURL(importer)))}`;
         if (id.endsWith('.astro')) return fileURLToPath(id.startsWith('file:') ? id : new URL(id, pathToFileURL(importer)));
+        // The following menu's loader imports the polyfill's address, which only a build resolves, so it is built in.
+        if (id.endsWith('/scroll-markers-loader.js')) return fileURLToPath(new URL(id, pathToFileURL(importer)));
         return { id: id.startsWith('.') ? new URL(id, pathToFileURL(importer)).href : import.meta.resolve(id), external: true };
       },
       async load(id) {

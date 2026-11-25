@@ -110,8 +110,8 @@ test('every component has a typed wrapper; only the declared client entries, the
       // components write too (directives.md, `toc`): one text, written as Astro writes the header's, testing for its
       // feature before it fetches, so the core's policy needs one hash for it and the offline copies find its address.
       assert.doesNotMatch(source, /<script/);
-      assert.match(source, /<TableOfContentsList entries=\{entries\} \/>\{follows && <Fragment set:html=\{followingMenuLoader\(scrollMarkersPolyfill\)\} \/>\}\n<\/nav>\}/);
-      assert.equal([...source.matchAll(/followingMenuLoader\(/g)].length, 1);
+      assert.match(source, /<TableOfContentsList entries=\{entries\} \/>\{follows && <Fragment set:html=\{scrollMarkersLoader\} \/>\}\n<\/nav>\}/);
+      assert.match(source, /^import \{ scrollMarkersLoader \} from '\.\/scroll-markers-loader\.js';$/m);
       assert.equal(followingMenuLoader('/_astro/scroll-markers-polyfill.js'), `<script data-kn-polyfill="scroll-markers">(function(){const src = "/_astro/scroll-markers-polyfill.js";\nif (!CSS.supports('scroll-target-group: auto')) import(src);})();</script>`);
     } else if (name === 'Accordion.astro') {
       assert.equal([...source.matchAll(/<script/g)].length, 1);
@@ -119,6 +119,20 @@ test('every component has a typed wrapper; only the declared client entries, the
     } else assert.doesNotMatch(source, /<script/);
     assert.doesNotMatch(source, /<h[1-6]\b/);
   }
+  // One module writes the following menu's loader with the polyfill's address, and every component that draws a following
+  // menu, the gallery's too, takes it from there, so none can write another text.
+  const root = new URL('../', import.meta.url);
+  const sources = (await Promise.all(['src/', 'gallery/src/'].map(async (folder) => (await readdir(new URL(folder, root), { recursive: true }))
+    .filter((file) => /\.(?:astro|js|mjs|ts)$/.test(file)).map((file) => `${folder}${file}`)))).flat();
+  const writers = [], addresses = [];
+  for (const file of sources) {
+    const text = await readFile(new URL(file, root), 'utf8');
+    if (/(?<!function )followingMenuLoader\(\w/.test(text)) writers.push(file);
+    if (/^import \w+ from '[^']*scroll-markers-polyfill\.js\?url/m.test(text)) addresses.push(file);
+  }
+  assert.deepEqual(writers, ['src/components/scroll-markers-loader.js']);
+  assert.deepEqual(addresses, ['src/components/scroll-markers-loader.js']);
+  assert.match(await readFile(new URL('scroll-markers-loader.js', directory), 'utf8'), /^export const scrollMarkersLoader = followingMenuLoader\(scrollMarkersPolyfill\);$/m);
   assert.equal(Object.keys(icons).length, 30);
   for (const markup of Object.values(icons)) assert.doesNotMatch(markup, /<svg|<script|\bhref=/);
   assert.match(await readFile(new URL('LICENSE-lucide.txt', directory), 'utf8'), /ISC License/);

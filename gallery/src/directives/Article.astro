@@ -6,8 +6,7 @@ import Card from './Card.astro';
 import Actions from './Actions.astro';
 import { landscape, portrait } from '../samples.js';
 import { surfaceOf } from '../../../src/directives/index.js';
-import { followingMenuLoader } from '../../../src/components/table-of-contents.js';
-import scrollMarkersPolyfill from '../../../src/components/scroll-markers-polyfill.js?url&no-inline';
+import { scrollMarkersLoader } from '../../../src/components/scroll-markers-loader.js';
 // An article's page, laid out by its fields: the opening, the body with its following menu and a fact box, and "Read more".
 // The menu ends with its polyfill's loader, as ArticleBody.astro writes it.
 interface Props { design: { breadcrumbs: Record<string, unknown> } }
@@ -42,7 +41,7 @@ const teasers = [['Planning', 'Plan the first week'], ['Tools', 'Tools we rely o
           <nav class="kn-toc" aria-labelledby="article-menu" data-kn-type="small" data-kn-follow>
             <p class="kn-toc-label" id="article-menu" data-kn-type="heading-6">In this article</p>
             <ol role="list">{stops.map(([id, label]) => <li><a href={`#${id}`}>{label}</a></li>)}</ol>
-            <Fragment set:html={followingMenuLoader(scrollMarkersPolyfill)} />
+            <Fragment set:html={scrollMarkersLoader} />
           </nav>
         </aside>
       </div>

@@ -10,11 +10,10 @@
 // menu ends with the loader of the polyfill that marks the section being read where a browser lacks CSS scroll markers.
 import { contextOf } from '../directives/render/context.js';
 import { articleBody } from './parts.js';
-import { followingMenuLoader } from '../components/table-of-contents.js';
-import scrollMarkersPolyfill from '../components/scroll-markers-polyfill.js?url&no-inline';
+import { scrollMarkersLoader } from '../components/scroll-markers-loader.js';
 
 const { label, menu = true } = Astro.props;
 const html = (await Astro.slots.render('default')) ?? '';
 const aside = Astro.slots.has('aside') ? await Astro.slots.render('aside') : undefined;
 ---
-<Fragment set:html={articleBody(html, contextOf(Astro), { label, menu, aside, loader: followingMenuLoader(scrollMarkersPolyfill) })} />
+<Fragment set:html={articleBody(html, contextOf(Astro), { label, menu, aside, loader: scrollMarkersLoader })} />

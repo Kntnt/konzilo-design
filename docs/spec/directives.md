@@ -1006,7 +1006,7 @@ An acre, a shed and the tools for both.
 
 The intro is the menu's label; without one, the `<nav>` takes an `aria-label` in the site's language, the page's context's word `contents`, "Contents" by default.
 
-The `<nav>` ends with the loader of the polyfill that marks the section being read where a browser lacks CSS scroll markers (Behaviour), its text the same in every menu: `(function(){const src = "<the polyfill's address>";`, a line break, and `if (!CSS.supports('scroll-target-group: auto')) import(src);})();`. `followingMenuLoader(src)` of `components/table-of-contents.js` writes it, and `Toc.astro` hands it to the renderer (since 2026-11-25).
+The `<nav>` ends with the loader of the polyfill that marks the section being read where a browser lacks CSS scroll markers (Behaviour), its text the same in every menu: `(function(){const src = "<the polyfill's address>";`, a line break, and `if (!CSS.supports('scroll-target-group: auto')) import(src);})();`. `followingMenuLoader(src)` of `components/table-of-contents.js` writes it, `components/scroll-markers-loader.js` gives it the polyfill's address as the build has it, every component that draws a following menu takes it from there, and `Toc.astro` hands it to the renderer (since 2026-11-25).
 
 **Markdown.**
 

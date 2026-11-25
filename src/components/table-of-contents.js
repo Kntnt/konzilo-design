@@ -17,7 +17,7 @@ export function contentsTree(headings, depth = 2) {
  * the polyfill that marks the link of the section being read, and elsewhere it does nothing. It is written as Astro
  * writes the header's loaders, `define:vars` and all, so its text is the same on every page of a build, as the Konzilo
  * core's content security policy needs, and the offline copies find the polyfill's address in it.
- * @param {string} src The polyfill's address, as a component imports `scroll-markers-polyfill.js?url&no-inline`.
+ * @param {string} src The polyfill's address, as scroll-markers-loader.js imports `scroll-markers-polyfill.js?url&no-inline`.
  */
 export function followingMenuLoader(src) {
   return `<script data-kn-polyfill="scroll-markers">(function(){const src = ${JSON.stringify(src)};\nif (!CSS.supports('scroll-target-group: auto')) import(src);})();</script>`;

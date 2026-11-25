@@ -5,9 +5,8 @@
 // the polyfill's address.
 import { contextOf } from '../render/context.js';
 import { renderDirective } from '../render/render.js';
-import { followingMenuLoader } from '../../components/table-of-contents.js';
-import scrollMarkersPolyfill from '../../components/scroll-markers-polyfill.js?url&no-inline';
+import { scrollMarkersLoader } from '../../components/scroll-markers-loader.js';
 
 const { content, 'data-konzilo-block': block, ...attributes } = Astro.props;
 ---
-<Fragment set:html={renderDirective('toc', attributes, content, contextOf(Astro), { block, loader: followingMenuLoader(scrollMarkersPolyfill) })} />
+<Fragment set:html={renderDirective('toc', attributes, content, contextOf(Astro), { block, loader: scrollMarkersLoader })} />

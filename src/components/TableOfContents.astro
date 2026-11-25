@@ -3,8 +3,8 @@ import { nextId } from './ids.js';
 import type { HTMLAttributes } from 'astro/types';
 import type { Level, Surface } from './frame-types';
 import type { ContentHeading } from './content-types';
-import { contentsTree, followingMenuLoader } from './table-of-contents.js';
-import scrollMarkersPolyfill from './scroll-markers-polyfill.js?url&no-inline';
+import { contentsTree } from './table-of-contents.js';
+import { scrollMarkersLoader } from './scroll-markers-loader.js';
 import TableOfContentsList from './TableOfContentsList.astro';
 interface Props extends HTMLAttributes<'nav'> {
   headings: ContentHeading[];
@@ -24,5 +24,5 @@ const follows = attributes['data-kn-follow'] !== undefined && attributes['data-k
 ---
 {count >= 2 && <nav {...attributes} class:list={['kn-toc', className]} aria-labelledby={labelId} data-kn-type="small" data-kn-surface={surface}>
   <Label class="kn-toc-label" id={labelId} data-kn-type="heading-6">{label}</Label>
-  <TableOfContentsList entries={entries} />{follows && <Fragment set:html={followingMenuLoader(scrollMarkersPolyfill)} />}
+  <TableOfContentsList entries={entries} />{follows && <Fragment set:html={scrollMarkersLoader} />}
 </nav>}
