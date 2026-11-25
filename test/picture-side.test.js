@@ -12,7 +12,8 @@ import { renderMarkdown } from './helpers/konzilo-body.js';
 import { coreCss } from '../src/css/index.js';
 import { componentsCss } from '../src/css/components.js';
 import { derive, defaultInputs, validateInputs } from '../src/generator/index.js';
-import { withDefaults } from '../src/generator/defaults.js';
+import { withDefaults, PICTURE_SIDES } from '../src/generator/defaults.js';
+import schema from '../schema/design-file.schema.json' with { type: 'json' };
 import { designMd } from '../src/design-md/index.js';
 
 const inputs = (section) => ({ 'brand-colors': { primary: '#168b83' }, ...(section ? { section } : {}) });
@@ -20,6 +21,9 @@ const SIDES = ['start', 'alternate', 'corners', 'corners-bleed'];
 
 test('a design sets the side of its sections\' pictures, at the start unless told otherwise, and the core CSS carries it', () => {
   assert.deepEqual(defaultInputs().section, { 'picture-side': 'start' });
+  // The words the tool's and the gallery's controls take name every side the schema allows, and no other.
+  assert.deepEqual(PICTURE_SIDES.map(([side]) => side), schema.$defs['section-settings'].properties['picture-side'].enum);
+  assert.deepEqual(SIDES, PICTURE_SIDES.map(([side]) => side));
   assert.deepEqual(derive(inputs()).section, { 'picture-side': 'start' }, 'at the start unless told otherwise, as before');
   for (const side of SIDES) {
     const resolved = derive(inputs({ 'picture-side': side }));

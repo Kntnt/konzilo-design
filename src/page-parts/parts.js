@@ -18,7 +18,7 @@ import { contactOf } from '../directives/cards.js';
 import { serviceOf } from '../directives/actions.js';
 import { iconHtml } from '../directives/icons.js';
 import { escapeAttribute, escapeText, tag, voidTag } from '../directives/render/html.js';
-import { breadcrumbsHtml, groupEyebrows } from '../directives/render/render.js';
+import { breadcrumbsHtml, groupEyebrows, sectionAttributes, sectionPhoto } from '../directives/render/render.js';
 import { allElements, innerHtml, retagged, textOfHtml, topElements } from '../directives/render/scan.js';
 import { teaserCard } from '../presentations/teasers.js';
 
@@ -96,14 +96,11 @@ function pictureFrom(html, element, className) {
   return retagged(inside, image, { set: { class: className, ...(mark === undefined ? {} : { 'data-konzilo-block': mark }) } });
 }
 
-// A figure as a section's photo: its picture, and its caption under it as a Figure's where it has one, as a :::section draws
-// it (render.js, photo()).
+// A figure as a section's photo, its caption as the core drew it, as a :::section draws it (render.js, sectionPhoto()).
 function photoFrom(html, element) {
-  const image = pictureFrom(html, element, 'kn-section-picture');
   const inside = innerOf(html, element);
   const caption = topElements(inside).find((one) => one.name === 'figcaption');
-  if (!caption) return image;
-  return tag('figure', { class: 'kn-section-figure' }, image, tag('figcaption', { class: 'kn-section-caption', 'data-kn-type': 'small' }, innerOf(inside, caption)));
+  return sectionPhoto(pictureFrom(html, element, 'kn-section-picture'), caption && innerOf(inside, caption));
 }
 
 // A section from its blocks in order, by the section's rules (directives.md, `section`): each block { kind, text, plain,
@@ -127,10 +124,7 @@ function sectionFrom(blocks, { surface, anchor, align } = {}) {
   const drawn = parts.media.length + parts.head.length;
   const rest = groupEyebrows(blocks.slice(drawn).map((block) => block.plain).join('')).trim();
   if (rest !== '') out.push(tag('div', { class: 'kn-section-body kn-body-text' }, rest));
-  return tag('section', {
-    class: 'kn-band kn-section', id: anchor || undefined, 'data-kn-surface': surface && surface !== 'page' ? surface : undefined,
-    'data-kn-align': align === 'center' ? 'center' : undefined,
-  }, tag('div', { class: 'kn-band-content' }, out));
+  return tag('section', sectionAttributes({ anchor, surface: surface && surface !== 'page' ? surface : undefined, align }), tag('div', { class: 'kn-band-content' }, out));
 }
 
 // The blocks of HTML the core drew, as sectionFrom() takes them: each element at its top, a figure's lightbox's dialog

@@ -2,6 +2,9 @@ export const SYSTEM_SANS = 'system-ui, sans-serif';
 export const SYSTEM_MONOSPACE = 'ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace';
 // The serif the tool offers among a computer's own typefaces.
 export const SYSTEM_SERIF = 'Georgia, serif';
+// The sides a section's picture may take, `section.picture-side` (issue #37), with the words the tool's and the gallery's
+// controls name them by.
+export const PICTURE_SIDES = Object.freeze([['start', 'On the left'], ['alternate', 'Alternating'], ['corners', 'Corner to corner'], ['corners-bleed', 'Corner to corner, to the window\'s edge']]);
 
 const defaults = {
   'brand-colors': { primary: '#168b83' },

@@ -1,6 +1,6 @@
 // The document: the presentation's pages, with their controls in place. Every control is written
 // once and stays in the page, so changing a value never rebuilds what is being dragged.
-import { SYSTEM_SANS, SYSTEM_MONOSPACE, SYSTEM_SERIF } from '/src/generator/defaults.js';
+import { SYSTEM_SANS, SYSTEM_MONOSPACE, SYSTEM_SERIF, PICTURE_SIDES } from '/src/generator/defaults.js';
 import { TYPEFACES, CATEGORIES } from '/src/fonts/catalog.js';
 import { scales, LINE, COMMON_WIDTHS, lineShare, menuText, ownText } from './logic.js';
 import { menu as sampleMenu, footer as sampleFooter, cta as sampleCta } from '/presentation/src/samples.js';
@@ -681,7 +681,7 @@ const sectionList = (page) => `<dl class="component-list">${CATALOGUE[page].map(
 // stands, which every section with a picture beside its text follows (issue #37, the owner, 2026-11-25).
 const COMPONENT_SETTINGS = {
   sections: [' Which side a section\'s picture stands on is the design\'s own, the same for every section with a picture beside its text, and is set below.', () => setting('Sections', `<div class="fields">
-      ${choice('The picture\'s side', 'inputs.section.picture-side', [['start', 'On the left'], ['alternate', 'Alternating'], ['corners', 'Corner to corner'], ['corners-bleed', 'Corner to corner, to the window\'s edge']], 'Where a section\'s picture stands beside its text. On the left in every section, or alternating: on the left in the first section with a picture, on the right in the next, and so on. Corner to corner, the sides alternate and each picture fills its band\'s height and half the content, with square corners, so the pictures of two sections meet at their corners; to the window\'s edge, each runs from the middle out to the edge on its side. A picture a form offers takes its turn but is never cropped. Every section on the site follows it.')}
+      ${choice('The picture\'s side', 'inputs.section.picture-side', PICTURE_SIDES, 'Where a section\'s picture stands beside its text. On the left in every section, or alternating: on the left in the first section with a picture, on the right in the next, and so on. Corner to corner, the sides alternate and each picture fills its band\'s height and half the content, with square corners, so the pictures of two sections meet at their corners; to the window\'s edge, each runs from the middle out to the edge on its side. A picture a form offers takes its turn but is never cropped. Every section on the site follows it.')}
     </div>`)],
   text: [' Where the line across the tabs stands is the design\'s own, the same for every tabs, and is set below.', () => setting('Tabs', `<div class="fields">
       ${choice('The line across the tabs', 'inputs.tabs.rule-place', [['below', 'Under the tabs'], ['above', 'Above the tabs']], 'Under the tabs, the line runs over the open panel, and the open tab is marked just above it. Above the tabs, it runs over them, the open tab is marked on it, and a tab reads like a value under it: a line, a label, the content. Every tabs on the site follows it.')}

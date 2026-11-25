@@ -27,6 +27,7 @@ import {
   levelOf, markOf, outer, tag, textOf, voidTag, walk,
 } from './html.js';
 import { topElements } from './scan.js';
+import components from '../components.json' with { type: 'json' };
 
 // The twelve directives this package draws, by their names.
 export const DIRECTIVES = Object.freeze(['hero', 'section', 'aside', 'list', 'cards', 'accordion', 'tabs', 'toc', 'choice', 'eyebrow', 'small', 'breadcrumbs']);
@@ -61,13 +62,25 @@ function picture(block, values = {}) {
   return voidTag('img', { class: classes, src, ...rest, alt: rest.alt ?? '', ...extra, ...markOf(block) });
 }
 
-// A section's photo, its caption under it as a Figure's where the editor gave it one, and otherwise the bare picture. The
-// block's mark stays on the picture, as on a picture without a caption (directives.md, Pictures).
+// A section's photo: its picture, and where it has a caption, the caption's HTML, under it as a Figure's; otherwise the
+// bare picture. The directive and the page parts' Section both draw it so (parts.js, photoFrom()).
+export function sectionPhoto(image, caption) {
+  if (caption === undefined) return image;
+  return tag('figure', { class: 'kn-section-figure' }, image, tag('figcaption', { class: 'kn-section-caption', 'data-kn-type': 'small' }, caption));
+}
+
+// A section's own attributes, as the directive and the page parts' Section write them, each only where it departs from
+// the default: its anchor, its Surface, its body in columns and its alignment (directives.md, `section`).
+export const sectionAttributes = ({ anchor, surface, body, align }) => ({
+  class: 'kn-band kn-section', id: anchor || undefined, 'data-kn-surface': surface,
+  'data-kn-body': body === 'columns' ? 'columns' : undefined, 'data-kn-align': align === 'center' ? 'center' : undefined,
+});
+
+// A section's photo from its block, the caption as the editor gave it. The block's mark stays on the picture, as on a
+// picture without a caption (directives.md, Pictures).
 function photo(block) {
-  const image = picture(block, { class: 'kn-section-picture' });
   const caption = isElement(block, 'figure') ? blocksOf(block.children).find((part) => isElement(part, 'figcaption')) : undefined;
-  if (!caption) return image;
-  return tag('figure', { class: 'kn-section-figure' }, image, tag('figcaption', { class: 'kn-section-caption', 'data-kn-type': 'small' }, inner(caption)));
+  return sectionPhoto(picture(block, { class: 'kn-section-picture' }), caption && inner(caption));
 }
 
 const isActions = (node) => directiveOf(node) === 'list' && attributesOf(node).type === 'actions';
@@ -195,9 +208,9 @@ function renderNested(node, ctx) {
 
 // ---------- hero ----------
 
-// The shares of the screen a hero's height takes (components.json, hero). Another value, which the core refuses, leaves
-// the design's height, so a hero never stands without one.
-const HERO_HEIGHTS = ['third', 'half', 'two-thirds', 'full'];
+// The shares of the screen a hero's height takes, as the directive declares them. Another value, which the core refuses,
+// leaves the design's height, so a hero never stands without one.
+const HERO_HEIGHTS = components.hero.attributes.height.values;
 
 function hero(attrs, blocks, ctx) {
   const settings = ctx.design.resolved.hero ?? {};
@@ -336,10 +349,7 @@ function section(attrs, blocks, ctx, { body } = {}) {
   const drawn = parts.media.length + parts.head.length;
   const rest = body === undefined ? renderBlocks(blocks.slice(drawn), band) : groupEyebrows(bodyFromSlot(body, blocks, drawn, band)).trim();
   if (rest !== '') out.push(tag('div', { class: 'kn-section-body kn-body-text' }, rest));
-  return tag('section', {
-    class: 'kn-band kn-section', id: attrs.anchor || undefined, 'data-kn-surface': surface,
-    'data-kn-body': attrs.body === 'columns' ? 'columns' : undefined, 'data-kn-align': attrs.align === 'center' ? 'center' : undefined,
-  }, tag('div', { class: 'kn-band-content' }, out));
+  return tag('section', sectionAttributes({ anchor: attrs.anchor, surface, body: attrs.body, align: attrs.align }), tag('div', { class: 'kn-band-content' }, out));
 }
 
 // ---------- aside ----------

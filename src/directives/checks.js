@@ -66,6 +66,8 @@ const drawnAsParagraph = (block) => block.type === 'paragraph' || isDirective(bl
 // Where section.css sets a section's parts side by side, by its rules 1, 2, 4 and 5 and body="columns", the reason
 // align="center" cannot centre it; none where the parts stack. The stylesheet reads the same from the HTML, and keeps a
 // side-by-side layout at the start edge where the attribute reaches it all the same (directives.md, A centred section).
+// The two cannot share one statement of it: this reads the editor's tree before anything is drawn, the stylesheet the
+// drawn HTML, by selectors. directive-checks.test.js and directives-section.test.js hold them to the same sections.
 function besideReason(attributes, parts, blocks) {
   const head = parts.head.map((at) => blocks[at]);
   const body = parts.body.map((at) => blocks[at]);
