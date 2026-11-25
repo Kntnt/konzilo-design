@@ -239,6 +239,9 @@ test('DESIGN.md writes the overlay\'s fade and ceiling one way only, and the pag
   assert.match(body, /level-2 links [^\n]*in the body style[^\n]*0\.75 times the body size/);
   assert.match(body, /not in every browser \(not in Firefox\); what works everywhere/);
   assert.match(body, /a native popover \(`popovertarget`\), placed absolutely in the top layer by the globe as its anchor/);
+  // A sticky header's dialogs take no anchor, and DESIGN.md says why (issue #27).
+  assert.match(body, /\*\*Megamenu\.\*\*[^\n]*under a sticky header fixed to the window, its top at the header's height, with no anchor: [^\n]*unscrolled place/);
+  assert.match(body, /\*\*Search box\.\*\*[^\n]*placed in the top layer as the megamenu is/);
   // How to build the header and footer without a script, and where a polyfill may stand in.
   assert.match(body, /let a small script try them one after another in a single task, before the browser paints, so nothing flickers/);
   assert.match(body, /Without the script, show the narrowest step: the identity and the menu button/);

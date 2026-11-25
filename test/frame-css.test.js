@@ -41,6 +41,7 @@ async function pages() {
   };
   return {
     '/flow.html': await page({}),
+    '/sticky.html': await page({ attachment: 'sticky' }),
     '/under.html': await page({ attachment: 'sticky', start: 'under' }),
     '/slides.html': await page({ attachment: 'sticky', start: 'under', autohide: true }),
     '/translucent.html': await page({ attachment: 'sticky', start: 'under', autohide: true, translucent: true }),
@@ -338,6 +339,81 @@ test('a header at the window\'s edge that slides away keeps its panels under its
       await tab.evaluate(() => document.activeElement?.blur());
       await scroll(tab, 400);
       assert.ok((await look(tab)).top < 0, `${name} at ${width}: away again on the way down`);
+    } finally { await browser.close(); }
+  }
+});
+
+test('a sticky header\'s panels open where the page is, under the bar, and stay under it wherever the page is then scrolled, also when the header had slid away, on a wide window and a phone, in every engine', { timeout: 240000 }, async () => {
+  // Issue #27, found in Firefox 160: the megamenu and the search box were placed in the top layer by the sticky bar as
+  // their anchor, which Firefox takes at its unscrolled place, the document's top, so the dialog lay there and opening
+  // it scrolled the page to the top. Playwright's Firefox 157 places it right as it opens but leaves it behind once the
+  // page scrolls, so the page is scrolled under the open panel here; and a header that had slid away misled Chromium's
+  // and WebKit's anchor too. A header in the flow scrolls away with its panel under it, as before. The language list
+  // keeps its anchor, the globe: a released Firefox keeps it under the globe as the page scrolls (Firefox 161,
+  // 2026-11-25), and only Playwright's Firefox 157 leaves it behind under a sticky header, so there it is checked only as
+  // it opens. Without motion, so that a panel is in place as soon as it opens, except where the header has slid away: it
+  // was on its way back as the panel opened that the anchor misled Chromium and WebKit.
+  const files = await pages();
+  const PANELS = [['menu', '.kn-megamenu'], ['search', '.kn-header-search-overlay'], ['language', '.kn-header-language-list']];
+  const at = (tab, selector) => tab.evaluate((selector) => {
+    const box = document.querySelector(selector).getBoundingClientRect();
+    const bar = document.querySelector('.kn-header-bar').getBoundingClientRect();
+    const globe = document.querySelector('.kn-header-row [data-kn-trigger="language"]').getBoundingClientRect();
+    return { y: scrollY, panel: box.top, bar: bar.bottom, globe: [Math.round(box.top - globe.bottom), Math.round(box.right - globe.right)] };
+  }, selector);
+  const under = (seen) => Math.abs(seen.panel - seen.bar) <= 1;
+  const shown = (tab, trigger) => tab.evaluate((trigger) => document.querySelector(`.kn-header-row [data-kn-trigger="${trigger}"]`).getClientRects().length > 0, trigger);
+  for (const [name, type] of ENGINES) {
+    const { browser, tab } = await open(type, files);
+    try {
+      for (const width of [1280, 390]) {
+        await tab.setViewportSize({ width, height: 700 });
+        // Where the page is when the panel opens: 1200px down, or at the top of a header in the flow, or wherever a
+        // header that slides away has just gone.
+        const cases = [['sticky', 'sticky', 1200], ['over the page\'s start', 'under', 1200], ['sliding away', 'slides-below', 'away'], ['over the page\'s start and sliding away', 'slides', 'away'], ...(width > 400 ? [['in the flow', 'flow', 0]] : [])];
+        for (const [variant, file, start] of cases) {
+          const away = start === 'away';
+          await tab.emulateMedia({ reducedMotion: away ? 'no-preference' : 'reduce' });
+          await tab.goto(`${ORIGIN}/${file}.html`);
+          for (const [trigger, selector] of PANELS) {
+            if (!(await shown(tab, trigger)) || (away && trigger === 'language')) continue;
+            const what = `${name} at ${width}px, ${variant}, the ${trigger}`;
+            if (away) {
+              // Scrolled down by the wheel, so that the header slides away; a panel opened now, as Tab and Enter can open
+              // one, brings it back.
+              await tab.mouse.move(width / 2, 400);
+              await tab.mouse.wheel(0, 600);
+              await tab.waitForTimeout(700);
+              assert.ok((await look(tab)).top < 0, `${what}: away`);
+            } else {
+              // A jump down, as a link to a place on the page makes, which would leave a header that slides away in place.
+              await tab.evaluate((y) => scrollTo(0, y), start);
+              await tab.waitForTimeout(100);
+            }
+            const before = await tab.evaluate(() => scrollY);
+            if (away) await tab.evaluate((trigger) => document.querySelector(`.kn-header-row [data-kn-trigger="${trigger}"]`).click(), trigger);
+            else {
+              const button = await tab.locator(`.kn-header-row [data-kn-trigger="${trigger}"]`).boundingBox();
+              await tab.mouse.click(button.x + button.width / 2, button.y + button.height / 2);
+            }
+            await tab.waitForTimeout(away ? 500 : 100);
+            const opened = await at(tab, selector);
+            assert.equal(opened.y, before, `${what}: opening it scrolls nothing`);
+            if (away) assert.equal((await look(tab)).top, 0, `${what}: the header is back`);
+            if (trigger === 'language') assert.deepEqual(opened.globe, [10, 0], `${what}: the list hangs 0.625rem under the globe, its end on the globe's`);
+            else assert.ok(under(opened), `${what}: it opens under the bar, at ${opened.panel} under ${opened.bar}`);
+            // The page scrolled under the open panel, as a script may scroll it though the root's overflow is hidden.
+            await tab.evaluate((y) => { document.documentElement.scrollTop = y; }, start === 0 ? 300 : before - 500);
+            await tab.waitForTimeout(100);
+            const moved = await at(tab, selector);
+            assert.notEqual(moved.y, before, `${what}: the page has scrolled`);
+            if (trigger !== 'language') assert.ok(under(moved), `${what}: scrolled to ${moved.y}, it stays under the bar, at ${moved.panel} under ${moved.bar}`);
+            else if (start === 0 || !name.startsWith('firefox')) assert.deepEqual(moved.globe, opened.globe, `${what}: scrolled to ${moved.y}, the list still hangs under the globe`);
+            await tab.keyboard.press('Escape');
+            await tab.evaluate(() => document.activeElement?.blur());
+          }
+        }
+      }
     } finally { await browser.close(); }
   }
 });
