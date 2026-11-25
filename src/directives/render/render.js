@@ -334,7 +334,10 @@ function section(attrs, blocks, ctx, { body } = {}) {
   const drawn = parts.media.length + parts.head.length;
   const rest = body === undefined ? renderBlocks(blocks.slice(drawn), band) : groupEyebrows(bodyFromSlot(body, blocks, drawn, band)).trim();
   if (rest !== '') out.push(tag('div', { class: 'kn-section-body kn-body-text' }, rest));
-  return tag('section', { class: 'kn-band kn-section', id: attrs.anchor || undefined, 'data-kn-surface': surface, 'data-kn-body': attrs.body === 'columns' ? 'columns' : undefined }, tag('div', { class: 'kn-band-content' }, out));
+  return tag('section', {
+    class: 'kn-band kn-section', id: attrs.anchor || undefined, 'data-kn-surface': surface,
+    'data-kn-body': attrs.body === 'columns' ? 'columns' : undefined, 'data-kn-align': attrs.align === 'center' ? 'center' : undefined,
+  }, tag('div', { class: 'kn-band-content' }, out));
 }
 
 // ---------- aside ----------
@@ -539,7 +542,7 @@ function tabs(attrs, blocks, ctx) {
     }));
 }
 
-function toc(attrs, blocks, ctx) {
+function toc(attrs, blocks, ctx, { loader = '' } = {}) {
   const { intro, items } = itemsOf(blocks);
   const id = ctx.id('toc');
   const label = intro.length ? intro[0] : null;
@@ -549,7 +552,8 @@ function toc(attrs, blocks, ctx) {
       tag('nav', { class: 'kn-toc', 'aria-labelledby': label ? id : undefined, 'aria-label': label ? undefined : ctx.words.contents, 'data-kn-type': 'small', 'data-kn-follow': '' },
         label ? tag('p', { class: 'kn-toc-label', id, 'data-kn-type': 'heading-6', ...markOf(label) }, isElement(label, 'p') ? inner(label) : escapeText(textOf(label))) : '',
         tag('ol', { role: 'list' }, items.filter((item) => item.heading.properties?.id !== undefined)
-          .map((item) => tag('li', {}, tag('a', { href: `#${item.heading.properties.id}` }, escapeText(textOf(item.heading).trim())))))))),
+          .map((item) => tag('li', {}, tag('a', { href: `#${item.heading.properties.id}` }, escapeText(textOf(item.heading).trim()))))),
+        loader))),
     tag('div', { class: 'kn-reading-area-flow' }, items.map((item) => outer(item.heading) + renderBlocks(item.blocks, ctx))));
 }
 
@@ -610,13 +614,14 @@ const RENDERERS = {
  * @param {object} attributes Its attributes, as the core hands its component them: typed, with their defaults.
  * @param {object | undefined} content Its body as the core's tree, a hast root; none for `breadcrumbs`.
  * @param {object} ctx The page's context (context.js).
- * @param {{ body?: string, block?: string }} [options] `body`: a section's slot, as the core drew it; `block`: the
- *   directive's mark in the live preview, which its root takes.
+ * @param {{ body?: string, block?: string, loader?: string }} [options] `body`: a section's slot, as the core drew it;
+ *   `block`: the directive's mark in the live preview, which its root takes; `loader`: for `toc`, the polyfill's loader
+ *   its following menu ends with, which only a component can give, having the polyfill's address (Toc.astro).
  * @returns {string} Its HTML.
  */
-export function renderDirective(name, attributes, content, ctx, { body, block } = {}) {
+export function renderDirective(name, attributes, content, ctx, { body, block, loader } = {}) {
   if (!Object.hasOwn(RENDERERS, name)) throw new Error(`@kntnt/konzilo-design draws no directive ${name}; it draws ${DIRECTIVES.join(', ')}.`);
   const nodes = content?.children ?? [];
   const children = name === 'eyebrow' || name === 'small' ? nodes : blocksOf(nodes);
-  return withMark(RENDERERS[name](attributes ?? {}, children, ctx, { body }), block);
+  return withMark(RENDERERS[name](attributes ?? {}, children, ctx, { body, loader }), block);
 }

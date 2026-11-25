@@ -49,6 +49,38 @@ test('a section in columns pairs one cards post list with a plain quotation, aft
   none('section', {}, [...head, posts, quote, p('An extra block.')]);
 });
 
+test('a centred section stacks its parts: align="center" is refused where the layout sets them side by side', () => {
+  const center = { align: 'center' };
+  const form = directive('form', { name: 'contact' });
+  const actions = directive('list', { type: 'actions' }, [list(item(strong(a('/plans/', 'See the plans'))))]);
+  const accordion = directive('accordion', {}, [h(3, 'A question'), p('An answer.')]);
+  const cards = directive('cards', {}, [h(3, 'Small'), p('For a balcony.'), h(3, 'Large'), p('For an acre.')]);
+  // Stacked sections centre: a form after words or actions (rule 3), a head alone, a head over a series, no head.
+  none('section', center, [h(2, 'Ready for the first bed?'), p('Tell us where you live.'), form, directive('small')]);
+  none('section', center, [directive('eyebrow'), h(2, 'Ready?'), actions, form]);
+  none('section', center, [h(2, 'Ready?'), directive('choice', {}, [h(3, 'Yes'), p('Good.'), h(3, 'No'), p('Fine.')])]);
+  none('section', center, [h(2, 'Everything in one shed'), p('The tools, the seeds and the soil.'), actions]);
+  none('section', center, [h(2, 'Plans'), p('Two sizes.'), cards]);
+  none('section', center, [h(2, 'Questions'), accordion, p('Ask us another.')]);
+  none('section', center, [h(2, 'Our story'), p('One.'), image('The first shed')]);
+  none('section', center, [p('Words.'), p('More words.')]);
+  none('section', center, [form]);
+  // Side by side: a picture first, a heading with a form right after it, a head with an accordion alone or with
+  // paragraphs alone, and a body in columns.
+  refused('section', center, [image('A shed'), h(2, 'A shed'), p('Words.')], /^A section that begins with a picture sets the picture beside its head and body, so it cannot be centred\. Leave out align="center", or write the picture after the heading\.$/);
+  refused('section', center, [image('A guide'), h(2, 'The guide'), form], /begins with a picture/);
+  refused('section', center, [directive('eyebrow'), h(2, 'Write to us'), form, directive('small')], /^A section with a form right after its heading sets the form beside the heading, so it cannot be centred\. Leave out align="center", or write a paragraph between the heading and the form\.$/);
+  refused('section', center, [h(2, 'Questions we hear'), p('And what we answer.'), actions, accordion], /^A section with a heading and an accordion alone sets the accordion beside the heading, so it cannot be centred\. Leave out align="center"\.$/);
+  refused('section', center, [h(2, 'Questions'), accordion], /accordion alone/);
+  refused('section', center, [h(2, 'Our story'), p('One.'), p('Two.')], /^A section with a heading and paragraphs alone sets the paragraphs beside the heading, so it cannot be centred\. Leave out align="center"\.$/);
+  refused('section', center, [h(2, 'Our story'), p('A deck.'), actions, p('One.'), directive('small')], /paragraphs alone/);
+  const quote = { type: 'quote', children: [p('We stop to see what has grown.')] };
+  refused('section', { ...center, body: 'columns' }, [h(2, 'A shared garden'), directive('post-list', { type: 'article', presentation: 'cards' }), quote], /^A section with its body in columns sets its two blocks side by side, so it cannot be centred\. Leave out align="center" or body="columns"\.$/);
+  // At the start edge, written or left out, every layout stands.
+  none('section', { align: 'start' }, [image('A shed'), h(2, 'A shed'), p('Words.')]);
+  none('section', {}, [h(2, 'Our story'), p('One.'), p('Two.')]);
+});
+
 test('an item cannot hold a post list, a form or a site\'s own component until the core can draw them there, but a picture and the package\'s own parts', () => {
   for (const [name, part] of [['cards', 'Cards'], ['accordion', 'An accordion'], ['tabs', 'Tabs'], ['toc', 'A table of contents'], ['choice', 'A choice'], ['aside', 'A fact box'], ['hero', 'An opening']]) {
     const blocks = [h(3, 'One'), directive('form', { name: 'contact' }), h(3, 'Two'), directive('post-list', { type: 'article' }), directive('timeline-of-our-own')];

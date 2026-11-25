@@ -1,9 +1,13 @@
 ---
 // The directive `toc` (docs/spec/directives.md): A table of contents with its following menu, drawn from its tree with the page's context. A Konzilo
-// site registers it by DESIGN_DIRECTIVES of @kntnt/konzilo-design/konzilo.
+// site registers it by DESIGN_DIRECTIVES of @kntnt/konzilo-design/konzilo. The menu ends with the loader of the polyfill
+// that marks the section being read where a browser lacks CSS scroll markers, which only a component can give, having
+// the polyfill's address.
 import { contextOf } from '../render/context.js';
 import { renderDirective } from '../render/render.js';
+import { followingMenuLoader } from '../../components/table-of-contents.js';
+import scrollMarkersPolyfill from '../../components/scroll-markers-polyfill.js?url&no-inline';
 
 const { content, 'data-konzilo-block': block, ...attributes } = Astro.props;
 ---
-<Fragment set:html={renderDirective('toc', attributes, content, contextOf(Astro), { block })} />
+<Fragment set:html={renderDirective('toc', attributes, content, contextOf(Astro), { block, loader: followingMenuLoader(scrollMarkersPolyfill) })} />
