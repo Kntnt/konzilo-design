@@ -61,6 +61,17 @@ test('each declaration has the shape the core reads a component in', () => {
   assert.equal(Object.hasOwn(components.hero.attributes.height, 'default'), false);
 });
 
+// A section's alignment (issue #32; directives.md, A centred section): `center`, or `start` where it is left out. The
+// core refuses any other value with the declaration's refusal, the value in it (konzilo-build.test.js runs the core's
+// own check where the core is at hand); here the declaration itself, so the suite holds it without the core.
+test('a section takes align start or center, start where it is left out, and refuses any other value by name', () => {
+  const { align } = components.section.attributes;
+  assert.equal(align.type, 'string');
+  assert.deepEqual(align.values, ['start', 'center']);
+  assert.equal(align.default, 'start');
+  assert.equal(align.refusal.replaceAll('{value}', 'middle'), 'A section\'s alignment is start or center, and start where this is left out, not middle.');
+});
+
 test('only the list is named as an element of the core\'s, so its element is list-directive', () => {
   const elements = Object.keys(components).map((name) => (CORE_ELEMENTS.includes(name) ? `${name}-directive` : name));
   assert.deepEqual(elements, ['hero', 'section', 'aside', 'list-directive', 'cards', 'accordion', 'tabs', 'toc', 'choice', 'eyebrow', 'small', 'breadcrumbs']);
