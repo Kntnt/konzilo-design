@@ -320,7 +320,7 @@
   "specimen.table-more": "Table on a brand background",
   "header.try": "Try it: open the menu and the search in the example below.",
   "header.veil": "The menu and the search box veil the page alike: it shows through both, just as faintly.",
-  "header.veil-search": "The search box veils the page, which shows through it faintly. The menu covers the page.",
+  "header.veil-search": "The search box always veils the page, which shows through it faintly, though the header does not. The menu covers the page.",
   "specimen.space-section": "A section",
   "type.tuning-sample": "Get a clear answer",
   "type.slider-min": "Narrowest: {value} px",
