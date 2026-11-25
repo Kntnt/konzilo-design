@@ -51,6 +51,23 @@
             "$ref": "#/$defs/menu-item"
           }
         },
+        "cta": {
+          "type": "object",
+          "description": "The client's own call to action, the button the header ends with where the design has one (inputs.header.cta), which the tool's preview and the presentation show in place of the sample's, Contact: its words and where it leads, each left out keeping the sample's. Not design: no input, fingerprint, CSS or site reads it.",
+          "properties": {
+            "label": {
+              "type": "string",
+              "minLength": 1,
+              "description": "The button's words, such as Book a visit."
+            },
+            "href": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Where the button leads, such as /contact or a full address. Left out, a fragment named for its words, as the menu's links have."
+            }
+          },
+          "additionalProperties": false
+        },
         "footer": {
           "type": "object",
           "description": "The client's own words in the footer's cells, each in place of the sample's where the tool's preview and the presentation show the footer; a cell left out keeps the sample's. The upper band's A1 is the brand, which the identity gives. Not design: no input, fingerprint, CSS or site reads it.",

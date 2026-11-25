@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- A design file holds the client's own call to action, the button the header ends with: `project.cta`, its words in `label` and where it leads in `href`, each optional. The tool's preview and the presentation show it in place of the sample's, `Contact` to `#contact`, in the bar and in the large menu, wherever the design's header has a CTA button. Words without an address lead to a fragment named for them, as the menu's links do, and an address alone keeps the sample's words. Like the menu and footer words, it is not design: no input, fingerprint, CSS or site reads it. This builds issue #8.
+- The tool's Start page has a **Call to action** section between the menu and the footer, with a field for the words and one for the address. Each shows the sample's in grey, and its head says whether the client's or the sample's show, or that the header shows none while the Header page has the CTA button off. The preview now follows no link but a fragment, as the presentation's reader already did, so the client's address never takes the preview away from the sample page.
+- Nothing changes for an existing design: a file without `project.cta` shows the sample's button, as before.
+
 ## [0.15.0] – 2026-11-25
 
 ### Added
