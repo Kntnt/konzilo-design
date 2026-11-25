@@ -120,6 +120,13 @@ of entries, each with a `label`, an optional `description` and `items` under it,
 `footer` the words of the footer's cells, a cell left out keeping the sample's. The schema
 holds their shape. They are not design: no input, fingerprint, CSS or site reads them.
 
+Optional `project.cta` is the client's own call to action, the button the header ends with
+where `inputs.header.cta` is on, which the tool's preview and the presentation show in place
+of the sample's, `Contact`: `label`, its words, and `href`, where it leads, each a non-empty
+string and each optional. Words without an address lead to a fragment named for them, as the
+menu's do, and an address alone keeps the sample's words. Like the menu and the footer, it is
+not design: no input, fingerprint, CSS or site reads it.
+
 ## Algorithms and storage
 
 ### Colour and ramps

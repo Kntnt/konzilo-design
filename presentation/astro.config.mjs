@@ -1,9 +1,16 @@
 import { defineConfig } from 'astro/config';
-import { resolve } from 'node:path';
+// `tool/build.js` builds with the root in a folder of its own outside the checkout, which links the checkout's
+// entries. The pages are reached through the links, kept as written, and both caches stay in the folder, never in
+// the packages its `node_modules` leads to; all go when the folder does.
 export default defineConfig({
   output: 'static',
-  outDir: resolve(process.env.KN_OUTPUT || 'presentation/dist'),
-  cacheDir: '../node_modules/.cache/konzilo-astro',
+  srcDir: './presentation/src',
+  outDir: process.env.KN_OUTPUT,
+  cacheDir: './cache/astro',
   build: { inlineStylesheets: 'always' },
-  vite: { build: { assetsInlineLimit: Number.MAX_SAFE_INTEGER } },
+  vite: {
+    cacheDir: './cache/vite',
+    resolve: { preserveSymlinks: true },
+    build: { assetsInlineLimit: Number.MAX_SAFE_INTEGER },
+  },
 });

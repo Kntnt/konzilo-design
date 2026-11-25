@@ -9,12 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- A design file holds the client's own call to action, the button the header ends with: `project.cta`, its words in `label` and where it leads in `href`, each optional. The tool's preview and the presentation show it in place of the sample's, `Contact` to `#contact`, in the bar and in the large menu, wherever the design's header has a CTA button. Words without an address lead to a fragment named for them, as the menu's links do, and an address alone keeps the sample's words. Like the menu and footer words, it is not design: no input, fingerprint, CSS or site reads it. This builds issue #8.
+- The tool's Start page has a **Call to action** section between the menu and the footer, with a field for the words and one for the address. Each shows the sample's in grey, and its head says whether the client's or the sample's show, or that the header shows none while the Header page has the CTA button off. The preview now follows no link but a fragment, as the presentation's reader already did, so the client's address never takes the preview away from the sample page.
+- Nothing changes for an existing design: a file without `project.cta` shows the sample's button, as before.
 - A page's opening chooses its own height. The `hero` directive takes `height`: `third`, `half`, `two-thirds` or `full`, each the same share of the screen as the design's height of that value, under a covering header or a sticky one the page starts under, and written as the same `data-kn-height`. Left out, the opening takes the design's height. Any other value is refused when the post is checked: "An opening's height is third, half, two-thirds or full, its share of the screen, not tall. Leave it out for the design's own." An opening with its picture behind takes its height the same way; the overlay keeps the least strength at which the text passes its check (directives.md, `hero`; issue #31).
 - DESIGN.md says that a page may give its hero another of the four heights, the presentation's Opening a page says the design's height and that a page may choose another, and the gallery shows an opening a third of the screen high beside one of two thirds.
 
 ### Changed
 
+- A table in a fact box, a tab, a choice's panel or a table of contents' flow stands off the paragraphs round it as in body text, bare or in the wrapper the Konzilo core is asked to write, `<div class="konzilo-table">`, and wherever the part stands, in an answer or another part too: one and a half times its own size above and below it, 1.40625rem at the default type sizes. It had no space of its own there, so the paragraph after it started at its last line and the one before it stood a paragraph's 1em above it. A table first or last in a fact box, a tab or a choice's panel still stands at the part's edge, and in a card the card's gap still stands round it (the assistant's choice, 2026-11-25; components.md, Tables). This builds issue #19.
 - **A new design's opening takes half of the screen**, where it took two thirds (the owner, 2026-11-25). So does a design file whose `inputs.hero` has no `height`, once it is resolved or saved again: the example design and a file written by hand may lack the key, while one saved by the tool has it and keeps its height. A file keeps the height it was resolved with until then, since a site reads `resolved.hero`. To keep two thirds, set `inputs.hero.height` to `two-thirds`.
+
+### Fixed
+
+- `design-presentation`, and the tool's Create presentation, build the Presentation in a folder of their own for each run, in the system's temporary folder, and remove it afterwards, so they only read the checkout. They built inside it, in `node_modules/.cache/konzilo-presentation`, with Astro's cache in `node_modules/.cache/konzilo-astro` and its `.astro/` in `presentation/`. So two presentations made at once, from two shells, shared those folders, and a checkout that could not be written to made none. No cache is kept between runs: it made a second build no faster (tool/README.md). This fixes issue #10.
 
 ## [0.15.0] – 2026-11-25
 
