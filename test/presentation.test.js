@@ -180,10 +180,12 @@ test('offline ZIP reader works from file URLs for normal, primary-only and stres
         model.inputs['brand-colors'].secondary = '#7a3e9d';
         model.inputs.shadow.strength = 50;
       }
-      // Other widths than the example's, which the Page page's sketch must follow, and an opening of a design that sets its height.
+      // Other widths than the example's, which the Page page's sketch must follow, an opening of a design that sets its
+      // height, and a translucent header.
       if (fixture === 'primary-only') {
         model.inputs.layout = { wide: 1040, narrow: 640 };
         model.inputs.hero = { height: 'full' };
+        model.inputs.header = { translucent: true };
       }
       // Three colours that keep accent and focus in the primary.
       if (fixture === 'stress') model.inputs['accent-color'] = 'primary';
@@ -204,6 +206,9 @@ test('offline ZIP reader works from file URLs for normal, primary-only and stres
       // The opening says the design's height, half where the file sets none, and that a page may choose its own.
       const height = `opening.height.${fixture === 'primary-only' ? 'full' : 'half'}`;
       assert.ok(copy[height] && html.includes(copy[height]), `${fixture}: ${height}`);
+      // The header page says that the search box veils the page as a translucent menu does, translucent header or not.
+      const [veil, other] = fixture === 'primary-only' ? ['header.veil', 'header.veil-search'] : ['header.veil-search', 'header.veil'];
+      assert.ok(copy[veil] && html.includes(copy[veil]) && !html.includes(copy[other]), `${fixture}: ${veil}`);
       assert.equal((html.match(/data:font\/woff2;base64/g) || []).length, shippedIn(derive(model.inputs).typefaces).flatMap((face) => [face.upright, face.italic].filter(Boolean)).length);
       try {
         await exec('unzip', ['-t', zip]);

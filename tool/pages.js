@@ -506,7 +506,7 @@ function headerPage(copy) {
       </div>
       ${flags([
         ['header.autohide', 'Slides away', `Slides out of the window when you scroll down, and back when you scroll up. ${onlySticky}`],
-        ['header.translucent', 'Translucent', 'The bar and the large menu let a hint of the page under them show through, blurred, as far as their text keeps its contrast over any page. A header that starts transparent stays clear at the top.'],
+        ['header.translucent', 'Translucent', 'The bar and the large menu let a hint of the page under them show through, blurred, as far as their text keeps its contrast over any page, as the search box does either way. A header that starts transparent stays clear at the top.'],
       ])}`)}
     ${setting('Identity', `<div class="fields">
         ${choice('Brand', 'inputs.header.identity', [['logo', 'Logo'], ['name', 'Name'], ['both', 'Logo and name']], 'What the brand is, in the header and the footer alike. Without a logo the name is used whatever you choose.')}

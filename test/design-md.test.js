@@ -117,6 +117,18 @@ test('DESIGN.md describes every header arrangement, the chosen one, and the orde
   assert.match(exported(translucent).body, /It is translucent: where its bar is not clear, the bar shows its Surface's background at an opacity of 88% in light mode and 85% in dark mode/);
 });
 
+test('DESIGN.md gives the search box a translucent megamenu\'s veil, translucent header or not: the page\'s translucent background over the page blurred by 1rem', () => {
+  for (const translucent of [false, true]) {
+    const inputs = defaultInputs();
+    inputs.header.translucent = translucent;
+    const { body } = exported(inputs);
+    const search = body.match(/^\*\*Search box\.\*\* .*$/m)[0];
+    assert.match(search, /covered by the `page` background at 88% opacity in light mode and 85% in dark mode, whether or not the header is translucent, over the page blurred by 1rem when the design says so/);
+    assert.doesNotMatch(search, /62%|0\.75rem \(|blurred by 0\.75rem/, 'no fade or blur of its own');
+    assert.match(body.match(/^\*\*A hint of the page\*\* .*$/m)[0], /the search box's veil too/);
+  }
+});
+
 test('DESIGN.md maps each shadow to its use, with its dark-mode value and the Surfaces that keep the dark one', () => {
   const [flat, soft, hard] = DESIGNS.map((inputs) => exported(inputs));
   assert.match(flat.body, /This design has no shadows/);

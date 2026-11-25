@@ -11,6 +11,8 @@ const variants = entry?.[3] || [];
 
 ---
 {page?.id === 'header' && <p class="prose">{t('header.try')}</p>}
+{/* The search box veils the page as a translucent menu does, whether or not the header is translucent (the owner, 2026-11-25, issue #26). */}
+{page?.id === 'header' && <p class="prose">{t(resolved.header.translucent ? 'header.veil' : 'header.veil-search')}</p>}
 {page?.id === 'breadcrumbs' && <p class="prose">{t(hidden ? 'breadcrumbs.off' : 'breadcrumbs.place')}</p>}
 {/* The design's height is every opening's, and a page may choose another of the four (directives.md, hero, 2026-11-25). */}
 {page?.id === 'opening' && <p class="prose">{t(`opening.height.${resolved.hero.height}`)}</p>}
