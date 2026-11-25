@@ -28,7 +28,10 @@
   /* Nothing hidden behind a sticky header: the scroll padding is its height. */
   :root:has(.kn-page > .kn-header[data-kn-attachment="sticky"]) { scroll-padding-block-start: var(--kn-header-height); --kn-header-visible-height: var(--kn-header-height); }
 
+  /* The veil the header lays over the page, the search box's and a translucent bar's and panels' alike: their Surface's
+     `--kn-background-translucent` over the page blurred by this one value (the owner, 2026-11-23 and 2026-11-25). */
   .kn-header {
+    --kn-header-veil-blur: 1rem;
     --kn-header-identity-scale: 1;
     --kn-header-menu-columns: 4;
     --kn-header-under: 0;
@@ -343,10 +346,12 @@
   /* Everything behind the box fades, and is blurred where the design says so, the header bar and the footer with the
      rest (the owner, 2026-11-11): the dialog's backdrop blurs the whole window, and a layer fixed to the window, which
      a click passes through, fades it. Both come in with a fade while the box slides down, since a dialog that moved
-     would hold the fixed layer within itself. */
-  .kn-header-search-overlay::backdrop { backdrop-filter: blur(0.75rem); }
+     would hold the fixed layer within itself. The fade and the blur are a translucent megamenu's, the header's veil, and
+     the fade is translucent whether or not the header is (the owner, 2026-11-23 and 2026-11-25, issue #26): the page's
+     background at the least opacity at which every role holds over any page, where it was at a fixed opacity of its own. */
+  .kn-header-search-overlay::backdrop { backdrop-filter: blur(var(--kn-header-veil-blur)); }
   .kn-header-search-overlay[data-kn-blur="false"]::backdrop { backdrop-filter: none; }
-  .kn-header-search-overlay::before { content: ""; position: fixed; inset: 0; background: var(--kn-background); opacity: 0.62; z-index: -1; pointer-events: none; }
+  .kn-header-search-overlay::before { content: ""; position: fixed; inset: 0; background: var(--kn-background-translucent); z-index: -1; pointer-events: none; }
   .kn-header-search-overlay[open], .kn-header-search-overlay[open]::backdrop { animation: kn-header-fade-in var(--kn-duration-feedback) var(--kn-easing-standard); }
   .kn-header-search-overlay[open] > .kn-header-search-box { animation: kn-header-slide-in var(--kn-duration-feedback) var(--kn-easing-standard); }
   @keyframes kn-header-fade-in { from { opacity: 0; } }
@@ -375,12 +380,12 @@
      With the design's `translucent` (the owner, 2026-11-12), the bar, where it is opaque, and the panels that hang from
      it, the megamenu and the language list, show the page under them as a hint: their Surface's background at the least
      opacity at which every role on it holds over any page, from black to white, and never under 85% (generator.md,
-     Surfaces), over the page blurred by 1rem, so what lies under it is sensed rather than read. Clear over the page's
-     start, the bar stays clear. */
+     Surfaces), over the page blurred by the header's veil, 1rem, so what lies under it is sensed rather than read: the
+     search box's veil (issue #26). Clear over the page's start, the bar stays clear. */
   @container not style(--kn-header-clear: 1) {
-    .kn-header[data-kn-translucent="true"] > .kn-header-bar { background: var(--kn-background-translucent); backdrop-filter: blur(1rem); }
+    .kn-header[data-kn-translucent="true"] > .kn-header-bar { background: var(--kn-background-translucent); backdrop-filter: blur(var(--kn-header-veil-blur)); }
   }
-  .kn-header[data-kn-translucent="true"] :is(.kn-megamenu:modal, .kn-header-language-list:popover-open) { background: var(--kn-background-translucent); backdrop-filter: blur(1rem); }
+  .kn-header[data-kn-translucent="true"] :is(.kn-megamenu:modal, .kn-header-language-list:popover-open) { background: var(--kn-background-translucent); backdrop-filter: blur(var(--kn-header-veil-blur)); }
   @media (prefers-reduced-motion: reduce) {
     .kn-header, .kn-header *, .kn-header-search-overlay::backdrop { transition: none; animation: none; }
   }

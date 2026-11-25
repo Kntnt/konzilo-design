@@ -251,5 +251,7 @@ test('a design says how its hero opens a page', () => {
   // Where DESIGN.md says what a hero's height is, it says that a page's hero may choose its own of the four.
   assert.match(words({}), /taller content makes it taller\. The share is the design's, half of the screen, unless the page gives its hero another of the four: a third, half, two thirds or all of it\./);
   assert.match(words({ height: 'full' }), /The share is the design's, all of the screen, unless/);
+  // Beside it, what the share is of, by the one name a frame sets from outside the page (issue #21).
+  assert.match(words({}), /two thirds or all of it\. Take the share of a custom property, `--kn-hero-screen`, with that screen as its fallback: a page leaves it unset, and a frame that shows the page in a box of another height, such as a preview at a phone's size, sets it to what the header leaves of the box, or all of it, so the hero takes its share of the box, not of the window\. It is the one name of the design system's that this file gives, since a frame sets it from outside the page\./);
   assert.match(words({ h1: 'below', type: 'display' }), /its heading in the display style\. The page's H1 stands under the hero: first in the next section, with the trail directly above it, in the first heading style\. The hero's text keeps its look as a plain paragraph/);
 });

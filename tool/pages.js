@@ -506,7 +506,7 @@ function headerPage(copy) {
       </div>
       ${flags([
         ['header.autohide', 'Slides away', `Slides out of the window when you scroll down, and back when you scroll up. ${onlySticky}`],
-        ['header.translucent', 'Translucent', 'The bar and the large menu let a hint of the page under them show through, blurred, as far as their text keeps its contrast over any page. A header that starts transparent stays clear at the top.'],
+        ['header.translucent', 'Translucent', 'The bar and the large menu let a hint of the page under them show through, blurred, as far as their text keeps its contrast over any page, as the search box does either way. A header that starts transparent stays clear at the top.'],
       ])}`)}
     ${setting('Identity', `<div class="fields">
         ${choice('Brand', 'inputs.header.identity', [['logo', 'Logo'], ['name', 'Name'], ['both', 'Logo and name']], 'What the brand is, in the header and the footer alike. Without a logo the name is used whatever you choose.')}
@@ -628,7 +628,7 @@ const HERO_PICTURES = [
 const HERO_PLACES = [
   ['top', 'Top', 'The text at the top. Over a picture behind it, the overlay is strongest at the top and fades away below the text.'],
   ['center', 'Middle', 'The text in the middle. Over a picture behind it, the overlay covers all of the picture.', 'middle'],
-  ['bottom', 'Bottom', 'The text at the bottom. Over a picture behind it, the overlay fades in above the text and is at full strength where the text begins.'],
+  ['bottom', 'Bottom', 'The text at the bottom. Over a picture behind it, the overlay fades in above the heading and is at full strength from the heading down, so the trail and the eyebrow stand in the fade.'],
 ];
 const HERO_ALIGNS = [
   ['start', 'Left', 'The text at the left of the content width. A picture at the side already gives the text its half.', 'align-start'],

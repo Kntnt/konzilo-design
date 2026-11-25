@@ -21,6 +21,7 @@ import { surfaceOf } from '../surfaces.js';
 import { RANK_KINDS } from '../../generator/surface.js';
 import { breadcrumbProps } from '../../components/design-props.js';
 import { heroAttributes } from '../../components/hero-attributes.js';
+import { pictureImage } from '../../components/picture-image.js';
 import {
   BLOCK, attributesFrom, attributesOf, blocksOf, directiveOf, escapeAttribute, escapeText, inner, isElement, isHeading,
   levelOf, markOf, outer, tag, textOf, voidTag, walk,
@@ -225,8 +226,9 @@ function hero(attrs, blocks, ctx) {
     class: 'kn-band kn-hero',
     'data-kn-surface': surface === 'page' ? undefined : surface,
     ...heroAttributes({ side, height: HERO_HEIGHTS.includes(attrs.height) ? attrs.height : settings.height, place: settings.place, align: settings.align }),
-    // A picture behind is the band's, as Band writes it: the one inline style of a directive (directives.md).
-    style: behind ? `--kn-picture-image:url(${JSON.stringify(String(source))})` : undefined,
+    // A picture behind is the band's, as Band writes it: the one inline style of a directive (directives.md). A relative
+    // address stops the build, as Band's does, since the core hands one from the site's root (picture-image.js).
+    style: behind ? `--kn-picture-image:${pictureImage(source)}` : undefined,
   }, tag('div', { class: 'kn-band-content kn-hero-content' },
     tag('div', { class: 'kn-hero-text' },
       // Where the H1 stands under the hero, the trail stands before it there, which PageBody writes.

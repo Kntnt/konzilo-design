@@ -181,10 +181,12 @@ test('offline ZIP reader works from file URLs for normal, primary-only and stres
         model.inputs['brand-colors'].secondary = '#7a3e9d';
         model.inputs.shadow.strength = 50;
       }
-      // Other widths than the example's, which the Page page's sketch must follow, and an opening of a design that sets its height.
+      // Other widths than the example's, which the Page page's sketch must follow, an opening of a design that sets its
+      // height, and a translucent header.
       if (fixture === 'primary-only') {
         model.inputs.layout = { wide: 1040, narrow: 640 };
         model.inputs.hero = { height: 'full' };
+        model.inputs.header = { translucent: true };
       }
       // Three colours that keep accent and focus in the primary, bands on one background parted by a hairline, and
       // sections whose pictures meet corner to corner out to the window's edge.
@@ -214,6 +216,9 @@ test('offline ZIP reader works from file URLs for normal, primary-only and stres
       const [bands, other] = fixture === 'stress' ? ['page.bands-parted', 'page.bands-shared'] : ['page.bands-shared', 'page.bands-parted'];
       const opening = (key) => copy[key].split(/['{]/)[0];
       assert.ok(html.includes(opening(bands)) && !html.includes(opening(other)), `${fixture}: ${bands}`);
+      // The header page says that the search box veils the page as a translucent menu does, translucent header or not.
+      const [veil, otherVeil] = fixture === 'primary-only' ? ['header.veil', 'header.veil-search'] : ['header.veil-search', 'header.veil'];
+      assert.ok(copy[veil] && html.includes(copy[veil]) && !html.includes(copy[otherVeil]), `${fixture}: ${veil}`);
       assert.equal((html.match(/data:font\/woff2;base64/g) || []).length, shippedIn(derive(model.inputs).typefaces).flatMap((face) => [face.upright, face.italic].filter(Boolean)).length);
       try {
         await exec('unzip', ['-t', zip]);

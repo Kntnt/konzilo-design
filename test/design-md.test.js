@@ -29,7 +29,10 @@ const rem = (px) => `${Number((px / 16).toFixed(4))}rem`;
 test('DESIGN.md names no stylesheet of the library\'s as if it came with the file', () => {
   for (const inputs of DESIGNS) {
     const { text } = exported(inputs);
-    assert.doesNotMatch(text, /--kn-|data-kn-|\bkn-[a-z]/, 'an agent has no stylesheet that defines these');
+    // But one: what a Hero's height is a share of, which a frame sets from outside the page and the agent's own CSS
+    // reads with the window as its fallback, so no stylesheet need define it (tool.md, point 4; issue #21).
+    assert.equal(text.split('`--kn-hero-screen`').length, 2, 'the Hero recipe names it once');
+    assert.doesNotMatch(text.replace('`--kn-hero-screen`', ''), /--kn-|data-kn-|\bkn-[a-z]/, 'an agent has no stylesheet that defines these');
     assert.doesNotMatch(text, /undefined|NaN|\[object|\bno an?\b/);
     assert.match(text, /No stylesheet, script, picture or font comes with it/);
   }
@@ -78,7 +81,7 @@ test('DESIGN.md gives every Surface in both modes, with the picture Surfaces\' o
     const { color, opacity } = r.surfaces['picture-dark'].light.scrim;
     assert.match(front, new RegExp(`^  picture-dark-scrim: "rgb\\([\\d ]+ / ${opacity}\\)"$`, 'm'));
     assert.ok(body.includes(`${color} at ${opacity} opacity`), 'the hero\'s overlay, in colour and strength');
-    assert.ok(body.includes('`clamp(6rem, 24svh, 16rem)`'), 'how far the overlay fades');
+    assert.ok(body.includes('`clamp(8rem, 36svh, 32rem)`'), 'how far the overlay fades');
   }
 });
 
@@ -115,6 +118,18 @@ test('DESIGN.md describes every header arrangement, the chosen one, and the orde
   const translucent = defaultInputs();
   translucent.header.translucent = true;
   assert.match(exported(translucent).body, /It is translucent: where its bar is not clear, the bar shows its Surface's background at an opacity of 88% in light mode and 85% in dark mode/);
+});
+
+test('DESIGN.md gives the search box a translucent megamenu\'s veil, translucent header or not: the page\'s translucent background over the page blurred by 1rem', () => {
+  for (const translucent of [false, true]) {
+    const inputs = defaultInputs();
+    inputs.header.translucent = translucent;
+    const { body } = exported(inputs);
+    const search = body.match(/^\*\*Search box\.\*\* .*$/m)[0];
+    assert.match(search, /covered by the `page` background at 88% opacity in light mode and 85% in dark mode, whether or not the header is translucent, over the page blurred by 1rem when the design says so/);
+    assert.doesNotMatch(search, /62%|0\.75rem \(|blurred by 0\.75rem/, 'no fade or blur of its own');
+    assert.match(body.match(/^\*\*A hint of the page\*\* .*$/m)[0], /the search box's veil too/);
+  }
 });
 
 test('DESIGN.md maps each shadow to its use, with its dark-mode value and the Surfaces that keep the dark one', () => {
@@ -229,8 +244,10 @@ test('DESIGN.md gives the status colours of every Surface, and says the componen
 
 test('DESIGN.md writes the overlay\'s fade and ceiling one way only, and the page, footer and trail exactly', () => {
   const { body } = exported(DESIGNS[0]);
-  assert.match(body, /going up from the text's top edge it has 84% of its strength a quarter of the way, 50% halfway, 16% at three quarters and nothing at the end/);
-  assert.match(body, /wherever text stands the layer has exactly that strength, and nowhere is it stronger/);
+  assert.match(body, /full strength from the hero's bottom edge up to the top edge of the main heading, or of the text block in a hero without one/);
+  assert.match(body, /going up from the heading's top edge it has 84% of its strength a quarter of the way, 50% halfway, 16% at three quarters and nothing at the end/);
+  assert.match(body, /The trail and the eyebrow above the heading stand in the fade, so their contrast over a bright picture is not checked; the checks hold from the heading down/);
+  assert.match(body, /wherever checked text stands the layer has exactly that strength, and nowhere is it stronger/);
   assert.doesNotMatch(body, /darker than that/);
   assert.match(body, /Header, page and footer together fill at least the window's height/);
   assert.match(body, /\*\*Where page and footer meet\.\*\*[^\n]*under either attachment[^\n]*the same as the footer's first band/);

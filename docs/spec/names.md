@@ -467,6 +467,7 @@ The class grammar and selectors are shared by Astro and the plain HTML export.
 | `--kn-header-scrolled-at`, `--kn-header-past-at`, `--kn-header-beyond-at` | Where each flag turns: 0.0625rem, 1.5rem (T) and the header's height. Registered lengths, which the polyfill reads in pixels. |
 | `--kn-header-clear` | 1 on a Page whose header is clear, transparent with the first band's Surface roles; the generated core reads it (2026-11-10). |
 | `--kn-header-under`, `--kn-header-same` | On the header: content lies under it, and the first band has its colour; with no shadow, either draws its hairline. |
+| `--kn-header-veil-blur` | The one blur of the header's veil, 1rem, set on the header: the search box's `::backdrop` and a translucent bar, megamenu and language list read it, so they blur the page alike (header.md, One veil; issue #26, 2026-11-25, the name the assistant's choice). |
 | `--kn-header-gone-slogan` … `--kn-header-gone-search` | On the header, 1 where its giving-way step is taken, by `data-kn-step`, or with no step written. |
 | `--kn-header-logo-height` | The design's `header.logo-height` in rem, which the generated core writes on the root (2026-11-23): the logo's height in a brand, the header's and the footer's, before the identity's scale, and the logo's term of the bar's height. `brand.css` and `header.css` read it with 2.25rem as their fallback, so a file resolved before it existed renders as before. |
 | `--kn-header-logo`, `--kn-header-name`, `--kn-header-slogan`, `--kn-header-slogan-gap`, `--kn-header-brand`, `--kn-header-identity`, `--kn-header-cap` | Local terms of the bar's height: each part's box, a line of words counting as `--kn-header-cap`, 0.66, of its size. |
@@ -478,9 +479,11 @@ The class grammar and selectors are shared by Astro and the plain HTML export.
 | `--kn-footer-inner`, `--kn-footer-side` | Local grid relations for the shared content rail and its margins. |
 | `--kn-footer-separator` | Local width of the footer link list’s bullet strip, in em. |
 | `--kn-reading-sticky-inset` | Existing Reading Area inset, now the visible sticky header height plus component gap. |
-| `--kn-hero-screen`, `--kn-hero-height` | What a Hero's height is a share of, and the share chosen by `data-kn-height`. |
+| `--kn-hero-screen`, `--kn-hero-height` | What a Hero's height is a share of, which a frame may set and DESIGN.md names (2026-11-25, issue #21), and the share chosen by `data-kn-height`. |
 | `--kn-scrim` | A picture Surface's scrim as one colour at its checked opacity, for a layer that masks say where to show. |
 | `--kn-scrim-fade`, `--kn-scrim-fade-length` | That layer's mask where text stands on part of the picture, from clear to whole over the length. |
+| `--kn-hero-window` | The window's height, which a picture Hero's fade length is a share of: `100svh`, or in the presentation the screen a sample stands for (the assistant's choice, 2026-11-25). |
+| `--kn-hero-heading` | Not a custom property but an anchor name: a picture Hero's main heading where its text stands at the bottom, which places the top of the layer's full strength (the assistant's choice, 2026-11-25, issue #28). |
 | `--kn-scrim-header` | That layer's mask behind a transparent header, whole over the header's height and then clearing. |
 | `--kn-scrim-fade-direction` | Which way that mask runs: `to bottom` (default) with the text at the bottom, `to top` with the text at the top. |
 
