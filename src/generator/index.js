@@ -52,6 +52,7 @@ export function derive(inputs) {
     breadcrumbs: settings.breadcrumbs,
     hero: settings.hero,
     tabs: settings.tabs,
+    section: settings.section,
     layout: {
       wide: settings.layout.wide,
       'side-margin': endpoints(16, 48),

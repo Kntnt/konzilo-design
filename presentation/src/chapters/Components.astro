@@ -14,6 +14,8 @@ const variants = entry?.[3] || [];
 {page?.id === 'breadcrumbs' && <p class="prose">{t(hidden ? 'breadcrumbs.off' : 'breadcrumbs.place')}</p>}
 {/* The design's height is every opening's, and a page may choose another of the four (directives.md, hero, 2026-11-25). */}
 {page?.id === 'opening' && <p class="prose">{t(`opening.height.${resolved.hero.height}`)}</p>}
+{/* Where every section's picture stands is the design's (directives.md, section, The side of the picture; 2026-11-25). */}
+{page?.id === 'sections' && <p class="prose">{t(`sections.picture-side.${resolved.section?.['picture-side'] ?? 'start'}`)}</p>}
 {defaults.map((id) => <Specimen id={id} />)}
 {/* The variants follow the main specimen, each shown at once: a variant behind a disclosure is easily missed (owner, 2026-11-11). */}
 {variants.map((id) => <Specimen id={id} />)}

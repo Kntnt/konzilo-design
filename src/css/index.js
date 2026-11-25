@@ -81,6 +81,9 @@ export function coreCss(r) {
   // Whether a hairline parts two bands on one background, which band.css reads by a style query: a site writes its
   // bands' HTML, so the design's choice reaches it here, and a file resolved before the choice existed has none.
   put('page-band-line', r.page?.['band-line'] === true);
+  // Where a section's picture beside its text stands, which section.css reads by a style query: a site writes its
+  // sections' HTML, so the design's choice reaches it here, and a file resolved before the choice existed has it at the start.
+  put('section-picture-side', r.section?.['picture-side'] ?? 'start');
   // The logo's height in the header and the footer's brand, which brand.css and header.css read; a file resolved before
   // the setting existed has the height every logo had then.
   put('header-logo-height', rem(r.header?.['logo-height'] ?? 36));

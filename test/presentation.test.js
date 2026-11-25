@@ -143,6 +143,7 @@ test('copy has no unused keys and all values are strings', async () => {
     ...['primary', 'secondary', 'tertiary', 'gray'].map((name) => `colour.${name}`),
     ...['primary', 'secondary', 'tertiary'].map((name) => `colour.${name}.job`),
     ...['third', 'half', 'two-thirds', 'full'].map((name) => `opening.height.${name}`),
+    ...['start', 'alternate', 'corners', 'corners-bleed'].map((name) => `sections.picture-side.${name}`),
     ...['display', 'heading-1', 'heading-2', 'heading-3', 'heading-4', 'heading-5', 'heading-6', 'lead', 'body', 'small', 'label', 'before', 'after'].map((name) => `type.${name}`),
     ...['main', 'heading', 'heading-1', 'display', 'label', 'monospace'].map((name) => `role.${name}`),
     ...[100, 200, 300, 400, 500, 600, 700, 800, 900].map((name) => `weight.${name}`),
@@ -185,8 +186,9 @@ test('offline ZIP reader works from file URLs for normal, primary-only and stres
         model.inputs.layout = { wide: 1040, narrow: 640 };
         model.inputs.hero = { height: 'full' };
       }
-      // Three colours that keep accent and focus in the primary, and bands on one background parted by a hairline.
-      if (fixture === 'stress') Object.assign(model.inputs, { 'accent-color': 'primary', page: { 'band-line': true } });
+      // Three colours that keep accent and focus in the primary, bands on one background parted by a hairline, and
+      // sections whose pictures meet corner to corner out to the window's edge.
+      if (fixture === 'stress') Object.assign(model.inputs, { 'accent-color': 'primary', page: { 'band-line': true }, section: { 'picture-side': 'corners-bleed' } });
       model.project.introduction = 'A short introduction.\n\nA second paragraph with <literal> text.';
       model.project.contact = { name: 'Design owner', email: 'review@example.invalid' };
       model.project.explanations = Object.fromEntries(['colour', 'typefaces', 'type-scale', 'space-shape', 'shadow', 'components'].map((key) => [key, 'A choice made for clear information.\n\nA second reason.']));
@@ -204,6 +206,10 @@ test('offline ZIP reader works from file URLs for normal, primary-only and stres
       // The opening says the design's height, half where the file sets none, and that a page may choose its own.
       const height = `opening.height.${fixture === 'primary-only' ? 'full' : 'half'}`;
       assert.ok(copy[height] && html.includes(copy[height]), `${fixture}: ${height}`);
+      // The Sections page says where this design puts a section's picture, at the start where the file sets nothing.
+      const side = `sections.picture-side.${fixture === 'stress' ? 'corners-bleed' : 'start'}`;
+      const words = (key) => copy[key].split("'").at(-1);
+      assert.ok(html.includes(words(side)) && !html.includes(words(fixture === 'stress' ? 'sections.picture-side.start' : 'sections.picture-side.corners-bleed')), `${fixture}: ${side}`);
       // The Page page says how two bands on one background meet in this design (page.md, point 3).
       const [bands, other] = fixture === 'stress' ? ['page.bands-parted', 'page.bands-shared'] : ['page.bands-shared', 'page.bands-parted'];
       const opening = (key) => copy[key].split(/['{]/)[0];

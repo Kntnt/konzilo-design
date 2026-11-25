@@ -207,4 +207,116 @@
       --kn-section-deck-from: 1;
     }
   }
+
+  /* The side of the picture (issue #37, the owner, 2026-11-25): the design's `section.picture-side`, which the core writes
+     as --kn-section-picture-side, since a site writes its sections' HTML. Alternating, the picture stands at the start in
+     the first section with a picture beside its text, at the end in the next, and so on, counted in page order over every
+     such section, so a band without one between them does not restart the count. A picture a form offers takes its turn
+     too (the assistant's choice, 2026-11-25). */
+  @media (width >= 48rem) {
+    @container style(--kn-section-picture-side: alternate) or style(--kn-section-picture-side: corners) or style(--kn-section-picture-side: corners-bleed) {
+      .kn-section:nth-child(even of .kn-section:has(> .kn-band-content > .kn-section-media)) > .kn-band-content {
+        grid-template-areas: ". media" "head media" "body media" ". media";
+      }
+    }
+  }
+
+  /* Corner to corner: the sides alternate as above, and a picture the rule crops to fill, neither offered by a form nor
+     with badges, fills its band's full height and exactly half the content area, with square corners, so the pictures
+     of two adjacent sections meet corner to corner; `corners-bleed` runs it from the middle of the content area to the
+     window's edge. The text keeps the band's space above and below and the column gap towards its picture. Such a band
+     meets the bands around it as at a change of background: it keeps both its spaces and the band before it its end
+     space, and no hairline stands between them (page.md, point 3), since its picture runs to its edge. A picture a form
+     offers, and one with badges, take their turn but stand in the band's space, shown as rule 1 shows them (the
+     assistant's choices, 2026-11-25).
+
+     The content runs from window edge to window edge, on lines that the two halves of the content area share, as a
+     Hero's with a picture beside it does, so a picture inside the content area and one out to the window differ only in
+     where they end. The picture reaches over the band's space by a negative margin of that space. */
+  @container style(--kn-section-picture-side: corners) or style(--kn-section-picture-side: corners-bleed) {
+    .kn-band.kn-section.kn-section:has(> .kn-band-content > .kn-section-media):where(:not(:has(> .kn-band-content > .kn-section-body > form), :has(> .kn-band-content .kn-section-badges))) {
+      padding-block: var(--kn-space-band);
+    }
+    .kn-band.kn-band:has(+ .kn-section > .kn-band-content > .kn-section-media):where(:not(:has(+ .kn-section > .kn-band-content > .kn-section-body > form), :has(+ .kn-section > .kn-band-content .kn-section-badges))) {
+      padding-block-end: var(--kn-space-band);
+    }
+    .kn-band.kn-section.kn-section:has(> .kn-band-content > .kn-section-media):where(:not(:has(> .kn-band-content > .kn-section-body > form), :has(> .kn-band-content .kn-section-badges)))::before,
+    .kn-band.kn-section.kn-section:has(> .kn-band-content > .kn-section-media):where(:not(:has(> .kn-band-content > .kn-section-body > form), :has(> .kn-band-content .kn-section-badges))) + .kn-band::before {
+      content: none;
+    }
+    .kn-section > .kn-band-content:has(> .kn-section-media):not(:has(> .kn-section-body > form)):not(:has(.kn-section-badges)) {
+      --kn-section-half: calc(var(--kn-layout-content-area) / 2);
+      inline-size: 100%;
+      grid-template-columns: [window-start] minmax(0, 1fr) [rail-start] var(--kn-section-half) [middle] var(--kn-section-half) [rail-end] minmax(0, 1fr) [window-end];
+      column-gap: 0;
+    }
+    .kn-section > .kn-band-content:has(> .kn-section-media):not(:has(> .kn-section-body > form)):not(:has(.kn-section-badges)) > :is(.kn-section-head, .kn-section-body) { grid-column: rail-start / rail-end; }
+    /* On a narrow window the picture stands first, at the band's start edge, as wide as the content area, and the text
+       under it, the column gap apart (the assistant's choice, 2026-11-25). */
+    .kn-section > .kn-band-content:has(> .kn-section-media):not(:has(> .kn-section-body > form)):not(:has(.kn-section-badges)) > .kn-section-media {
+      grid-column: rail-start / rail-end;
+      margin-block-start: calc(-1 * var(--kn-space-band));
+    }
+    .kn-section > .kn-band-content:has(> .kn-section-media):not(:has(> .kn-section-body > form)):not(:has(.kn-section-badges)) > .kn-section-media .kn-section-picture { border-radius: 0; }
+
+    @media (width >= 48rem) {
+      .kn-section > .kn-band-content:has(> .kn-section-media):not(:has(> .kn-section-body > form)):not(:has(.kn-section-badges)) {
+        --kn-section-picture-columns: rail-start / middle;
+        --kn-section-text-columns: middle / rail-end;
+        --kn-section-text-gap: var(--kn-space-column-gap) 0rem;
+        grid-template-rows: 1fr auto auto 1fr auto;
+        grid-template-areas: none;
+      }
+      .kn-section:nth-child(even of .kn-section:has(> .kn-band-content > .kn-section-media)) > .kn-band-content:has(> .kn-section-media):not(:has(> .kn-section-body > form)):not(:has(.kn-section-badges)) {
+        --kn-section-picture-columns: middle / rail-end;
+        --kn-section-text-columns: rail-start / middle;
+        --kn-section-text-gap: 0rem var(--kn-space-column-gap);
+      }
+      /* The picture and a photo's caption stand in the content's grid themselves, so the caption can stand with the text. */
+      .kn-section > .kn-band-content:has(> .kn-section-media):not(:has(> .kn-section-body > form)):not(:has(.kn-section-badges)) > .kn-section-media,
+      .kn-section > .kn-band-content:has(> .kn-section-media):not(:has(> .kn-section-body > form)):not(:has(.kn-section-badges)) > .kn-section-media > .kn-section-figure {
+        display: contents;
+        container-type: normal;
+      }
+      /* As tall as its band, whatever the text makes that, and cropped to fill it; beside short text the band is as tall as
+         the picture's own proportions make it, up to 85svh. */
+      .kn-section > .kn-band-content:has(> .kn-section-media):not(:has(> .kn-section-body > form)):not(:has(.kn-section-badges)) > .kn-section-media .kn-section-picture {
+        grid-row: 1 / -1;
+        grid-column: var(--kn-section-picture-columns);
+        align-self: start;
+        position: static;
+        margin-block: calc(-1 * var(--kn-space-band));
+        block-size: auto;
+        min-block-size: calc(100% + 2 * var(--kn-space-band));
+        max-block-size: 85svh;
+        object-fit: cover;
+      }
+      .kn-section > .kn-band-content:has(> .kn-section-media):not(:has(> .kn-section-body > form)):not(:has(.kn-section-badges)) > :is(.kn-section-head, .kn-section-body) {
+        grid-column: var(--kn-section-text-columns);
+        margin-inline: var(--kn-section-text-gap);
+      }
+      .kn-section > .kn-band-content:has(> .kn-section-media):not(:has(> .kn-section-body > form)):not(:has(.kn-section-badges)) > .kn-section-head { grid-row: 2; }
+      .kn-section > .kn-band-content:has(> .kn-section-media):not(:has(> .kn-section-body > form)):not(:has(.kn-section-badges)) > .kn-section-body { grid-row: 3; }
+      /* A photo's caption stays with the text: at the foot of its column, the column gap at least under the body, so the
+         picture alone meets its neighbours corner to corner (the assistant's choice, 2026-11-25). */
+      .kn-section > .kn-band-content:has(> .kn-section-media):not(:has(> .kn-section-body > form)):not(:has(.kn-section-badges)) > .kn-section-media .kn-section-caption {
+        grid-row: 5;
+        grid-column: var(--kn-section-text-columns);
+        margin-inline: var(--kn-section-text-gap);
+        margin-block-start: var(--kn-space-column-gap);
+        padding-block-start: 0;
+      }
+    }
+  }
+  @container style(--kn-section-picture-side: corners-bleed) {
+    /* On a narrow window as wide as the window, its caption kept in the content area. */
+    .kn-section > .kn-band-content:has(> .kn-section-media):not(:has(> .kn-section-body > form)):not(:has(.kn-section-badges)) > .kn-section-media { grid-column: window-start / window-end; }
+    @media (width < 48rem) {
+      .kn-section > .kn-band-content:has(> .kn-section-media):not(:has(> .kn-section-body > form)):not(:has(.kn-section-badges)) > .kn-section-media .kn-section-caption { margin-inline: calc((100% - var(--kn-layout-content-area)) / 2); }
+    }
+    @media (width >= 48rem) {
+      .kn-section > .kn-band-content:has(> .kn-section-media):not(:has(> .kn-section-body > form)):not(:has(.kn-section-badges)) { --kn-section-picture-columns: window-start / middle; }
+      .kn-section:nth-child(even of .kn-section:has(> .kn-band-content > .kn-section-media)) > .kn-band-content:has(> .kn-section-media):not(:has(> .kn-section-body > form)):not(:has(.kn-section-badges)) { --kn-section-picture-columns: middle / window-end; }
+    }
+  }
 }

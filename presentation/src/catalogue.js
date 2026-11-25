@@ -9,6 +9,7 @@ export const CATALOGUE = {
   opening: [{ components: ['Hero'], specimens: [['hero']] }],
   sections: [
     { components: ['Band'], specimens: [['band']] },
+    { components: ['Section'], specimens: [['section-pictures']] },
     { components: ['Text and Image'], specimens: [['text-image', 'Picture right'], ['text-image-start', 'Picture left']] },
     { components: ['CTA Band', 'Key Figures'], specimens: [['cta-band']] },
   ],

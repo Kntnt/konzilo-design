@@ -505,6 +505,8 @@ Optional `inputs.header`, `inputs.footer`, `inputs.page`, `inputs.breadcrumbs` a
 
 Optional `inputs.tabs` passes with its default to `resolved.tabs` too (2026-11-12). Unlike the frame's settings it is written in the core CSS, since a site writes the tabs' HTML itself, from the directives, and the design's choice must reach it without the site writing anything: `--kn-tabs-rule-place` on `:root` is `tabs.rule-place`, `below` or `above`, or `below` where a file resolved before 0.5.0 has no `tabs`, and `tabs.css` reads it by a style query (directives.md, `tabs`).
 
+Optional `inputs.section` passes with its default to `resolved.section` in the same way (2026-11-25, issue #37), and is written in the core CSS for the same reason, since a site writes its sections' HTML itself: `--kn-section-picture-side` on `:root` is `section.picture-side`, `start` (the default), `alternate`, `corners` or `corners-bleed`, or `start` where a file resolved before it has no `section`, and `section.css` reads it by a style query (directives.md, `section`, The side of the picture).
+
 Optional `inputs.type.roles` sets a role's look: `main` (body, lead and small text),
 `heading`, `heading-1`, `display`, `label` and `monospace`, each with optional `weight`,
 `letter-spacing`, `axes` (variation axes by tag) and `features` (OpenType tags). A style

@@ -13,9 +13,19 @@ import { ownPictures } from '../data.js';
 import { heroProps, nextHeadingProps, breadcrumbProps } from '../frame.js';
 import Breadcrumbs from '../../../src/components/Breadcrumbs.astro';
 import HeadingGroup from '../../../src/components/HeadingGroup.astro';
+import { looseSection } from '../../../src/page-parts/parts.js';
+import { escapeHtml } from '../../../src/components/footer-html.js';
 const { id, project, resolved } = Astro.props;
 const images = context(project, resolved, ownPictures);
 const { landscapes } = images;
+// Four sections with a picture beside their text, in a row, as a site's body draws them, which show where the design
+// puts each picture (directives.md, section, The side of the picture). The second has a caption.
+const pictured = [
+  ['Plan the work together', sample.paragraph],
+  ['Build in small steps', 'Each step ends with something you can see and use, so the plan can change before much is spent.', 'A composition from the design’s own palette.'],
+  ['Check what was done', 'We go through the result with you, against the plan, and change what does not fit.'],
+  ['Keep it running', 'After delivery we stay close, with a short call each month and help when you need it.'],
+].map(([heading, text, caption], index) => looseSection(`<figure><img src="${escapeHtml(landscapes[index])}" alt="">${caption ? `<figcaption>${escapeHtml(caption)}</figcaption>` : ''}</figure><h2>${escapeHtml(heading)}</h2><p>${escapeHtml(text)}</p>`)).join('');
 const trail = resolved.breadcrumbs.show ? breadcrumbProps(resolved.breadcrumbs, project) : undefined;
 const below = resolved.hero.h1 === 'below';
 ---
@@ -56,6 +66,7 @@ const below = resolved.hero.h1 === 'below';
     </TextImage>
   </div>
 )}
+{id === 'section-pictures' && <div class="section-pictures-stage" set:html={pictured} />}
 {id === 'cta-band' && (
   <div class="sample-stack">
     <div class="specimen-rail figures-stage">

@@ -15,7 +15,7 @@ export function getStaticPaths() {
 }
 const { id } = Astro.params;
 const isFull = (name) =>
-  /^(header-|footer|hero$|text-image|cta-band|band$|page$|page-layout$|preview$|overview$|responsive-|space-section$|shadow-)/.test(
+  /^(header-|footer|hero$|text-image|section-pictures$|cta-band|band$|page$|page-layout$|preview$|overview$|responsive-|space-section$|shadow-)/.test(
     name,
   );
 const full = isFull(id);

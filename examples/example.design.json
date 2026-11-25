@@ -1896,6 +1896,9 @@
     "tabs": {
       "rule-place": "below"
     },
+    "section": {
+      "picture-side": "start"
+    },
     "layout": {
       "wide": 1200,
       "side-margin": {

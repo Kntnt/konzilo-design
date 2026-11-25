@@ -113,6 +113,8 @@ The directive list Konzilo defines needs two components that stood under "Not no
 
 ***Built* 2026-11-25, for issue #32 (the owner's decision):** a section's `align="center"` centres it, its head in the middle and its body in a column of Narrow's width in the middle, where a form, its terms and a choice's panels keep the start edge. What a section holds centres it no more: one with a form or a choice keeps the start edge, its body in that column. The check refuses the attribute where the layout sets parts side by side, and the stylesheet keeps the start edge there (directives.md, A centred section).
 
+***Built* 2026-11-25, for issue #37 (the owner's decision; what the brief left open, the assistant's choices):** the design's `section.picture-side` says where a section's picture stands beside its text: at the start, alternating from one such section to the next, or alternating with pictures that fill their band's height and half the content area and meet corner to corner, within the content area or out to the window's edge, the text keeping the band space above and below. A picture a form offers and one with badges take their turn in the band space; a photo's caption stands at the foot of the text's column; such a band meets its neighbours as at a change of background (directives.md, `section`, The side of the picture).
+
 ## On the site
 
 What only one site needs stays on that site (tool.md, point 1), such as views fed by its own business data.

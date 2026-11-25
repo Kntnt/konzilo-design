@@ -280,6 +280,9 @@
         "tabs": {
           "$ref": "#/$defs/tabs-settings"
         },
+        "section": {
+          "$ref": "#/$defs/section-settings"
+        },
         "brand-colors": {
           "type": "object",
           "properties": {
@@ -1124,6 +1127,9 @@
         },
         "tabs": {
           "$ref": "#/$defs/tabs-settings"
+        },
+        "section": {
+          "$ref": "#/$defs/section-settings"
         },
         "type-scale": {
           "type": "object",
@@ -3594,6 +3600,24 @@
           "enum": [
             "below",
             "above"
+          ]
+        }
+      },
+      "required": [],
+      "additionalProperties": false
+    },
+    "section-settings": {
+      "type": "object",
+      "description": "The design's choices for every section (docs/spec/directives.md, `section`). Absent in a file resolved before it existed (2026-11-25), which then has every section's picture at the start.",
+      "properties": {
+        "picture-side": {
+          "type": "string",
+          "description": "Where a section's picture beside its text stands: at the start, alternating from one such section to the next, or alternating with pictures that meet corner to corner, within the content area or out to the window's edge. Written by the core CSS as --kn-section-picture-side.",
+          "enum": [
+            "start",
+            "alternate",
+            "corners",
+            "corners-bleed"
           ]
         }
       },

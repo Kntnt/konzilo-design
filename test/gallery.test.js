@@ -77,6 +77,11 @@ test('built gallery embeds every resource and the actual bundle runs without cry
   ui.fields['band-line'].checked = true;
   ui.listeners.change({ target: ui.fields['band-line'] });
   assert.match(ui.style.textContent, /--kn-page-band-line: true;/);
+  // The side of a section's picture, which the core writes for section.css (issue #37).
+  assert.match(ui.style.textContent, /--kn-section-picture-side: start;/);
+  ui.fields['picture-side'].value = 'corners';
+  ui.listeners.change({ target: ui.fields['picture-side'] });
+  assert.match(ui.style.textContent, /--kn-section-picture-side: corners;/);
   ui.fields.mode.value = 'dark';
   ui.listeners.change({ target: ui.fields.mode });
   assert.equal(ui.document.documentElement.dataset.knMode, 'dark');
@@ -172,8 +177,9 @@ test('live controls defer layout changes, keep immediate feedback, and retain th
 test('every design control is described by a tooltip', () => {
   const form = html.match(/<form class="g-form"[\s\S]*?<\/form>/)[0];
   const controls = [...form.matchAll(/<(?:input|select)\b[^>]*>/g)].map(([tag]) => tag);
-  // 14 since 2026-11-25: Line between bands, the design's page.band-line (issue #30).
-  assert.equal(controls.length, 14);
+  // 14 since 2026-11-25: Line between bands, the design's page.band-line (issue #30); 15 the same day: The picture's
+  // side, the design's section.picture-side (issue #37).
+  assert.equal(controls.length, 15);
   for (const tag of controls) {
     const id = tag.match(/aria-describedby="([^"]+)"/)?.[1];
     assert.ok(id, tag);

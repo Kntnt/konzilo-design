@@ -82,14 +82,16 @@ test('the default design\'s resolved JSON and core CSS change only on purpose', 
   // resolved and the core writes it, 2.25rem by default (header.md, point 13); nothing else moves. Changed on purpose
   // 2026-11-25: a hero takes half of the screen by default, where it took two thirds (directives.md, hero); the core CSS
   // does not move. Changed on purpose 2026-11-25: the space role band-run is retired, and the page's band-line, off by
-  // default, passes to resolved and the core writes it as --kn-page-band-line (page.md, point 3); nothing else moves.
+  // default, passes to resolved and the core writes it as --kn-page-band-line (page.md, point 3); nothing else moves. Changed on
+  // purpose 2026-11-25: the design's section, its pictures at the start by default, passes to resolved and the core writes
+  // where they stand as --kn-section-picture-side (directives.md, section); nothing else moves.
   assert.equal(
     hash(JSON.stringify({ ...r, 'generator-version': '' })),
-    'b260870a31a7c207980801eb910f8a5c6ea444b913c35e8a9244d1eb8732be54',
+    '5b63ba9335c79b9cb0b013dd19ce3d5ca56a0095a5bae4df6577dfde60ba37df',
   );
   assert.equal(
     hash(coreCss(r)),
-    '8ff272bcf4e2615739dc30438cb0a2a18556d20841267f8967cd8c97fed6b6d0',
+    'd3d55d1fc809d2b1fa622f5564a7df167bb34b692a19ad425ac3e15ae5603e74',
   );
 });
 

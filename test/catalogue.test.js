@@ -21,6 +21,7 @@ const SHOWS = {
   opening: { hero: [[], { '.kn-hero': 1 }] },
   sections: {
     band: [['Tint', 'Brand colour', 'Dark'], { '.kn-band': 3 }],
+    section: [[], { '.kn-section': 4, '.kn-section-picture': 4, '.kn-section-caption': 1 }],
     'text-and-image': [['Picture right', 'Picture left'], { '.kn-text-image': 2, '.kn-text-image[data-kn-image-side="start"]': 1 }],
     'cta-band-and-key-figures': [[], { '.kn-cta-band': 1, '.kn-key-figures': 1 }],
   },
@@ -121,7 +122,7 @@ test('each section holds one or two of its page\'s components, as the report lis
   assert.equal(cataloguePath('text'), '/catalogue/text.html');
 });
 
-test('every component page holds no control but its way on, and Text the tabs\' line, opening a page aside, and lists the sections its preview shows', { timeout: 180000 }, async () => {
+test('every component page holds no control but its way on, Text the tabs\' line and Sections the pictures\' side, opening a page aside, and lists the sections its preview shows', { timeout: 180000 }, async () => {
   const { context, page, ends, errors, writes } = await openTool();
   try {
     const designBefore = await readFile(tool.path, 'utf8');
@@ -137,6 +138,11 @@ test('every component page holds no control but its way on, and Text the tabs\' 
         assert.equal(controls, 1, 'text has one control');
         assert.deepEqual(await form.locator('[data-path="inputs.tabs.rule-place"] option').evaluateAll((options) => options.map((option) => option.value)), ['below', 'above']);
         assert.match(await form.locator('.component-note').first().textContent(), /A site chooses among the variants each time it uses a component[^]*Where the line across the tabs stands is the design's own/);
+      } else if (id === 'sections') {
+        // Where a section's picture stands is the design's (issue #37, the owner, 2026-11-25), and the one control here.
+        assert.equal(controls, 1, 'sections has one control');
+        assert.deepEqual(await form.locator('[data-path="inputs.section.picture-side"] option').evaluateAll((options) => options.map((option) => option.value)), ['start', 'alternate', 'corners', 'corners-bleed']);
+        assert.match(await form.locator('.component-note').first().textContent(), /A site chooses among the variants each time it uses a component[^]*Which side a section's picture stands on is the design's own/);
       } else {
         assert.equal(controls, 0, `${id} has no control`);
         assert.match(await form.locator('.component-note').first().textContent(), /each with its variants side by side and named\. A site chooses among the variants each time it uses a component/);
@@ -179,6 +185,39 @@ test('the Text page sets where the line across the tabs stands, and the preview 
     assert.deepEqual(JSON.parse(await readFile(tool.path, 'utf8')).inputs.tabs, { 'rule-place': 'above' }, 'saved in the design file');
     await page.locator('#undo').click();
     for (const end of ends) await end.waitForFunction(() => getComputedStyle(document.querySelector('[data-component="tabs"] .kn-tabs-tab'), '::before').borderTopWidth === '0px');
+    await page.waitForFunction(() => document.getElementById('status-text').textContent === 'Saved');
+    assert.deepEqual(errors, []);
+  } finally {
+    await context.close();
+  }
+});
+
+test('the Sections page sets the side of a section\'s picture, and the preview follows it at once, at both ends', { timeout: 180000 }, async () => {
+  const { context, page, ends, errors } = await openTool();
+  try {
+    await turnTo(page, 'sections');
+    // Where each picture stands against its text, and whether it meets its band's top edge.
+    const pictures = (end) => end.locator('[data-component="section"] .kn-section').evaluateAll((sections) => sections.map((section) => {
+      const picture = section.querySelector('.kn-section-picture').getBoundingClientRect();
+      const head = section.querySelector('.kn-section-head').getBoundingClientRect();
+      const side = picture.right <= head.left + 1 ? 'start' : picture.left >= head.right - 1 ? 'end' : 'over';
+      return `${side}${Math.abs(picture.top - section.getBoundingClientRect().top) < 1 ? ', at the edge' : ''}`;
+    }));
+    const [wide, narrow] = ends;
+    for (const end of ends) await end.waitForFunction((path) => location.pathname === path && document.readyState === 'complete', cataloguePath('sections'));
+    assert.deepEqual(await pictures(wide), ['start', 'start', 'start', 'start'], 'at the start by default');
+    assert.deepEqual(await pictures(narrow), ['over', 'over', 'over', 'over'], 'stacked on a phone');
+    await page.locator('[data-path="inputs.section.picture-side"]').selectOption('alternate');
+    await wide.waitForFunction(() => getComputedStyle(document.documentElement).getPropertyValue('--kn-section-picture-side').trim() === 'alternate');
+    assert.deepEqual(await pictures(wide), ['start', 'end', 'start', 'end'], 'alternating');
+    await page.locator('[data-path="inputs.section.picture-side"]').selectOption('corners');
+    for (const end of ends) await end.waitForFunction(() => getComputedStyle(document.documentElement).getPropertyValue('--kn-section-picture-side').trim() === 'corners');
+    assert.deepEqual(await pictures(wide), ['start, at the edge', 'end, at the edge', 'start, at the edge', 'end, at the edge'], 'corner to corner');
+    assert.deepEqual(await pictures(narrow), Array(4).fill('over, at the edge'), 'first, at the band\'s edge, on a phone');
+    await page.waitForFunction(() => document.getElementById('status-text').textContent === 'Saved');
+    assert.deepEqual(JSON.parse(await readFile(tool.path, 'utf8')).inputs.section, { 'picture-side': 'corners' }, 'saved in the design file');
+    await page.locator('#undo').click();
+    await wide.waitForFunction(() => getComputedStyle(document.documentElement).getPropertyValue('--kn-section-picture-side').trim() === 'alternate');
     await page.waitForFunction(() => document.getElementById('status-text').textContent === 'Saved');
     assert.deepEqual(errors, []);
   } finally {
@@ -312,7 +351,7 @@ test('the accordion has three questions, the quotation a section of its own, and
   try {
     await report.goto(`file://${file}`);
     for (const [id, specimens] of Object.entries({
-      sections: { band: { '.kn-band': 3 }, 'text-image-start': { '.kn-text-image': 1 } },
+      sections: { band: { '.kn-band': 3 }, 'section-pictures': { '.kn-section': 4, '.kn-section-picture': 4 }, 'text-image-start': { '.kn-text-image': 1 } },
       text: { accordion: { '.kn-accordion': 1, 'details': 3, '.kn-quotation': 0 }, quotation: { '.kn-quotation': 1, '.kn-accordion': 0 }, 'callout-more': { '.kn-callout': 8 }, 'accordion-more': { '.kn-accordion': 1, 'details': 3 }, 'table-more': { '.kn-table-scroll': 1 } },
       buttons: { 'button-default': { '.kn-button': 6, 'a:not(.kn-button)': 2 }, buttons: { '.kn-button': 24, '[data-kn-type="label"]': 8 }, links: { 'a': 12, '[data-kn-type="label"]': 12 } },
       cards: { card: { '.kn-card': 3 }, 'card-unplated': { '.kn-card': 3 }, 'card-person': { '.kn-card': 3 }, 'content-card': { '.kn-content-card': 3 }, 'card-grid': { '.kn-card-grid': 2, '.kn-card': 6, '.grid-caption': 2 } },
