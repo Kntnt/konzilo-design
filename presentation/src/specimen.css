@@ -334,6 +334,8 @@ body[data-specimen='catalogue'] .text-image-stage { min-height: 0; }
 @media (width <= 40rem) {
   :root { --sample-screen: 216vw; }
 }
+/* A picture hero's fade is a share of the window's height, so it is a share of the screen the sample stands for. */
+.kn-hero { --kn-hero-window: var(--sample-screen); }
 .kn-page { --kn-hero-screen: calc(var(--sample-screen) - var(--kn-header-height)); }
 .kn-page:has(> .kn-header[data-kn-attachment="sticky"][data-kn-start="under"]) { --kn-hero-screen: var(--sample-screen); }
 .hero-screen {
