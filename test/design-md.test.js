@@ -29,7 +29,10 @@ const rem = (px) => `${Number((px / 16).toFixed(4))}rem`;
 test('DESIGN.md names no stylesheet of the library\'s as if it came with the file', () => {
   for (const inputs of DESIGNS) {
     const { text } = exported(inputs);
-    assert.doesNotMatch(text, /--kn-|data-kn-|\bkn-[a-z]/, 'an agent has no stylesheet that defines these');
+    // But one: what a Hero's height is a share of, which a frame sets from outside the page and the agent's own CSS
+    // reads with the window as its fallback, so no stylesheet need define it (tool.md, point 4; issue #21).
+    assert.equal(text.split('`--kn-hero-screen`').length, 2, 'the Hero recipe names it once');
+    assert.doesNotMatch(text.replace('`--kn-hero-screen`', ''), /--kn-|data-kn-|\bkn-[a-z]/, 'an agent has no stylesheet that defines these');
     assert.doesNotMatch(text, /undefined|NaN|\[object|\bno an?\b/);
     assert.match(text, /No stylesheet, script, picture or font comes with it/);
   }

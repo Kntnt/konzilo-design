@@ -1,14 +1,16 @@
 ---
 import type { HTMLAttributes } from 'astro/types';
 import type { Surface } from './frame-types';
+import { pictureImage } from './picture-image.js';
 // Background and vertical rhythm belong to the band; its content shares the page rail.
 interface Props extends HTMLAttributes<'section'> {
   surface?: Surface;
+  // From the site's root or whole, with its scheme; a relative address stops the build (picture-image.js).
   picture?: string;
   contentClass?: string;
 }
 const { surface, picture, contentClass, class: className, style, ...attributes } = Astro.props;
-const pictureStyle = picture ? { '--kn-picture-image': `url(${JSON.stringify(picture)})` } : {};
+const pictureStyle = picture ? { '--kn-picture-image': pictureImage(picture) } : {};
 const bandStyle = typeof style === 'string'
   ? `${Object.entries(pictureStyle).map(([key, value]) => `${key}:${value}`).join(';')};${style}`
   : { ...pictureStyle, ...style };
