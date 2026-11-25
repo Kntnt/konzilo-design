@@ -9,14 +9,14 @@ Records the HTML contract between the directive list Konzilo defines and this de
 - **The directive list Konzilo defines** decides which parts exist and the structure and meaning of their HTML. Its examples' colours, type steps and picture shapes are illustrative only.
 - **This design system decides every look:** colour, type, space, columns and states. Everything here works for any design the tool can make, light or dark, in any colours and any typefaces.
 - **The site writes only HTML**, with this package's classes (`kn-*`), text types (`data-kn-type`) and Surfaces (`data-kn-surface`). This file names the class of every part. A site's own classes are its own CSS and no part of this contract.
-- **Behaviour belongs to this design system:** tab switching, choosing an answer, one-open accordions, marking the section being read in the following menu, and a head that stays as the page scrolls. It is HTML and CSS, with no script wherever that is possible (principles.md, owner, 2026-11-10): tabs, a choice and an accordion are native `<details>`, and a head or an Aside Block stays by `position: sticky`.
+- **Behaviour belongs to this design system:** tab switching, choosing an answer, one-open accordions, marking the section being read in the following menu, and a head that stays as the page scrolls. It is HTML and CSS, with no script wherever that is possible (principles.md, owner, 2026-11-10): tabs, a choice and an accordion are native `<details>`, and a head or an Aside Block stays by `position: sticky`. The following menu is marked by the browser's CSS scroll markers, and where a browser lacks them by a polyfill its component loads (the owner, 2026-11-23; `toc`).
 - **The owner's decisions on look**, made with the directive list, bind this design system and override earlier specs where they clash (Superseded, below).
 
 ***Drawn by this package*** (the Konzilo core's ADR 0068, settled by the owner, 2026-11-10; built 2026-11-12): on a Konzilo site this package draws the HTML below itself, by components a site registers (The components, below), and the site writes it by hand only where it renders a directive without them, as a site outside Konzilo does.
 
 ***The assistant's choices, 2026-11-10:*** the following menu "In this article" marks the section being read, and fact boxes (`aside`) stand in the reading column, not in the Aside.
 
-***Dropped* by the owner's principle (principles.md, HTML and CSS, not JavaScript), 2026-11-10:** marking the section being read was the assistant's choice and needed a script, so no script marks it now. Where a browser has CSS scroll markers it marks the section itself, as a progressive enhancement that costs nothing elsewhere (`toc`, below). Visitor Filters, for `filtered`, runs no script either (the assistant's choice, 2026-11-10).
+***Dropped* by the owner's principle (principles.md, HTML and CSS, not JavaScript), 2026-11-10:** marking the section being read was the assistant's choice and needed a script, so no script marks it now. Where a browser has CSS scroll markers it marks the section itself, as a progressive enhancement that costs nothing elsewhere (`toc`, below). *(Changed twice: the owner removed the scroll markers on 2026-11-11, since only Chromium had them, and on 2026-11-23 brought the mark back in every engine, by the scroll markers and, where a browser lacks them, a polyfill that marks the same link; `toc`, Behaviour.)* Visitor Filters, for `filtered`, runs no script either (the assistant's choice, 2026-11-10).
 
 ## How the design reads content
 
@@ -77,7 +77,7 @@ Records the HTML contract between the directive list Konzilo defines and this de
 
 - **Card Grid's columns** (components.md, How a component is built, Links and layout): in a card series from the directives, the number of cards sets the columns, three or four, whichever leaves the last row fuller, and two cards stand in two (owner, 2026-11-10, via the directive list). Card Grid's `columns` holds for other uses, and on a window too narrow for four a directive series makes the same choice between three and two, then two and one (owner's rule, applied by the assistant, 2026-11-10); Card Grid's own `data-kn-columns="4"` still falls straight to two for other uses.
 - **Accordion's FAQ** (components.md, Owner's component review): an accordion whose headings are all questions is drawn as questions and answers, a look of its own read from `data-kn-questions` (owner, 2026-11-10, via the directive list). `faq` on the Astro component still adds only structured data.
-- **Table of Contents' "no scroll-spy is added"** (components.md, Navigation): the following menu marked the section being read by a script (the assistant's choice, 2026-11-10, above), dropped the same day by the owner's principle. It stands again: no script is added, and only a browser's own scroll markers mark the section (`toc`). A Table of Contents without `data-kn-follow` stays as it was.
+- **Table of Contents' "no scroll-spy is added"** (components.md, Navigation): the following menu marked the section being read by a script (the assistant's choice, 2026-11-10, above), dropped the same day by the owner's principle. It stood again: no script was added, and only a browser's own scroll markers marked the section (`toc`), until they went too on 2026-11-11. ***Superseded* by the owner, 2026-11-23 (the remaining question settled 2026-11-25):** a following menu marks the section being read in every engine, by the browser's scroll markers and, where a browser lacks them, by a polyfill that marks the same link, loaded only there (`toc`, Behaviour), so "no scroll-spy is added" no longer holds for a following menu. A Table of Contents without `data-kn-follow` stays as it was.
 
 ## The components
 
@@ -188,7 +188,7 @@ A post's body is a sequence of bands (page.md, point 3): heroes and sections. A 
 </section>
 ```
 
-No directive has a runtime (2026-11-10): a site's layout imports no script for a body. `section.js`, `tabs.js`, `choice.js` and `reading-area.js` are gone, replaced by native `<details>` and CSS, as each part below says; a site that still calls their setups must drop those imports.
+No directive has a runtime (2026-11-10): a site's layout imports no script for a body. The following menu's polyfill (since 2026-11-25, `toc`) is none either: the component that draws the menu writes its loader, and the browser fetches it only where it lacks CSS scroll markers. `section.js`, `tabs.js`, `choice.js` and `reading-area.js` are gone, replaced by native `<details>` and CSS, as each part below says; a site that still calls their setups must drop those imports.
 
 ### Behaviour in a live preview
 
@@ -408,7 +408,7 @@ Its first heading is its heading, at any level; the eyebrow is its label.
 
 **Read from content.** *(CSS)* Its eyebrow is a plain label, its heading small and a list in it in small type, with the design's bullets. In a section's body it keeps to the reading column too, at the start, or in the middle of a centred section, as the text does (fixed after 0.6.1; it spanned the content width). In an article, a fact box with an `id` is a stop in the following menu, its heading the stop's name. In a `toc`'s flow it is no stop, its anchor or not: the menu lists the items' headings, and the fact box's heading, inside it, begins no item (the assistant's choice, 2026-11-12).
 
-**Behaviour.** None of its own; where the browser marks the section being read (`toc`), it marks a fact box as a crosshead.
+**Behaviour.** None of its own; in an article, the following menu marks a fact box with an anchor as it marks a crosshead (`toc`, Behaviour).
 
 **Component.** New: Fact Box. It stands in the reading column, in the flow; Aside Block keeps the Aside.
 
@@ -917,6 +917,7 @@ An acre, a shed and the tools for both.
       <nav class="kn-toc" aria-labelledby="toc-1" data-kn-type="small" data-kn-follow>
         <p class="kn-toc-label" id="toc-1" data-kn-type="heading-6">In depth</p>
         <ol role="list"><li><a href="#first-part">The first part</a></li><li><a href="#second-part">The second part</a></li></ol>
+        <script data-kn-polyfill="scroll-markers">…</script>
       </nav>
     </aside>
   </div>
@@ -930,6 +931,8 @@ An acre, a shed and the tools for both.
 ```
 
 The intro is the menu's label; without one, the `<nav>` takes an `aria-label` in the site's language, the page's context's word `contents`, "Contents" by default.
+
+The `<nav>` ends with the loader of the polyfill that marks the section being read where a browser lacks CSS scroll markers (Behaviour), its text the same in every menu: `(function(){const src = "<the polyfill's address>";`, a line break, and `if (!CSS.supports('scroll-target-group: auto')) import(src);})();`. `followingMenuLoader(src)` of `components/table-of-contents.js` writes it, and `Toc.astro` hands it to the renderer (since 2026-11-25).
 
 **Markdown.**
 
@@ -953,9 +956,26 @@ One paragraph before the first heading is the label, and nothing else stands the
 
 **Read from content.** *(CSS)* As Reading Area and Table of Contents. `data-kn-side="start"` puts the menu before the text. An Aside Block that begins with a table of contents has no rule above it, so the menu's label stands level with the text (the owner, 2026-11-12).
 
-**Behaviour.** No script (the owner's principle, 2026-11-10). The menu stands on a rail along its links and stays in view as Reading Area keeps its Aside, and nothing marks the section being read. ***Removed* by the owner, 2026-11-11, under his rule that a site behaves the same in Gecko, WebKit and Chromium:** the assistant's choice of 2026-11-10, `scroll-target-group: auto` on `.kn-toc[data-kn-follow]`, by which a browser with CSS scroll markers marked the link whose section was being read with `:target-current`, drawn as the rail's accent; only Chromium had them (Firefox 157 and Safari 27.2 had neither).
+**Behaviour.** ***Decided* by the owner (2026-11-23, the remaining question settled 2026-11-25; issue #25):** the menu stands on a rail along its links, stays in view as Reading Area keeps its Aside, and marks the link of the section being read: the link in the text colour with an accent bar on the rail (`currentColor` in forced colours), only colours, so no line moves. It looks the same in Gecko, WebKit and Chromium, in both modes and on every Surface the Aside can take.
 
-**Component.** Reading Area, Aside Block and Table of Contents, which gains `data-kn-follow`, with no runtime.
+- **Native first.** `scroll-target-group: auto` on `.kn-toc[data-kn-follow]` lets a browser with CSS scroll markers mark the link itself with `:target-current`, with no script: Chromium, as of 2026-11-25.
+- **A polyfill where a browser lacks them**, Firefox and WebKit as of 2026-11-25. `scroll-markers-polyfill.js` loads only where `CSS.supports('scroll-target-group: auto')` is false, by the loader that ends the menu, in the package's loader pattern (`data-kn-polyfill`, as the header's: header.md, How it is built, Polyfills), so it passes the Konzilo core's content security policy as they do (konzilo.md). It sets `aria-current="location"` on the link and nothing else, and the CSS draws that state exactly as it draws `:target-current`. Each state stands in a rule of its own, since a browser that does not know `:target-current` drops every selector of a rule naming it. It names the feature it stands in for, and is to be deleted once every engine has scroll markers.
+- **Chromium's rule, not the draft's example.** The polyfill marks the link Chromium marks, by the rule of its `ScrollMarkerChooser`: a target stands where scrolling it into view takes the page, under the scroll padding, its scroll margin counted twice, as Chromium counts it (probably a fault of Chromium's, copied so that the two agree); positions within an eighth of the window of either end of the page are spread over that eighth, so that every link can be marked, the last ones too where the page cannot scroll to their headings; and of the last target at or above the scroll position and the first less than half a window below it, the nearer is marked, so the mark moves halfway between two headings. It follows the reader both ways. `test/following-menu.test.js` holds it to Chromium's own marker at every scroll position of a page, in steps of 7 to 13 px, down and up, at three widths, and holds Firefox and WebKit to the same links, moving within a pixel of where Chromium's do.
+- **No `aria-current` where the browser marks** (the owner, 2026-11-25): where the native marker works, no script runs, so only the polyfill exposes the state to assistive technology.
+- **Without script**, a browser without scroll markers marks nothing: the rail and its links, as before 2026-11-23. A Table of Contents without `data-kn-follow` is unchanged and loads nothing.
+- **Smooth scrolling.** Chromium moves the mark at once to where the scroll will end, and the polyfill moves it as the page scrolls; accepted as harmless (the owner, 2026-11-25).
+
+***The assistant's choices, 2026-11-25:***
+
+- **The loader is the `<nav>`'s last element.** After it, a script would be the last child of the Aside Block or of a section's body, which would change their `:last-child` margins and with them the join between adjoining bands.
+- **The renderers take the loader from the component.** `renderDirective` and the page parts' `articleBody` are plain JavaScript, which cannot know the polyfill's address that Vite gives a component, so `Toc.astro` and `ArticleBody.astro` pass it in (`loader`). A page drawn by `renderDirective` without one, or by hand, is marked only where the browser has scroll markers.
+- **One loader text everywhere**, written as Astro writes the header's, so the core's policy needs one hash for it, and the offline copies find the polyfill's address in it as in the header's.
+- **A page that cannot scroll marks its last link**, as Chromium's source does.
+- **The test page is of blocks of a fixed height**, not text, so the three engines lay it out alike and their marks can be compared to the pixel.
+
+*Earlier:* No script (the owner's principle, 2026-11-10). The menu stands on a rail along its links and stays in view as Reading Area keeps its Aside, and nothing marks the section being read. ***Removed* by the owner, 2026-11-11, under his rule that a site behaves the same in Gecko, WebKit and Chromium:** the assistant's choice of 2026-11-10, `scroll-target-group: auto` on `.kn-toc[data-kn-follow]`, by which a browser with CSS scroll markers marked the link whose section was being read with `:target-current`, drawn as the rail's accent; only Chromium had them (Firefox 157 and Safari 27.2 had neither). *(Superseded by the owner, 2026-11-23, above: the scroll markers are back, and a polyfill makes the other engines mark alike, which meets the same rule.)*
+
+**Component.** Reading Area, Aside Block and Table of Contents, which gains `data-kn-follow`, with no runtime but the polyfill's loader (since 2026-11-25; until then with no runtime at all). `Toc.astro` hands the renderer the loader; Table of Contents writes it itself where it follows.
 
 ## `choice`
 
@@ -1225,6 +1245,7 @@ An article's page is laid out by its fields, not by directives: an opening, the 
           <nav class="kn-toc" aria-labelledby="article-menu" data-kn-type="small" data-kn-follow>
             <p class="kn-toc-label" id="article-menu" data-kn-type="heading-6">In this article</p>
             <ol role="list"><li><a href="#a-crosshead">A crosshead</a></li><li><a href="#in-short">In short</a></li></ol>
+            <script data-kn-polyfill="scroll-markers">…</script>
           </nav>
         </aside>
       </div>
@@ -1246,9 +1267,9 @@ An article's page is laid out by its fields, not by directives: an opening, the 
 
 **Read from content.** *(CSS)* Crossheads and the headings under them take the article's steps, which the design sets by place, so the body's headings carry no `data-kn-type`. A question is drawn as an interview's question.
 
-**Behaviour.** Only a browser's own scroll markers mark the section being read, as for `toc`; the Reading Area's CSS places the menu and keeps it in view, with no script.
+**Behaviour.** The menu marks the section being read as `toc`'s does: by the browser's scroll markers, or by the polyfill whose loader ends the menu, which `ArticleBody.astro` hands `articleBody()` (since 2026-11-25); the Reading Area's CSS places the menu and keeps it in view. *(Changed 2026-11-25: this said only a browser's own scroll markers marked it, which none did after 2026-11-11.)*
 
-**Component.** Reading Area, Aside Block, Table of Contents with `data-kn-follow` and no runtime, Fact Box and Body Text. New: the class `kn-article-body` and the part `.kn-question`.
+**Component.** Reading Area, Aside Block, Table of Contents with `data-kn-follow` and its polyfill's loader (no runtime until 2026-11-25), Fact Box and Body Text. New: the class `kn-article-body` and the part `.kn-question`.
 
 ### "Read more"
 
