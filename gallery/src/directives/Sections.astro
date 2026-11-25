@@ -21,6 +21,11 @@ const questions = [
   <p>A section that begins with a picture sets it beside the head and the body, with its badges under it.</p>
   <ul><li>Spade and fork</li><li>Seeds for twelve beds</li><li>A notebook for each bench</li></ul>
 </Section>
+<Section surface="raised" picture={{ ...picture('Three raised beds of larch in a walled garden'), caption: 'The walled garden in May, a week after the first sowing.' }} eyebrows={['47 / Section · 1, a photo with its caption']} heading="A caption stays with its photo">
+  <p>Where the editor gives the section's photo a caption, it stands under the picture, small and muted, as a figure's caption does.</p>
+  <p>Beside text taller than the picture, the picture grows to the text's height less its caption and is cropped to fill it, and the caption stays under it.</p>
+  <p>Beside text longer still, the picture and its caption stay in view together as the text scrolls by. On a narrow window both stand above the head.</p>
+</Section>
 <Section picture={{ src: portrait, alt: 'The cover of the field guide' }} eyebrows={['47 / Section · 1 with a form']} heading="Get the field guide">
   <p>Forty pages on light, soil and patience. With a form in the body, the picture is what the form offers.</p>
   <CoreForm id="guide" label="Get the field guide" send="Send me the guide" fields={[{ name: 'email', label: 'Email', type: 'email', required: true }]} />

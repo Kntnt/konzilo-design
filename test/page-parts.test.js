@@ -83,6 +83,27 @@ Loose again.`, ctx);
   assert.equal(tight(looseSection('<h2 id="a">A</h2>\n<p>One.</p>\n<p>Two.</p>')), '<section class="kn-band kn-section"><div class="kn-band-content"><header class="kn-section-head"><hgroup class="kn-heading-group"><h2 class="kn-heading-group-heading" id="a" data-kn-type="heading-2">A</h2></hgroup></header><div class="kn-section-body kn-body-text"><p>One.</p><p>Two.</p></div></div></section>');
 });
 
+test('a loose run that begins with a captioned photo keeps the caption under it, as a :::section does', () => {
+  // As the core draws it on a page: the image in the lightbox's button, the caption after it, and the dialog after the figure.
+  const core = '<figure data-konzilo-block="0"><button class="konzilo-lightbox-open" type="button" aria-label="Open"><img src="/media/shed.webp" alt="A shed"></button><figcaption>The shed in <em>May</em>.</figcaption></figure><dialog class="konzilo-modal konzilo-lightbox" id="konzilo-modal-1"><ul class="konzilo-lightbox-strip"><li><figure><img src="/media/shed.webp" alt="A shed"><figcaption>The shed in <em>May</em>.</figcaption></figure></li></ul></dialog>\n<h2 id="a">A</h2>\n<p>One.</p>';
+  assert.equal(tight(looseSection(core)), [
+    '<section class="kn-band kn-section"><div class="kn-band-content">',
+    '<div class="kn-section-media"><figure class="kn-section-figure"><img class="kn-section-picture" src="/media/shed.webp" alt="A shed" data-konzilo-block="0"><figcaption class="kn-section-caption" data-kn-type="small">The shed in <em>May</em>.</figcaption></figure></div>',
+    '<header class="kn-section-head"><hgroup class="kn-heading-group"><h2 class="kn-heading-group-heading" id="a" data-kn-type="heading-2">A</h2></hgroup></header>',
+    '<div class="kn-section-body kn-body-text"><p>One.</p></div>',
+    '</div></section>',
+  ].join(''));
+  // The same media as the same blocks in a :::section.
+  const markdown = md`![A shed](/media/shed.webp)\
+The shed in *May*.
+
+## A
+
+One.`;
+  const media = (html) => html.match(/<div class="kn-section-media">.*?<\/div>/s)[0];
+  assert.equal(media(tight(pageBody(drawn(markdown), context(), { title: false }))), media(tight(drawn(`:::section\n\n${markdown}\n\n:::`))));
+});
+
 test('a body that opens with no hero has the title band first, and one that opens with a hero has none', () => {
   const ctx = context();
   assert.match(tight(pageBody(drawn('Words.'), ctx)), new RegExp(`^<section class="kn-band kn-section"><div class="kn-band-content"><header class="kn-section-head">.*<h1 class="kn-heading-group-heading" data-kn-type="heading-1">Planning a garden</h1></hgroup></header></div></section><section class="kn-band kn-section"><div class="kn-band-content"><div class="kn-section-body kn-body-text"><p>Words.</p>`, 's'));
