@@ -486,6 +486,7 @@ The class grammar and selectors are shared by Astro and the plain HTML export.
 | `--kn-hero-heading` | Not a custom property but an anchor name: a picture Hero's main heading where its text stands at the bottom, which places the top of the layer's full strength (the assistant's choice, 2026-11-25, issue #28). |
 | `--kn-scrim-header` | That layer's mask behind a transparent header, whole over the header's height and then clearing. |
 | `--kn-scrim-fade-direction` | Which way that mask runs: `to bottom` (default) with the text at the bottom, `to top` with the text at the top. |
+| `--kn-scrim-below` | Local length, `100rem`: how far that layer reaches below its main heading's top where a sticky header starts under a picture Hero with its text at the bottom, more than any Hero's text below its heading, so the layer never ends above the Hero's bottom, which clips it (the assistant's choice, 2026-11-25, issue #28). |
 
 | Attribute | What it is |
 |---|---|
