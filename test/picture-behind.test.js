@@ -4,8 +4,9 @@
 // it keeps the alt text it came with.
 import test, { after, before } from 'node:test';
 import assert from 'node:assert/strict';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
+import { generate, parse as parseCss, walk } from 'css-tree';
 import { chromium, firefox, webkit } from 'playwright-core';
 import { parse } from 'ultrahtml';
 import { querySelector as one, querySelectorAll as all } from 'ultrahtml/selector';
@@ -16,6 +17,7 @@ import { serve } from './helpers/serve.js';
 import { renderMarkdown, testDesign } from './helpers/konzilo-body.js';
 import { ROLES, ROLE_TARGETS, contrast, derive, defaultInputs } from '../src/generator/index.js';
 import { coreCss } from '../src/css/index.js';
+import { surfaceCss } from '../src/css/surface.js';
 import { componentsCss } from '../src/css/components.js';
 import { breadcrumbProps } from '../src/components/design-props.js';
 import { pageContext } from '../src/directives/render/context.js';
@@ -122,9 +124,81 @@ test('an article\'s opening draws its main image behind as an <img> with the src
   assert.equal(pictureOf(sectionOf(opening({ picture: 'behind' }, { src: 'media/soil.webp', alt: '' }))).attributes.src, 'media/soil.webp');
 });
 
+// ---------- In print, by the stylesheets ----------
+
+// What surface.js declares for a Surface, by property, each with every value it takes: the block of each kind, and the
+// block a header the page starts under takes from its first band, of a design and one with the quiet edge, which adds
+// the filled button's ring. A kind with a scrim is a picture's.
+function surfaceDeclarations() {
+  const blocks = { own: [], header: [] };
+  for (const inputs of [defaultInputs(), { ...defaultInputs(), frame: { width: 1, color: 'border' } }]) {
+    walk(parseCss(surfaceCss(derive(inputs).surfaces)), {
+      visit: 'Rule',
+      enter(rule) {
+        const selector = generate(rule.prelude);
+        const declared = new Map();
+        walk(rule.block, { visit: 'Declaration', enter(node) { declared.set(node.property, generate(node.value).trim()); } });
+        const kind = /\[data-kn-surface="([\w-]+)"\]/.exec(selector)?.[1];
+        if (/^\[data-kn-surface="[\w-]+"\]$/.test(selector)) blocks.own.push({ kind, declared });
+        else if (selector.endsWith('>[data-kn-start="under"]')) blocks.header.push({ kind, declared });
+      },
+    });
+  }
+  const pictures = new Set(blocks.own.filter(({ declared }) => declared.has('--kn-scrim')).map(({ kind }) => kind));
+  const of = (found) => found.filter(({ kind }) => pictures.has(kind)).reduce((all, { declared }) => {
+    for (const [property, value] of declared) all.set(property, [...(all.get(property) ?? []), value]);
+    return all;
+  }, new Map());
+  return { picture: of(blocks.own), header: of(blocks.header) };
+}
+
+// What a component's stylesheet declares in print for one selector, at its top and in its print block.
+function printedFor(file, selector) {
+  const wanted = generate(parseCss(selector, { context: 'selector' }));
+  const declared = new Map();
+  walk(parseCss(readFileSync(new URL(`../src/components/${file}`, import.meta.url), 'utf8')), {
+    visit: 'Rule',
+    enter(rule) {
+      const within = this.atrule;
+      const applies = !within || within.name === 'layer' || (within.name === 'media' && generate(within.prelude) === 'print');
+      if (!applies || !rule.prelude.children.toArray().some((one) => generate(one) === wanted)) return;
+      walk(rule.block, { visit: 'Declaration', enter(node) { declared.set(node.property, generate(node.value).trim()); } });
+    },
+  });
+  return declared;
+}
+
+// A band's, a card's and a header's own print rules take back what surface.js gives a picture's Surface, and what a
+// header takes from a first band of one, so each stands in the colours of what it stands on: every declaration, unless
+// it reads only what the rule takes back, as a background, a colour and the frame's ring do, or is one of the scrim's
+// masks, which shape a scrim the rule clears. A declaration surface.js adds that a print rule leaves out fails here.
+const MASKS = ['--kn-scrim-fade', '--kn-scrim-header'];
+const PRINTED_RESETS = [
+  ['band.css', '.kn-band:has(> .kn-band-picture)', 'picture'],
+  ['cards.css', '.kn-cards[data-kn-picture="behind"] .kn-card:has(> .kn-card-picture)', 'picture'],
+  ['header.css', '.kn-page:has(> .kn-page-main > .kn-band:first-child > .kn-band-picture) > .kn-header[data-kn-start="under"]', 'header'],
+];
+test('in print a band, a card and a header that a picture behind the text leaves on what they stand on take back every declaration surface.js gives them', () => {
+  const surfaces = surfaceDeclarations();
+  assert.ok(surfaces.picture.has('--kn-scrim') && surfaces.picture.has('background-image') && MASKS.every((mask) => surfaces.picture.has(mask)), 'a picture\'s Surface has its scrim, its picture and the scrim\'s masks');
+  for (const [file, selector, from] of PRINTED_RESETS) {
+    const printed = printedFor(file, selector);
+    const reads = (values) => values.every((value) => /^var\(--kn-[\w-]+\)$/.test(value) && printed.has(value.slice(4, -1)));
+    for (const [property, values] of surfaces[from]) {
+      if (MASKS.includes(property) || reads(values)) continue;
+      assert.ok(printed.has(property), `${file}: in print ${selector} takes back ${property}, which surface.js gives it as ${values[0]}`);
+    }
+    for (const [property, value] of printed) {
+      if (!surfaces[from].has(property)) continue;
+      const taken = property === '--kn-scrim' ? 'transparent' : property === 'background-image' ? 'none' : 'inherit';
+      assert.equal(value, taken, `${file}: in print ${selector} sets ${property} to ${taken}`);
+    }
+  }
+});
+
 // ---------- In the browser ----------
 
-const BROWSERS = Object.entries({ chromium, firefox, webkit }).filter(([, type]) => existsSync(type.executablePath()));
+const BROWSERS =Object.entries({ chromium, firefox, webkit }).filter(([, type]) => existsSync(type.executablePath()));
 // A phone and a wide screen.
 const WINDOWS = [[390, 844], [1440, 900]];
 const HEIGHTS = ['third', 'half', 'two-thirds', 'full'];
@@ -141,7 +215,8 @@ const DRAWN_PLACES = ['center', 'bottom'];
 // In print, a sheet of A4, 210 × 297 mm, at 96 CSS pixels to the inch, as a browser lays a page out on it. On it, each
 // band with its picture behind, under the site's header and with a band on the page after it: a Hero with its text at
 // each place, and under a header the page starts under, the hero directive's, an article opening's, the design's own,
-// a Band's, one with a picture taller than half the sheet, and a series of cards with their pictures behind.
+// a Band's, one with a picture taller than half the sheet, and a series of cards with their pictures behind, on the page
+// and in a band of another colour.
 const SHEET = { width: 794, height: 1123 };
 const PRINTED = ['hero-top', 'hero-center', 'hero-bottom', 'hero-under', 'directive', 'opening', 'band', 'tall'];
 const DECK = 'Practical support, useful information and a straightforward way to get started.';
@@ -185,6 +260,7 @@ before(async () => {
     band: [below, await render('Band', { surface: 'picture-dark', picture: PICTURE, alt: 'A garden' }, { default: '<h2>Raised beds</h2><p>Start small, and let the beds widen year by year.</p>' })],
     tall: [below, await render('Band', { surface: 'picture-light', picture: TALL }, { default: '<h2>A tall picture</h2><p>Taller than half the sheet.</p>' })],
     cards: [below, renderMarkdown(CARDS)],
+    'cards-band': [below, renderMarkdown(CARDS.replace('::::section', '::::section{surface="inverse"}'))],
   };
   for (const [name, [top, band]] of Object.entries(printed)) for (const mode of MODES) pages.set(`/print-${name}-${mode}.html`, document(await render('Page', {}, { header: top, default: `${band}${next}` }), mode));
   server = await serve(fileURLToPath(new URL('../presentation/pictures/', import.meta.url)), { pages });
@@ -421,17 +497,20 @@ test('in print a card\'s picture behind its text stands above it, 16:9 of the ca
               card: card.getBoundingClientRect().toJSON(), picture: picture.toJSON(), fit: getComputedStyle(card.querySelector('.kn-card-picture')).objectFit,
               words: Math.min(...[...card.children].filter((child) => !child.matches('.kn-card-picture')).map((child) => child.getBoundingClientRect().top)),
               scrim: scrim.content === 'none' ? 'none' : `${scrim.backgroundColor} ${scrim.backgroundImage}`,
+              image: style.backgroundImage,
               heading: getComputedStyle(card.querySelector('.kn-card-heading')).color, background: style.backgroundColor, roles: rolesOf(style),
             };
           }) };
         }, ROLES);
         assert.equal(seen.cards.length, 3, label);
-        for (const [i, { card, picture, fit, words, scrim, heading, background, roles }] of seen.cards.entries()) {
+        for (const [i, { card, picture, fit, words, scrim, image, heading, background, roles }] of seen.cards.entries()) {
           const which = `${label}, card ${i + 1}`;
           assert.ok(Math.abs(picture.top - card.top) < 0.5 && picture.bottom <= words + 0.5, `${which}: the picture first, above the card's text`);
           assert.ok(Math.abs(picture.left - card.left) < 0.5 && Math.abs(picture.width - card.width) < 0.5, `${which}: as wide as the card`);
           assert.ok(Math.abs(picture.height - picture.width * 9 / 16) < 0.5 && fit === 'cover', `${which}: cropped to 16:9, ${picture.width} × ${picture.height}`);
           assert.ok(clear(scrim), `${which}: no scrim, ${scrim}`);
+          // Nor the Surface's own under the picture, a background a browser prints with backgrounds.
+          assert.equal(image, 'none', `${which}: no scrim under the picture either`);
           assert.equal(heading, seen.page.color, `${which}: the heading in the page's text colour`);
           assert.equal(background, seen.page.background, `${which}: on the page's background`);
           assert.ok(contrast(hex(heading), hex(seen.page.background)) >= ROLE_TARGETS.text, `${which}: at the design's contrast`);
@@ -439,6 +518,49 @@ test('in print a card\'s picture behind its text stands above it, 16:9 of the ca
           const distance = await bare(tab, `.kn-cards > .kn-card:nth-child(${i + 1}) > .kn-card-picture`, 12);
           t.diagnostic(`${which}: ${distance.toFixed(2)}`);
           assert.ok(distance <= LIMIT, `${which}: the picture is drawn ${distance.toFixed(2)} levels from itself alone`);
+        }
+      }
+    } finally {
+      await tab.close();
+    }
+  }
+});
+
+// A card with its picture behind, in a band of another colour, prints in that band's colours, as an ordinary card there
+// does: with backgrounds printed, the page's dark text would stand on the band's dark background (the assistant's reading
+// of #43's "in the page's colours", awaiting the owner; konzilo.md, A band's picture).
+test('in print a card\'s picture behind its text in a band of another colour leaves the card in the band\'s colours, as an ordinary card there, in both modes', { timeout: 300000 }, async () => {
+  for (const [name, browser] of browsers) {
+    const tab = await browser.newPage({ viewport: SHEET });
+    try {
+      await tab.emulateMedia({ media: 'print' });
+      for (const mode of MODES) {
+        const label = `${name} in ${mode} mode`;
+        await tab.goto(`${server.origin}/print-cards-band-${mode}.html`);
+        const seen = await tab.evaluate((roles) => {
+          const colours = (node) => {
+            const style = getComputedStyle(node);
+            return { color: style.color, background: style.backgroundColor, scheme: style.colorScheme, roles: roles.map((role) => style.getPropertyValue(`--kn-${role}`).trim()) };
+          };
+          const heading = (card) => getComputedStyle(card.querySelector('.kn-card-heading')).color;
+          const cards = [...document.querySelectorAll('.kn-band[data-kn-surface] .kn-card')];
+          return {
+            band: colours(document.querySelector('.kn-band[data-kn-surface]')),
+            page: colours(document.querySelector('.kn-page')),
+            behind: cards.filter((card) => card.querySelector(':scope > .kn-card-picture')).map((card) => ({ ...colours(card), heading: heading(card) })),
+            ordinary: cards.filter((card) => !card.querySelector(':scope > .kn-card-picture')).map(heading),
+          };
+        }, ROLES);
+        assert.equal(seen.behind.length, 3, label);
+        assert.equal(seen.ordinary.length, 1, label);
+        assert.notEqual(seen.band.background, seen.page.background, `${label}: the band is of another colour than the page`);
+        for (const [i, card] of seen.behind.entries()) {
+          const which = `${label}, card ${i + 1}`;
+          assert.equal(card.heading, seen.band.color, `${which}: the heading in the band's text colour`);
+          assert.equal(card.heading, seen.ordinary[0], `${which}: as an ordinary card's heading in the band`);
+          assert.equal(card.background, seen.band.background, `${which}: on the band's background`);
+          assert.ok(contrast(hex(card.heading), hex(seen.band.background)) >= ROLE_TARGETS.text, `${which}: at the design's contrast`);
+          assert.deepEqual([card.scheme, card.roles], [seen.band.scheme, seen.band.roles], `${which}: every role the band's`);
         }
       }
     } finally {

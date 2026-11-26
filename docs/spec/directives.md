@@ -852,7 +852,7 @@ What each plan holds.
 </div>
 ```
 
-**Read from content.** *(CSS)* The text on the picture, over the Surface's checked scrim. A card without a picture in the series is drawn as an ordinary card. In print a card with its picture behind is an ordinary card too, its picture above its text, cropped to 16:9 of its width as an ordinary card's is, with no scrim and in the colours of what it stands on, the page's on the page (***decided* by the owner, 2026-11-26**, issue #43; konzilo.md, A band's picture). It drops its plate, its frame, padding and shadow, and a card in a band of another colour takes that band's colours, as an ordinary card there does (the assistant's choices, the same day).
+**Read from content.** *(CSS)* The text on the picture, over the Surface's checked scrim. A card without a picture in the series is drawn as an ordinary card. In print a card with its picture behind is an ordinary card too, its picture above its text, cropped to 16:9 of its width as an ordinary card's is, with no scrim and in the colours of what it stands on, the page's on the page (***decided* by the owner, 2026-11-26**, issue #43; konzilo.md, A band's picture). It drops its plate, its frame, padding and shadow (the assistant's choice, the same day), and a card in a band of another colour takes that band's colours, as an ordinary card there does (the assistant's reading of "in the page's colours", awaiting the owner; konzilo.md, A band's picture).
 
 **Behaviour.** None. **Component.** Card, with a picture Surface.
 
