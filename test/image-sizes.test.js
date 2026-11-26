@@ -18,7 +18,8 @@ import { presentationHtml, teaserCard, teaserImageOf, teaserOf } from '../src/pr
 import { imageContexts } from '../src/konzilo/index.js';
 import {
   ACCORDION, BADGE, CARD, FEATURED, GALLERY, HEADER, HERO_HEIGHTS, HERO_STACKED, LOGO, LOGOS, OFFER, SECTION, SWITCH, SYMBOL, WIDEST,
-  bandPictureSizes, cornerToCorner, drawnWidths, heroPictureOf, masterWidths, noWider, pictureSizes, seriesPicture, teaserPictures,
+  bandPictureSizes, bodyPictures, cornerToCorner, drawnWidths, heroPictureOf, masterWidths, noWider, pictureSizes, placeRows, seriesPicture,
+  teaserPictures, teaserRows,
 } from '../src/konzilo/images.js';
 import { htmlToHast } from 'satteri';
 import { render } from './helpers/render.js';
@@ -985,6 +986,56 @@ test('the page parts write on each series the sizes of where they put it, and a 
   const image = { src: { name: 'soil', width: 1600, height: 1000 }, alt: '' };
   assert.deepEqual(readMorePicture(ctx, 3, image), seriesPicture(r, 3, { list: true, ratio: 1.6, place: 'across' }));
   assert.equal(readMorePicture(ctx, 3, { src: '/public/soil.webp', alt: '' }), null);
+});
+
+test('the Details page lists a card\'s sizes across a band by its number of cards, and each other place where they differ', () => {
+  for (const name of ['default', 'inverted', 'large']) {
+    const r = design(DESIGNS[name]);
+    // Across a band, from one card to eight, those of one sizes together, for a photo of 3:2; behind its text too.
+    const series = bodyPictures(r).filter(({ picture }) => picture === 'series');
+    assert.deepEqual(series.flatMap(({ counts }) => counts).sort((a, b) => a - b), [1, 2, 3, 4, 5, 6, 7, 8], name);
+    for (const { counts, sizes } of series) for (const count of counts) assert.equal(sizes, seriesPicture(r, count, { ratio: PHOTO, place: 'across' }).sizes, `${name}, ${count} cards`);
+    for (const { counts, sizes } of bodyPictures(r).filter(({ picture }) => picture === 'series-behind')) {
+      for (const count of counts) assert.equal(sizes, seriesPicture(r, count, { ratio: PHOTO, behind: true, place: 'across' }).sizes, `${name}, ${count} cards behind`);
+    }
+    // Each other place, a row of what differs there from across a band: a card's by its number of cards, `featured`'s
+    // teasers where a list stands, and where no part says where it stands, a list's teasers too.
+    const rows = placeRows(r);
+    const across = (count) => seriesPicture(r, count, { ratio: PHOTO, place: 'across' }).sizes;
+    const [first, other] = teaserPictures(r, 'featured', 2, photos(2), { place: 'across' });
+    for (const { key, place, entries } of rows) {
+      assert.ok(entries.length > 0, `${name}, ${key}: only a place that differs has a row`);
+      for (const entry of entries) {
+        const why = `${name}, ${key}, ${entry.key}`;
+        if (entry.picture === 'series') {
+          for (const count of entry.counts) {
+            assert.equal(entry.sizes, seriesPicture(r, count, { ratio: PHOTO, place }).sizes, why);
+            assert.notEqual(entry.sizes, across(count), why);
+          }
+        } else if (entry.picture === 'teaser') {
+          for (const count of entry.counts) assert.equal(entry.sizes, teaserPictures(r, 'filtered', count, photos(count), { place })[0].sizes, why);
+        } else {
+          const [latest, next] = teaserPictures(r, 'featured', 2, photos(2), { place });
+          assert.equal(entry.sizes, (entry.picture === 'featured-first' ? latest : next).sizes, why);
+          assert.notEqual(entry.sizes, (entry.picture === 'featured-first' ? first : other).sizes, why);
+        }
+      }
+    }
+    const keys = rows.map(({ key }) => key);
+    assert.ok(keys.includes('accordion-head-questions') && keys.at(-1) === 'unknown', `${name}: ${keys}`);
+    assert.equal(keys.includes('corners'), cornerToCorner(r), `${name}: corner to corner where the design sets it`);
+    // Where Narrow is wider than Wide, a section at Narrow draws a series as across a band.
+    assert.equal(keys.includes('narrow'), r.layout.narrow < r.layout.wide, `${name}: ${keys}`);
+  }
+  // A lone teaser of `cards` fills its column beside a quotation, where its teasers' widths are those of the widest
+  // place a list may stand in, which a presentation cannot know.
+  const r = design({});
+  const lone = teaserRows(r).find(({ key }) => key === 'teaser-lone');
+  assert.equal(lone.sizes, teaserPictures(r, 'cards', 1, [PHOTO], { place: 'columns' })[0].sizes);
+  assert.deepEqual(lone.widths, teaserPictures(r, 'cards', 1, [PHOTO])[0].widths);
+  for (const { counts, sizes, widths } of teaserRows(r).filter(({ picture }) => picture === 'teaser')) {
+    for (const count of counts) assert.deepEqual([sizes, widths], [teaserPictures(r, 'filtered', count, photos(count), { place: 'across' })[0].sizes, teaserPictures(r, 'filtered', count, photos(count))[0].widths]);
+  }
 });
 
 test('a hero\'s picture beside its text and its logo, and a logo in a list of logos, say the widths they are drawn at', () => {

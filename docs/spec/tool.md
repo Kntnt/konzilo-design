@@ -147,13 +147,20 @@ the reference values for those who build the site, has a disclosure, Image width
 with each context's widths, `sizes` and ratio as `fromDesign` hands them to the core, and under
 them, Pictures the design draws from a body, each `sizes` the design's own parts write on a
 picture they draw from a body, from `bodyPictures(resolved)` (issue #38, under the owner's
-triage of 2026-11-26): a card's picture by its number of cards, and so behind its text, a
-section's photo and a figure in its body by the section's layout, a hero's picture behind its
-text or beside it, and a logo, a badge and a symbol at their widest, a picture the CSS crops to
-cover its box for a photo of 3:2, as its note says; and under them, Teasers in a list of posts, the widths and `sizes` the
+triage of 2026-11-26): a card's picture across a band by its number of cards, and so behind its
+text, a section's photo and a figure in its body by the section's layout, a hero's picture behind
+its text or beside it, and a logo, a badge and a symbol at their widest, a picture the CSS crops to
+cover its box for a photo of 3:2, as its note says; under them, Cards and teasers in other places,
+from `placeRows(resolved)` (the assistant's form, 2026-11-26, issue #44): a row for each place
+where a card's or a teaser's `sizes` differ from across a band, a section's layouts, an accordion
+in them and beside a section's head, and where no part says where it stands, each row what
+differs there, a card's by its number of cards and featured's two, a place where nothing differs
+left out; and under them, Teasers in a list of posts, the widths and `sizes` the
 design's presentations of a post list make each teaser's picture in, from `teaserRows(resolved)`
-(issue #39, under the owner's triage of 2026-11-26): in cards and filtered by the number of
-posts, a lone teaser in cards, and featured's latest post and the others, for a photo of 3:2,
+(issue #39, under the owner's triage of 2026-11-26): the widths of the widest place a list stands
+in, which a presentation cannot know, and the `sizes` across a band in cards and filtered by the
+number of posts and of featured's latest post and the others, and a lone teaser in cards beside a
+quotation, where it fills its column, for a photo of 3:2,
 with a word that a width within a tenth below the uploaded picture's own is made at its own
 width, and that an article's opening takes a hero's picture's; the contexts' note says a hero's
 are for a picture of 16:9. The widths drawn come from `drawnWidths(resolved, px, high)` in

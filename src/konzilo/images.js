@@ -782,31 +782,32 @@ export function teaserPictures(r, presentation, count, ratios = [], { place } = 
 // A ratio a picture the Details page lists has where its sizes follows its proportions: a camera's 3:2.
 const SHOWN_RATIO = 3 / 2;
 
-// The numbers of cards or posts from one to eight, those whose pictures have the same sizes together, each
-// { counts, ...picture(count) } in order of their first number.
-function byCounts(picture) {
+// The numbers of cards or posts from one to eight, those whose pictures have the same sizes and widths together, each
+// { counts, ...picture(count) } in order of their first number; those `leave(count, picture)` names left out.
+function byCounts(picture, leave = () => false) {
   const found = new Map();
   for (let count = 1; count <= 8; count++) {
     const made = picture(count);
-    const same = found.get(made.sizes);
-    found.set(made.sizes, { ...made, counts: [...(same?.counts ?? []), count] });
+    if (leave(count, made)) continue;
+    const key = `${made.sizes} ${made.widths ?? ''}`;
+    found.set(key, { ...made, counts: [...(found.get(key)?.counts ?? []), count] });
   }
   return [...found.values()];
 }
 
 /**
  * Every sizes a resolved design writes on a picture its parts draw from a body, for the presentation's Details page
- * (tool.md, Pictures at the right size): a card's picture by the number of cards, from one to eight, those of the same
- * sizes together, and so behind its text; a section's photo and a figure in its body by the section's layout, corner to
- * corner where the design sets its pictures so; a hero's picture behind its text or beside it, where the design puts it;
- * and a logo, a badge and a symbol at their widest, a narrower one by its proportions. A picture the CSS crops to cover
- * its box says how wide a picture of 3:2 is drawn there.
+ * (tool.md, Pictures at the right size): a card's picture across a band by the number of cards, from one to eight, those
+ * of the same sizes together, and so behind its text (its other places are placeRows()'); a section's photo and a figure
+ * in its body by the section's layout, corner to corner where the design sets its pictures so; a hero's picture behind
+ * its text or beside it, where the design puts it; and a logo, a badge and a symbol at their widest, a narrower one by
+ * its proportions. A picture the CSS crops to cover its box says how wide a picture of 3:2 is drawn there.
  * @param {object} r A design file's `resolved`.
  * @returns {{ key: string, picture: string, layout?: string, counts?: number[], sizes: string }[]}
  */
 export function bodyPictures(r) {
   const row = (picture, layout, options = {}) => ({ key: layout ? `${picture}-${layout}` : picture, picture, layout, sizes: pictureSizes(r, picture, { layout, ratio: SHOWN_RATIO, ...options }) });
-  const series = (behind) => byCounts((count) => ({ sizes: pictureSizes(r, 'series', { count, behind, ratio: SHOWN_RATIO }) }))
+  const series = (behind) => byCounts((count) => ({ sizes: pictureSizes(r, 'series', { count, behind, ratio: SHOWN_RATIO, place: 'across' }) }))
     .map(({ counts, sizes }) => ({ key: `series${behind ? '-behind' : ''}-${counts.join('-')}`, picture: behind ? 'series-behind' : 'series', counts, sizes }));
   const { picture: place = 'behind', height } = r.hero ?? {};
   return [
@@ -820,18 +821,62 @@ export function bodyPictures(r) {
   ];
 }
 
+// The places besides across a band a series may stand in, as the Details page lists them: each of SERIES_ROWS but
+// `head`, corner to corner where the design sets its pictures so; an accordion in each but a body in columns, which
+// holds none, and alone beside a section's head, of plain answers and of questions; and none, where no part says.
+function otherPlaces(r) {
+  const rows = SERIES_ROWS.filter((row) => !['across', 'head'].includes(row) && (row !== 'corners' || cornerToCorner(r)));
+  const accordions = ['across', ...rows.filter((row) => row !== 'columns'), 'head'].flatMap((accordion) => [{ accordion }, { accordion, questions: true }]);
+  return [...rows, ...accordions, undefined];
+}
+const placeKey = (place) => (place === undefined ? 'unknown' : typeof place === 'string' ? place : `accordion-${place.accordion}${place.questions ? '-questions' : ''}`);
+
+/**
+ * What a resolved design writes on a card's or a teaser's picture in each place besides across a band, where it differs
+ * from across a band, for the presentation's Details page (tool.md, Pictures at the right size; the assistant's choice,
+ * 2026-11-26, issue #44): a row for each place where anything differs, `key` its name, `accordion-<row>`, with
+ * `-questions` for one of questions, for an accordion standing there, and `unknown` where no part says where a series
+ * stands; its `entries` a card's picture by its number of cards, from one to eight, those of one sizes together, which a
+ * teaser in `cards` and `filtered` takes too, and where a list may stand, `featured`'s latest post and the others; and
+ * where no part says, a list's teasers by their number, which differ there from a card's. Each for a photo of 3:2.
+ * @param {object} r A design file's `resolved`.
+ * @returns {{ key: string, place?: string | object, entries: { key: string, picture: string, counts?: number[], sizes: string }[] }[]}
+ */
+export function placeRows(r) {
+  const card = (count, place) => pictureSizes(r, 'series', { count, ratio: SHOWN_RATIO, place });
+  const teasers = (presentation, count, place) => teaserPictures(r, presentation, count, Array(count).fill(SHOWN_RATIO), { place });
+  return otherPlaces(r).map((place) => {
+    const entries = byCounts((count) => ({ sizes: card(count, place) }), (count, made) => made.sizes === card(count, 'across'))
+      .map(({ counts, sizes }) => ({ key: `series-${counts.join('-')}`, picture: 'series', counts, sizes }));
+    if (place === undefined) {
+      entries.push(...byCounts((count) => ({ sizes: teasers('filtered', count)[0].sizes }), (count, made) => made.sizes === card(count, place))
+        .map(({ counts, sizes }) => ({ key: `teaser-${counts.join('-')}`, picture: 'teaser', counts, sizes })));
+    }
+    if (place === undefined || typeof place === 'string') {
+      const [across, here] = [teasers('featured', 2, 'across'), teasers('featured', 2, place)];
+      ['featured-first', 'featured-other'].forEach((picture, at) => {
+        if (here[at].sizes !== across[at].sizes) entries.push({ key: picture, picture, sizes: here[at].sizes });
+      });
+    }
+    return { key: placeKey(place), place, entries };
+  }).filter(({ entries }) => entries.length > 0);
+}
+
 /**
  * Every teaser's picture a resolved design makes in its post-list presentations, its widths and its sizes, for the
  * presentation's Details page (tool.md, Pictures at the right size): in `cards` and `filtered` by the number of posts,
- * from one to eight, those of the same sizes together; a lone teaser of `cards`; and the latest post of `featured` and
- * another; each for a photo of 3:2, which its 16:9 crop draws as wide as its card.
+ * from one to eight, those of the same sizes together, and the latest post of `featured` and another, across a band; and
+ * a lone teaser of `cards` beside a quotation, where it fills its column. Each is made in the widths of the widest place
+ * a list may stand in, which a presentation cannot know, and the section around it writes its sizes there (issue #44);
+ * the other places are placeRows()'. Each for a photo of 3:2, which its 16:9 crop draws as wide as its card.
  * @param {object} r A design file's `resolved`.
  * @returns {{ key: string, picture: string, counts?: number[], widths: number[], sizes: string }[]}
  */
 export function teaserRows(r) {
-  const shown = (presentation, count) => teaserPictures(r, presentation, count, Array(count).fill(SHOWN_RATIO));
-  const rows = byCounts((count) => shown('filtered', count)[0]).map(({ counts, widths, sizes }) => ({ key: `teaser-${counts.join('-')}`, picture: 'teaser', counts, widths, sizes }));
-  const [first, other] = shown('featured', 2);
-  rows.push({ key: 'teaser-lone', picture: 'teaser-lone', ...shown('cards', 1)[0] }, { key: 'featured-first', picture: 'featured-first', ...first }, { key: 'featured-other', picture: 'featured-other', ...other });
+  const shown = (presentation, count, place) => teaserPictures(r, presentation, count, Array(count).fill(SHOWN_RATIO), { place });
+  const made = (presentation, count, place) => shown(presentation, count, place).map((picture, at) => ({ ...picture, widths: shown(presentation, count)[at].widths }));
+  const rows = byCounts((count) => made('filtered', count, 'across')[0]).map(({ counts, widths, sizes }) => ({ key: `teaser-${counts.join('-')}`, picture: 'teaser', counts, widths, sizes }));
+  const [first, other] = made('featured', 2, 'across');
+  rows.push({ key: 'teaser-lone', picture: 'teaser-lone', ...made('cards', 1, 'columns')[0] }, { key: 'featured-first', picture: 'featured-first', ...first }, { key: 'featured-other', picture: 'featured-other', ...other });
   return rows;
 }
