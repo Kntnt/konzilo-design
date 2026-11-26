@@ -142,8 +142,12 @@ export function childElements(html, element) {
   }));
 }
 
+// An element's classes, as topElements() and its kin give it, and whether it has one.
+export const classesOf = (element) => String(element?.attributes?.class ?? '').split(/\s+/).filter(Boolean);
+export const hasClass = (element, name) => classesOf(element).includes(name);
+
 // An element's content, between its start tag and its end tag.
-export const innerHtml = (html, element) => html.slice(element.open.textEnd ?? element.open.end, endOf(html, element.open).start);
+export const innerHtml =(html, element) => html.slice(element.open.textEnd ?? element.open.end, endOf(html, element.open).start);
 
 /**
  * An element written again from `html`, under another name or with attributes of the design's: `set` adds an

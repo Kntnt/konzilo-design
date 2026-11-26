@@ -19,10 +19,11 @@ const teasers = teaserRows(r);
 const cardCounts = new Intl.ListFormat(copy.lang, { type: 'disjunction' });
 const counted = (counts) => (counts ? cardCounts.format(counts.map(String)) : '');
 const pictureName = (key, counts) => t(`details.picture.${key}`, { counts: counted(counts) });
-// A place's name: an accordion's by the place it stands in.
-const placeName = (key) => {
-  const [, row, questions] = /^accordion-(.+?)(-questions)?$/.exec(key) ?? [];
-  return row ? t(questions ? 'details.place.accordion-questions' : 'details.place.accordion', { where: t(`details.place.${row}`) }) : t(`details.place.${key}`);
+// A place's name, as placeRows() gives the place: a row's, an accordion's by the row it stands in, and none's.
+const placeName = (place) => {
+  if (place === undefined) return t('details.place.unknown');
+  if (!place.accordion) return t(`details.place.${place}`);
+  return t(place.questions ? 'details.place.accordion-questions' : 'details.place.accordion', { where: t(`details.place.${place.accordion}`) });
 };
 const entryName = ({ picture, counts }) => (['series', 'teaser'].includes(picture) ? t(`details.place.${picture}`, { counts: counted(counts) }) : pictureName(picture));
 const licences = await Promise.all(shipped.map(({ licence }) => readFile(`src/fonts/${licence}`, 'utf8')));
@@ -54,7 +55,7 @@ const licences = await Promise.all(shipped.map(({ licence }) => readFile(`src/fo
   <h2 data-kn-type="heading-4">{t('details.images.places')}</h2>
   <p class="prose">{t('details.images.places.note')}</p>
   <div class="table-scroll"><table data-series-places><thead><tr>{['place', 'sizes'].map((key) => <th>{t(`details.images.${key}`)}</th>)}</tr></thead><tbody>
-    {places.map(({ key, entries }) => <tr data-place={key}><th>{placeName(key)}</th><td><dl>{entries.map((entry) => <div data-entry={entry.key}><dt>{entryName(entry)}</dt><dd><SizesCode sizes={entry.sizes} /></dd></div>)}</dl></td></tr>)}
+    {places.map(({ key, place, entries }) => <tr data-place={key}><th>{placeName(place)}</th><td><dl>{entries.map((entry) => <div data-entry={entry.key}><dt>{entryName(entry)}</dt><dd><SizesCode sizes={entry.sizes} /></dd></div>)}</dl></td></tr>)}
   </tbody></table></div>
   <h2 data-kn-type="heading-4">{t('details.images.teasers')}</h2>
   <p class="prose">{t('details.images.teasers.note')}</p>
