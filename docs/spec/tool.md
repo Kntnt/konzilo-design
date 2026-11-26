@@ -140,7 +140,12 @@ worst twice the data needed; two steps for a screen of double density; the ladde
 a picture in body text on a wide screen, with the version a phone loads for one; the steps each
 context takes; and the cap. The page has no `sizes` and no code: the Details page, which holds
 the reference values for those who build the site, has a disclosure, Image widths and sizes,
-with each context's widths, `sizes` and ratio as `fromDesign` hands them to the core. The
+with each context's widths, `sizes` and ratio as `fromDesign` hands them to the core, and under
+them, Pictures the design draws from a body, each `sizes` the design's own parts write on a
+picture they draw from a body, from `bodyPictures(resolved)` (issue #38, under the owner's
+triage of 2026-11-26): a card's picture by its number of cards, a section's photo and a figure
+in its body by the section's layout, a hero's picture beside its text, and a logo, a badge and
+a symbol at their widest. The Media page's words stay as they are. The
 widths drawn come from `drawnWidths(resolved, px)` in `src/konzilo/images.js`, the drawings
 the `sizes` come from, so the two never disagree; `test/image-sizes.test.js` holds it to the
 specs' words, and `test/presentation.test.js` holds both pages to it for three designs, one

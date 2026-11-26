@@ -56,6 +56,7 @@ const PLACES = [
   ['src/css/index.js', "put('frame-width'", 'writes the frame, 0-3px'],
   ['src/generator/shadow.js', '`${r}px`', 'writes a shadow'],
   ['presentation/src/samples.js', '<svg xmlns=', 'the own size of a picture file, not a length on a page'],
+  ['src/konzilo/images.js', '${number(px)}px)', 'the display width the editor gave a picture, which the core writes in its sizes in pixels'],
 ];
 
 const used = new Set();

@@ -413,3 +413,28 @@ export function pictureSizes(r, picture, { display = null, ...options } = {}) {
   const sizes = sizesOf(drawn);
   return capped && display ? noWider(sizes, display) : sizes;
 }
+
+/**
+ * Every sizes a resolved design writes on a picture its parts draw from a body, for the presentation's Details page
+ * (tool.md, Pictures at the right size): a card's picture by the number of cards, from one to eight, those of the same
+ * sizes together; a section's photo and a figure in its body by the section's layout, corner to corner where the design
+ * sets its pictures so; a hero's picture beside its text where the design puts it there; and a logo, a badge and a
+ * symbol at their widest, a narrower one by its proportions.
+ * @param {object} r A design file's `resolved`.
+ * @returns {{ key: string, picture: string, layout?: string, counts?: number[], sizes: string }[]}
+ */
+export function bodyPictures(r) {
+  const series = new Map();
+  for (let count = 1; count <= 8; count++) {
+    const { sizes } = seriesPicture(r, count);
+    series.set(sizes, [...(series.get(sizes) ?? []), count]);
+  }
+  const rows = [...series].map(([sizes, counts]) => ({ key: `series-${counts.join('-')}`, picture: 'series', counts, sizes }));
+  const row = (picture, layout, options = {}) => ({ key: layout ? `${picture}-${layout}` : picture, picture, layout, sizes: pictureSizes(r, picture, { layout, ...options }) });
+  rows.push(...['cropped', 'badges', 'offered'].map((layout) => row('section-photo', layout)));
+  rows.push(...['across', 'beside', ...(cornerToCorner(r) ? ['corners'] : []), 'narrow', 'form'].map((layout) => row('section-body', layout)));
+  const place = r.hero?.picture ?? 'behind';
+  if (place !== 'behind') rows.push(row('hero', undefined, { side: place === 'none' ? 'end' : place }));
+  rows.push(row('hero-logo'), row('badge'), row('logo'), row('symbol', 'item'), row('symbol', 'heading'));
+  return rows;
+}

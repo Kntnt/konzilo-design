@@ -1,14 +1,16 @@
 ---
 import { shippedIn } from '../../../src/fonts/catalog.js';
 import { readFile } from 'node:fs/promises';
-import { resolved as r, t, num, date } from '../data.js';
+import { resolved as r, t, num, date, copy } from '../data.js';
 import { typeOrder, faceName, families, range, px } from '../words.js';
 import { shownRole } from '../../../src/design-md/surfaces.js';
-import { imageContexts } from '../../../src/konzilo/images.js';
+import { bodyPictures, imageContexts } from '../../../src/konzilo/images.js';
 const shipped = shippedIn(r.typefaces);
 // What fromDesign hands the core for each picture, as the site writes it (konzilo.md, Images); the Media page says it in
-// words for a client.
+// words for a client. Beside them, the sizes the design's own parts write on the pictures they draw from a body.
 const images = imageContexts(r);
+const drawn = bodyPictures(r);
+const cardCounts = new Intl.ListFormat(copy.lang, { type: 'disjunction' });
 const licences = await Promise.all(shipped.map(({ licence }) => readFile(`src/fonts/${licence}`, 'utf8')));
 ---
 <details><summary>{t('details.contrast')}</summary>
@@ -29,6 +31,11 @@ const licences = await Promise.all(shipped.map(({ licence }) => readFile(`src/fo
   <p class="prose">{t('details.images.note')}</p>
   <div class="table-scroll"><table data-image-sizes><thead><tr>{['context', 'widths', 'sizes', 'ratio'].map((key) => <th>{t(`details.images.${key}`)}</th>)}</tr></thead><tbody>
     {Object.entries(images).map(([name, { widths, sizes, ratio }]) => <tr data-context={name}><th><code>{name}</code></th><td data-widths>{widths.join(', ')}</td><td><code data-sizes>{sizes.split(', ').map((stretch, i, all) => <span>{stretch}{i < all.length - 1 && ', '}</span>)}</code></td><td>{ratio ?? t('details.images.whole')}</td></tr>)}
+  </tbody></table></div>
+  <h2 data-kn-type="heading-4">{t('details.images.drawn')}</h2>
+  <p class="prose">{t('details.images.drawn.note')}</p>
+  <div class="table-scroll"><table data-body-pictures><thead><tr>{['picture', 'sizes'].map((key) => <th>{t(`details.images.${key}`)}</th>)}</tr></thead><tbody>
+    {drawn.map(({ key, picture, layout, counts, sizes }) => <tr data-picture={key}><th>{t(`details.picture.${picture}${layout ? `.${layout}` : ''}`, { counts: counts ? cardCounts.format(counts.map(String)) : '' })}</th><td><code data-sizes>{sizes.split(', ').map((stretch, i, all) => <span>{stretch}{i < all.length - 1 && ', '}</span>)}</code></td></tr>)}
   </tbody></table></div>
 </details>
 <details><summary>{t('details.fonts')}</summary>
