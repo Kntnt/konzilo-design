@@ -5,6 +5,8 @@ import assert from 'node:assert/strict';
 import { readdir, readFile } from 'node:fs/promises';
 import { derive, fitRolesToFaces, validateInputs, sizeAt } from '../src/generator/index.js';
 import { coreCss } from '../src/css/index.js';
+import { codePoints, woff2Tables } from './helpers/woff2.js';
+import { BLOCK, INLINE } from '../gallery/src/formula-samples.js';
 
 const read = (path, encoding = 'utf8') => readFile(new URL(`../${path}`, import.meta.url), encoding);
 const generic = /(?:sans-serif|serif|monospace)$/;
@@ -310,19 +312,46 @@ test('a design file value names its shipped typeface, and only used typefaces ar
   );
 });
 
-// Formulas are drawn in one math font for every design (issue #33): STIX Two Math 2.13, the upstream release's WOFF2 as
-// it is published, since its licence reserves the name "TM Math" and "STIX Two" is the IEEE's trademark, so a cut
-// version could not be called by its name. It is no typeface a role may take.
-test('the formulas\' font ships whole, as its release publishes it, with its licence, and is no typeface of a role', async () => {
+// Formulas are drawn in one math font for every design (issue #33): STIX Two Math 2.13, from its release, cut to the
+// characters Temml can write and shipped under its own name, as the cut typefaces are (the owner, 2026-11-26), since its
+// licence reserves only the name "TM Math". It is no typeface a role may take.
+test('the formulas\' font ships cut, under its own name, with its licence, and is no typeface of a role', async () => {
   assert.equal(MATH.family, 'STIX Two Math');
   assert.equal(MATH.version, '2.13 b171');
   assert.equal(MATH.source, 'https://github.com/stipub/stixfonts/tree/v2.13b171');
+  assert.equal(MATH.subset, 'temml 0.14.0');
   assert.equal(MATH.italic, null);
   assert.ok(!TYPEFACES.some((face) => face.family === MATH.family), 'no role may take it');
   const file = await read(`src/fonts/${MATH.upright}`, null);
   assert.equal(file.subarray(0, 4).toString('latin1'), 'wOF2');
-  // The SHA-256 of fonts/static_otf_woff2/STIXTwoMath-Regular.woff2 at the tag v2.13b171 of stipub/stixfonts.
-  assert.equal(createHash('sha256').update(file).digest('hex'), '094191335def3f0452c81ec0713cfc2f29bb6af8cecbf79b60881fbf2db97562');
-  assert.match(await read(`src/fonts/${MATH.licence}`), /Reserved Font Name "TM Math"[\s\S]*SIL OPEN FONT LICENSE Version 1\.1/);
+  // The SHA-256 of what bin/design-fonts writes from fonts/static_otf_woff2/STIXTwoMath-Regular.woff2 at the tag
+  // v2.13b171 of stipub/stixfonts, cut to the characters of Temml 0.14.0. Run it again after changing either, and put
+  // the hash of the file it writes here.
+  assert.equal(createHash('sha256').update(file).digest('hex'), 'e5e7b318d312287a4ae23b9cdce8bb1c44791c21b567fd16523fc91a7eb58f6b');
+  const licence = await read(`src/fonts/${MATH.licence}`);
+  assert.match(licence, /SIL OPEN FONT LICENSE Version 1\.1/);
+  assert.deepEqual([...licence.matchAll(/Reserved Font Names? "([^"]+)"/g)].map(([, name]) => name), ['TM Math'], 'the one name a cut may not carry');
   assert.ok((await read('src/fonts/fonts.css')).includes(`@font-face { font-family: "STIX Two Math"; src: url("./${MATH.upright}") format("woff2"); font-weight: 400; font-style: normal; font-display: swap; }`));
+});
+
+// The characters a formula draws: the text of its MathML, without the LaTeX of its annotation.
+const drawn = (math) => [...math.replace(/<annotation[\s\S]*?<\/annotation>/g, '').replace(/<[^>]*>/g, '')
+  .replace(/&#x([0-9a-f]+);/gi, (_, hex) => String.fromCodePoint(parseInt(hex, 16)))
+  .replace(/&(lt|gt|quot|amp);/g, (_, name) => ({ lt: '<', gt: '>', quot: '"', amp: '&' })[name])].map((character) => character.codePointAt(0));
+
+test('the formulas\' font keeps its MATH table, every character the formulas here draw and those a cut by Unicode blocks would drop', async () => {
+  const tables = woff2Tables(await read(`src/fonts/${MATH.upright}`, null));
+  assert.ok(tables.has('MATH'), 'the table by which a browser builds a formula');
+  const points = codePoints(tables.get('cmap'));
+  const hex = (point) => `U+${point.toString(16).toUpperCase().padStart(4, '0')}`;
+  const formulas = [...Object.values(INLINE), ...Object.values(BLOCK), ...(await read('test/fixtures/konzilo-page.html')).match(/<math[\s\S]*?<\/math>/g)];
+  assert.ok(formulas.length > 10);
+  for (const formula of formulas) for (const point of drawn(formula)) assert.ok(points.has(point), `${hex(point)}, ${String.fromCodePoint(point)}`);
+  // Measured 2026-11-26: a cut to Latin, Greek and the math blocks drops these, among 352 characters Temml writes. The
+  // prime; arrows from Supplemental Arrows-A; the double bar; the ellipsis; \hat's accent and its combining form;
+  // \square, \triangle, \sharp and \checkmark.
+  for (const character of ['′', '⟶', '⟹', '‖', '…', 'ˆ', '̂', '□', '△', '♯', '✓']) assert.ok(points.has(character.codePointAt(0)), hex(character.codePointAt(0)));
+  // And it is a cut: of the release's 4,605 characters, those Temml names nowhere, such as Cyrillic, are left out.
+  assert.ok(points.size < 4605, `${points.size} characters`);
+  for (let point = 0x410; point < 0x450; point += 1) assert.ok(!points.has(point), hex(point));
 });

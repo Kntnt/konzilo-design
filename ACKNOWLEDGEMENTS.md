@@ -4,7 +4,7 @@ Konzilo Design stands on the work of others. This file names what it is built on
 
 ## Typefaces
 
-The library ships 47 variable typefaces in [`src/fonts/`](src/fonts/), and one math font, STIX Two Math, in which every design draws its formulas, each with its licence beside it as `LICENSE-<name>.txt`, which travels with the font into every export. `bin/design-fonts` fetches each from its source: the designers' own repository where that is better, and otherwise the family download from Google Fonts. The files are used as published. Two kinds of change are made: a TTF is recompressed to WOFF2, and Google Sans Flex, Noto Sans and Roboto Serif are cut to the Latin characters. Their licences reserve no font name, so a cut version may keep it. STIX Two Math is used whole: its licence reserves the name "TM Math", and STIX Two is a trademark of the IEEE.
+The library ships 47 variable typefaces in [`src/fonts/`](src/fonts/), and one math font, STIX Two Math, in which every design draws its formulas, each with its licence beside it as `LICENSE-<name>.txt`, which travels with the font into every export. `bin/design-fonts` fetches each from its source: the designers' own repository where that is better, and otherwise the family download from Google Fonts. The files are used as published. Two kinds of change are made: a TTF is recompressed to WOFF2, and four fonts are cut, Google Sans Flex, Noto Sans and Roboto Serif to the Latin characters, and STIX Two Math to the characters Temml, which writes a Konzilo site's formulas, can write. A cut version may not carry a Reserved Font Name: the licences of the first three reserve none, and STIX Two Math's only "TM Math", so each keeps its own name.
 
 | Typeface | By | Licence |
 |---|---|---|

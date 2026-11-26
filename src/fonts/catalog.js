@@ -55,7 +55,7 @@ export const TYPEFACES = [
 ];
 
 // The one math font, in which every design draws its formulas (konzilo.md, Formulas): no typeface a role may take.
-export const MATH = {"family": "STIX Two Math", "weight": "400", "upright": "STIXTwoMath-Regular.woff2", "italic": null, "licence": "LICENSE-stix-two-math.txt", "version": "2.13 b171", "source": "https://github.com/stipub/stixfonts/tree/v2.13b171"};
+export const MATH = {"family": "STIX Two Math", "weight": "400", "upright": "STIXTwoMath-Regular.woff2", "italic": null, "licence": "LICENSE-stix-two-math.txt", "version": "2.13 b171", "source": "https://github.com/stipub/stixfonts/tree/v2.13b171", "subset": "temml 0.14.0"};
 
 // A stack's first family, without quotes and in lower case, since CSS matches a family's name in any case.
 export const familyOf = (stack) => stack.split(',')[0].trim().replace(/^["']|["']$/g, '').toLowerCase();
