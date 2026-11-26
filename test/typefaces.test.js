@@ -1,5 +1,6 @@
 import test from 'node:test';
-import { TYPEFACES, CATEGORIES, shippedIn } from '../src/fonts/catalog.js';
+import { TYPEFACES, CATEGORIES, MATH, shippedIn } from '../src/fonts/catalog.js';
+import { createHash } from 'node:crypto';
 import assert from 'node:assert/strict';
 import { readdir, readFile } from 'node:fs/promises';
 import { derive, fitRolesToFaces, validateInputs, sizeAt } from '../src/generator/index.js';
@@ -291,7 +292,7 @@ test('the shipped typefaces are web fonts with a real italic and their licences'
     assert.ok(roles.length, family);
     assert.ok(CATEGORIES.some(([name]) => name === category), family);
   }
-  assert.equal([...css.matchAll(/@font-face/g)].length, TYPEFACES.flatMap((face) => [face.upright, face.italic].filter(Boolean)).length);
+  assert.equal([...css.matchAll(/@font-face/g)].length, TYPEFACES.flatMap((face) => [face.upright, face.italic].filter(Boolean)).length + 1, 'and the formulas\' font');
   assert.match(css, /"Roboto Flex"[^}]*font-style: oblique 0deg 10deg;/);
   assert.match(css, /"Recursive"[^}]*font-style: oblique 0deg 15deg;/);
   assert.match(await read('src/fonts/LICENSE-mona-sans.txt'), /Reserved Font Name "Mona"/);
@@ -307,4 +308,21 @@ test('a design file value names its shipped typeface, and only used typefaces ar
     shippedIn(derive(inputs({ typefaces: { main: 'Lora, Georgia, serif', monospace: 'Red Hat Mono' } })).typefaces).map((face) => face.family),
     ['Lora', 'Red Hat Mono'],
   );
+});
+
+// Formulas are drawn in one math font for every design (issue #33): STIX Two Math 2.13, the upstream release's WOFF2 as
+// it is published, since its licence reserves the name "TM Math" and "STIX Two" is the IEEE's trademark, so a cut
+// version could not be called by its name. It is no typeface a role may take.
+test('the formulas\' font ships whole, as its release publishes it, with its licence, and is no typeface of a role', async () => {
+  assert.equal(MATH.family, 'STIX Two Math');
+  assert.equal(MATH.version, '2.13 b171');
+  assert.equal(MATH.source, 'https://github.com/stipub/stixfonts/tree/v2.13b171');
+  assert.equal(MATH.italic, null);
+  assert.ok(!TYPEFACES.some((face) => face.family === MATH.family), 'no role may take it');
+  const file = await read(`src/fonts/${MATH.upright}`, null);
+  assert.equal(file.subarray(0, 4).toString('latin1'), 'wOF2');
+  // The SHA-256 of fonts/static_otf_woff2/STIXTwoMath-Regular.woff2 at the tag v2.13b171 of stipub/stixfonts.
+  assert.equal(createHash('sha256').update(file).digest('hex'), '094191335def3f0452c81ec0713cfc2f29bb6af8cecbf79b60881fbf2db97562');
+  assert.match(await read(`src/fonts/${MATH.licence}`), /Reserved Font Name "TM Math"[\s\S]*SIL OPEN FONT LICENSE Version 1\.1/);
+  assert.ok((await read('src/fonts/fonts.css')).includes(`@font-face { font-family: "STIX Two Math"; src: url("./${MATH.upright}") format("woff2"); font-weight: 400; font-style: normal; font-display: swap; }`));
 });
