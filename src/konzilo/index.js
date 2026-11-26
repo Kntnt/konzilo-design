@@ -11,8 +11,8 @@ import { checkFormat, validateDesignFile } from '../generator/validate.js';
 import { checkFingerprint } from '../generator/fingerprint.js';
 import { checkContrast } from '../generator/surface.js';
 import { coreCss } from '../css/index.js';
-import { MATH, shippedIn } from '../fonts/catalog.js';
-import { FONT_CSS, filesOf } from './fonts.js';
+import { MATH } from '../fonts/catalog.js';
+import { FONT_CSS, filesOf, siteFaces } from './fonts.js';
 import { DEFAULT_FOLDER, logoFiles } from './logos.js';
 import { imageContexts } from './images.js';
 
@@ -65,15 +65,16 @@ async function checkedDesign(path, name) {
   return file;
 }
 
-// The stylesheet of the typefaces the design uses and of the formulas' font, which every design has. The fonts are not in
-// this package.
+// The stylesheet of the design's faces, the typefaces it uses and the formulas' font, which every design has. The fonts
+// are not in this package.
 async function fontStylesheet(file, folder, name, way) {
   const css = await readable(join(folder, FONT_CSS));
   const there = (font) => access(join(folder, font)).then(() => true, () => false);
   const held = async (face) => !(await Promise.all(filesOf(face).map(there))).includes(false) && Boolean(css?.includes(`font-family: "${face.family}"`));
   const missing = [];
-  for (const face of shippedIn(file.resolved.typefaces)) if (!await held(face)) missing.push(face.family);
-  const lacks = [missing.length && `uses ${missing.join(', ')}`, !await held(MATH) && `draws its formulas in ${MATH.family}`].filter(Boolean);
+  for (const face of siteFaces(file.resolved.typefaces)) if (!await held(face)) missing.push(face);
+  const typefaces = missing.filter((face) => face !== MATH).map(({ family }) => family);
+  const lacks = [typefaces.length && `uses ${typefaces.join(', ')}`, missing.includes(MATH) && `draws its formulas in ${MATH.family}`].filter(Boolean);
   if (lacks.length) throw new Error(`${name} ${lacks.join(' and ')}, which ${way} does not hold. Run "konzilo-design fonts ${name} -o ${way}" from the design system's repository, and keep the folder in the site's repository.`);
   return join(folder, FONT_CSS);
 }

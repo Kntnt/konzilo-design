@@ -1,12 +1,11 @@
-// DESIGN.md with the files it names, for an archive: the logos, the font files of the typefaces the design uses and of the
-// formulas' font, with their licences and @font-face rules, and the icons the components use with theirs. Everything
+// DESIGN.md with the files it names, for an archive: the logos, the font files of the typefaces the design uses and of
+// the formulas' font, with their licences and @font-face rules, and the icons the components use with theirs. Everything
 // comes from the design file and this repository, so it works offline.
 import { readFile } from 'node:fs/promises';
 import { dirname, isAbsolute, resolve } from 'node:path';
 import { logoExtension } from '../components/design-props.js';
 import { icons } from '../components/icons.js';
-import { MATH, shippedIn } from '../fonts/catalog.js';
-import { filesOf, fontFaceRules } from '../konzilo/fonts.js';
+import { filesOf, fontFaceRules, siteFaces } from '../konzilo/fonts.js';
 import { ICONS } from './components.js';
 import { designMd } from './index.js';
 
@@ -39,7 +38,7 @@ export async function designBundle(file, designFile, sourceName) {
     entries.push({ name, content: await logoBytes(logo, key, designFile) });
     assets.logos[key] = name;
   }
-  const faces = [...shippedIn(file.resolved.typefaces), MATH];
+  const faces = siteFaces(file.resolved.typefaces);
   const fonts = new URL('fonts/', repo);
   const css = await readFile(new URL('fonts.css', fonts), 'utf8').catch((error) => {
     if (error.code !== 'ENOENT') throw error;
