@@ -421,6 +421,26 @@ test('each other picture the package draws from a body says the width its CSS dr
   }
 });
 
+// The core gives a body's image the body's widths and the lightbox's (its versionsInBody()), so a picture the package
+// draws from a body finds a version near its own width wherever it is wider than the body's narrowest version.
+test('a body\'s image has a version that covers each picture the package draws from it at its widest on a dense screen, up to the cap', () => {
+  for (const [name, inputs] of Object.entries(DESIGNS)) {
+    const r = design(inputs);
+    const { body, lightbox } = imageContexts(r);
+    const srcset = [...new Set([...body.widths, ...lightbox.widths])].sort((a, b) => a - b);
+    const all = [...otherPictures(r).map(({ picture, options }) => [`${picture} ${JSON.stringify(options)}`, pictureSizes(r, picture, options)]),
+      ...[1, 2, 3, 4, 7].map((count) => [`a series of ${count}`, seriesPicture(r, count).sizes])];
+    for (const [what, sizes] of all) {
+      let widest = 0;
+      for (let px = 320; px <= 3200; px += 1) widest = Math.max(widest, sizesAt(sizes, px));
+      assert.ok(srcset.some((step) => step >= Math.min(2 * widest, WIDEST)), `${name}, ${what}: ${widest} px at the widest, versions ${srcset}`);
+    }
+    // From the body's narrowest version to the cap, every step of the ladder, each √2 wider than the one before.
+    assert.equal(srcset.at(-1), WIDEST, name);
+    srcset.slice(0, -1).forEach((step, i) => assert.ok(i === 0 || Math.abs(step / srcset[i - 1] - Math.SQRT2) < 0.01, `${name}: ${srcset}`));
+  }
+});
+
 test('a picture the editor gave a display width says each size no wider where the CSS draws it no wider than its width, and not where it stretches it', () => {
   const r = design({});
   // A badge, a hero's logo, a picture beside a form and a figure in a section's body are drawn at most their own width.
