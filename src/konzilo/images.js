@@ -259,30 +259,38 @@ export const ACCORDION = Object.freeze({ padding: 1.5, questions: 2.5 });
 // the criteria hold exactly; in a section's body beside its picture, beside a heading with a form right after it, at
 // Narrow, as a centred section's or one with a form or a choice, and as an article's reading column is, and in two
 // columns; and in an accordion across a band or beside its head, whose series takes the component gap. A renderer does
-// not know which it stands in, so a series' picture says the widest it is drawn in any of them.
-function seriesPlaces(r) {
+// not know which it stands in, so a series' picture says the widest it is drawn in any of them. A post list stands only
+// directly in a section, which the checks hold it to, since a part drawn from its tree cannot draw one (directives.md,
+// What only the core can draw), so never in an accordion (`list`).
+function seriesPlaces(r, { list = false } = {}) {
   const { contentArea: area, narrow, columnGap: gap, componentGap, body } = measures(r);
   const from = (window, then) => switched(WINDOW, fixed(window), then, area);
-  const half = times(sum(area, times(gap, -1)), 1 / 2);
   const share = times(sum(area, times(gap, -1)), SECTION.share);
   const accordion = (row) => [ACCORDION.padding, ACCORDION.questions].map((padding) => [sum(row, times(body, -padding)), componentGap]);
   const places = [
     [area, gap],
-    [from(SECTION.beside, half), gap],
+    [from(SECTION.beside, halfOf(area, gap)), gap],
     [from(SECTION.beside, share), gap],
     [least(area, narrow), gap],
-    [switched(area, sum(fixed(2 * SECTION.columns), gap), half, area), gap],
-    ...accordion(area),
-    ...accordion(from(SECTION.wide, share)),
+    [inColumns(area, gap), gap],
+    ...(list ? [] : [...accordion(area), ...accordion(from(SECTION.wide, share))]),
   ];
   // Corner to corner, the text beside a picture the section crops stands in half the content area less the column gap.
   if (cornerToCorner(r)) places.push([from(SECTION.beside, sum(times(area, 1 / 2), times(gap, -1))), gap]);
   return places;
 }
 const cornerToCorner = (r) => String(r.section?.['picture-side'] ?? '').startsWith('corners');
+// Half the content area less half the column gap; and a column of a section's body in two, each at least 18rem where
+// two fit, and else the whole content area (section.css, body="columns").
+const halfOf = (area, gap) => times(sum(area, times(gap, -1)), 1 / 2);
+const inColumns = (area, gap) => switched(area, sum(fixed(2 * SECTION.columns), gap), halfOf(area, gap), area);
 
 // The ladder of a design's widths.
 const ladderOf = (r) => ladder(Math.min(r.layout.narrow, r.layout.wide));
+// A picture drawn `drawn` wide, as its widths on the ladder and its sizes.
+const drawnPicture = (r, drawn) => ({ widths: widthsOf(drawn, ladderOf(r)), sizes: sizesOf(drawn) });
+// The widest an item of a series of `count` items is drawn in any place a series, or a post list, stands in.
+const seriesDrawn = (r, count, options) => greatest(...seriesPlaces(r, options).map(([row, gap]) => seriesItem(row, gap, count)));
 
 /**
  * The widths and sizes of a picture that fills an item of a series of `count` items, as a card's picture in `:::cards`,
@@ -290,11 +298,67 @@ const ladderOf = (r) => ladder(Math.min(r.layout.narrow, r.layout.wide));
  * ladder's steps that cover it from the narrowest window at density 1 to its widest at density 2 (konzilo.md, Images).
  * @param {object} r A design file's `resolved`.
  * @param {number} count The number of items the series draws, at least one.
+ * @param {{ list?: boolean }} [options] `list`: a post list's, in the places a post list stands in, which leave out an
+ *   accordion's.
  * @returns {{ widths: number[], sizes: string }}
  */
-export function seriesPicture(r, count) {
-  const drawn = greatest(...seriesPlaces(r).map(([row, gap]) => seriesItem(row, gap, count)));
-  return { widths: widthsOf(drawn, ladderOf(r)), sizes: sizesOf(drawn) };
+export const seriesPicture = (r, count, options) => drawnPicture(r, seriesDrawn(r, count, options));
+
+// ---------- A post list's teasers (issue #39; konzilo.md, Images) ----------
+
+// `featured` lays out by its list's own width, by container queries (post-list.css): one column under `two` rem; from
+// it two, the latest across both; from `three` rem three, the latest over two; the column gap apart wherever it stands.
+export const FEATURED = Object.freeze({ two: 32, three: 50 });
+function featuredItem(row, gap, first) {
+  const share = (k) => times(sum(row, times(gap, -(k - 1))), 1 / k);
+  const two = first ? row : share(2);
+  const three = first ? sum(times(share(3), 2), gap) : share(3);
+  return switched(row, fixed(FEATURED.three), three, switched(row, fixed(FEATURED.two), two, row));
+}
+
+/**
+ * The widths and sizes of each teaser's picture in a post list of `count` posts as the package's presentation draws it,
+ * the widest it is drawn in any place a post list stands in, as a series' (seriesPicture()): in `cards` and `filtered`
+ * an item of a series of `count`, every teaser counted, the ones a filtered list's pills hide too, as the series' rule
+ * counts them; but a lone teaser of `cards` fills its column beside a quotation (section.css, body="columns"); and in
+ * `featured` the latest post and the others by the list's own columns.
+ * @param {object} r A design file's `resolved`.
+ * @param {'cards' | 'featured' | 'filtered'} presentation
+ * @param {number} count The number of posts the list draws.
+ * @returns {{ widths: number[], sizes: string }[]} One for each teaser, in order.
+ */
+export function teaserPictures(r, presentation, count) {
+  if (count < 1) return [];
+  const { contentArea, columnGap } = measures(r);
+  if (presentation === 'featured') {
+    const rows = seriesPlaces(r, { list: true }).map(([row]) => row);
+    const [first, other] = [true, false].map((latest) => drawnPicture(r, greatest(...rows.map((row) => featuredItem(row, columnGap, latest)))));
+    return Array.from({ length: count }, (_, at) => (at === 0 ? first : other));
+  }
+  if (!['cards', 'filtered'].includes(presentation)) throw new Error(`the package has no presentation ${presentation}`);
+  const series = seriesDrawn(r, count, { list: true });
+  const drawn = presentation === 'cards' && count === 1 ? greatest(series, inColumns(contentArea, columnGap)) : series;
+  return Array(count).fill(drawnPicture(r, drawn));
+}
+
+/**
+ * Every teaser's picture a resolved design makes in its presentations of a post list, its widths and its sizes, for the
+ * presentation's Details page (tool.md, Pictures at the right size): in `cards` and `filtered` by the number of posts,
+ * from one to eight, those of the same sizes together; a lone teaser of `cards`; and the latest post of `featured` and
+ * another.
+ * @param {object} r A design file's `resolved`.
+ * @returns {{ key: string, picture: string, counts?: number[], widths: number[], sizes: string }[]}
+ */
+export function teaserRows(r) {
+  const series = new Map();
+  for (let count = 1; count <= 8; count++) {
+    const [picture] = teaserPictures(r, 'filtered', count);
+    series.set(picture.sizes, { ...picture, counts: [...(series.get(picture.sizes)?.counts ?? []), count] });
+  }
+  const rows = [...series.values()].map(({ counts, widths, sizes }) => ({ key: `teaser-${counts.join('-')}`, picture: 'teaser', counts, widths, sizes }));
+  const [first, other] = teaserPictures(r, 'featured', 2);
+  rows.push({ key: 'teaser-lone', picture: 'teaser-lone', ...teaserPictures(r, 'cards', 1)[0] }, { key: 'featured-first', picture: 'featured-first', ...first }, { key: 'featured-other', picture: 'featured-other', ...other });
+  return rows;
 }
 
 // A picture shown whole at a height, its width by its proportions, `ratio` its width over its height, at most `widest`:
