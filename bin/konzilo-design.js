@@ -66,7 +66,7 @@ try {
     if (!path || !(args.length === 0 || (args.length === 2 && args[0] === '-o'))) throw new Error(usage);
     const { copyFonts } = await import('../src/konzilo/fonts.js');
     const { folder, families, files, unshipped } = await copyFonts(path, args[1] ?? join(dirname(path), 'fonts'));
-    process.stdout.write(families.length ? `${families.join(', ')}: ${files.length} font files in ${folder}.\n` : 'This design uses no typeface of the library, so there is nothing to copy.\n');
+    process.stdout.write(families.length ? `${families.join(', ')}, and STIX Two Math for formulas: ${files.length} font files in ${folder}.\n` : `This design uses no typeface of the library, so only STIX Two Math, for formulas, is copied: 1 font file in ${folder}.\n`);
     for (const { name, meant } of unshipped) {
       process.stderr.write(`${name} is not a typeface the library ships, so no font file is copied for it${meant ? `. If it is ${meant}, correct its name in the design, resolve the design and run fonts again` : ', and a visitor sees it only where it is installed'}.\n`);
     }

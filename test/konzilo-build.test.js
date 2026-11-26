@@ -15,6 +15,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { defaultInputs, resolve as resolveDesign, DESIGN_FORMAT } from '../src/generator/index.js';
+import { copyFonts } from '../src/konzilo/fonts.js';
 
 const repo = fileURLToPath(new URL('..', import.meta.url));
 const core = process.env.KONZILO_CORE ? resolve(process.env.KONZILO_CORE.replace(/^~(?=\/)/, process.env.HOME ?? '~')) : null;
@@ -493,8 +494,10 @@ function build(out, environment = {}) {
   const designFile = join(site, 'design/site.design.json');
   if (!existsSync(designFile)) {
     mkdirSync(dirname(designFile), { recursive: true });
-    return resolveDesign(inputs).then((resolved) => {
+    return resolveDesign(inputs).then(async (resolved) => {
       writeFileSync(designFile, JSON.stringify({ format: DESIGN_FORMAT, inputs, project: { name: 'Example Gardens' }, resolved }));
+      // Every design takes its fonts folder, for the formulas' font, copied from this repository as a site's is.
+      await copyFonts(designFile, join(site, 'design/fonts'));
       return build(out, environment);
     });
   }

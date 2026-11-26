@@ -174,44 +174,50 @@ test('fromDesign takes the root as a URL and a font folder elsewhere, and leaves
   assert.deepEqual((await readdir(join(root, 'node_modules/.cache/konzilo-design'))), ['site.core.css'], 'no temporary file stays');
 });
 
-test('a design with no typeface of the library needs no font folder, and no font stylesheet', async () => {
+test('a design with no typeface of the library still takes its fonts folder, for the formulas\' font', async () => {
   const root = await site();
+  await assert.rejects(fromDesign('./design/site.design.json', { root }), /site\.design\.json draws its formulas in STIX Two Math, which \.\/design\/fonts does not hold\. Run "konzilo-design fonts \.\/design\/site\.design\.json -o \.\/design\/fonts"/);
+  await copyFonts(join(root, 'design/site.design.json'), join(root, 'design/fonts'));
   const { bodyStyles } = await fromDesign('./design/site.design.json', { root });
-  assert.equal(bodyStyles.length, 3);
-  assert.ok(!bodyStyles.some((sheet) => sheet.includes('fonts.css')));
+  assert.equal(bodyStyles.at(-1), './design/fonts/fonts.css');
+  assert.deepEqual([...(await readFile(join(root, 'design/fonts/fonts.css'), 'utf8')).matchAll(/font-family: "([^"]+)"/g)].map((match) => match[1]), ['STIX Two Math']);
 });
 
 test('fromDesign refuses a design whose fonts are missing, naming the typeface and the command', async () => {
   const root = await site(typefaces({ main: 'Mona Sans', heading: 'Source Serif 4' }));
   const path = join(root, 'design/site.design.json');
-  const words = /uses Mona Sans, Source Serif 4, which \.\/design\/fonts does not hold\. Run "konzilo-design fonts \.\/design\/site\.design\.json -o \.\/design\/fonts" from the design system's repository/;
+  const words = /uses Mona Sans, Source Serif 4 and draws its formulas in STIX Two Math, which \.\/design\/fonts does not hold\. Run "konzilo-design fonts \.\/design\/site\.design\.json -o \.\/design\/fonts" from the design system's repository/;
   await assert.rejects(fromDesign('./design/site.design.json', { root }), words);
   await copyFonts(path, join(root, 'design/fonts'));
   assert.ok(await fromDesign('./design/site.design.json', { root }));
   await rm(join(root, 'design/fonts/SourceSerif4-Italic-VF.woff2'));
   await assert.rejects(fromDesign('./design/site.design.json', { root }), /uses Source Serif 4, which \.\/design\/fonts does not hold/);
   await copyFonts(path, join(root, 'design/fonts'));
+  await rm(join(root, 'design/fonts/STIXTwoMath-Regular.woff2'));
+  await assert.rejects(fromDesign('./design/site.design.json', { root }), /site\.design\.json draws its formulas in STIX Two Math, which \.\/design\/fonts does not hold/);
+  await copyFonts(path, join(root, 'design/fonts'));
   await rm(join(root, 'design/fonts/fonts.css'));
   await assert.rejects(fromDesign('./design/site.design.json', { root }), /Run "konzilo-design fonts/);
 });
 
-test('the fonts command copies only the typefaces the design uses, upright and italic, with relative addresses and their licences', async () => {
+test('the fonts command copies only the typefaces the design uses, upright and italic, and the formulas\' font, with relative addresses and their licences', async () => {
   const root = await site(typefaces({ main: 'Mona Sans', monospace: 'Red Hat Mono' }));
   const path = join(root, 'design/site.design.json');
   const folder = join(root, 'out');
   const said = execFileSync(process.execPath, [cli, 'fonts', path, '-o', folder], { encoding: 'utf8' });
-  assert.match(said, /Mona Sans, Red Hat Mono: 4 font files/);
+  assert.match(said, /Mona Sans, Red Hat Mono, and STIX Two Math for formulas: 5 font files/);
   const names = (await readdir(folder)).sort();
-  assert.deepEqual(names, ['LICENSE-mona-sans.txt', 'LICENSE-red-hat-mono.txt', 'MonaSans-Italic-VF.woff2', 'MonaSans-VF.woff2', 'RedHatMono-Italic-VF.woff2', 'RedHatMono-VF.woff2', 'fonts.css']);
+  assert.deepEqual(names, ['LICENSE-mona-sans.txt', 'LICENSE-red-hat-mono.txt', 'LICENSE-stix-two-math.txt', 'MonaSans-Italic-VF.woff2', 'MonaSans-VF.woff2', 'RedHatMono-Italic-VF.woff2', 'RedHatMono-VF.woff2', 'STIXTwoMath-Regular.woff2', 'fonts.css']);
   const css = await readFile(join(folder, 'fonts.css'), 'utf8');
-  assert.deepEqual([...new Set([...css.matchAll(/font-family: "([^"]+)"/g)].map((match) => match[1]))], ['Mona Sans', 'Red Hat Mono']);
+  assert.deepEqual([...new Set([...css.matchAll(/font-family: "([^"]+)"/g)].map((match) => match[1]))], ['Mona Sans', 'Red Hat Mono', 'STIX Two Math']);
   const addresses = [...css.matchAll(/url\("([^"]+)"\)/g)].map((match) => match[1]);
-  assert.equal(addresses.length, 4);
+  assert.equal(addresses.length, 5);
   for (const address of addresses) {
     assert.match(address, /^\.\/[^/]+\.woff2$/);
     assert.ok(existsSync(join(folder, address)));
   }
   assert.deepEqual(await readFile(join(folder, 'MonaSans-VF.woff2')), await readFile(join(repo, 'src/fonts/MonaSans-VF.woff2')));
+  assert.deepEqual(await readFile(join(folder, 'STIXTwoMath-Regular.woff2')), await readFile(join(repo, 'src/fonts/STIXTwoMath-Regular.woff2')));
 });
 
 test('the fonts folder follows the design: a typeface no longer used goes, and what is not the library\'s stays', async () => {
@@ -223,12 +229,13 @@ test('the fonts folder follows the design: a typeface no longer used goes, and w
   const inputs = typefaces({ main: 'Lora, Georgia, serif' });
   await writeFile(path, JSON.stringify({ format: DESIGN_FORMAT, inputs, project: {}, resolved: await resolve(inputs) }));
   await copyFonts(path, folder);
-  assert.deepEqual((await readdir(folder)).sort(), ['LICENSE-lora.txt', 'Lora-Italic-VF.woff2', 'Lora-VF.woff2', 'fonts.css', 'own-face.woff2']);
+  const math = ['LICENSE-stix-two-math.txt', 'STIXTwoMath-Regular.woff2'];
+  assert.deepEqual((await readdir(folder)).sort(), ['LICENSE-lora.txt', ...math, 'Lora-Italic-VF.woff2', 'Lora-VF.woff2', 'fonts.css', 'own-face.woff2'].sort());
 
   const plain = defaultInputs();
   await writeFile(path, JSON.stringify({ format: DESIGN_FORMAT, inputs: plain, project: {}, resolved: await resolve(plain) }));
-  assert.match(execFileSync(process.execPath, [cli, 'fonts', path, '-o', folder], { encoding: 'utf8' }), /no typeface of the library/);
-  assert.deepEqual(await readdir(folder), ['own-face.woff2']);
+  assert.equal(execFileSync(process.execPath, [cli, 'fonts', path, '-o', folder], { encoding: 'utf8' }), `This design uses no typeface of the library, so only STIX Two Math, for formulas, is copied: 1 font file in ${folder}.\n`);
+  assert.deepEqual((await readdir(folder)).sort(), [...math, 'fonts.css', 'own-face.woff2']);
 });
 
 test('the fonts command takes a typeface named in any case, and for a family the library does not ship says so and removes nothing', async () => {
@@ -237,7 +244,7 @@ test('the fonts command takes a typeface named in any case, and for a family the
   const folder = join(root, 'design/fonts');
   const copied = await copyFonts(path, folder);
   assert.deepEqual([copied.families, copied.unshipped], [['Mona Sans', 'Red Hat Mono'], []]);
-  const names = ['LICENSE-mona-sans.txt', 'LICENSE-red-hat-mono.txt', 'MonaSans-Italic-VF.woff2', 'MonaSans-VF.woff2', 'RedHatMono-Italic-VF.woff2', 'RedHatMono-VF.woff2', 'fonts.css'];
+  const names = ['LICENSE-mona-sans.txt', 'LICENSE-red-hat-mono.txt', 'LICENSE-stix-two-math.txt', 'MonaSans-Italic-VF.woff2', 'MonaSans-VF.woff2', 'RedHatMono-Italic-VF.woff2', 'RedHatMono-VF.woff2', 'STIXTwoMath-Regular.woff2', 'fonts.css'];
   assert.deepEqual((await readdir(folder)).sort(), names);
   assert.ok(await fromDesign('./design/site.design.json', { root }), 'CSS matches a family in any case, so the site has its fonts');
 
@@ -248,20 +255,20 @@ test('the fonts command takes a typeface named in any case, and for a family the
   };
   const misread = await rewrite({ main: 'MonaSans' });
   assert.equal(misread.status, 0);
-  assert.equal(misread.stdout, 'This design uses no typeface of the library, so there is nothing to copy.\n');
+  assert.equal(misread.stdout, `This design uses no typeface of the library, so only STIX Two Math, for formulas, is copied: 1 font file in ${folder}.\n`);
   assert.equal(misread.stderr, `MonaSans is not a typeface the library ships, so no font file is copied for it. If it is Mona Sans, correct its name in the design, resolve the design and run fonts again.\nSince that may be a typeface's name misread, no font already in ${folder} was removed.\n`);
   assert.deepEqual((await readdir(folder)).sort(), names, 'nothing went');
 
   const own = await rewrite({ main: 'Helvetica Neue, Arial, sans-serif', heading: 'Lora' });
-  assert.match(own.stdout, /^Lora: 2 font files/);
+  assert.match(own.stdout, /^Lora, and STIX Two Math for formulas: 3 font files/);
   assert.match(own.stderr, /^Helvetica Neue is not a typeface the library ships, so no font file is copied for it, and a visitor sees it only where it is installed\.\n/);
   assert.deepEqual((await readdir(folder)).sort(), ['LICENSE-lora.txt', ...names.slice(0, -1), 'Lora-Italic-VF.woff2', 'Lora-VF.woff2', 'fonts.css'].sort());
-  assert.deepEqual([...(await readFile(join(folder, 'fonts.css'), 'utf8')).matchAll(/font-family: "([^"]+)"/g)].map((match) => match[1]), ['Lora', 'Lora'], 'the stylesheet holds what the design uses');
+  assert.deepEqual([...(await readFile(join(folder, 'fonts.css'), 'utf8')).matchAll(/font-family: "([^"]+)"/g)].map((match) => match[1]), ['Lora', 'Lora', 'STIX Two Math'], 'the stylesheet holds what the design uses');
 
   // A computer's own families are no typeface misread: what the design no longer uses goes.
   const system = await rewrite({ main: 'Georgia, serif', monospace: 'ui-monospace, monospace' });
   assert.equal(system.stderr, '');
-  assert.deepEqual(await readdir(folder), []);
+  assert.deepEqual((await readdir(folder)).sort(), ['LICENSE-stix-two-math.txt', 'STIXTwoMath-Regular.woff2', 'fonts.css']);
 });
 
 test('the fonts command refuses a stale design, a missing format, and a stylesheet it did not write', async () => {
@@ -329,7 +336,12 @@ test('the logos command refuses what it cannot write, in plain words', async () 
 });
 
 test('fromDesign refuses a design whose logo has no file, naming the command, and still returns only the styles and tokens', async () => {
-  const root = await site(defaultInputs(), withLogos({ logo: svgUri, 'logo-dark': pngUri }));
+  // Every design takes its fonts folder, for the formulas' font, so each site here has it.
+  const fonted = async (root) => {
+    await copyFonts(join(root, 'design/site.design.json'), join(root, 'design/fonts'));
+    return root;
+  };
+  const root = await fonted(await site(defaultInputs(), withLogos({ logo: svgUri, 'logo-dark': pngUri })));
   const path = join(root, 'design/site.design.json');
   await assert.rejects(fromDesign('./design/site.design.json', { root }), /site\.design\.json has a logo, but \.\/public\/logos does not hold logo\.svg\. Run "konzilo-design logos \.\/design\/site\.design\.json -o \.\/public\/logos"/);
   assert.equal(existsSync(join(root, 'node_modules')), false, 'a refused design writes nothing');
@@ -338,12 +350,12 @@ test('fromDesign refuses a design whose logo has no file, naming the command, an
   await rm(join(root, 'public/logos/logo-dark.png'));
   await assert.rejects(fromDesign('./design/site.design.json', { root }), /does not hold logo-dark\.png/);
 
-  const elsewhere = await site(defaultInputs(), withLogos({ logo: svgUri }));
+  const elsewhere = await fonted(await site(defaultInputs(), withLogos({ logo: svgUri })));
   await assert.rejects(fromDesign('./design/site.design.json', { root: elsewhere, logos: './static/brand' }), /\.\/static\/brand does not hold logo\.svg\. Run "konzilo-design logos \.\/design\/site\.design\.json -o \.\/static\/brand"/);
   await writeLogos(join(elsewhere, 'design/site.design.json'), join(elsewhere, 'static/brand'));
   assert.ok(await fromDesign('./design/site.design.json', { root: elsewhere, logos: './static/brand' }));
 
-  assert.ok(await fromDesign('./design/site.design.json', { root: await site() }), 'a design with no logo needs no folder');
+  assert.ok(await fromDesign('./design/site.design.json', { root: await fonted(await site()) }), 'a design with no logo needs no folder');
 });
 
 test('a logo\'s served address comes from the design, and the identity takes it in place of what the file holds', () => {
@@ -609,7 +621,7 @@ test('the tarball holds what a site needs, and no fonts, tool or presentation, a
 
   const missing = run();
   assert.equal(missing.status, 1);
-  assert.match(missing.stderr, /uses Mona Sans, which \.\/design\/fonts does not hold\. Run "konzilo-design fonts/);
+  assert.match(missing.stderr, /uses Mona Sans and draws its formulas in STIX Two Math, which \.\/design\/fonts does not hold\. Run "konzilo-design fonts/);
 
   // The fonts are copied from this repository, as a site's are, and the build then stops at the logo.
   await copyFonts(join(root, 'design/site.design.json'), join(root, 'design/fonts'));
