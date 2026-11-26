@@ -37,7 +37,7 @@ test('a band on a picture Surface draws its picture as an <img> after its conten
     assert.equal(image.alt, '', `${address}: decorative unless the template says what it shows`);
     assert.equal(image.loading, 'eager');
   }
-  const given = pictureOf(sectionOf(await render('Band', { surface: 'picture-light', picture: '/beds-2520.webp', alt: 'Raised beds', srcset: '/beds-509.webp 509w, /beds-1018.webp 1018w', sizes: '100vw' }))).attributes;
+  const given = pictureOf(sectionOf(await render('Band', { surface: 'picture-light', picture: '/beds-2520.webp', alt: 'Raised beds', srcset: '/beds-509.webp 509w, /beds-1018.webp 1018w', sizes: '100vw', pictureWidth: 2520, pictureHeight: 1680 }))).attributes;
   assert.deepEqual([given.src, given.srcset, given.sizes, given.alt], ['/beds-2520.webp', '/beds-509.webp 509w, /beds-1018.webp 1018w', '100vw', 'Raised beds']);
   // Given the picture's width and height, as getImage() gives them, and no sizes, a band as tall as its text says the
   // window's width, which is all a sizes can know of it.
@@ -56,16 +56,33 @@ test('a Hero with its picture behind gives the band its picture, its alt text, s
   assert.equal(plain.attributes.style, undefined);
   assert.deepEqual(childrenOf(plain), ['div.kn-band-content kn-hero-content', 'img.kn-band-picture']);
   assert.equal(pictureOf(plain).attributes.alt, '');
-  const given = pictureOf(sectionOf(await hero({ alt: 'Raised beds', srcset: '/beds-509.webp 509w', sizes: '100vw' }))).attributes;
+  const given = pictureOf(sectionOf(await hero({ alt: 'Raised beds', srcset: '/beds-509.webp 509w', sizes: '100vw', pictureWidth: 2400, pictureHeight: 1600 }))).attributes;
   assert.deepEqual([given.src, given.srcset, given.sizes, given.alt, given.loading], ['/beds.webp', '/beds-509.webp 509w', '100vw', 'Raised beds', 'eager']);
   // With no sizes, the Hero works it out from its height and the picture's proportions: it covers a band at least half
-  // the window's height, so a picture of 3:2 is drawn as wide as 75% of the window's height where that is wider; one of
-  // unknown proportions is taken as 16:9; with no height the band is as tall as its text.
+  // the window's height, so a picture of 3:2 is drawn as wide as 75% of the window's height where that is wider, and
+  // one of 16:9 at its full height as wide as 177.78%; with no height the band is as tall as its text.
   const sized = async (props) => pictureOf(sectionOf(await hero({ srcset: '/beds-509.webp 509w', ...props }))).attributes.sizes;
   assert.equal(await sized({ height: 'half', pictureWidth: 2400, pictureHeight: 1600 }), 'max(100vw, 75vh)');
-  assert.equal(await sized({ height: 'full' }), 'max(100vw, 177.7778vh)');
+  assert.equal(await sized({ height: 'full', pictureWidth: 1600, pictureHeight: 900 }), 'max(100vw, 177.7778vh)');
   assert.equal(await sized({ pictureWidth: 2400, pictureHeight: 1600 }), '100vw');
-  assert.equal(await sized({ height: 'half', sizes: '50vw' }), '50vw', 'a sizes given is written as it is');
+  assert.equal(await sized({ height: 'half', sizes: '50vw', pictureWidth: 2400, pictureHeight: 1600 }), '50vw', 'a sizes given is written as it is');
+});
+
+// A picture's proportions decide how wide a band taller than they are draws it, so a Band or a Hero given its versions
+// requires its width and height, and guesses none (the owner, 2026-11-26).
+test('a Band or a Hero given a srcset without its picture\'s width and height stops the build, naming both and where to get them', async () => {
+  const components = { Band: { surface: 'picture-dark', picture: '/beds.webp' }, Hero: { heading: 'A heading', surface: 'picture-dark', picture: '/beds.webp', height: 'half' } };
+  for (const [name, props] of Object.entries(components)) {
+    for (const missing of [{}, { pictureWidth: 2400 }, { pictureHeight: 1600 }, { sizes: '100vw' }, { pictureWidth: 0, pictureHeight: 1600 }]) {
+      await assert.rejects(render(name, { ...props, srcset: '/beds-509.webp 509w', ...missing }), (error) => {
+        assert.match(error.message, new RegExp(`A ${name} given a srcset requires pictureWidth and pictureHeight`));
+        assert.match(error.message, /getImage\(\), as image\.attributes\.width and image\.attributes\.height/);
+        return true;
+      }, `${name} ${JSON.stringify(missing)}`);
+    }
+    // Without a srcset it needs neither, as before.
+    assert.equal(pictureOf(sectionOf(await render(name, props))).attributes.sizes, undefined, name);
+  }
 });
 
 test('the hero directive draws its picture behind as an <img> with the core\'s srcset, the band\'s sizes and the picture\'s own alt text', () => {

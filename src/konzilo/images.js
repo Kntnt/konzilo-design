@@ -639,6 +639,20 @@ export function imageSizes(image, r, picture, options = {}) {
 export const bandPictureSizes = (options) => sizesOf(bandDrawing(options));
 
 /**
+ * The proportions of the picture a `Band` or a `Hero` is given versions of, its width over its height, from the width
+ * and height it requires with a `srcset` (the owner, 2026-11-26): its sizes follows them where the band is taller than
+ * they are. None without a `srcset`.
+ * @param {'Band' | 'Hero'} component
+ * @param {{ srcset?: string, pictureWidth?: number, pictureHeight?: number }} props
+ * @returns {number | undefined}
+ */
+export function bandPictureRatio(component, { srcset, pictureWidth, pictureHeight }) {
+  if (!srcset) return undefined;
+  if (Number(pictureWidth) > 0 && Number(pictureHeight) > 0) return Number(pictureWidth) / Number(pictureHeight);
+  throw new TypeError(`A ${component} given a srcset requires pictureWidth and pictureHeight, its picture's own width and height, by which it works out the picture's sizes: give them from Astro's getImage(), as image.attributes.width and image.attributes.height`);
+}
+
+/**
  * The widths and sizes of a picture that fills an item of a series of `count` items, as a card's picture in `:::cards`,
  * or a post list's teaser: the widest its item is drawn in any place a series stands in, at each window, as wide as its
  * `ratio` makes its crop, and the ladder's steps that cover it from the narrowest window at density 1 to its widest at
