@@ -14,8 +14,10 @@ import { coreCss } from '../css/index.js';
 import { shippedIn } from '../fonts/catalog.js';
 import { FONT_CSS, filesOf } from './fonts.js';
 import { DEFAULT_FOLDER, logoFiles } from './logos.js';
+import { imageContexts } from './images.js';
 
 export { DESIGN_COMPONENT_CHECKS, DESIGN_COMPONENTS_FROM, DESIGN_DIRECTIVES, DESIGN_PRESENTATIONS } from './directives.js';
+export { imageContexts };
 
 const PACKAGE = '@kntnt/konzilo-design';
 const pathOf = (place) => (place instanceof URL ? fileURLToPath(place) : String(place));
@@ -119,5 +121,7 @@ export async function fromDesign(path, { root = process.cwd(), fonts, logos = DE
       ...(fontCss ? [fromRoot(site, fontCss)] : []),
     ],
     tokens: { colors: { primary: '--kn-theme-primary', base: '--kn-theme-base' } },
+    // The widths, sizes and aspect ratio in which the design draws an image, by the core's contexts.
+    images: imageContexts(file.resolved),
   };
 }
