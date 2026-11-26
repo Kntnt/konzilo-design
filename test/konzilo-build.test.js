@@ -19,7 +19,7 @@ import { defaultInputs, resolve as resolveDesign, DESIGN_FORMAT } from '../src/g
 import { MATH } from '../src/fonts/catalog.js';
 import { copyFonts } from '../src/konzilo/fonts.js';
 import { imageContexts } from '../src/konzilo/index.js';
-import { seriesPicture } from '../src/konzilo/images.js';
+import { seriesPicture, teaserPictures } from '../src/konzilo/images.js';
 import { serve } from './helpers/serve.js';
 
 const repo = fileURLToPath(new URL('..', import.meta.url));
@@ -142,6 +142,15 @@ Holds water.
 Compost in the middle.
 
 :::
+
+::::`;
+
+// A post list of three teasers in a band across the content area (issue #39).
+const JOURNAL = md`::::section
+
+## From the journal
+
+::post-list{type="article" number="3" presentation="cards"}
 
 ::::`;
 
@@ -501,6 +510,7 @@ before(() => {
   write('content/pages/formulas.md', page('Formulas', FORMULAS));
   write('content/pages/bands.md', page('Bands', BANDS));
   write('content/pages/beds.md', page('Kinds of bed', BEDS));
+  write('content/pages/journal.md', page('From the journal', JOURNAL));
   write('content/not-found.md', '---\ntitle: "This page is not here"\n---\n\nTry the [start page](/pages/garden/).\n');
   // The core's own demo settings, which hold every group the core asks for, with the articles' meta line in a format of the
   // owner's sentence and the pictures they name.
@@ -912,6 +922,147 @@ test('in a designed site built by the core, a card\'s picture in :::cards loads 
     }
   } finally {
     await server.close();
+  }
+});
+
+// The pictures the package's presentations, "Read more" and an article's opening make through Astro's getImage(), in
+// a site the core builds: each in the widths and with the sizes of where the design draws it (issue #39).
+const ENTITIES = { amp: '&', lt: '<', gt: '>', quot: '"', '#38': '&', '#39': "'" };
+const attributeOf = (img, name) => new RegExp(`\\b${name}="([^"]*)"`).exec(img)?.[1].replace(/&(amp|lt|gt|quot|#38|#39);/g, (_, entity) => ENTITIES[entity]);
+const candidatesOf = (img) => attributeOf(img, 'srcset').split(', ').map((candidate) => {
+  const [url, w] = candidate.trim().split(/\s+/);
+  return { url, width: Number(w.slice(0, -1)) };
+});
+// Each post list on a page, its presentation and its teasers' pictures, up to the next list or the end of its section.
+const listsOf = (html) => html.split('<div class="kn-post-list"').slice(1).map((chunk) => ({
+  presentation: /^[^>]*data-kn-presentation="(\w+)"/.exec(chunk)[1],
+  pictures: [...chunk.split('</section>')[0].matchAll(/<img class="kn-card-picture" ([^>]*)>/g)].map(([, attributes]) => attributes),
+}));
+
+test('in a designed site built by the core, each teaser\'s picture and an article opening\'s carry the widths and sizes of where the design draws them', { skip: why ?? false, timeout: 600000 }, async () => {
+  if (!existsSync(join(site, 'dist/pages/journal/index.html'))) {
+    const built = await build('dist');
+    assert.equal(built.status, 0, built.output);
+  }
+  const resolved = JSON.parse(readFileSync(join(site, 'design/site.design.json'), 'utf8')).resolved;
+  // The master is 1600 px wide, so the core's image service makes each width asked for, and where one is wider than the
+  // master, the master's own in place of those wider and of one within a tenth below it (its versionWidths(), ADR 0022).
+  const made = (widths) => (widths.every((width) => width <= 1600) ? widths : [...widths.filter((width) => width < 0.9 * 1600), 1600]);
+  // A section's featured and filtered lists, which stand at Narrow beside its form, and a lone teaser beside a quotation.
+  const garden = listsOf(readFileSync(join(site, 'dist/pages/garden/index.html'), 'utf8'));
+  assert.deepEqual(garden.map(({ presentation }) => presentation), ['featured', 'filtered', 'cards']);
+  // A term's page, a list across a band of its own; an article's "Other articles", a list a template places in a section.
+  const term = listsOf(readFileSync(join(site, 'dist/category/guides/index.html'), 'utf8'));
+  const soil = readFileSync(join(site, 'dist/articles/soil/index.html'), 'utf8');
+  for (const { presentation, pictures } of [...garden, ...term, ...listsOf(soil)]) {
+    const expected = teaserPictures(resolved, presentation, pictures.length);
+    assert.ok(pictures.length > 0, presentation);
+    pictures.forEach((img, at) => {
+      assert.equal(attributeOf(img, 'sizes'), expected[at].sizes, `${presentation} of ${pictures.length}, teaser ${at}`);
+      assert.deepEqual(candidatesOf(img).map(({ width }) => width), made(expected[at].widths), `${presentation} of ${pictures.length}, teaser ${at}`);
+    });
+  }
+  assert.equal(garden[2].pictures.length, 1, 'one teaser beside the quotation');
+  // "Read more", a series of its related posts across a band, where a list of posts stands.
+  const more = /<h2 class="kn-heading-group-heading" data-kn-type="heading-2">Read more<\/h2>[\s\S]*?<\/section>/.exec(soil)[0];
+  const related = [...more.matchAll(/<img class="kn-card-picture" ([^>]*)>/g)].map(([, attributes]) => attributes);
+  assert.ok(related.length > 0);
+  for (const img of related) assert.equal(attributeOf(img, 'sizes'), seriesPicture(resolved, related.length, { list: true }).sizes);
+  // The opening's main image behind its text, as the default design puts it, across the band.
+  const opening = /<section class="kn-band kn-hero kn-article-opening"[\s\S]*?<img class="kn-band-picture" ([^>]*)><\/section>/.exec(soil)?.[1];
+  assert.ok(opening, 'the opening draws its main image behind its text');
+  const { hero } = imageContexts(resolved);
+  assert.equal(attributeOf(opening, 'sizes'), hero.sizes);
+  assert.deepEqual(candidatesOf(opening).map(({ width }) => width), made(hero.widths));
+});
+
+// A teaser card's picture in a list of three across a band, at a phone's width and a wide window: a browser loads the
+// narrowest version that covers the width the design draws it at, where the hand-set sizes loaded wider (issue #39).
+test('in a designed site built by the core, a teaser card\'s picture loads the version that covers how wide it is drawn, on a phone and a wide screen, at density 1 and 2', { skip: why ?? false, timeout: 600000 }, async (t) => {
+  if (!existsSync(join(site, 'dist/pages/journal/index.html'))) {
+    const built = await build('dist');
+    assert.equal(built.status, 0, built.output);
+  }
+  const resolved = JSON.parse(readFileSync(join(site, 'design/site.design.json'), 'utf8')).resolved;
+  const [list] = listsOf(readFileSync(join(site, 'dist/pages/journal/index.html'), 'utf8'));
+  assert.equal(list.pictures.length, 3, 'the list draws three teasers');
+  for (const img of list.pictures) assert.equal(attributeOf(img, 'sizes'), teaserPictures(resolved, 'cards', 3)[0].sizes);
+  const candidates = candidatesOf(list.pictures[0]);
+  // The ladder's steps from the one that covers it on the narrowest window to the one that covers it at its widest on a
+  // dense screen, all narrower than the 1600 px master.
+  assert.deepEqual(candidates.map(({ width }) => width), [360, 509, 720, 1018, 1440]);
+  const server = await serve(join(site, 'dist'));
+  try {
+    for (const [engine, type] of ENGINES) {
+      const browser = await type.launch();
+      try {
+        for (const [width, height] of [[390, 844], [1440, 900]]) {
+          for (const density of [1, 2]) {
+            const context = await browser.newContext({ viewport: { width, height }, deviceScaleFactor: density });
+            const tab = await context.newPage();
+            const requested = new Set();
+            tab.on('request', (request) => requested.add(new URL(request.url()).pathname));
+            await tab.goto(`${server.origin}/pages/journal/`);
+            const card = tab.locator('.kn-card-picture').first();
+            await card.scrollIntoViewIfNeeded();
+            await tab.waitForFunction(() => [...document.querySelectorAll('.kn-card-picture')].every((image) => image.complete && image.naturalWidth > 0));
+            const { drawn, current } = await card.evaluate((image) => ({ drawn: image.getBoundingClientRect().width, current: new URL(image.currentSrc).pathname }));
+            const chosen = candidates.find(({ url }) => url === current);
+            const where = `${engine} at ${width} px, density ${density}: drawn ${drawn} px, ${current} loaded of ${candidates.map(({ width: w }) => w)}`;
+            assert.ok(chosen, where);
+            // The narrowest version at least as wide as the picture is drawn at this density.
+            assert.equal(chosen, candidates.find(({ width: w }) => w >= drawn * density), where);
+            assert.deepEqual([...requested].filter((path) => candidates.some(({ url }) => url === path)), [current], `${where}: the three teasers load that version alone`);
+            t.diagnostic(`${engine}, ${width} px, density ${density}: drawn ${drawn} px, loaded the ${chosen.width} px version`);
+            await context.close();
+          }
+        }
+      } finally {
+        await browser.close();
+      }
+    }
+  } finally {
+    await server.close();
+  }
+});
+
+// A WebP's width and height, from its first chunk: lossy, lossless or extended.
+function webpSize(bytes) {
+  const chunk = bytes.toString('ascii', 12, 16);
+  if (chunk === 'VP8X') return { width: 1 + bytes.readUIntLE(24, 3), height: 1 + bytes.readUIntLE(27, 3) };
+  if (chunk === 'VP8L') {
+    const bits = bytes.readUInt32LE(21);
+    return { width: 1 + (bits & 0x3fff), height: 1 + ((bits >>> 14) & 0x3fff) };
+  }
+  if (chunk === 'VP8 ') return { width: bytes.readUInt16LE(26) & 0x3fff, height: bytes.readUInt16LE(28) & 0x3fff };
+  throw new Error(`not a WebP: ${chunk}`);
+}
+
+// A picture an article shows in its body and a list shows as its teaser, the same master, is made once at each width
+// the two share: the teaser's widths are the body's ladder, and the core's image service names a version by its master,
+// width and quality alone (issue #39).
+test('in a designed site built by the core, a picture shown both in an article\'s body and as its teaser is made once at each width the two share', { skip: why ?? false, timeout: 600000 }, async () => {
+  if (!existsSync(join(site, 'dist/pages/journal/index.html'))) {
+    const built = await build('dist');
+    assert.equal(built.status, 0, built.output);
+  }
+  const body = /<div class="kn-reading-area-flow kn-body-text">[\s\S]*?<figure><button class="konzilo-lightbox-open"[^>]*><img ([^>]*)>/.exec(readFileSync(join(site, 'dist/articles/water/index.html'), 'utf8'))?.[1];
+  assert.ok(body, 'the article\'s body draws its picture');
+  const teaser = /<article class="kn-card"[^>]*><img class="kn-card-picture" ([^>]*)>(?:(?!<\/article>)[\s\S])*href="\/articles\/water\/"/.exec(readFileSync(join(site, 'dist/pages/journal/index.html'), 'utf8'))?.[1];
+  assert.ok(teaser, 'the list draws the article\'s teaser with its picture');
+  const [inBody, asTeaser] = [body, teaser].map((img) => new Map(candidatesOf(img).map(({ width, url }) => [width, url])));
+  // The body's are the body's and the lightbox's widths, up to the master's 1600 px in place of 1440 and those wider; the
+  // teaser's go up to 1440, narrower than the master, which the core makes as asked.
+  const shared = [...asTeaser.keys()].filter((width) => inBody.has(width));
+  assert.deepEqual([[...inBody.keys()], [...asTeaser.keys()]], [[360, 509, 720, 1018, 1600], [360, 509, 720, 1018, 1440]]);
+  assert.deepEqual(shared, [360, 509, 720, 1018]);
+  // The build's files of the master, by their size: each version of the whole picture, 1600 × 1000, once.
+  const assets = join(site, 'dist/_astro');
+  const files = readdirSync(assets).filter((name) => name.startsWith(PICTURE.replace(/\.webp$/, '')) && name.endsWith('.webp'));
+  const whole = files.map((name) => ({ name, ...webpSize(readFileSync(join(assets, name))) })).filter(({ width, height }) => Math.abs(height - width * 1000 / 1600) <= 1);
+  for (const width of shared) {
+    assert.equal(inBody.get(width), asTeaser.get(width), `${width} px: one address`);
+    assert.deepEqual(whole.filter((file) => file.width === width).map(({ name }) => `/_astro/${name}`), [inBody.get(width)], `${width} px: one file, ${whole.map(({ name, width: w }) => `${name} ${w}`).join(', ')}`);
   }
 });
 
