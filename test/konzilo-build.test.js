@@ -603,7 +603,7 @@ test('a site built by the core draws every directive with the package\'s compone
   const values = bands.slice(bands.indexOf('<dl class="kn-value-list">'), bands.indexOf('</dl>') + 5);
   assert.ok(tight(soil).includes(values), 'the value list is the Markdown\'s');
   assert.match(values, /<a href="mailto:jobs@gardens\.example" data-kn-contact="email">jobs@<wbr>gardens<wbr>\.example<\/a>/);
-  assert.match(tight(soil), /<\/dl><ul class="kn-actions" role="list"><li><a class="kn-action" href="#planting" data-kn-main>How to apply<\/a><\/li><\/ul><\/div><\/div><\/section>/);
+  assert.match(tight(soil), /<\/dl><ul class="kn-actions" role="list"><li><a class="kn-action" href="#planting" data-kn-main>How to apply<\/a><\/li><\/ul><\/div><\/div><img class="kn-band-picture"[^>]*><\/section>/);
   // A section's head over a list a presentation draws, and a lone action after the list in its body.
   assert.match(tight(soil), /<section class="kn-band kn-section" data-kn-surface="raised"><div class="kn-band-content"><header class="kn-section-head"><hgroup class="kn-heading-group"><h2 class="kn-heading-group-heading" data-kn-type="heading-2" id="other-articles">Other articles<\/h2><\/hgroup><\/header><div class="kn-section-body kn-body-text"><div class="kn-post-list" data-kn-presentation="cards">.*<\/div><ul class="kn-actions" role="list"><li><a class="kn-action" href="\/articles\/" data-kn-main>All articles<\/a><\/li><\/ul><\/div><\/div><\/section>/);
   // A term's page calls the presentation itself, the row it settles left out and kept with a search.
@@ -722,38 +722,41 @@ test('in a designed site built by the core, a body\'s image at a phone\'s width 
   try {
     for (const [engine, type] of ENGINES) {
       const browser = await type.launch();
-      const loaded = {};
-      for (const density of [1, 2]) {
-        const context = await browser.newContext({ viewport: { width: 400, height: 800 }, deviceScaleFactor: density });
-        const tab = await context.newPage();
-        const requested = new Set();
-        tab.on('request', (request) => requested.add(new URL(request.url()).pathname));
-        await tab.goto(`${server.origin}/articles/water/`);
-        const figure = tab.locator('.kn-reading-area-flow figure img').first();
-        await figure.scrollIntoViewIfNeeded();
-        await tab.waitForFunction(() => { const image = document.querySelector('.kn-reading-area-flow figure img'); return image.complete && image.naturalWidth > 0; });
-        const { drawn, current, elsewhere } = await figure.evaluate((image) => ({
-          drawn: image.getBoundingClientRect().width,
-          current: new URL(image.currentSrc).pathname,
-          // The same master's versions other parts of the page draw, as the article's opening draws its own.
-          elsewhere: [...document.querySelectorAll('img')].filter((other) => other !== image && other.currentSrc).map((other) => new URL(other.currentSrc).pathname),
-        }));
-        const where = `${engine} at density ${density}: drawn ${drawn} px, ${current} loaded of ${candidates.map(({ width }) => width)}`;
-        const chosen = candidates.find(({ url }) => url === current);
-        assert.ok(chosen, where);
-        // The narrowest version at least as wide as the image is drawn at this density, or the one under it, which
-        // Chromium takes where it is near enough: never one wider than covers it.
-        const need = drawn * density;
-        const covering = candidates.find(({ width }) => width >= need);
-        const under = candidates.filter(({ width }) => width < need).at(-1);
-        assert.ok(chosen === covering || chosen === under, where);
-        assert.deepEqual([...requested].filter((path) => candidates.some(({ url }) => url === path) && !elsewhere.includes(path)), [current], `${where}: no other version of it is loaded`);
-        loaded[density] = chosen.width;
-        t.diagnostic(`${engine}, density ${density}: drawn ${drawn} px, loaded the ${chosen.width} px version`);
-        await context.close();
+      try {
+        const loaded = {};
+        for (const density of [1, 2]) {
+          const context = await browser.newContext({ viewport: { width: 400, height: 800 }, deviceScaleFactor: density });
+          const tab = await context.newPage();
+          const requested = new Set();
+          tab.on('request', (request) => requested.add(new URL(request.url()).pathname));
+          await tab.goto(`${server.origin}/articles/water/`);
+          const figure = tab.locator('.kn-reading-area-flow figure img').first();
+          await figure.scrollIntoViewIfNeeded();
+          await tab.waitForFunction(() => { const image = document.querySelector('.kn-reading-area-flow figure img'); return image.complete && image.naturalWidth > 0; });
+          const { drawn, current, elsewhere } = await figure.evaluate((image) => ({
+            drawn: image.getBoundingClientRect().width,
+            current: new URL(image.currentSrc).pathname,
+            // The same master's versions other pictures on the page draw, as the article's opening and the lightbox do.
+            elsewhere: [...document.querySelectorAll('img')].filter((other) => other !== image && other.currentSrc).map((other) => new URL(other.currentSrc).pathname),
+          }));
+          const where = `${engine} at density ${density}: drawn ${drawn} px, ${current} loaded of ${candidates.map(({ width }) => width)}`;
+          const chosen = candidates.find(({ url }) => url === current);
+          assert.ok(chosen, where);
+          // The narrowest version at least as wide as the image is drawn at this density, or the one under it, which
+          // Chromium takes where it is near enough: never one wider than covers it.
+          const need = drawn * density;
+          const covering = candidates.find(({ width }) => width >= need);
+          const under = candidates.filter(({ width }) => width < need).at(-1);
+          assert.ok(chosen === covering || chosen === under, where);
+          assert.deepEqual([...requested].filter((path) => candidates.some(({ url }) => url === path) && (path === current || !elsewhere.includes(path))), [current], `${where}: no other version of it is loaded`);
+          loaded[density] = chosen.width;
+          t.diagnostic(`${engine}, density ${density}: drawn ${drawn} px, loaded the ${chosen.width} px version`);
+          await context.close();
+        }
+        assert.ok(loaded[2] / loaded[1] >= 1.4 && loaded[2] / loaded[1] <= 2.9, `${engine}: ${loaded[1]} px at density 1 and ${loaded[2]} px at density 2`);
+      } finally {
+        await browser.close();
       }
-      assert.ok(loaded[2] / loaded[1] >= 1.4 && loaded[2] / loaded[1] <= 2.9, `${engine}: ${loaded[1]} px at density 1 and ${loaded[2]} px at density 2`);
-      await browser.close();
     }
   } finally {
     await server.close();
@@ -784,41 +787,40 @@ test('in a designed site built by the core, a hero\'s picture behind its text at
   try {
     for (const [engine, type] of ENGINES) {
       const browser = await type.launch();
-      const loaded = {};
-      for (const density of [1, 2]) {
-        const context = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: density });
-        const tab = await context.newPage();
-        const requested = new Set();
-        tab.on('request', (request) => requested.add(new URL(request.url()).pathname));
-        await tab.goto(`${server.origin}/pages/garden/`);
-        await tab.waitForFunction(() => { const image = document.querySelector('.kn-band-picture'); return image.complete && image.naturalWidth > 0; });
-        const { band, drawn, current, elsewhere } = await tab.evaluate(() => {
-          const image = document.querySelector('.kn-band-picture');
-          return {
-            band: image.parentElement.getBoundingClientRect().width,
-            drawn: image.getBoundingClientRect().width,
-            current: new URL(image.currentSrc).pathname,
-            // The same master's versions other pictures on the page draw, as the section's photo and a card's.
-            elsewhere: [...document.querySelectorAll('img')].filter((other) => other !== image && other.currentSrc).map((other) => new URL(other.currentSrc).pathname),
-          };
-        });
-        const where = `${engine} at density ${density}: drawn ${drawn} px, ${current} loaded of ${candidates.map(({ width }) => width)}`;
-        assert.equal(drawn, band, `${where}: as wide as the band`);
-        const chosen = candidates.find(({ url }) => url === current);
-        assert.ok(chosen, where);
-        // The narrowest version at least as wide as the band at this density, or the one under it, which Chromium takes
-        // where it is near enough: never one wider than covers it.
-        const need = drawn * density;
-        const covering = candidates.find(({ width }) => width >= need);
-        const under = candidates.filter(({ width }) => width < need).at(-1);
-        assert.ok(chosen === covering || chosen === under, where);
-        assert.deepEqual([...requested].filter((path) => candidates.some(({ url }) => url === path) && !elsewhere.includes(path)), [current], `${where}: no other version of it is loaded`);
-        loaded[density] = chosen.width;
-        t.diagnostic(`${engine}, density ${density}: drawn ${drawn} px, loaded the ${chosen.width} px version`);
-        await context.close();
+      try {
+        const loaded = {};
+        for (const density of [1, 2]) {
+          const context = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: density });
+          const tab = await context.newPage();
+          const requested = new Set();
+          tab.on('request', (request) => requested.add(new URL(request.url()).pathname));
+          await tab.goto(`${server.origin}/pages/garden/`);
+          await tab.waitForFunction(() => { const image = document.querySelector('.kn-band-picture'); return image.complete && image.naturalWidth > 0; });
+          const { band, drawn, current, elsewhere } = await tab.evaluate(() => {
+            const image = document.querySelector('.kn-band-picture');
+            return {
+              band: image.parentElement.getBoundingClientRect().width,
+              drawn: image.getBoundingClientRect().width,
+              current: new URL(image.currentSrc).pathname,
+              // The same master's versions other pictures on the page draw, as the section's photo and a card's.
+              elsewhere: [...document.querySelectorAll('img')].filter((other) => other !== image && other.currentSrc).map((other) => new URL(other.currentSrc).pathname),
+            };
+          });
+          const where = `${engine} at density ${density}: drawn ${drawn} px, ${current} loaded of ${candidates.map(({ width }) => width)}`;
+          assert.equal(drawn, band, `${where}: as wide as the band`);
+          const chosen = candidates.find(({ url }) => url === current);
+          assert.ok(chosen, where);
+          // The narrowest version at least as wide as the band at this density, which all three engines take here.
+          assert.equal(chosen, candidates.find(({ width }) => width >= drawn * density), where);
+          assert.deepEqual([...requested].filter((path) => candidates.some(({ url }) => url === path) && (path === current || !elsewhere.includes(path))), [current], `${where}: no other version of it is loaded`);
+          loaded[density] = chosen.width;
+          t.diagnostic(`${engine}, density ${density}: drawn ${drawn} px, loaded the ${chosen.width} px version`);
+          await context.close();
+        }
+        assert.ok(loaded[2] / loaded[1] >= 1.4 && loaded[2] / loaded[1] <= 2.9, `${engine}: ${loaded[1]} px at density 1 and ${loaded[2]} px at density 2`);
+      } finally {
+        await browser.close();
       }
-      assert.ok(loaded[2] / loaded[1] >= 1.4 && loaded[2] / loaded[1] <= 2.9, `${engine}: ${loaded[1]} px at density 1 and ${loaded[2]} px at density 2`);
-      await browser.close();
     }
   } finally {
     await server.close();
