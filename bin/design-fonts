@@ -154,6 +154,16 @@ def stylistic_sets(font):
     return [[tag, sets[tag]] for tag in sorted(sets)]
 
 def number(value): return int(value) if float(value).is_integer() else value
+
+# A font's licence, written beside it as LICENSE-<family>.txt where the source has one, and that file's name.
+def licence_file(family, licence):
+    name = f"LICENSE-{family.lower().replace(' ', '-')}.txt"
+    if licence: (OUT / name).write_bytes(licence)
+    return name
+
+# A font's version, as its name table says it, without the word "Version" or what follows a semicolon.
+def version_of(font): return re.sub(r'^Version\s+', '', font['name'].getDebugName(5).split(';')[0])
+
 def js(value): return json.dumps(value, ensure_ascii=False)
 
 def main():
@@ -171,9 +181,6 @@ def main():
             _, bytes_it = prepared(italic, options)
             italic_file = f'{name}-Italic-VF.woff2'
             (OUT / italic_file).write_bytes(bytes_it)
-        slug = family.lower().replace(' ', '-')
-        licence_file = f'LICENSE-{slug}.txt'
-        if licence: (OUT / licence_file).write_bytes(licence)
         axes = {a.axisTag: [number(a.minValue), number(a.defaultValue), number(a.maxValue)] for a in font['fvar'].axes if a.axisTag != 'ital'}
         quoted = f'"{family}"' if re.search(r'\d', family) else family
         face = dict(family=family, category=category, value=quoted + FALLBACK.get(category, ''), roles=USES[use])
@@ -187,8 +194,8 @@ def main():
         if options.get('slant'): face['slant'] = options['slant']
         face['axes'] = axes
         face['sets'] = stylistic_sets(font)
-        face['licence'] = licence_file
-        face['version'] = re.sub(r'^Version\s+', '', font['name'].getDebugName(5).split(';')[0])
+        face['licence'] = licence_file(family, licence)
+        face['version'] = version_of(font)
         face['source'] = url
         if options.get('subset'): face['subset'] = 'latin'
         faces.append(face)
@@ -198,11 +205,8 @@ def main():
     font, bytes_up = prepared(upright, {})
     name = font['name'].getDebugName(6)
     (OUT / f'{name}.woff2').write_bytes(bytes_up)
-    licence_file = f"LICENSE-{family.lower().replace(' ', '-')}.txt"
-    (OUT / licence_file).write_bytes(licence)
-    version = re.sub(r'^Version\s+', '', font['name'].getDebugName(5).split(';')[0])
-    math = dict(family=family, weight='400', upright=f'{name}.woff2', italic=None, licence=licence_file, version=version, source=url)
-    print(f"{family:28}{version:10}{(OUT / math['upright']).stat().st_size // 1024:6} kB  math", flush=True)
+    math = dict(family=family, weight='400', upright=f'{name}.woff2', italic=None, licence=licence_file(family, licence), version=version_of(font), source=url)
+    print(f"{family:28}{math['version']:10}{(OUT / math['upright']).stat().st_size // 1024:6} kB  math", flush=True)
     lines = ',\n  '.join(js(f) for f in faces)
     (OUT / 'catalog.js').write_text(f"""// The typefaces the library ships, in the owner's order: written by bin/design-fonts, which holds the
 // list and reads everything else from the files. `value` is what a design file stores, `roles` where a
