@@ -119,23 +119,18 @@
     vertical-align: -0.25em;
   }
 
-  /* The text on the picture: the picture fills the card, and over it lies the picture Surface's scrim, whose strength the
-     generator checked for every role on any picture, black or white. A card without a picture is an ordinary card. */
+  /* The text on the picture: the picture fills the card, under the picture Surface's scrim, as a band's picture behind
+     its text, by the rules the two share (band.css). Here the card's own: its words at its foot, at least 20rem high, and
+     the picture and the scrim within its rounded frame. A card without a picture is an ordinary card. */
   .kn-cards[data-kn-picture="behind"] .kn-card:has(> .kn-card-picture) {
-    isolation: isolate;
     justify-content: flex-end;
     min-block-size: 20rem;
     overflow: clip;
   }
   .kn-cards[data-kn-picture="behind"] .kn-card > .kn-card-picture,
-  .kn-cards[data-kn-picture="behind"] .kn-card:has(> .kn-card-picture)::before {
-    position: absolute;
-    inset: 0;
-    inline-size: 100%;
-    block-size: 100%;
+  .kn-cards[data-kn-picture="behind"] .kn-card:has(> .kn-card-picture)::after {
     margin: 0;
     border-radius: max(0rem, calc(var(--kn-radius-card) - var(--kn-frame-width)));
   }
-  .kn-cards[data-kn-picture="behind"] .kn-card > .kn-card-picture { z-index: -2; aspect-ratio: auto; object-fit: cover; }
-  .kn-cards[data-kn-picture="behind"] .kn-card:has(> .kn-card-picture)::before { content: ""; z-index: -1; background: var(--kn-scrim, transparent); }
+  .kn-cards[data-kn-picture="behind"] .kn-card > .kn-card-picture { aspect-ratio: auto; }
 }
