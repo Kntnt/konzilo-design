@@ -10,15 +10,15 @@
 import test, { after, before } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync, spawnSync } from 'node:child_process';
-import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync, symlinkSync, writeFileSync } from 'node:fs';
-import { createServer } from 'node:http';
+import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { dirname, extname, join, normalize, resolve } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium, firefox, webkit } from 'playwright-core';
 import { defaultInputs, resolve as resolveDesign, DESIGN_FORMAT } from '../src/generator/index.js';
 import { copyFonts } from '../src/konzilo/fonts.js';
 import { imageContexts } from '../src/konzilo/index.js';
+import { serve } from './helpers/serve.js';
 
 const repo = fileURLToPath(new URL('..', import.meta.url));
 const core = process.env.KONZILO_CORE ? resolve(process.env.KONZILO_CORE.replace(/^~(?=\/)/, process.env.HOME ?? '~')) : null;
@@ -680,20 +680,6 @@ test('the core\'s body check reads the package\'s declarations and runs its chec
   assert.deepEqual(reasons(':::section{align="center"}\n\n## Ready?\n\nTell us where you live.\n\n::form{name="contact"}\n\n:::'), []);
   assert.deepEqual(reasons(':::section{align="center"}\n\n## Our story\n\nOne.\n\nTwo.\n\n:::'), ['A section with a heading and paragraphs alone sets the paragraphs beside the heading, so it cannot be centred. Leave out align="center".']);
 });
-
-// The built site's pages, served as a host would serve them, with each image's type.
-function serve(root) {
-  const TYPES = { '.html': 'text/html', '.css': 'text/css', '.js': 'text/javascript', '.webp': 'image/webp', '.svg': 'image/svg+xml', '.png': 'image/png', '.woff2': 'font/woff2', '.json': 'application/json', '.xml': 'application/xml', '.txt': 'text/plain' };
-  const server = createServer((request, response) => {
-    let path = normalize(join(root, decodeURIComponent(new URL(request.url, 'http://localhost').pathname)));
-    if (!path.startsWith(root)) path = join(root, '404.html');
-    if (existsSync(path) && statSync(path).isDirectory()) path = join(path, 'index.html');
-    if (!existsSync(path)) path = join(root, '404.html');
-    response.writeHead(path.endsWith('404.html') ? 404 : 200, { 'content-type': TYPES[extname(path)] ?? 'application/octet-stream' });
-    response.end(readFileSync(path));
-  });
-  return new Promise((done) => server.listen(0, '127.0.0.1', () => done({ origin: `http://127.0.0.1:${server.address().port}`, close: () => new Promise((closed) => server.close(closed)) })));
-}
 
 // A body's image drawn by the package's article body in a site the core builds, at a phone's width: a browser loads the
 // version of it that covers the width the design draws it at, at the screen's density, and no other (issue #36; the

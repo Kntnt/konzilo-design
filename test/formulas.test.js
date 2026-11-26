@@ -5,10 +5,9 @@
 import test, { after, before } from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
-import { createServer } from 'node:http';
+import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { basename, dirname, join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium, firefox, webkit } from 'playwright-core';
 import { DESIGN_FORMAT, defaultInputs, derive, resolve } from '../src/generator/index.js';
@@ -16,6 +15,7 @@ import { coreCss } from '../src/css/index.js';
 import { componentsCss } from '../src/css/components.js';
 import { copyFonts } from '../src/konzilo/fonts.js';
 import { renderMarkdown } from './helpers/konzilo-body.js';
+import { serve } from './helpers/serve.js';
 import { BLOCK, INLINE } from '../gallery/src/formula-samples.js';
 
 const here = (path) => fileURLToPath(new URL(path, import.meta.url));
@@ -29,7 +29,7 @@ const MATH_FONT = 'STIXTwoMath-Regular.woff2';
 
 // A site's stylesheets, in the order fromDesign names them, with the library's components, which a site's layout imports
 // too, and its fonts folder served beside its pages, as the fonts command writes it.
-let styles, scratch, server, base;
+let styles, scratch, server;
 const browsers = [];
 const documents = new Map();
 before(async () => {
@@ -38,29 +38,12 @@ before(async () => {
   const inputs = defaultInputs();
   await writeFile(join(scratch, 'site.design.json'), JSON.stringify({ format: DESIGN_FORMAT, inputs, project: {}, resolved: await resolve(inputs) }));
   await copyFonts(join(scratch, 'site.design.json'), join(scratch, 'fonts'));
-  server = createServer(async (request, response) => {
-    const path = new URL(request.url, 'http://local').pathname;
-    try {
-      if (documents.has(path)) {
-        response.setHeader('Content-Type', 'text/html');
-        response.end(documents.get(path));
-      } else {
-        if (!/^\/fonts\/[\w.-]+$/.test(path)) throw new Error('Not served');
-        response.setHeader('Content-Type', path.endsWith('.css') ? 'text/css' : 'font/woff2');
-        response.end(await readFile(join(scratch, 'fonts', basename(path))));
-      }
-    } catch {
-      response.statusCode = 404;
-      response.end();
-    }
-  });
-  await new Promise((done) => server.listen(0, '127.0.0.1', done));
-  base = `http://127.0.0.1:${server.address().port}`;
+  server = await serve(scratch, { pages: documents });
   for (const [name, type] of BROWSERS) browsers.push([name, await type.launch()]);
 }, { timeout: 120000 });
 after(async () => {
   await Promise.all(browsers.map(([, browser]) => browser.close()));
-  await new Promise((done) => server.close(done));
+  await server.close();
   await rm(scratch, { recursive: true, force: true });
 });
 
@@ -74,7 +57,7 @@ async function open(browser, body, { width = 1280, mode = 'light', media = 'scre
   const requests = [];
   tab.on('request', (request) => requests.push(new URL(request.url()).pathname));
   await tab.emulateMedia({ media });
-  await tab.goto(base + path);
+  await tab.goto(server.origin + path);
   await tab.evaluate(() => document.fonts.ready);
   tab.on('close', () => context.close().catch(() => {}));
   return { tab, requests };

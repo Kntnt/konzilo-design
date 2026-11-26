@@ -4,7 +4,6 @@ import test, { after, before } from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
-import { createServer } from 'node:http';
 import { join } from 'node:path';
 import { chromium, firefox, webkit } from 'playwright-core';
 import { coreCss } from '../src/css/index.js';
@@ -18,6 +17,7 @@ import { footerContent, identityProps } from '../presentation/src/frame.js';
 import { designMd } from '../src/design-md/index.js';
 import { decodePng, inkBounds } from './helpers/ink.js';
 import { render } from './helpers/render.js';
+import { serve } from './helpers/serve.js';
 
 const repo = new URL('..', import.meta.url).pathname;
 const IDENTITIES = ['logo', 'name', 'both'];
@@ -118,29 +118,12 @@ const FACES = { 'Mona Sans': 'Mona Sans', 'Source Serif 4': '"Source Serif 4", G
 const WORDS = 'HEH';
 const SCALE = 4;
 const LIMIT = 1;
-let server, base;
+let server;
 const documents = new Map();
 before(async () => {
-  server = createServer(async (request, response) => {
-    const path = new URL(request.url, 'http://local').pathname;
-    try {
-      if (documents.has(path)) {
-        response.setHeader('Content-Type', 'text/html');
-        response.end(documents.get(path));
-      } else {
-        if (!/^\/src\/fonts\/[A-Za-z0-9-]+\.(?:css|woff2)$/.test(path)) throw new Error('Not served');
-        response.setHeader('Content-Type', path.endsWith('.css') ? 'text/css' : 'font/woff2');
-        response.end(await readFile(join(repo, path)));
-      }
-    } catch {
-      response.statusCode = 404;
-      response.end();
-    }
-  });
-  await new Promise((done) => server.listen(0, '127.0.0.1', done));
-  base = `http://127.0.0.1:${server.address().port}`;
+  server = await serve(repo, { pages: documents });
 });
-after(() => new Promise((done) => server.close(done)));
+after(() => server.close());
 
 async function documentFor(face, direction) {
   const logo = `data:image/svg+xml;base64,${(await readFile(join(repo, 'tool/new-design-logo.svg'))).toString('base64')}`;
@@ -191,7 +174,7 @@ for (const [name, type] of BROWSERS) {
         documents.set(path, await documentFor(face, direction));
         const context = await browser.newContext({ viewport: { width: 900, height: 1600 }, deviceScaleFactor: SCALE });
         const page = await context.newPage();
-        await page.goto(base + path);
+        await page.goto(server.origin + path);
         const family = await page.evaluate(async () => {
           const name = getComputedStyle(document.querySelector('.kn-brand-name'));
           await document.fonts.load(`${name.fontWeight} 24px ${name.fontFamily}`);
