@@ -10,7 +10,7 @@ WOFF2 if it is a TTF, and subset only where marked: a subset is a modified versi
 carry a Reserved Font Name.
 Usage: design-fonts [--cache folder]
 """
-import argparse, io, json, re, sys, urllib.parse, urllib.request, zipfile
+import argparse, io, json, re, sys, tarfile, urllib.parse, urllib.request, zipfile
 from pathlib import Path
 from fontTools import subset
 from fontTools.ttLib import TTFont
@@ -87,9 +87,11 @@ FACES = [
 ]
 
 # The one math font, in which every design draws its formulas: no typeface a role may take, so it stands apart from the
-# list above. Used whole, as published: its licence reserves the name "TM Math", and "STIX Two" is a trademark of the
-# IEEE, so a cut version could not be called by its name.
+# list above. It is cut to the characters that Temml, which writes a Konzilo site's formulas, can write, at the version
+# the core uses, TEMML: when the core takes another Temml, set it here and run this again. Its licence reserves only the
+# name "TM Math", so the cut keeps its own.
 MATH = ('STIX Two Math', tree('stipub/stixfonts', 'v2.13b171', 'fonts/static_otf_woff2/STIXTwoMath-Regular.woff2', None, 'OFL.txt'))
+TEMML = '0.14.0'
 
 def get(url, cache=None):
     if cache:
@@ -130,12 +132,27 @@ def fetch(family, source, options, cache):
     licence = member(archive, source['licence']) if source['licence'] else raw(*options['licence'], cache)
     return upright, italic, licence, f'https://github.com/{repo}/releases/tag/{urllib.parse.quote(tag, safe="")}'
 
-def prepared(data, options):
-    font = TTFont(io.BytesIO(data))
-    if options.get('subset'):
+# The characters Temml can write, as near as its release tells: every character beyond ASCII in its dist/temml.mjs,
+# written out or as a \u escape, with printable ASCII, Latin-1, the combining marks, which it reads as one range,
+# Greek, and the two blocks it works characters out in rather than spelling them, Letterlike Symbols and Mathematical
+# Alphanumeric Symbols. Read from the package npm publishes, the one the core installs.
+def temml_characters(version, cache):
+    package = tarfile.open(fileobj=io.BytesIO(get(f'https://registry.npmjs.org/temml/-/temml-{version}.tgz', cache)))
+    source = package.extractfile('package/dist/temml.mjs').read().decode('utf8')
+    source = re.sub(r'\\u\{([0-9a-fA-F]+)\}|\\u([0-9a-fA-F]{4})', lambda m: chr(int(m[1] or m[2], 16)), source)
+    # A character past the Basic Multilingual Plane is written as two escapes, a surrogate pair: join them, drop a lone one.
+    source = source.encode('utf-16-le', 'surrogatepass').decode('utf-16-le', 'ignore')
+    blocks = [(0x20, 0x7E), (0xA0, 0xFF), (0x300, 0x36F), (0x370, 0x3FF), (0x2100, 0x214F), (0x1D400, 0x1D7FF)]
+    return {ord(c) for c in source if ord(c) > 0x7F} | {point for first, last in blocks for point in range(first, last + 1)}
+
+# A font as WOFF2, cut to the characters given, if any. It keeps its release's timestamp, so that a run writes the same
+# file from the same sources.
+def prepared(data, characters=None):
+    font = TTFont(io.BytesIO(data), recalcTimestamp=False)
+    if characters:
         settings = subset.Options(layout_features=['*'], name_IDs=['*'], notdef_outline=True, glyph_names=False, hinting=False)
         subsetter = subset.Subsetter(settings)
-        subsetter.populate(unicodes=subset.parse_unicodes(LATIN))
+        subsetter.populate(unicodes=characters)
         subsetter.subset(font)
     elif data[:4] == b'wOF2':
         return font, data
@@ -174,11 +191,12 @@ def main():
     for family, category, use, slants, source, options in FACES:
         upright, italic, licence, url = fetch(family, source, options, cache)
         name = family.replace(' ', '')
-        font, bytes_up = prepared(upright, options)
+        characters = subset.parse_unicodes(LATIN) if options.get('subset') else None
+        font, bytes_up = prepared(upright, characters)
         (OUT / f'{name}-VF.woff2').write_bytes(bytes_up)
         italic_file = None
         if italic and slants == 'italic':
-            _, bytes_it = prepared(italic, options)
+            _, bytes_it = prepared(italic, characters)
             italic_file = f'{name}-Italic-VF.woff2'
             (OUT / italic_file).write_bytes(bytes_it)
         axes = {a.axisTag: [number(a.minValue), number(a.defaultValue), number(a.maxValue)] for a in font['fvar'].axes if a.axisTag != 'ital'}
@@ -202,11 +220,11 @@ def main():
         print(f"{family:28}{face['version']:10}{(OUT / face['upright']).stat().st_size // 1024:6} kB  {' '.join(f'{t} {a[0]}-{a[2]}' for t, a in axes.items())}", flush=True)
     family, source = MATH
     upright, _, licence, url = fetch(family, source, {}, cache)
-    font, bytes_up = prepared(upright, {})
+    font, bytes_up = prepared(upright, temml_characters(TEMML, cache))
     name = font['name'].getDebugName(6)
     (OUT / f'{name}.woff2').write_bytes(bytes_up)
-    math = dict(family=family, weight='400', upright=f'{name}.woff2', italic=None, licence=licence_file(family, licence), version=version_of(font), source=url)
-    print(f"{family:28}{math['version']:10}{(OUT / math['upright']).stat().st_size // 1024:6} kB  math", flush=True)
+    math = dict(family=family, weight='400', upright=f'{name}.woff2', italic=None, licence=licence_file(family, licence), version=version_of(font), source=url, subset=f'temml {TEMML}')
+    print(f"{family:28}{math['version']:10}{(OUT / math['upright']).stat().st_size // 1024:6} kB  math, cut to Temml {TEMML}", flush=True)
     lines = ',\n  '.join(js(f) for f in faces)
     (OUT / 'catalog.js').write_text(f"""// The typefaces the library ships, in the owner's order: written by bin/design-fonts, which holds the
 // list and reads everything else from the files. `value` is what a design file stores, `roles` where a
