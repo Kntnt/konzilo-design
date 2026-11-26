@@ -428,6 +428,105 @@ test('a series of three or four in a band across a wide window says about as wid
   assert.throws(() => seriesPicture(r, 0), /a series of at least one item/);
 });
 
+// The places the package knows a series stands in (issue #44), each its row and its gap in a window `px` wide, by the
+// section's rules (section.css): at the top of a section's body across the content area, as "Read more" and a page's
+// loose blocks stand too; beside its photo, half the content area less half the column gap from 48rem; beside a photo
+// corner to corner, half the content area less the column gap; after a form beside the heading, three fifths of the
+// content area less the column gap from 48rem; at Narrow, as a centred section's, one with a form or a choice, and an
+// article's reading column; and in a column of two of at least 18rem, body="columns". In an accordion in one of them,
+// 1.5em narrower, or 2.5em where it is of questions, at the component gap; and an accordion alone beside a section's
+// head stands in three fifths from 60rem (rule 4).
+function knownRow(r, px, place) {
+  const { column, component } = gaps(r, px);
+  const area = contentArea(r, px);
+  const rows = {
+    across: area,
+    beside: sideBySide(px) ? halfOf(r, px) : area,
+    corners: sideBySide(px) ? area / 2 - column : area,
+    form: sideBySide(px) ? (area - column) * 3 / 5 : area,
+    narrow: Math.min(area, r.layout.narrow),
+    columns: area >= 2 * 18 * 16 + column ? halfOf(r, px) : area,
+    head: px >= 60 * 16 ? (area - column) * 3 / 5 : area,
+  };
+  if (typeof place === 'string') return [rows[place], column];
+  return [rows[place.accordion] - (place.questions ? 2.5 : 1.5) * typeSize(r.type.body.size, px), component];
+}
+const KNOWN = [
+  'across', 'beside', 'corners', 'form', 'narrow', 'columns',
+  ...['across', 'beside', 'narrow', 'head'].flatMap((accordion) => [{ accordion }, { accordion, questions: true }]),
+];
+
+test('a series whose place the package knows says exactly the width an item of so many is drawn at there, at every window, and the widest where it does not', () => {
+  for (const name of ['default', 'other', 'small', 'large']) {
+    const r = design(DESIGNS[name]);
+    for (let count = 1; count <= 12; count++) {
+      for (const place of [...KNOWN, undefined]) {
+        const { sizes } = seriesPicture(r, count, { ratio: PHOTO, place });
+        const at = (px) => (place === undefined ? widestItem(r, px, count) : seriesItem(...knownRow(r, px, place), count));
+        for (let px = 320; px <= 3200; px += 1.5) {
+          const [said, drawn] = [sizesAt(sizes, px), at(px)];
+          const why = `${name}, a series of ${count} ${JSON.stringify(place) ?? 'in an unknown place'} at ${px}px: sizes says ${said}, an item is drawn ${drawn}`;
+          // An answer's 2.5em takes the body size's clamp, whose vw the CSS rounds to four places, two and a half times.
+          assert.ok(said > drawn - 0.1, why);
+          // Where the row changes its columns, the width jumps, and the sizes says the wider for a 32nd of a pixel.
+          const jumps = Math.abs(at(px - 0.1) - at(px + 0.1)) > 0.3;
+          if (!jumps) assert.ok(said < drawn + 0.1, why);
+        }
+      }
+    }
+  }
+  // Three cards across a band on a 64rem window are drawn 17.9rem wide, where the widest of their places is a narrower
+  // row's one column, 31.11rem (konzilo.md, Images).
+  const r = design({});
+  assert.equal(Math.round(sizesAt(seriesPicture(r, 3, { ratio: PHOTO, place: 'across' }).sizes, 1024) / 16 * 10) / 10, 17.9);
+  assert.equal(Math.round(sizesAt(seriesPicture(r, 3, { ratio: PHOTO }).sizes, 1024) / 16 * 100) / 100, 31.11);
+  // Its widths are the ladder's steps for that drawing, from the one that covers it on the narrowest window at density 1
+  // to the one that covers its widest at density 2: steps √2 apart from Narrow, below it too, and the cap.
+  const steps = [...Array.from({ length: 24 }, (_, k) => Math.round(r.layout.narrow * 2 ** ((k - 12) / 2))).filter((step) => step < WIDEST * 0.9), WIDEST];
+  for (const place of KNOWN) {
+    for (const count of [1, 2, 4, 7]) {
+      let widest = 0;
+      for (let px = 320; px <= 3200; px += 1) widest = Math.max(widest, seriesItem(...knownRow(r, px, place), count));
+      const { widths } = seriesPicture(r, count, { ratio: PHOTO, place });
+      const narrowest = seriesItem(...knownRow(r, 320, place), count);
+      const why = `${JSON.stringify(place)}, a series of ${count}: ${widths}, for ${narrowest} at the narrowest and ${widest} at the widest`;
+      assert.deepEqual(widths, steps.filter((step) => step >= steps.find((one) => one >= narrowest) && step <= steps.find((one) => one >= 2 * widest)), why);
+    }
+  }
+  assert.throws(() => seriesPicture(r, 3, { ratio: PHOTO, place: 'aside' }), /a series stands in no place aside/);
+});
+
+test('a teaser whose list\'s place the package knows says exactly the width it is drawn at there, by its presentation', () => {
+  for (const name of ['default', 'other', 'small']) {
+    const r = design(DESIGNS[name]);
+    for (const place of ['across', 'beside', 'corners', 'form', 'narrow', 'columns']) {
+      for (const count of [1, 2, 3, 4, 7]) {
+        for (const presentation of ['cards', 'filtered', 'featured']) {
+          const pictures = teaserPictures(r, presentation, count, photos(count), { place });
+          pictures.forEach(({ sizes }, n) => {
+            const at = (px) => {
+              const [row, gap] = knownRow(r, px, place);
+              if (presentation === 'featured') return featuredItem(row, gap, n === 0);
+              // A lone teaser of `cards` fills its column beside a quotation (section.css, body="columns").
+              if (presentation === 'cards' && count === 1 && place === 'columns') return row;
+              return seriesItem(row, gap, count);
+            };
+            for (let px = 320; px <= 3200; px += 2.5) {
+              const [said, drawn] = [sizesAt(sizes, px), at(px)];
+              const why = `${name}, ${presentation} of ${count} ${place}, teaser ${n} at ${px}px: sizes says ${said}, drawn ${drawn}`;
+              assert.ok(said > drawn - 0.1, why);
+              if (Math.abs(at(px - 0.1) - at(px + 0.1)) <= 0.3) assert.ok(said < drawn + 0.1, why);
+            }
+          });
+        }
+      }
+    }
+  }
+  // A list of three across a band on a 64rem window: 17.9rem, as three cards.
+  const r = design({});
+  assert.equal(teaserPictures(r, 'cards', 3, photos(3), { place: 'across' })[0].sizes, seriesPicture(r, 3, { ratio: PHOTO, place: 'across' }).sizes);
+});
+
 // The header's height at the most, in px (header.css): the taller of 4rem and its identity with 0.75rem above and below,
 // and its 1px hairline, the identity the taller of the logo and a line of the name or the slogan, 0.66 of their size at
 // its largest.
