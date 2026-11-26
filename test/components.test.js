@@ -9,9 +9,9 @@ import { coreCss } from '../src/css/index.js';
 import { componentsCss } from '../src/css/components.js';
 import { icons } from '../src/components/icons.js';
 import { followingMenuLoader } from '../src/components/table-of-contents.js';
+import { PHYSICAL } from './helpers/logical.js';
 
 const directory = new URL('../src/components/', import.meta.url);
-const physical = /^(?:(?:min-|max-)?(?:width|height)|left|right|top|bottom|(?:margin|padding|inset)-(?:left|right|top|bottom)|border-(?:left|right|top|bottom)(?:-(?:width|style|color))?|border-(?:top|bottom)-(?:left|right)-radius)$/;
 const colorFunctions = /^(?:rgba?|hsla?|hwb|lab|lch|oklab|oklch|color|color-mix|light-dark)$/i;
 
 test('component CSS uses only logical properties, role reads and permitted drawing units', async () => {
@@ -42,7 +42,7 @@ test('component CSS uses only logical properties, role reads and permitted drawi
     if (!['header.css', 'page.css'].includes(name)) assert.doesNotMatch(sides.reduce((text, query) => text.replaceAll(query, ''), source.replace('@container style(--kn-reading-columns: 2)', '').replaceAll('@container not style(--kn-shadow-box: none)', '').replaceAll('@container style(--kn-tabs-rule-place: above)', '').replace('@container style(--kn-page-band-line: true)', '')), /\b(?:if|style)\(/, name);
     for (const [, role] of source.matchAll(/var\(\s*(--kn-[\w-]+)/g)) assert.ok(emitted.has(role) || shared.has(role) || local.has(role), `${name}: unknown role ${role}`);
     walk(ast, { visit: 'Declaration', enter(declaration) {
-      assert.ok(!physical.test(declaration.property), `${name}: physical property ${declaration.property}`);
+      assert.ok(!PHYSICAL.test(declaration.property), `${name}: physical property ${declaration.property}`);
       if (declaration.property === 'line-height') assert.doesNotMatch(generate(declaration.value), /\d(?:px|rem|em|%)/, name);
       walk(declaration.value, (node) => {
         assert.notEqual(node.type, 'Hash', `${name}: literal colour`);

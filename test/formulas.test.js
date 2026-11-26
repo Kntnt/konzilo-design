@@ -113,6 +113,19 @@ for (const [name] of BROWSERS) {
     await tab.close();
   });
 
+  // konzilo.css writes Temml's lengths in ex in em, at this x-height, so they are Temml's to a hair.
+  test(`in ${name} STIX Two Math's x-height is 0.473em, at which konzilo.css writes Temml's lengths in ex`, { timeout: 120000 }, async () => {
+    const { tab } = await open(browser(), article(`<p id="before">A formula, ${INLINE.euler}.</p>`));
+    const height = await tab.evaluate(() => {
+      const probe = document.createElementNS('http://www.w3.org/1998/Math/MathML', 'mrow');
+      probe.style.cssText = 'display: block; padding-block-start: 100ex;';
+      document.querySelector('#before math semantics').append(probe);
+      return parseFloat(getComputedStyle(probe).paddingBlockStart) / 100 / parseFloat(getComputedStyle(probe).fontSize);
+    });
+    assert.ok(Math.abs(height - 0.473) < 0.001, `${height}em`);
+    await tab.close();
+  });
+
   test(`in ${name} a block formula is centred in the reading column, in an article's body and in a section's`, { timeout: 120000 }, async () => {
     const section = renderMarkdown(`:::section\n\n## Formulas\n\nThe section's deck.\n\nThe words before it.\n\n${BLOCK.quotient.replace('<div class="konzilo-math">', '<div class="konzilo-math" id="in-section">')}\n\nThe words after it.\n\n:::`);
     for (const body of [article(BODY), `<main class="kn-page-main">${section}</main>`]) {

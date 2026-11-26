@@ -8,11 +8,12 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { chromium, firefox } from 'playwright-core';
-import { parse, walk } from 'css-tree';
+import { generate, parse, walk } from 'css-tree';
 import { derive, defaultInputs, contrast } from '../src/generator/index.js';
 import { coreCss } from '../src/css/index.js';
 import { componentsCss } from '../src/css/components.js';
 import { footerFromDesign } from '../src/components/design-props.js';
+import { PHYSICAL } from './helpers/logical.js';
 import { render } from './helpers/render.js';
 
 const here = (path) => fileURLToPath(new URL(path, import.meta.url));
@@ -78,6 +79,31 @@ test('konzilo.css has a layer of its own after the components, so a site\'s styl
   const properties = [];
   walk(tree, (node) => { if (node.type === 'Declaration' && node.property.startsWith('--konzilo-lightbox-')) properties.push(node.property); });
   assert.deepEqual(properties.sort(), ['--konzilo-lightbox-control', '--konzilo-lightbox-overlay', '--konzilo-lightbox-text']);
+});
+
+// konzilo.css follows a right-to-left page as the components do, in logical properties (components.md, How a component
+// is built), and so do a formula's rules, though a formula reads left to right: a physical property, a shorthand of three
+// or four values, which names each side, or a text aligned to the left or the right, fails.
+const SIDES = /^(?:margin|padding|inset|border-(?:width|style|color))$/;
+test('konzilo.css writes logical properties alone, a formula\'s too', () => {
+  const found = [];
+  walk(parse(css, { positions: true }), { visit: 'Declaration', enter(declaration) {
+    const value = generate(declaration.value);
+    const values = declaration.value.children?.toArray().filter((node) => node.type !== 'WhiteSpace').length ?? 0;
+    const physical = PHYSICAL.test(declaration.property) || (SIDES.test(declaration.property) && values > 2) || (declaration.property === 'text-align' && /^(?:left|right)$/.test(value));
+    if (physical) found.push(`line ${declaration.loc.start.line}: ${declaration.property}: ${value}`);
+  } });
+  assert.deepEqual(found, []);
+});
+
+// Its lengths are in rem and em, as tool.md's point 3 asks, a formula's too: Temml's lengths in ex are written in em, at
+// STIX Two Math's x-height (formulas.test.js measures it in each engine).
+test('konzilo.css writes no length in ex', () => {
+  const found = [];
+  walk(parse(css, { positions: true }), { visit: 'Declaration', enter(declaration) {
+    walk(declaration.value, (node) => { if (node.type === 'Dimension' && node.unit.toLowerCase() === 'ex') found.push(`line ${declaration.loc.start.line}: ${declaration.property}: ${generate(declaration.value)}`); });
+  } });
+  assert.deepEqual(found, []);
 });
 
 const BROWSERS = Object.entries({ firefox, chromium }).filter(([, type]) => existsSync(type.executablePath()));
