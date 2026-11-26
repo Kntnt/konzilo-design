@@ -195,3 +195,17 @@ for (const [name] of BROWSERS) {
     await tab.close();
   });
 }
+
+// What Temml's MathML relies on, in its own stylesheet for STIX Two Math (Temml 0.14.0, dist/Temml-STIX2.css): every class
+// it styles, but its equation numbers, which the design does not draw, and none of its font rules.
+const TEMML_CLASSES = `mathscr tml-prime menclose tml-cancelto tml-right tml-left tml-shift-left tml-jot tml-small tml-vec ff-narrow
+  ff-nudge-left ff-squash tml-sml-pad tml-med-pad tml-lrg-pad wbk-acc wbk-sml wbk-sml-acc wbk-sml-vec wbk-med wbk-med-acc
+  wbk-med-vec wbk-lrg wbk-lrg-acc wbk-lrg-vec chr-sml chr-sml-vec chr-med chr-med-vec chr-lrg chr-lrg-vec tml-overline
+  tml-underline tml-cancel upstrike downstrike sout tml-xcancel longdiv-top longdiv-arc phasor-bottom phasor-angle tml-fbox
+  circle-pad textcircle actuarial tml-tilde-2 tml-tilde-3 tml-tilde-4 tml-hat-1 tml-hat-2 tml-hat-3 tml-hat-4`.split(/\s+/);
+
+test('konzilo.css holds Temml\'s rules for each class its MathML may hold, without its font rules or its equation numbers', () => {
+  for (const name of TEMML_CLASSES) assert.match(konzilo, new RegExp(`\\.${name}(?![\\w-])`), name);
+  assert.doesNotMatch(konzilo, /@font-face|font-family: STIX2|tml-eqn|tmlEqnNo/);
+  assert.deepEqual([...konzilo.matchAll(/font-family:\s*([^;}]+)/g)].map(([, family]) => family.trim()).filter((family) => /math/i.test(family)), ['"STIX Two Math", math']);
+});
