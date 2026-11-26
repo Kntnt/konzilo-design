@@ -18,7 +18,7 @@ import { presentationHtml, teaserCard } from '../src/presentations/teasers.js';
 import { imageContexts } from '../src/konzilo/index.js';
 import {
   ACCORDION, BADGE, CARD, FALLBACK_RATIO, FEATURED, GALLERY, HEADER, HERO_HEIGHTS, HERO_STACKED, LOGO, LOGOS, OFFER, SECTION, SWITCH, SYMBOL, WIDEST,
-  bandPictureSizes, drawnWidths, heroPictureOf, noWider, pictureSizes, seriesPicture, teaserPictures,
+  bandPictureSizes, drawnWidths, heroPictureOf, masterWidths, noWider, pictureSizes, seriesPicture, teaserPictures,
 } from '../src/konzilo/images.js';
 import { htmlToHast } from 'satteri';
 import { render } from './helpers/render.js';
@@ -901,9 +901,10 @@ test('an article\'s opening makes its main image in the widths and sizes of a he
     const picture = await openingPicture(image, ctx, getImage);
     assert.equal(picture.sizes, expected.sizes, place);
     assert.equal(picture.sizes, place === 'behind' ? pictureSizes(r, 'band', { height: 'half', ratio: 1.5 }) : pictureSizes(r, 'hero', { side: place === 'none' ? 'end' : place, height: 'half', ratio: 1.5 }), place);
-    // Its box grows with the window's height, so it is made in every step up to the cap.
-    assert.deepEqual(widthsIn(picture.srcset), expected.widths, place);
+    // Its box grows with the window's height, so it is made in every step up to the cap, which its master's 2400 px takes
+    // the place of.
     assert.equal(expected.widths.at(-1), WIDEST, place);
+    assert.deepEqual(widthsIn(picture.srcset), [...expected.widths.slice(0, -1), 2400], place);
     const html = articleOpening(ctx, { data: { headline: 'Know your soil' }, picture });
     const drawn = imagesIn(html).at(-1);
     assert.equal(drawn.class, place === 'behind' ? 'kn-band-picture' : undefined, place);
@@ -915,6 +916,39 @@ test('an article\'s opening makes its main image in the widths and sizes of a he
   assert.equal(behind.sizes, 'max(100vw, 88.8889vh)');
   // A picture of its own address, as a site's public folder holds it, is written as given.
   assert.deepEqual(await openingPicture({ src: '/public/soil.webp', alt: '' }, contextFor(), getImage), { src: '/public/soil.webp', alt: '' });
+});
+
+// The core makes a body's image in the body's and the lightbox's widths, which reach past any master, so it makes the
+// master's own width in place of those wider and of one within a tenth below it (its versionWidths(), ADR 0022). A
+// teaser or an opening made through getImage() asks for its widths by the same rule against its master, whether or not
+// one is wider, so it makes no near duplicate and shares the body's files (the owner, 2026-11-26).
+test('a picture made through getImage() asks for no width within a tenth below its master, the master\'s own in its place, as a body\'s image is made', async () => {
+  // The triage's examples: three teasers of a master 1600 px wide, and of one 1000 px wide.
+  assert.deepEqual(masterWidths([360, 509, 720, 1018, 1440], 1600), [360, 509, 720, 1018, 1600]);
+  assert.deepEqual(masterWidths([360, 509, 720, 1018, 1440], 1000), [360, 509, 720, 1000]);
+  // An opening, whose widths reach the cap, as the core makes it: a master wider than the cap is made at the cap.
+  assert.deepEqual(masterWidths([360, 509, 720, 1018, 1440, 2036, 2520], 1600), [360, 509, 720, 1018, 1600]);
+  assert.deepEqual(masterWidths([360, 509, 720, 1018, 1440, 2036, 2520], 4000), [360, 509, 720, 1018, 1440, 2036, 2520]);
+  assert.deepEqual(masterWidths([360, 509, 720, 1018, 1440, 2036], 2200), [360, 509, 720, 1018, 1440, 2200]);
+  // None within a tenth below it: as asked; a master narrower than every width, at its own.
+  assert.deepEqual(masterWidths([360, 509, 720], 1600), [360, 509, 720]);
+  assert.deepEqual(masterWidths([360, 509], 300), [300]);
+  // A presentation's teasers and an article's opening ask Astro's getImage() for those widths.
+  const ctx = contextFor();
+  const asked = [];
+  const made = async (options) => {
+    asked.push(options.widths);
+    return getImage(options);
+  };
+  const masters = (count, width, height) => postsOf(count).map((post) => ({ ...post, entry: { ...post.entry, data: { ...post.entry.data, image: { src: { ...post.entry.data.image.src, width, height }, alt: '' } } } }));
+  for (const [width, widths] of [[1600, [360, 509, 720, 1018, 1600]], [1000, [360, 509, 720, 1000]]]) {
+    const pictures = imagesIn(await presentationHtml('cards', { posts: masters(3, width, width * 5 / 8), options: {} }, ctx, { getImage: made })).filter((image) => image.class === 'kn-card-picture');
+    assert.equal(pictures.length, 3);
+    for (const picture of pictures) assert.deepEqual(widthsIn(picture.srcset), widths, `a master ${width} px wide`);
+  }
+  assert.deepEqual(asked.at(-1), [360, 509, 720, 1000]);
+  const opening = await openingPicture({ src: { name: 'soil', width: 1600, height: 1000 }, alt: '' }, ctx, made);
+  assert.deepEqual(widthsIn(opening.srcset), [360, 509, 720, 1018, 1600]);
 });
 
 // In the browser: a page of each context as the package draws it, an article's body with a figure and galleries of

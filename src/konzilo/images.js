@@ -235,6 +235,25 @@ function ladder(anchor) {
 }
 const ladderOf = (r) => ladder(Math.min(r.layout.narrow, r.layout.wide));
 
+/**
+ * The widths a picture made through Astro's getImage() asks for of a master `own` px wide, by the core's rule against
+ * near duplicates (Kntnt/konzilo `src/astro/image-versions.js`, its versionWidths() and NEAR_DUPLICATE; ADR 0022): none
+ * wider than the master, or than the cap where the master is wider, and in place of each width wider than it or within
+ * a tenth below it, the master's own width, or the cap, once. The core applies the tenth only where a width asked for
+ * is wider than the master, which a body's image always asks for, with the lightbox's widths; this applies it whether
+ * or not, so a teaser or an opening asks for the versions the core makes of the same master in a body, and shares its
+ * files (the owner, 2026-11-26). Where the master's width is not known, the widths as given.
+ * @param {number[]} widths @param {number | undefined} own
+ * @returns {number[]}
+ */
+export function masterWidths(widths, own) {
+  if (!(own > 0)) return [...widths];
+  const widest = Math.min(Math.round(own), WIDEST);
+  const asked = [...new Set(widths.map(Math.round))].sort((a, b) => a - b);
+  const kept = asked.filter((one) => one < widest * NEAR);
+  return kept.length === asked.length ? kept : [...kept, widest];
+}
+
 // The widths of a picture drawn so: from the step that covers its box at the narrowest window at density 1 to the step
 // that covers its widest drawing at density 2, or the cap, which a drawing that grows with the window's height, or
 // past the widest window, takes.
