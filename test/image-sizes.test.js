@@ -1443,10 +1443,21 @@ const OTHERS_MD = [
   `::::section\n\n:::cards{symbol="item"}\n\n### One\n\n${pic('symbol-item', 1600, 800)}\n\nWords.\n\n### Two\n\n${pic('symbol-tall', 400, 800)}\n\nWords.\n\n:::\n\n:::cards{symbol="heading"}\n\n### One\n\n${pic('symbol-heading', 1600, 800)}\n\nWords.\n\n:::\n\n::::`,
 ].join('\n\n');
 
+// A figure in a title band's body, which the band reads as a section's (issue #44): under the title alone and under a
+// deck, across the content area; after a form under the title alone, in three fifths beside it; and after a form under a
+// deck, at Narrow.
+const TITLE_BANDS = {
+  'title-across': [undefined, `Words.\n\n${pic('title-across')}`],
+  'title-deck': ['A deck.', `Words.\n\n${pic('title-deck')}`],
+  'title-form': [undefined, `::form{name="contact"}\n\n${pic('title-form')}`],
+  'title-narrow': ['A deck.', `::form{name="contact"}\n\n${pic('title-narrow')}`],
+};
+const titleBands = (ctx) => Object.values(TITLE_BANDS).map(([deck, markdown]) => titleBand(ctx, { deck, body: renderBody(withVersions(bodyHtml(markdown)), ctx) })).join('');
+
 async function picturesPage(r) {
   const ctx = pageContext({ design: { resolved: r, project: { name: 'Example' } }, title: 'A page', warn: () => {} });
   const markdown = [OTHERS_MD, ...COUNTS.flatMap((count) => Object.values(SERIES_PLACES).map((place) => place(count)))].join('\n\n');
-  const html = renderBody(withVersions(bodyHtml(markdown)), ctx) + COUNTS.flatMap((count) => Object.values(PART_PLACES).map((place) => place(count, ctx))).join('');
+  const html = renderBody(withVersions(bodyHtml(markdown)), ctx) + COUNTS.flatMap((count) => Object.values(PART_PLACES).map((place) => place(count, ctx))).join('') + titleBands(ctx);
   const styles = [coreCss(r), flat('../src/konzilo/body-styles.css'), read('../src/konzilo/konzilo.css'), components].join('\n');
   // What each picture's sizes says, by its id; and the page with every one of them so wide that the CSS alone draws
   // each picture, one it draws at its own width at the most the CSS lets it be.
@@ -1485,7 +1496,7 @@ for (const name of ['default', 'other', 'small', 'large', 'inverted']) {
     const r = design(DESIGNS[name]);
     const { sizes, html } = await picturesPage(r);
     const ids = Object.keys(sizes);
-    for (const required of ['hero-logo', 'hero-picture', 'photo-offered', 'photo-badged', 'photo-cropped', 'photo-tall', 'photo-short', 'badge-wide', 'figure-across', 'figure-narrow', 'figure-form', 'figure-beside', 'logo-wide', 'symbol-item', 'symbol-heading', 's-band-3-0', 's-head-7-0', 'behind-3-0', 'nav-3-0', 'wide-3-0', 'f-answer', 'f-tab', 'f-deep', 'f-card', 'd-tab-3-0']) assert.ok(ids.includes(required), `${name}: ${required} is drawn with versions`);
+    for (const required of ['hero-logo', 'hero-picture', 'photo-offered', 'photo-badged', 'photo-cropped', 'photo-tall', 'photo-short', 'badge-wide', 'figure-across', 'figure-narrow', 'figure-form', 'figure-beside', 'logo-wide', 'symbol-item', 'symbol-heading', 's-band-3-0', 's-head-7-0', 'behind-3-0', 'nav-3-0', 'wide-3-0', 'f-answer', 'f-tab', 'f-deep', 'f-card', 'd-tab-3-0', ...Object.keys(TITLE_BANDS)]) assert.ok(ids.includes(required), `${name}: ${required} is drawn with versions`);
     // Corner to corner, a photo beside words taller than 85% of the window, as beside the tall words, a figure or a
     // series, is drawn wider than its sizes says, which the sizes leaves out, since it cannot know the words' height
     // (konzilo.md, Images); beside short words it is drawn no wider.
