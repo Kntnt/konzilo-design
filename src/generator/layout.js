@@ -22,30 +22,40 @@ export function fluidLine(css) {
   return { ...line, at, limits };
 }
 
+// The content area, min(window − 2 × side margin, Wide) (page.md), in rem at a window `w` rem wide, and the windows where
+// it bends: where the side margin reaches its limits, and where the content area reaches Wide.
+export function contentAreaLine(layout) {
+  const margin = fluidLine(layout['side-margin'].css);
+  const wide = layout.wide / 16;
+  const at = (w) => Math.min(w - 2 * margin.at(w), wide);
+  // w − 2m(w) is straight between the margin's limits and past the last; where it crosses Wide the content area bends.
+  const ends = [0, ...margin.limits].filter((w) => w >= 0).sort((a, b) => a - b);
+  ends.push(ends.at(-1) + 2 * wide + 1);
+  const bends = [...margin.limits];
+  for (let i = 0; i < ends.length - 1; i++) {
+    const [a, b] = [ends[i], ends[i + 1]];
+    const [ya, yb] = [a - 2 * margin.at(a), b - 2 * margin.at(b)];
+    if ((ya - wide) * (yb - wide) < 0) bends.push(a + (wide - ya) * (b - a) / (yb - ya));
+  }
+  return { at, bends };
+}
+
 const round = (x, toward) => Math[toward](x * 1e4) / 1e4;
 
 // The windows, in rem, at which two columns fit: a list of { from, to }, `to` null where it holds for
 // every wider window. Usually one, from a width on; none where Wide is too narrow for them ever; a
 // window bounded above only where the column gap grows past what Wide leaves room for.
 export function readingColumnWindows(layout, columnGap) {
-  const margin = fluidLine(layout['side-margin'].css);
+  const content = contentAreaLine(layout);
   const gap = fluidLine(columnGap.css);
   const wide = layout.wide / 16, need = (layout.narrow + layout['aside-min']) / 16;
-  const content = (w) => Math.min(w - 2 * margin.at(w), wide);
-  const room = (w) => content(w) - gap.at(w) - need;
-  // Between these the room is a straight line, apart from where the content area reaches Wide, found
-  // below; past the last the content area is Wide and the gap constant, so the room is constant.
-  const ends = [0, ...margin.limits, ...gap.limits].filter((w) => w >= 0).sort((a, b) => a - b);
-  const last = ends.at(-1) + 2 * wide + 1;
-  ends.push(last);
-  const points = new Set(ends);
-  for (let i = 0; i < ends.length - 1; i++) {
-    const [a, b] = [ends[i], ends[i + 1]];
-    // w − 2m(w) is straight on [a, b]; where it crosses Wide the room bends.
-    const [ya, yb] = [a - 2 * margin.at(a), b - 2 * margin.at(b)];
-    if ((ya - wide) * (yb - wide) < 0) points.add(a + (wide - ya) * (b - a) / (yb - ya));
-  }
-  const xs = [...points].sort((a, b) => a - b);
+  const room = (w) => content.at(w) - gap.at(w) - need;
+  // Between these the room is a straight line: the content area's bends, where it reaches Wide among
+  // them, and the gap's limits; past the last the content area is Wide and the gap constant, so the
+  // room is constant.
+  const ends = [0, ...content.bends, ...gap.limits].filter((w) => w >= 0);
+  const last = Math.max(...ends) + 2 * wide + 1;
+  const xs = [...new Set([...ends, last])].sort((a, b) => a - b);
   const windows = [];
   let from = room(xs[0]) >= 0 ? xs[0] : null;
   for (let i = 0; i < xs.length - 1; i++) {

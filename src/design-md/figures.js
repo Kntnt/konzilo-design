@@ -5,7 +5,7 @@
 // is drawn for that column (tool.md, point 4).
 import { faceOf } from '../fonts/catalog.js';
 import { contrast } from '../generator/color.js';
-import { fluidLine } from '../generator/layout.js';
+import { contentAreaLine } from '../generator/layout.js';
 import { number, rem } from '../generator/fluid.js';
 
 // No text in the design is smaller (src/generator/type.js), so no label should show smaller either.
@@ -24,9 +24,8 @@ function measures(r) {
   const narrow = r.layout.narrow;
   const first = r['type-scale'].breakpoints.min;
   const phone = Math.min(first, PHONE);
-  // The side margin as the CSS writes it, read back, so the column is the one the browser lays out.
-  const margin = fluidLine(r.layout['side-margin'].css).at(phone / 16) * 16;
-  const column = Math.round(Math.min(phone - 2 * margin, r.layout.wide, narrow));
+  // The content area with the side margin as the CSS writes it, read back, so the column is the one the browser lays out.
+  const column = Math.round(Math.min(contentAreaLine(r.layout).at(phone / 16) * 16, narrow));
   const body = r.type.body.size, small = r.type.small.size;
   // The widest figure whose secondary labels, at the small size, still show at the least text size on a phone.
   const legible = Math.min(narrow, Math.floor(column * small.max / LEAST_TEXT));

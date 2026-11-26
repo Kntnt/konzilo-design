@@ -5,7 +5,7 @@
 // Each width here is a function of the window's width `v`, in rem, which between its bends is a straight line: the
 // side margin and the gaps are clamps of the window, and the rest is sums, halves and least values of those and the
 // design's own lengths. So a `sizes` can say it exactly, one straight line per stretch of windows.
-import { fluidLine } from '../generator/layout.js';
+import { contentAreaLine, fluidLine } from '../generator/layout.js';
 import { number } from '../generator/fluid.js';
 
 // The narrowest window the design is made for, where its fluid scales start, in rem. Below it the narrowest stretch of
@@ -160,10 +160,11 @@ function heroPicture(place = 'behind', contentArea, columnGap) {
  */
 export function imageContexts(r) {
   const rem = (px) => px / 16;
-  const margin = fluid(r.layout['side-margin'].css);
   const componentGap = fluid(r.space.roles['component-gap'].css);
   const columnGap = fluid(r.space.roles['column-gap'].css);
-  const contentArea = least(sum(WINDOW, times(margin, -2)), fixed(rem(r.layout.wide)));
+  // The content area, min(window − 2 × side margin, Wide), as the layout works it out for the Reading Area too.
+  const area = contentAreaLine(r.layout);
+  const contentArea = width(area.at, area.bends);
   const column = least(contentArea, fixed(rem(r.layout.narrow)));
   const steps = ladder(Math.min(r.layout.narrow, r.layout.wide));
   const context = (drawn) => ({ widths: widthsOf(drawn, steps), sizes: sizesOf(drawn) });

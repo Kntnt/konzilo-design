@@ -463,7 +463,7 @@ reverse in RTL. Use them in a full-width band or a parent centred on the viewpor
 geometry; the Reading Area component adjusts them for its offset Narrow column,
 occupied Aside rows and caption alignment, in CSS alone. The core writes
 `--kn-reading-columns: 1` on `:root` and, for each window `readingColumnWindows`
-(`src/generator/layout.js`) finds where `min(w − 2 × side margin, Wide)` holds
+(`src/generator/layout.js`) finds where `contentAreaLine`, `min(w − 2 × margin, Wide)`, holds
 Narrow, the column gap and the Aside minimum, a `@media screen and (width >= …rem)`
 that sets it to 2. It reads the side margin and the column gap back from their
 emitted clamps, so the arithmetic is the browser's; for the defaults the query is
