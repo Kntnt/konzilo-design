@@ -103,11 +103,11 @@ const APART = 0.002;
 // What the design's CSS draws by lengths of its own, not of the design file: a gallery's least column, and the aspect
 // ratio it crops its pictures to (konzilo.css).
 export const GALLERY = Object.freeze({ minimum: 12, ratio: '4:3' });
-// A series of cards' least column and the ratio a card crops its picture to (cards.css, card.css), and the widest
-// window on which a hero's picture beside its text stands above it instead (hero.css).
+// A series of cards' least column and the ratio a card crops its picture to (cards.css, card.css).
 export const CARD = Object.freeze({ minimum: 15, ratio: '16:9' });
 // The factor by which a series' CSS turns a length into a switch (cards.css, konzilo.css).
 export const SWITCH = 999;
+// The widest window, in rem, on which a hero's picture beside its text stands above it instead (hero.css).
 export const HERO_STACKED = 40;
 
 // The widest version the core makes of any image, its master's longest side (the core's WIDEST, ADR 0022).
