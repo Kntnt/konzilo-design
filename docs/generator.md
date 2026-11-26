@@ -76,7 +76,7 @@ Resolve writes a complete result into the same file, preserving its inputs and
 presentation identity, and its format, or this version's where it has none, save that each
 type role keeps only what its typeface has, as `fitRolesToFaces` below; it says on stdout
 what it changed there. CSS goes to stdout unless an output path is supplied. Check
-validates the format, the file, the fingerprint and the Surface contrast check. Fonts copies the typefaces the design uses, and logos writes its logos as files, for a Konzilo site's repository (docs/spec/konzilo.md). Errors go to stderr with a nonzero exit status.
+validates the format, the file, the fingerprint and the Surface contrast check. Fonts copies the typefaces the design uses and STIX Two Math, the formulas' font every design has, and logos writes its logos as files, for a Konzilo site's repository (docs/spec/konzilo.md). Errors go to stderr with a nonzero exit status.
 
 `tool <file> [--port N] [--no-open]` opens the local editor on 127.0.0.1, on the named file or a new design created there, and returns at once; the editor stops by itself when its last window has been closed for 30 seconds. `tool --status` and `tool --stop [<file>]` list and stop the editors running (`tool/README.md`).
 A missing file starts as a new design, with Mona Sans, and is written at once, as the tool starts. `presentation <file>
