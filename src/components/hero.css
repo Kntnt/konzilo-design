@@ -89,10 +89,12 @@
     --kn-hero-window: 100svh;
     --kn-scrim-fade-length: clamp(8rem, calc(var(--kn-hero-window) * 0.36), 32rem);
     anchor-scope: --kn-hero-heading;
-    background-image: var(--kn-picture-image, none);
+    background-image: none;
     isolation: isolate;
     overflow: clip;
   }
+  /* The band's even scrim gives way to this one (band.css). */
+  .kn-hero:is([data-kn-place="top"], [data-kn-place="bottom"])[data-kn-surface^="picture-"]::after { content: none; }
   .kn-hero:is([data-kn-place="top"], [data-kn-place="bottom"])[data-kn-surface^="picture-"] > .kn-hero-content { position: relative; }
   .kn-hero:is([data-kn-place="top"], [data-kn-place="bottom"])[data-kn-surface^="picture-"] > .kn-hero-content::before {
     content: "";

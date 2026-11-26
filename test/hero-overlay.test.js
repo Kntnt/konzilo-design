@@ -24,15 +24,16 @@ let styles;
 let trail;
 const browsers = [];
 before(async () => {
-  // The picture is flat white, so a pixel's darkening is the overlay's strength there; the header takes its room but
-  // draws nothing, so the column shows the overlay behind it.
-  styles = `${coreCss(resolved)}${await componentsCss()} .kn-hero { --kn-picture-image: linear-gradient(#fff, #fff) !important; } .kn-header { visibility: hidden; }`;
+  // The header takes its room but draws nothing, so the column shows the overlay behind it.
+  styles = `${coreCss(resolved)}${await componentsCss()} .kn-header { visibility: hidden; }`;
   trail = await render('Breadcrumbs', breadcrumbProps({ separator: 'slash', current: true, narrow: 'trail' }, { name: 'Example' }, { trail: [{ label: 'Services', href: '#services' }, { label: 'A clear next step' }] }));
   for (const [name, type] of BROWSERS) browsers.push([name, await type.launch()]);
 }, { timeout: 120000 });
 after(() => Promise.all(browsers.map(([, browser]) => browser.close())));
 
-const heroHtml = (props) => render('Hero', { heading: 'Make the next step clear', eyebrow: 'A clear direction', deck: 'Practical support, useful information and a straightforward way to get started.', surface: 'picture-dark', picture: '/flat.webp', height: 'full', ...props }, { before: trail, default: '<p>A note under the deck.</p>' });
+// The picture is flat white, so a pixel's darkening is the overlay's strength there.
+const WHITE = `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"><rect width="16" height="16" fill="#fff"/></svg>')}`;
+const heroHtml = (props) => render('Hero', { heading: 'Make the next step clear', eyebrow: 'A clear direction', deck: 'Practical support, useful information and a straightforward way to get started.', surface: 'picture-dark', picture: WHITE, height: 'full', ...props }, { before: trail, default: '<p>A note under the deck.</p>' });
 async function pageHtml(hero, { header = false } = {}) {
   const next = await render('Band', {}, { default: '<h2>What follows</h2><p>Some words.</p>' });
   const slots = { default: `${hero}${next}` };

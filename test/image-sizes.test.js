@@ -14,7 +14,7 @@ import { pageContext } from '../src/directives/render/context.js';
 import { articleBody } from '../src/page-parts/parts.js';
 import { teaserCard } from '../src/presentations/teasers.js';
 import { imageContexts } from '../src/konzilo/index.js';
-import { CARD, GALLERY, HERO_STACKED, SWITCH, WIDEST, drawnWidths } from '../src/konzilo/images.js';
+import { CARD, GALLERY, HERO_STACKED, SWITCH, WIDEST, bandPictureSizes, drawnWidths } from '../src/konzilo/images.js';
 import { render } from './helpers/render.js';
 
 const read = (path) => readFileSync(new URL(path, import.meta.url), 'utf8');
@@ -149,6 +149,8 @@ test('a card\'s, a hero\'s and the lightbox\'s pictures are cropped to no ratio,
   assert.match(read('../src/components/cards.css'), /\.kn-cards\[data-kn-picture="behind"\] \.kn-card > \.kn-card-picture \{[^}]*aspect-ratio: auto; object-fit: cover; \}/);
   assert.equal(lightbox.sizes, '100vw');
   assert.equal(opening.sizes, '100vw');
+  // The hero directive writes the band's on its picture behind the text, in place of the body's the core gives it.
+  assert.equal(bandPictureSizes(), opening.sizes);
   // Up to the cap, the master's longest side, which a hero across a wide, dense screen gets and no more.
   assert.deepEqual(lightbox.widths, [360, 509, 720, 1018, 1440, 2036, 2520]);
   assert.deepEqual(opening.widths, lightbox.widths);
@@ -271,7 +273,8 @@ const said = (tab, all, engine) => tab.evaluate(async ([all, engine]) => {
 // The widths the CSS draws each context's picture at.
 const drawn = (tab) => tab.evaluate(() => {
   const width = (selector) => document.querySelector(selector).getBoundingClientRect().width;
-  const hero = document.querySelector('#hero .kn-hero-media img') ? width('#hero .kn-hero-media img') : width('#hero');
+  // Beside the text the picture in its media, behind it the band's own (band.css).
+  const hero = width(document.querySelector('#hero .kn-hero-media img') ? '#hero .kn-hero-media img' : '#hero > .kn-band-picture');
   const lightbox = document.querySelector('#lightbox');
   lightbox.showModal();
   const whole = width('#whole');

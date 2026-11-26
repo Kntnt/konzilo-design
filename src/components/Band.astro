@@ -1,20 +1,25 @@
 ---
 import type { HTMLAttributes } from 'astro/types';
 import type { Surface } from './frame-types';
-import { pictureImage } from './picture-image.js';
 // Background and vertical rhythm belong to the band; its content shares the page rail.
+// A picture behind the text is an <img> after the content, which the CSS lays under the picture Surface's scrim and the
+// text (band.css), so a browser loads the version of `srcset` near the band's width. Only a picture Surface has the scrim
+// the text is checked on, so a band on any other draws no picture. Its address is written as given, as every picture's.
 interface Props extends HTMLAttributes<'section'> {
   surface?: Surface;
-  // From the site's root or whole, with its scheme; a relative address stops the build (picture-image.js).
   picture?: string;
+  // What the picture shows; empty, a picture a screen reader passes over, where a template leaves it out.
+  alt?: string;
+  // The picture's versions with their `w` widths, as Astro's getImage() gives them in `srcSet.attribute`, and how wide
+  // it is drawn: the window's width, `100vw`, for a band across it.
+  srcset?: string;
+  sizes?: string;
   contentClass?: string;
 }
-const { surface, picture, contentClass, class: className, style, ...attributes } = Astro.props;
-const pictureStyle = picture ? { '--kn-picture-image': pictureImage(picture) } : {};
-const bandStyle = typeof style === 'string'
-  ? `${Object.entries(pictureStyle).map(([key, value]) => `${key}:${value}`).join(';')};${style}`
-  : { ...pictureStyle, ...style };
+const { surface, picture, alt = '', srcset, sizes, contentClass, class: className, ...attributes } = Astro.props;
+const behind = picture && surface?.startsWith('picture-');
 ---
-<section {...attributes} class:list={['kn-band', className]} data-kn-surface={surface} style={bandStyle}>
+<section {...attributes} class:list={['kn-band', className]} data-kn-surface={surface}>
   <div class:list={['kn-band-content', contentClass]}><slot /></div>
+  {behind && <img class="kn-band-picture" src={picture} srcset={srcset} sizes={sizes} alt={alt} loading="eager" />}
 </section>

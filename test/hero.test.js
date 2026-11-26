@@ -34,7 +34,8 @@ test('a hero\'s background and heading are free of each other', async () => {
 
 test('a picture lies behind on a picture Surface and otherwise stands on its side', async () => {
   const behind = await hero({ surface: 'picture-dark', picture: '/a.webp' });
-  assert.match(behind.attributes.style, /--kn-picture-image/);
+  assert.equal(one(behind, '.kn-band-picture').attributes.src, '/a.webp');
+  assert.equal(behind.attributes.style, undefined);
   assert.equal(behind.attributes['data-kn-picture'], undefined);
   assert.ok(!one(behind, '.kn-hero-media'));
   const beside = await hero({ surface: 'brand', picture: '/a.webp', alt: '' });
@@ -66,7 +67,7 @@ test('every picture, place and size of a design becomes the same attributes in t
     assert.equal(node.attributes['data-kn-place'], place === 'center' ? undefined : place, name);
     assert.equal(node.attributes['data-kn-surface'], picture === 'behind' ? 'picture-dark' : undefined, name);
     assert.equal(Boolean(one(node, '.kn-hero-media')), Boolean(side), name);
-    assert.equal(Boolean(node.attributes.style?.includes('--kn-picture-image')), picture === 'behind', name);
+    assert.equal(Boolean(one(node, '.kn-band-picture')), picture === 'behind', name);
     // The live sample writes what the helper says, and the helper says what the component wrote.
     const written = heroAttributes(props);
     for (const key of ['data-kn-picture', 'data-kn-height', 'data-kn-place', 'data-kn-align']) assert.equal(written[key], node.attributes[key], `${name}: ${key}`);
@@ -116,6 +117,9 @@ const measureHero = (node) => {
     paddingTop: parseFloat(getComputedStyle(node).paddingBlockStart),
     paddingBottom: parseFloat(getComputedStyle(node).paddingBlockEnd),
     image: getComputedStyle(node).backgroundImage,
+    // The even overlay over a picture behind the text, which the band lays on its ::after (band.css).
+    even: getComputedStyle(node, '::after').content,
+    evenScrim: getComputedStyle(node, '::after').backgroundColor,
   };
 };
 // The rail is the content width: the grid's two middle tracks, whatever the window's width.
@@ -209,12 +213,14 @@ test('the tool chooses the design\'s hero with nothing disabled, and the overlay
       const centred = await measure();
       assert.ok(centred.hero.height >= screen * share - 1, `${height}: at least its share`);
       assert.ok(Math.abs((centred.text.top - centred.hero.top) - (centred.hero.bottom - centred.text.bottom)) < 2, `${height}: in the middle`);
-      assert.match(centred.image, /linear-gradient/, `${height}: in the middle the even overlay covers all of the picture`);
+      assert.notEqual(centred.even, 'none', `${height}: in the middle the even overlay covers all of the picture`);
+      assert.match(centred.evenScrim, /0\.57\)/, `${height}: at the Surface's tested strength`);
+      assert.equal(centred.image, 'none', `${height}: and the band draws no second one`);
       assert.equal(centred.pseudo, 'none', `${height}: and no fade stands on the text`);
 
       await choose({ picture: 'behind', height, place: 'bottom' });
       const bottom = await measure();
-      assert.doesNotMatch(bottom.image, /linear-gradient/, `${height}: at the bottom the even overlay is gone`);
+      assert.deepEqual([bottom.even, bottom.image], ['none', 'none'], `${height}: at the bottom the even overlay is gone`);
       assert.doesNotMatch(bottom.mask, /^linear-gradient\((?:to top|0deg)/, `${height}: at the bottom it fades in going down`);
       assert.match(bottom.scrim, /0\.57\)/, `${height}: to the Surface's tested strength`);
       // The reach is 36% of the screen the sample stands for, not of the preview's frame, which is taller.
@@ -226,7 +232,7 @@ test('the tool chooses the design\'s hero with nothing disabled, and the overlay
 
       await choose({ picture: 'behind', height, place: 'top' });
       const top = await measure();
-      assert.doesNotMatch(top.image, /linear-gradient/, `${height}: at the top the even overlay is gone`);
+      assert.deepEqual([top.even, top.image], ['none', 'none'], `${height}: at the top the even overlay is gone`);
       assert.match(top.mask, /^linear-gradient\((?:to top|0deg), /, `${height}: at the top it fades away going down`);
       assert.match(top.scrim, /0\.57\)/, `${height}: from the Surface's tested strength`);
       assert.ok(top.pseudoTop <= top.hero.top + 1, `${height}: full strength from the hero's top`);
@@ -358,7 +364,7 @@ test('the tool chooses the design\'s hero with nothing disabled, and the overlay
     await colour.selectOption('brand');
     await preview.waitForSelector(`${liveHero}[data-kn-picture="end-bleed"] > .kn-hero-content > .kn-hero-media img[src]`);
     await preview.waitForSelector(`${liveHero}[data-kn-surface="brand"]`);
-    assert.equal(await preview.locator(liveHero).evaluate((node) => node.style.getPropertyValue('--kn-picture-image')), '');
+    assert.equal(await preview.locator(`${liveHero} > .kn-band-picture`).count(), 0, 'beside the text the band draws no picture behind it');
     const media = preview.locator(`${liveHero} .kn-hero-media`);
     await media.evaluate((node) => { node.dataset.same = 'yes'; });
     await pick('picture', 'start').click();
@@ -542,7 +548,11 @@ test('no point of a picture is darker or lighter than its overlay\'s tested stre
         await pickHero(page, 'place', place);
         await pickHero(page, 'height', height);
         await shownAs(preview, first, { picture: 'behind', place, height });
-        await preview.locator(first).evaluate((node, value) => node.style.setProperty('--kn-picture-image', `linear-gradient(rgb(${value} ${value} ${value}), rgb(${value} ${value} ${value}))`), flat);
+        // The picture behind, one flat value.
+        await preview.locator(`${first} > .kn-band-picture`).evaluate((image, value) => {
+          image.src = `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"><rect width="16" height="16" fill="rgb(${value},${value},${value})"/></svg>`)}`;
+          return image.decode();
+        }, flat);
         const strengths = await strengthOf(reader, await preview.locator(first).screenshot(), flat, colour);
         const name = `${overlay} ${place} ${height}`;
         assert.ok(Math.max(...strengths) <= opacity + 0.005, `${name}: ${Math.max(...strengths)} passes ${opacity}`);
@@ -585,6 +595,7 @@ test('under a transparent header the words keep the overlay\'s strength, and tex
         scrim: before.backgroundColor,
         masks: before.maskImage.match(/linear-gradient/g)?.length ?? 0,
         image: getComputedStyle(node).backgroundImage,
+        even: getComputedStyle(node, '::after').content,
         media: media && { top: media.getBoundingClientRect().top, bottom: media.getBoundingClientRect().bottom },
         mediaOver: media && getComputedStyle(media, '::after').backgroundImage,
       };
@@ -598,20 +609,20 @@ test('under a transparent header the words keep the overlay\'s strength, and tex
     const top = await look();
     assert.ok(top.textTop >= top.headerBottom + 10, 'text at the top clears the header');
     assert.ok(top.contentTop + top.pseudoTop <= top.heroTop + 1, 'full strength right behind the header\'s words');
-    assert.doesNotMatch(top.image, /linear-gradient/, 'and no second overlay above it, which would pass the tested strength');
+    assert.deepEqual([top.even, top.image], ['none', 'none'], 'and no second overlay above it, which would pass the tested strength');
     assert.match(top.scrim, /0\.57\)/);
 
     await choose('place', 'bottom');
     await showing('bottom');
     const bottom = await look();
-    assert.doesNotMatch(bottom.image, /linear-gradient/, 'at the bottom the overlay is one layer, not a second one over the first');
+    assert.deepEqual([bottom.even, bottom.image], ['none', 'none'], 'at the bottom the overlay is one layer, not a second one over the first');
     assert.equal(bottom.masks, 2, 'with the header keeping its strength by a mask of its own beside the fade');
     assert.match(bottom.scrim, /0\.57\)/);
 
     await choose('place', 'center');
     await showing('center');
     const centred = await look();
-    assert.match(centred.image, /linear-gradient/, 'in the middle the even overlay lies under the header too');
+    assert.notEqual(centred.even, 'none', 'in the middle the even overlay lies under the header too');
     assert.equal(centred.pseudo, 'none');
 
     for (const [picture, place] of [['end-bleed', 'top'], ['start-bleed', 'bottom']]) {

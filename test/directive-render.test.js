@@ -129,9 +129,11 @@ Start small and let the beds **widen** year by year.
     '</div><div class="kn-hero-media"><img src="/media/beds.webp" alt="Raised beds in the spring" loading="eager"></div></div></section>',
   ].join(''));
 
-  // The design's picture behind: the picture's Surface for both, its picture on the band.
+  // The design's picture behind: the picture's Surface for both, its picture the band's, after its content.
   const behind = page(markdown, { design: testDesign({ hero: { picture: 'behind', overlay: 'dark' } }) });
-  assert.match(behind, /^<section class="kn-band kn-hero" data-kn-surface="picture-dark"[^>]* style="--kn-picture-image:url\(&quot;\/media\/beds\.webp&quot;\)">/);
+  assert.match(behind, /^<section class="kn-band kn-hero" data-kn-surface="picture-dark"[^>]*>/);
+  assert.doesNotMatch(behind, /\sstyle=/);
+  assert.match(unmarked(behind), /<\/div><\/div><img class="kn-band-picture" src="\/media\/beds\.webp" alt="Raised beds in the spring" loading="eager"><\/section>\s*$/);
   assert.doesNotMatch(behind, /kn-hero-media/);
   // Left out, the surface is the design's; the design's none is no Surface at all.
   const own = md`::::hero

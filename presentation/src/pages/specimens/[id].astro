@@ -106,11 +106,6 @@ const live = page === 'opening' || id === 'preview';
             const fresh = place(video, video.getAttribute('poster'));
             if (fresh && fresh !== video.getAttribute('poster')) video.poster = fresh;
           }
-          for (const band of document.querySelectorAll('[style*="--kn-picture-image"]')) {
-            const image = band.style.getPropertyValue('--kn-picture-image');
-            const fresh = place(band, image);
-            if (fresh && !image.includes(fresh)) band.style.setProperty('--kn-picture-image', `url(${JSON.stringify(fresh)})`);
-          }
         }
         if (surfaces !== shown.surfaces)
           document

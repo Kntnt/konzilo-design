@@ -535,8 +535,14 @@ test('a site built by the core draws every directive with the package\'s compone
   // The hero: the trail, the post's title, the eyebrow, deck, actions, small print and the picture behind, as the
   // default design has it. The trail ends with the page itself, as the design's `current` says, though the core's setting
   // for the type, off by default, marks the level hidden.
-  assert.match(html, /^<section class="kn-band kn-hero" data-kn-surface="picture-dark"[^>]* style="--kn-picture-image:url\(&quot;\/_astro\/[^&]+\.webp&quot;\)"><div class="kn-band-content kn-hero-content"><div class="kn-hero-text"><nav class="kn-breadcrumbs"[^>]* data-kn-current="true"[^>]*>.*?<span aria-current="page">Planning a garden<\/span><\/li><\/ol><\/nav><hgroup class="kn-heading-group"><p class="kn-heading-group-eyebrow" data-kn-type="label">A guide<\/p><h1 class="kn-heading-group-heading" data-kn-type="heading-1">Planning a garden<\/h1><p class="kn-heading-group-deck" data-kn-type="lead">Start small/s);
+  assert.match(html, /^<section class="kn-band kn-hero" data-kn-surface="picture-dark"[^>]*><div class="kn-band-content kn-hero-content"><div class="kn-hero-text"><nav class="kn-breadcrumbs"[^>]* data-kn-current="true"[^>]*>.*?<span aria-current="page">Planning a garden<\/span><\/li><\/ol><\/nav><hgroup class="kn-heading-group"><p class="kn-heading-group-eyebrow" data-kn-type="label">A guide<\/p><h1 class="kn-heading-group-heading" data-kn-type="heading-1">Planning a garden<\/h1><p class="kn-heading-group-deck" data-kn-type="lead">Start small/s);
   assert.match(html, /<ul class="kn-actions" role="list"><li><a class="kn-action" href="\/pages\/garden\/" data-kn-main>Get started<\/a><\/li>/);
+  // Its picture behind is an <img> after its content, with the core's srcset, the band's sizes and its own alt text.
+  const hero = /^<section class="kn-band kn-hero"[\s\S]*?<\/section>/.exec(html)[0];
+  assert.doesNotMatch(hero, /^<section[^>]*\sstyle=/);
+  const behind = /<\/div><\/div><img class="kn-band-picture" ([^>]*)><\/section>$/.exec(hero)?.[1];
+  assert.ok(behind, 'the band\'s last child');
+  for (const attribute of [/\bsrc="\/_astro\/[^"]+\.webp"/, /\bsrcset="[^"]+ \d+w"/, /\bsizes="100vw"/, /\balt="Raised beds"/, /\bloading="eager"/]) assert.match(behind, attribute);
   // The core's image service made the pictures, and the components keep what it wrote.
   assert.match(html, /<img class="kn-section-picture" src="\/_astro\/[^"]+\.webp" alt="A shed"[^>]* width="\d+" height="\d+"/);
   // A section's photo keeps its caption under it; a hero's picture drops its own, with no warning (issue #35).
@@ -730,13 +736,78 @@ test('in a designed site built by the core, a body\'s image at a phone\'s width 
           drawn: image.getBoundingClientRect().width,
           current: new URL(image.currentSrc).pathname,
           // The same master's versions other parts of the page draw, as the article's opening draws its own.
-          elsewhere: [...document.querySelectorAll('[style*="url("]')].map((element) => /url\(["']?([^"')]+)/.exec(element.getAttribute('style'))[1]),
+          elsewhere: [...document.querySelectorAll('img')].filter((other) => other !== image && other.currentSrc).map((other) => new URL(other.currentSrc).pathname),
         }));
         const where = `${engine} at density ${density}: drawn ${drawn} px, ${current} loaded of ${candidates.map(({ width }) => width)}`;
         const chosen = candidates.find(({ url }) => url === current);
         assert.ok(chosen, where);
         // The narrowest version at least as wide as the image is drawn at this density, or the one under it, which
         // Chromium takes where it is near enough: never one wider than covers it.
+        const need = drawn * density;
+        const covering = candidates.find(({ width }) => width >= need);
+        const under = candidates.filter(({ width }) => width < need).at(-1);
+        assert.ok(chosen === covering || chosen === under, where);
+        assert.deepEqual([...requested].filter((path) => candidates.some(({ url }) => url === path) && !elsewhere.includes(path)), [current], `${where}: no other version of it is loaded`);
+        loaded[density] = chosen.width;
+        t.diagnostic(`${engine}, density ${density}: drawn ${drawn} px, loaded the ${chosen.width} px version`);
+        await context.close();
+      }
+      assert.ok(loaded[2] / loaded[1] >= 1.4 && loaded[2] / loaded[1] <= 2.9, `${engine}: ${loaded[1]} px at density 1 and ${loaded[2]} px at density 2`);
+      await browser.close();
+    }
+  } finally {
+    await server.close();
+  }
+});
+
+// A hero's picture behind its text in a site the core builds, at a phone's width: a browser loads the version of it that
+// covers the band, the window's width, at the screen's density, where as a CSS background it loaded the widest (issue #40).
+test('in a designed site built by the core, a hero\'s picture behind its text at a phone\'s width loads the version that covers the band, and about twice as wide at density 2', { skip: why ?? false, timeout: 600000 }, async (t) => {
+  if (!existsSync(join(site, 'dist/pages/garden/index.html'))) {
+    const built = await build('dist');
+    assert.equal(built.status, 0, built.output);
+  }
+  const { hero } = imageContexts(JSON.parse(readFileSync(join(site, 'design/site.design.json'), 'utf8')).resolved);
+  const html = readFileSync(join(site, 'dist/pages/garden/index.html'), 'utf8');
+  const img = /<img class="kn-band-picture" ([^>]*)>/.exec(html)?.[1];
+  assert.ok(img, 'the hero draws its picture behind');
+  const entities = { amp: '&', lt: '<', gt: '>', quot: '"', '#38': '&', '#39': "'" };
+  const attribute = (name) => new RegExp(`\\b${name}="([^"]*)"`).exec(img)?.[1].replace(/&(amp|lt|gt|quot|#38|#39);/g, (_, entity) => entities[entity]);
+  assert.equal(attribute('sizes'), hero.sizes, 'the band\'s sizes, the design\'s hero context behind the text');
+  const candidates = attribute('srcset').split(', ').map((candidate) => {
+    const [url, w] = candidate.trim().split(/\s+/);
+    return { url, width: Number(w.slice(0, -1)) };
+  });
+  // The core gives a body's image the body's and the lightbox's widths, up to the master's 1600 px.
+  assert.deepEqual(candidates.map(({ width }) => width), [360, 509, 720, 1018, 1600]);
+  const server = await serve(join(site, 'dist'));
+  try {
+    for (const [engine, type] of ENGINES) {
+      const browser = await type.launch();
+      const loaded = {};
+      for (const density of [1, 2]) {
+        const context = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: density });
+        const tab = await context.newPage();
+        const requested = new Set();
+        tab.on('request', (request) => requested.add(new URL(request.url()).pathname));
+        await tab.goto(`${server.origin}/pages/garden/`);
+        await tab.waitForFunction(() => { const image = document.querySelector('.kn-band-picture'); return image.complete && image.naturalWidth > 0; });
+        const { band, drawn, current, elsewhere } = await tab.evaluate(() => {
+          const image = document.querySelector('.kn-band-picture');
+          return {
+            band: image.parentElement.getBoundingClientRect().width,
+            drawn: image.getBoundingClientRect().width,
+            current: new URL(image.currentSrc).pathname,
+            // The same master's versions other pictures on the page draw, as the section's photo and a card's.
+            elsewhere: [...document.querySelectorAll('img')].filter((other) => other !== image && other.currentSrc).map((other) => new URL(other.currentSrc).pathname),
+          };
+        });
+        const where = `${engine} at density ${density}: drawn ${drawn} px, ${current} loaded of ${candidates.map(({ width }) => width)}`;
+        assert.equal(drawn, band, `${where}: as wide as the band`);
+        const chosen = candidates.find(({ url }) => url === current);
+        assert.ok(chosen, where);
+        // The narrowest version at least as wide as the band at this density, or the one under it, which Chromium takes
+        // where it is near enough: never one wider than covers it.
         const need = drawn * density;
         const covering = candidates.find(({ width }) => width >= need);
         const under = candidates.filter(({ width }) => width < need).at(-1);

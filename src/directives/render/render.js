@@ -21,7 +21,7 @@ import { surfaceOf } from '../surfaces.js';
 import { RANK_KINDS } from '../../generator/surface.js';
 import { breadcrumbProps } from '../../components/design-props.js';
 import { heroAttributes } from '../../components/hero-attributes.js';
-import { pictureImage } from '../../components/picture-image.js';
+import { bandPictureSizes } from '../../konzilo/images.js';
 import {
   BLOCK, attributesFrom, attributesOf, blocksOf, directiveOf, escapeAttribute, escapeText, inner, isElement, isHeading,
   levelOf, markOf, outer, tag, textOf, voidTag, walk,
@@ -234,14 +234,10 @@ function hero(attrs, blocks, ctx) {
     tag(below ? 'p' : 'h1', { class: 'kn-heading-group-heading', 'data-kn-type': settings.type ?? 'heading-1' }, escapeText(ctx.title)),
     deck ? tag('p', { class: 'kn-heading-group-deck', 'data-kn-type': 'lead', ...markOf(deck) }, inner(deck)) : '');
   const band = within(ctx, surface === 'page' ? undefined : surface);
-  const source = behind ? pictureOf(main).properties.src : undefined;
   return tag('section', {
     class: 'kn-band kn-hero',
     'data-kn-surface': surface === 'page' ? undefined : surface,
     ...heroAttributes({ side, height: HERO_HEIGHTS.includes(attrs.height) ? attrs.height : settings.height, place: settings.place, align: settings.align }),
-    // A picture behind is the band's, as Band writes it: the one inline style of a directive (directives.md). A relative
-    // address stops the build, as Band's does, since the core hands one from the site's root (picture-image.js).
-    style: behind ? `--kn-picture-image:${pictureImage(source)}` : undefined,
   }, tag('div', { class: 'kn-band-content kn-hero-content' },
     tag('div', { class: 'kn-hero-text' },
       // Where the H1 stands under the hero, the trail stands before it there, which PageBody writes.
@@ -249,7 +245,10 @@ function hero(attrs, blocks, ctx) {
       logo ? picture(logo, { class: 'kn-hero-logo', loading: 'eager' }) : '',
       group,
       renderBlocks(rest, band)),
-    main && !behind ? tag('div', { class: 'kn-hero-media' }, picture(main, { loading: 'eager' })) : ''));
+    main && !behind ? tag('div', { class: 'kn-hero-media' }, picture(main, { loading: 'eager' })) : ''),
+  // A picture behind is the band's, as Band draws it, after the text, which a screen reader meets first. It keeps the
+  // core's srcset, and its sizes is the band's, where the core gives every image in a body the body's.
+  behind ? picture(main, { class: 'kn-band-picture', sizes: attributesFrom(pictureOf(main)).srcset ? bandPictureSizes() : undefined, loading: 'eager' }) : '');
 }
 
 // ---------- section ----------
