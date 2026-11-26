@@ -20,6 +20,7 @@ import { componentsCss } from '../src/css/components.js';
 import { pageContext } from '../src/directives/render/context.js';
 import { renderDirective } from '../src/directives/render/render.js';
 import { articleOpening } from '../src/page-parts/parts.js';
+import { pictureSizes } from '../src/konzilo/images.js';
 
 // The band's own children, in order, by their tags and classes.
 const childrenOf = (section) => section.children.filter((node) => node.type === 1).map((node) => `${node.name}.${node.attributes.class}`);
@@ -38,6 +39,10 @@ test('a band on a picture Surface draws its picture as an <img> after its conten
   }
   const given = pictureOf(sectionOf(await render('Band', { surface: 'picture-light', picture: '/beds-2520.webp', alt: 'Raised beds', srcset: '/beds-509.webp 509w, /beds-1018.webp 1018w', sizes: '100vw' }))).attributes;
   assert.deepEqual([given.src, given.srcset, given.sizes, given.alt], ['/beds-2520.webp', '/beds-509.webp 509w, /beds-1018.webp 1018w', '100vw', 'Raised beds']);
+  // Given the picture's width and height, as getImage() gives them, and no sizes, a band as tall as its text says the
+  // window's width, which is all a sizes can know of it.
+  const measured = pictureOf(sectionOf(await render('Band', { surface: 'picture-dark', picture: '/beds-2520.webp', srcset: '/beds-509.webp 509w', pictureWidth: 2520, pictureHeight: 1680 }))).attributes;
+  assert.deepEqual([measured.sizes, measured.width, measured.height], ['100vw', '2520', '1680']);
   // A site's own style stays the band's.
   assert.equal(sectionOf(await render('Band', { surface: 'picture-dark', picture: '/a.webp', style: 'outline: 0' })).attributes.style, 'outline: 0');
   // Only a picture Surface shows a picture behind, as only it has the scrim the text is checked on.
@@ -53,6 +58,14 @@ test('a Hero with its picture behind gives the band its picture, its alt text, s
   assert.equal(pictureOf(plain).attributes.alt, '');
   const given = pictureOf(sectionOf(await hero({ alt: 'Raised beds', srcset: '/beds-509.webp 509w', sizes: '100vw' }))).attributes;
   assert.deepEqual([given.src, given.srcset, given.sizes, given.alt, given.loading], ['/beds.webp', '/beds-509.webp 509w', '100vw', 'Raised beds', 'eager']);
+  // With no sizes, the Hero works it out from its height and the picture's proportions: it covers a band at least half
+  // the window's height, so a picture of 3:2 is drawn as wide as 75% of the window's height where that is wider; one of
+  // unknown proportions is taken as 16:9; with no height the band is as tall as its text.
+  const sized = async (props) => pictureOf(sectionOf(await hero({ srcset: '/beds-509.webp 509w', ...props }))).attributes.sizes;
+  assert.equal(await sized({ height: 'half', pictureWidth: 2400, pictureHeight: 1600 }), 'max(100vw, 75vh)');
+  assert.equal(await sized({ height: 'full' }), 'max(100vw, 177.7778vh)');
+  assert.equal(await sized({ pictureWidth: 2400, pictureHeight: 1600 }), '100vw');
+  assert.equal(await sized({ height: 'half', sizes: '50vw' }), '50vw', 'a sizes given is written as it is');
 });
 
 test('the hero directive draws its picture behind as an <img> with the core\'s srcset, the band\'s sizes and the picture\'s own alt text', () => {
@@ -67,7 +80,10 @@ test('the hero directive draws its picture behind as an <img> with the core\'s s
   const image = pictureOf(band).attributes;
   assert.equal(image.src, '/_astro/beds.webp');
   assert.equal(image.srcset, '/_astro/beds_360.webp 360w, /_astro/beds_509.webp 509w, /_astro/beds_2520.webp 2520w');
-  assert.equal(image.sizes, '100vw', 'the band is as wide as the window');
+  // The band is as wide as the window, and at least half its height, the design's, so a picture of 3:2 is drawn as wide
+  // as 75% of the window's height where that is wider.
+  assert.equal(image.sizes, 'max(100vw, 75vh)');
+  assert.equal(image.sizes, pictureSizes(testDesign({ hero: { picture: 'behind' } }).resolved, 'band', { height: 'half', ratio: 1.5 }));
   assert.equal(image.alt, 'Raised beds', 'the alt text the picture came with');
   assert.equal(image.loading, 'eager');
   assert.deepEqual([image.width, image.height, image.decoding], ['2520', '1680', 'async']);
@@ -99,6 +115,11 @@ const PLACES = ['center', 'top', 'bottom'];
 const MODES = ['light', 'dark'];
 // The presentation's own photo, 1920 × 1281, so a phone's band crops its sides and a wide one its top and bottom.
 const PICTURE = '/hero.webp';
+// The hero directive's and an article opening's, at the default design's height and one more, in the middle and at the
+// bottom, in light mode: the same band, drawn by the renderers in place of Hero.
+const DRAWN_BY = ['directive', 'opening'];
+const DRAWN_HEIGHTS = ['half', 'full'];
+const DRAWN_PLACES = ['center', 'bottom'];
 
 let server;
 const browsers = [];
@@ -106,10 +127,21 @@ before(async () => {
   const styles = `${coreCss(derive(defaultInputs()))}${await componentsCss()}`;
   const pages = new Map();
   const next = await render('Band', {}, { default: '<h2>What follows</h2><p>Some words.</p>' });
+  const document = (page, mode) => `<!doctype html><html lang="en" data-kn-mode="${mode}"><head><meta charset="utf-8"><title>Hero</title><style>${styles}</style></head><body>${page}</body></html>`;
   for (const height of HEIGHTS) for (const place of PLACES) {
     const hero = await render('Hero', { heading: 'Make the next step clear', eyebrow: 'A clear direction', deck: 'Practical support, useful information and a straightforward way to get started.', surface: 'picture-dark', picture: PICTURE, alt: 'A garden', height, place }, { default: '<p>A note under the deck.</p>' });
     const page = await render('Page', {}, { default: `${hero}${next}` });
-    for (const mode of MODES) pages.set(`/${height}-${place}-${mode}.html`, `<!doctype html><html lang="en" data-kn-mode="${mode}"><head><meta charset="utf-8"><title>Hero</title><style>${styles}</style></head><body>${page}</body></html>`);
+    for (const mode of MODES) pages.set(`/${height}-${place}-${mode}.html`, document(page, mode));
+  }
+  // The hero directive from a body's tree, its picture as the core writes it, and an article's opening of its main image,
+  // each with the sizes it writes, as wide as the band draws the picture: with the band's width alone, WebKit draws a
+  // picture taller in its proportions than its band from a version it has scaled down to the band's width, and soft.
+  const image = `<img src="${PICTURE}" srcset="${PICTURE} 1920w" sizes="100vw" alt="A garden" width="1920" height="1281">`;
+  for (const height of DRAWN_HEIGHTS) for (const place of DRAWN_PLACES) {
+    const ctx = pageContext({ design: testDesign({ hero: { picture: 'behind', height, place } }), title: 'Make the next step clear', warn: () => {} });
+    const directive = renderDirective('hero', { height }, htmlToHast(`<p>Practical support, useful information and a straightforward way to get started.</p><figure>${image}</figure>`, { fragment: true }), ctx);
+    const opening = articleOpening(ctx, { data: { headline: 'Make the next step clear', standfirst: 'Practical support, useful information and a straightforward way to get started.' }, picture: { src: PICTURE, srcset: `${PICTURE} 1920w`, sizes: pictureSizes(ctx.design.resolved, 'band', { height, ratio: 1920 / 1281 }), width: 1920, height: 1281, alt: 'A garden' } });
+    for (const [by, hero] of [['directive', directive], ['opening', opening]]) pages.set(`/${by}-${height}-${place}-light.html`, document(await render('Page', {}, { default: `${hero}${next}` }), 'light'));
   }
   server = await serve(fileURLToPath(new URL('../presentation/pictures/', import.meta.url)), { pages });
   for (const [name, type] of BROWSERS) browsers.push([name, await type.launch()]);
@@ -141,14 +173,16 @@ function apart(one, other) {
   return worst;
 }
 
-test('a picture behind a hero\'s text fills the band exactly as its CSS background did, under the scrim and the text, at every height and place, in both modes', { timeout: 600000 }, async (t) => {
+// That a page's hero, `/<page>.html`, draws its picture behind its text as its CSS background did, in each engine at a
+// phone's and a wide window: the same box, crop and place, under the scrim and the text.
+async function fillsAsBackground(t, pages) {
   for (const [name, browser] of browsers) for (const [width, height] of WINDOWS) {
     const context = await browser.newContext({ viewport: { width, height } });
     const tab = await context.newPage();
     try {
-      for (const share of HEIGHTS) for (const place of PLACES) for (const mode of MODES) {
-        const label = `${name} ${width} × ${height}, ${share}, ${place}, ${mode}`;
-        await tab.goto(`${server.origin}/${share}-${place}-${mode}.html`);
+      for (const page of pages) {
+        const label = `${name} ${width} × ${height}, ${page}`;
+        await tab.goto(`${server.origin}/${page}.html`);
         // WebKit decodes a large picture apart from the page and draws it once it is done.
         await tab.evaluate(() => document.querySelector('.kn-band-picture').decode());
         const drawn = await tab.evaluate(() => {
@@ -198,6 +232,14 @@ test('a picture behind a hero\'s text fills the band exactly as its CSS backgrou
       await context.close();
     }
   }
+}
+
+test('a picture behind a hero\'s text fills the band exactly as its CSS background did, under the scrim and the text, at every height and place, in both modes', { timeout: 600000 }, async (t) => {
+  await fillsAsBackground(t, HEIGHTS.flatMap((share) => PLACES.flatMap((place) => MODES.map((mode) => `${share}-${place}-${mode}`))));
+});
+
+test('the hero directive\'s and an article opening\'s picture behind the text fill the band as Hero\'s does', { timeout: 600000 }, async (t) => {
+  await fillsAsBackground(t, DRAWN_BY.flatMap((by) => DRAWN_HEIGHTS.flatMap((share) => DRAWN_PLACES.map((place) => `${by}-${share}-${place}-light`))));
 });
 
 // A browser prints an <img> whether or not it prints backgrounds, which it does not by default, and the scrim is a

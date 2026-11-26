@@ -18,10 +18,10 @@ import { contactOf } from '../directives/cards.js';
 import { serviceOf } from '../directives/actions.js';
 import { iconHtml } from '../directives/icons.js';
 import { escapeAttribute, escapeText, tag, voidTag } from '../directives/render/html.js';
-import { breadcrumbsHtml, cornerToCorner, drawnSizes, groupEyebrows, sectionAttributes, sectionPhoto, withBodySizes } from '../directives/render/render.js';
+import { breadcrumbsHtml, groupEyebrows, sectionAttributes, sectionPhoto, withBodySizes } from '../directives/render/render.js';
 import { allElements, innerHtml, retagged, textOfHtml, topElements } from '../directives/render/scan.js';
-import { pictureOf, teaserCard } from '../presentations/teasers.js';
-import { imageContexts } from '../konzilo/images.js';
+import { postPicture, ratioOf, teaserCard } from '../presentations/teasers.js';
+import { cornerToCorner, heroPictureOf, imageSizes } from '../konzilo/images.js';
 
 const classesOf = (element) => String(element?.attributes?.class ?? '').split(/\s+/).filter(Boolean);
 const hasClass = (element, name) => classesOf(element).includes(name);
@@ -90,35 +90,36 @@ function kindOf(html, element) {
 const isDialog = (element) => element.name === 'dialog' && hasClass(element, 'konzilo-modal');
 
 // A figure's image as a section's picture: its start tag again, with a class of the design's, the figure's mark and the
-// sizes of the width the section draws it at, by `drawn(image's attributes)`.
-function pictureFrom(html, element, className, drawn = () => ({})) {
+// sizes of the width the section draws it at, by `sizesFor(image's attributes)`.
+function pictureFrom(html, element, className, sizesFor = () => ({})) {
   const inside = innerOf(html, element);
   const image = allElements(inside).find((one) => one.name === 'img');
   const mark = element.attributes['data-konzilo-block'];
-  return retagged(inside, image, { set: { class: className, ...(mark === undefined ? {} : { 'data-konzilo-block': mark }), ...drawn(image.attributes) } });
+  return retagged(inside, image, { set: { class: className, ...(mark === undefined ? {} : { 'data-konzilo-block': mark }), ...sizesFor(image.attributes) } });
 }
 
 // A figure as a section's photo, its caption as the core drew it, as a :::section draws it (render.js, sectionPhoto()).
-function photoFrom(html, element, drawn) {
+function photoFrom(html, element, sizesFor) {
   const inside = innerOf(html, element);
   const caption = topElements(inside).find((one) => one.name === 'figcaption');
-  return sectionPhoto(pictureFrom(html, element, 'kn-section-picture', drawn), caption && innerOf(inside, caption));
+  return sectionPhoto(pictureFrom(html, element, 'kn-section-picture', sizesFor), caption && innerOf(inside, caption));
 }
 
 // A section from its blocks in order, by the section's rules (directives.md, `section`): each block { kind, text, plain,
 // head, picture, photo }, its kind and text as sectionParts() reads them, `plain` its HTML in a section's body,
-// `head({ long })` its HTML in the head, `picture(drawn)` a picture's image as a badge, and `photo(drawn)` the media's
-// first picture with its caption, each at the sizes `drawn(image's attributes)` gives. With the page's context, its
-// pictures and the figures in its body take the sizes of the widths the section draws them at (konzilo.md, Images).
+// `head({ long })` its HTML in the head, `picture(sizesFor)` a picture's image as a badge, and `photo(sizesFor)` the
+// media's first picture with its caption, each at the sizes `sizesFor(image's attributes)` gives. With the page's
+// context, its pictures and the figures in its body take the sizes of the widths the section draws them at (konzilo.md,
+// Images).
 function sectionFrom(blocks, { surface, anchor, align, ctx } = {}) {
   const parts = sectionParts(blocks);
-  const layout = sectionLayout(blocks, parts, { align, corners: ctx ? cornerToCorner(ctx) : false });
-  const drawn = (picture, options) => (image) => (ctx ? drawnSizes(image, ctx, picture, options) : {});
+  const layout = sectionLayout(blocks, parts, { align, corners: ctx ? cornerToCorner(ctx.design.resolved) : false });
+  const sizesFor = (picture, options) => (image) => (ctx ? imageSizes(image, ctx.design.resolved, picture, options) : {});
   const out = [];
   if (parts.media.length) {
     const [first, ...badges] = parts.media.map((at) => blocks[at]);
-    out.push(tag('div', { class: 'kn-section-media' }, first.photo(drawn('section-photo', { layout: layout.photo })),
-      badges.length ? tag('ul', { class: 'kn-section-badges', role: 'list' }, badges.map((badge) => tag('li', {}, badge.picture(drawn('badge'))))) : ''));
+    out.push(tag('div', { class: 'kn-section-media' }, first.photo(sizesFor('section-photo', { layout: layout.photo })),
+      badges.length ? tag('ul', { class: 'kn-section-badges', role: 'list' }, badges.map((badge) => tag('li', {}, badge.picture(sizesFor('badge'))))) : ''));
   }
   if (parts.head.length) {
     const head = parts.head.map((at) => blocks[at]);
@@ -147,8 +148,8 @@ function blocksOfHtml(html) {
         if (kind === 'paragraph') return retagged(html, element, { set: { class: 'kn-heading-group-deck', 'data-kn-type': 'lead', 'data-kn-deck': long ? 'long' : undefined } });
         return retagged(html, element, { set: { class: 'kn-heading-group-eyebrow' } });
       },
-      picture: (drawn) => pictureFrom(html, element, undefined, drawn),
-      photo: (drawn) => photoFrom(html, element, drawn),
+      picture: (sizesFor) => pictureFrom(html, element, undefined, sizesFor),
+      photo: (sizesFor) => photoFrom(html, element, sizesFor),
     };
   });
 }
@@ -354,14 +355,14 @@ export function metaLineHtml(pieces = [], topics = []) {
 }
 
 /**
- * An article's main image as its opening draws it, made by Astro's getImage() in the widths and with the sizes of the
- * design's hero context, which follows where the design puts a hero's picture, behind its text across the window or
- * beside it (konzilo.md, Images); as given where it is no master.
+ * An article's main image as its opening draws it, made by Astro's getImage() in the widths and with the sizes of
+ * where the design puts a hero's picture, behind its text across the window or beside it, as tall as the hero's height
+ * makes its box, by the picture's own proportions (heroPictureOf(); konzilo.md, Images); as given where it is no master.
  * @param {{ src: object | string, alt?: string } | undefined} image The article's `image`.
  * @param {object} ctx The page's context.
  * @param {Function} [getImage] Astro's getImage().
  */
-export const openingPicture = (image, ctx, getImage) => pictureOf(image, imageContexts(ctx.design.resolved).hero, getImage);
+export const openingPicture = (image, ctx, getImage) => postPicture(image, heroPictureOf(ctx.design.resolved, { ratio: ratioOf(image) }), getImage);
 
 /**
  * An article's opening (directives.md, An article, The opening): a Hero, its picture the article's main image, behind

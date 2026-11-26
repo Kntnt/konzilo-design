@@ -131,7 +131,9 @@ the core's five contexts, a picture in body text, in a gallery, opened large in 
 an opening and on a card: how wide the design draws it on a phone and on a wide screen, at 390
 and 1440 px as the Page page's drawing, a gallery's and a card's "up to" the widest of a row of
 two; whether the design crops it, the gallery to its ratio around the point the editor marks,
-the others made whole and cropped, where they are, by their own CSS; and the widths a site
+the others made whole and cropped, where they are, by their own CSS, an opening's shown wider
+than its place where the opening is taller in its shape than the picture, as on a phone, and
+loaded for that width (konzilo.md, A picture cropped to cover its box); and the widths a site
 makes of it, every row the whole ladder with its own steps filled and the others dashed, so
 the rows line up as one ladder. In a column under 52rem each row stands as a block, its figures
 labelled. Under the table, why the widths are what they are, in plain words and the design's
@@ -143,9 +145,10 @@ the reference values for those who build the site, has a disclosure, Image width
 with each context's widths, `sizes` and ratio as `fromDesign` hands them to the core, and under
 them, Pictures the design draws from a body, each `sizes` the design's own parts write on a
 picture they draw from a body, from `bodyPictures(resolved)` (issue #38, under the owner's
-triage of 2026-11-26): a card's picture by its number of cards, a section's photo and a figure
-in its body by the section's layout, a hero's picture beside its text, and a logo, a badge and
-a symbol at their widest; and under them, Teasers in a list of posts, the widths and `sizes` the
+triage of 2026-11-26): a card's picture by its number of cards, and so behind its text, a
+section's photo and a figure in its body by the section's layout, a hero's picture behind its
+text or beside it, and a logo, a badge and a symbol at their widest, a picture the CSS crops to
+cover its box for a photo of 3:2, as its note says; and under them, Teasers in a list of posts, the widths and `sizes` the
 design's presentations of a post list make each teaser's picture in, from `teaserRows(resolved)`
 (issue #39, under the owner's triage of 2026-11-26): in cards and filtered by the number of
 posts, a lone teaser in cards, and featured's latest post and the others, with a word that an

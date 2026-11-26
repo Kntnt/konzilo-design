@@ -1,0 +1,8 @@
+---
+// A `sizes` as the Details page shows it: its stretches, the widest windows first, each in a span of its own so a long one
+// breaks between them, split at the commas outside parentheses, since a stretch may hold max() or min().
+import { sizesIn } from '../../src/konzilo/images.js';
+const { sizes } = Astro.props;
+const stretches = sizesIn(sizes);
+---
+<code data-sizes>{stretches.map((stretch, i) => <span>{stretch}{i < stretches.length - 1 && ', '}</span>)}</code>

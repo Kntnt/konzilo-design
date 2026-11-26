@@ -5,14 +5,17 @@ import { resolved as r, t, num, date, copy } from '../data.js';
 import { typeOrder, faceName, families, range, px } from '../words.js';
 import { shownRole } from '../../../src/design-md/surfaces.js';
 import { bodyPictures, imageContexts, teaserRows } from '../../../src/konzilo/images.js';
+import SizesCode from '../SizesCode.astro';
 const shipped = shippedIn(r.typefaces);
 // What fromDesign hands the core for each picture, as the site writes it (konzilo.md, Images); the Media page says it in
 // words for a client. Beside them, the sizes the design's own parts write on the pictures they draw from a body, and
 // the widths and sizes its presentations of a post list make their teasers' pictures in.
 const images = imageContexts(r);
-const drawn = bodyPictures(r);
+const fromBody = bodyPictures(r);
 const teasers = teaserRows(r);
+// A row's name, with the numbers of cards or posts it stands for in words.
 const cardCounts = new Intl.ListFormat(copy.lang, { type: 'disjunction' });
+const pictureName = (key, counts) => t(`details.picture.${key}`, { counts: counts ? cardCounts.format(counts.map(String)) : '' });
 const licences = await Promise.all(shipped.map(({ licence }) => readFile(`src/fonts/${licence}`, 'utf8')));
 ---
 <details><summary>{t('details.contrast')}</summary>
@@ -32,17 +35,17 @@ const licences = await Promise.all(shipped.map(({ licence }) => readFile(`src/fo
 <details><summary>{t('details.images')}</summary>
   <p class="prose">{t('details.images.note')}</p>
   <div class="table-scroll"><table data-image-sizes><thead><tr>{['context', 'widths', 'sizes', 'ratio'].map((key) => <th>{t(`details.images.${key}`)}</th>)}</tr></thead><tbody>
-    {Object.entries(images).map(([name, { widths, sizes, ratio }]) => <tr data-context={name}><th><code>{name}</code></th><td data-widths>{widths.join(', ')}</td><td><code data-sizes>{sizes.split(', ').map((stretch, i, all) => <span>{stretch}{i < all.length - 1 && ', '}</span>)}</code></td><td>{ratio ?? t('details.images.whole')}</td></tr>)}
+    {Object.entries(images).map(([name, { widths, sizes, ratio }]) => <tr data-context={name}><th><code>{name}</code></th><td data-widths>{widths.join(', ')}</td><td><SizesCode sizes={sizes} /></td><td>{ratio ?? t('details.images.whole')}</td></tr>)}
   </tbody></table></div>
   <h2 data-kn-type="heading-4">{t('details.images.drawn')}</h2>
   <p class="prose">{t('details.images.drawn.note')}</p>
   <div class="table-scroll"><table data-body-pictures><thead><tr>{['picture', 'sizes'].map((key) => <th>{t(`details.images.${key}`)}</th>)}</tr></thead><tbody>
-    {drawn.map(({ key, picture, layout, counts, sizes }) => <tr data-picture={key}><th>{t(`details.picture.${picture}${layout ? `.${layout}` : ''}`, { counts: counts ? cardCounts.format(counts.map(String)) : '' })}</th><td><code data-sizes>{sizes.split(', ').map((stretch, i, all) => <span>{stretch}{i < all.length - 1 && ', '}</span>)}</code></td></tr>)}
+    {fromBody.map(({ key, picture, layout, counts, sizes }) => <tr data-picture={key}><th>{pictureName(layout ? `${picture}.${layout}` : picture, counts)}</th><td><SizesCode sizes={sizes} /></td></tr>)}
   </tbody></table></div>
   <h2 data-kn-type="heading-4">{t('details.images.teasers')}</h2>
   <p class="prose">{t('details.images.teasers.note')}</p>
   <div class="table-scroll"><table data-teaser-pictures><thead><tr>{['picture', 'widths', 'sizes'].map((key) => <th>{t(`details.images.${key}`)}</th>)}</tr></thead><tbody>
-    {teasers.map(({ key, picture, counts, widths, sizes }) => <tr data-picture={key}><th>{t(`details.picture.${picture}`, { counts: counts ? cardCounts.format(counts.map(String)) : '' })}</th><td data-widths>{widths.join(', ')}</td><td><code data-sizes>{sizes.split(', ').map((stretch, i, all) => <span>{stretch}{i < all.length - 1 && ', '}</span>)}</code></td></tr>)}
+    {teasers.map(({ key, picture, counts, widths, sizes }) => <tr data-picture={key}><th>{pictureName(picture, counts)}</th><td data-widths>{widths.join(', ')}</td><td><SizesCode sizes={sizes} /></td></tr>)}
   </tbody></table></div>
 </details>
 <details><summary>{t('details.fonts')}</summary>

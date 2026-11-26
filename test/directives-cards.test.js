@@ -178,7 +178,7 @@ test('the picture fills a card behind its text, under the picture Surface\'s che
     const cards = await tab.$$eval('#behind .kn-card', (all) => all.map((card) => {
       const box = card.getBoundingClientRect();
       const picture = card.querySelector('.kn-card-picture')?.getBoundingClientRect();
-      const scrim = getComputedStyle(card, '::before');
+      const scrim = getComputedStyle(card, '::after');
       const words = [...card.querySelectorAll('h3, p')].map((element) => element.getBoundingClientRect());
       return {
         covered: !!picture && picture.width >= box.width - 8 && picture.height >= box.height - 8,
