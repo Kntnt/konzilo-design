@@ -6,7 +6,7 @@
 // side margin and the gaps are clamps of the window, and the rest is sums, halves and least values of those and the
 // design's own lengths. So a `sizes` can say it exactly, one straight line per stretch of windows.
 import { contentAreaLine, fluidLine } from '../generator/layout.js';
-import { number } from '../generator/fluid.js';
+import { number, stepStart } from '../generator/fluid.js';
 
 // The narrowest window the design is made for, where its fluid scales start, in rem. Below it the narrowest stretch of
 // a `sizes` goes on as it is, which says a little more than the design draws, since a clamp only stops a margin or a
@@ -310,6 +310,27 @@ export const SYMBOL = Object.freeze({ size: 1.25, item: 2 });
 export const OFFER = Object.freeze({ narrow: 16, wide: 26 });
 const whole = (height, ratio, widest) => times(height, Math.min(widest, ratio > 0 && Number.isFinite(ratio) ? ratio : Infinity));
 
+// A type size as the owner's formula, the body size times the base to the power of its step, each a straight line of
+// the window between the type's breakpoints (css/index.js, scaleCurve()), in rem: in straight pieces between eight
+// windows on it, whose chords lie on it or above, since it bends upwards, so a sizes never says less than it is. A
+// design file without its scale has the clamp a browser without pow() keeps.
+function typeSize(r, name) {
+  if (!r['type-scale']) return fluid(r.type[name].size.css);
+  const { breakpoints: { min, max }, ratio, 'body-size': body } = r['type-scale'];
+  const { step } = r.type[name];
+  const [from, to] = [stepStart(min, max) / 16, max / 16];
+  const exact = (v) => {
+    const share = Math.min(1, Math.max(0, (v - from) / (to - from)));
+    return (body.min + (body.max - body.min) * share) / 16 * (ratio.min + (ratio.max - ratio.min) * share) ** step;
+  };
+  const knots = Array.from({ length: 9 }, (_, i) => from + (to - from) * i / 8);
+  return width((v) => {
+    if (v <= from || v >= to) return exact(v);
+    const i = Math.min(7, Math.floor((v - from) / (to - from) * 8));
+    return exact(knots[i]) + (exact(knots[i + 1]) - exact(knots[i])) * (v - knots[i]) / (knots[i + 1] - knots[i]);
+  }, knots);
+}
+
 // How wide the package's CSS draws each other picture it draws from a body, and whether that is at most the picture's
 // own width, its display width where the editor gave it one (`capped`), or stretched to its box whatever that is.
 function pictureDrawing(r, picture, { layout, side, ratio } = {}) {
@@ -350,7 +371,7 @@ function pictureDrawing(r, picture, { layout, side, ratio } = {}) {
     case 'logo': return { drawn: whole(fluid(LOGOS.height), ratio, LOGOS.widest) };
     case 'symbol': {
       const heading = layout === 'heading';
-      const size = times(fluid(r.type[heading ? 'heading-5' : 'heading-2'].size.css), SYMBOL.size);
+      const size = times(typeSize(r, heading ? 'heading-5' : 'heading-2'), SYMBOL.size);
       return { drawn: whole(size, ratio, heading ? 1 : SYMBOL.item) };
     }
     default: throw new Error(`the package draws no picture ${picture} from a body`);

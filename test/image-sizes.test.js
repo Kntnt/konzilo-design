@@ -5,6 +5,7 @@
 import test, { after, before } from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
+import { crc32, deflateSync } from 'node:zlib';
 import { chromium, firefox, webkit } from 'playwright-core';
 import { derive, defaultInputs } from '../src/generator/index.js';
 import { coreCss } from '../src/css/index.js';
@@ -15,9 +16,13 @@ import { articleBody, looseSection, pageBody, section } from '../src/page-parts/
 import { renderDirective } from '../src/directives/render/render.js';
 import { teaserCard } from '../src/presentations/teasers.js';
 import { imageContexts } from '../src/konzilo/index.js';
-import { CARD, GALLERY, HERO_STACKED, SWITCH, WIDEST, bandPictureSizes, drawnWidths, noWider, pictureSizes, seriesPicture } from '../src/konzilo/images.js';
+import {
+  ACCORDION, BADGE, CARD, GALLERY, HERO_STACKED, LOGO, LOGOS, OFFER, SECTION, SWITCH, SYMBOL, WIDEST, bandPictureSizes, drawnWidths, noWider,
+  pictureSizes, seriesPicture,
+} from '../src/konzilo/images.js';
 import { htmlToHast } from 'satteri';
 import { render } from './helpers/render.js';
+import { bodyHtml, renderBody } from './helpers/konzilo-body.js';
 
 const read = (path) => readFileSync(new URL(path, import.meta.url), 'utf8');
 
@@ -211,6 +216,28 @@ test('the lengths the CSS draws by, not the design file, are the CSS\'s own', ()
   assert.match(read('../src/components/hero.css'), new RegExp(`@media \\(width <= ${HERO_STACKED}rem\\) \\{\\n\\s+\\.kn-hero\\[data-kn-picture\\] > \\.kn-hero-content`));
 });
 
+test('the lengths the CSS draws the pictures from a body by are the CSS\'s own', () => {
+  const sectionCss = read('../src/components/section.css');
+  assert.match(sectionCss, new RegExp(`@media \\(width >= ${SECTION.beside}rem\\) \\{\\n\\s+/\\* Rule 1: a picture first\\.`));
+  assert.match(sectionCss, new RegExp(`@media \\(width >= ${SECTION.wide}rem\\) \\{\\n\\s+/\\* Rule 4: a head and an accordion alone\\.`));
+  assert.equal(SECTION.share, 3 / 5);
+  assert.equal((sectionCss.match(/grid-template-columns: minmax\(0, 2fr\) minmax\(0, 3fr\);/g) ?? []).length, 3, 'rules 2, 4 and 5');
+  assert.ok(sectionCss.includes(`grid-template-columns: repeat(auto-fit, minmax(min(100%, ${SECTION.columns}rem), 1fr));`));
+  assert.match(sectionCss, new RegExp(`max-inline-size: min\\(100%, var\\(--kn-section-offer-size, ${OFFER.narrow}rem\\)\\)`));
+  assert.ok(sectionCss.includes(`--kn-section-offer-size: ${OFFER.wide}rem;`));
+  assert.ok(sectionCss.includes(`.kn-section-badges img { display: block; inline-size: auto; block-size: auto; max-block-size: ${BADGE.height}rem; max-inline-size: ${BADGE.widest}rem;`));
+  assert.ok(read('../src/components/hero.css').includes(`.kn-hero-logo { display: block; justify-self: start; inline-size: auto; block-size: auto; max-block-size: ${LOGO.height}rem; max-inline-size: min(100%, ${LOGO.widest}rem);`));
+  const logos = read('../src/components/logos.css');
+  assert.ok(logos.includes(`--kn-logo-height: ${LOGOS.height};`));
+  assert.ok(logos.includes(`max-inline-size: min(${LOGOS.widest} * var(--kn-logo-height), 100%)`));
+  const cards = read('../src/components/cards.css');
+  assert.ok(cards.includes(`inline-size: calc(${SYMBOL.item} * ${SYMBOL.size} * var(--kn-type-heading-2-size));\n    block-size: calc(${SYMBOL.size} * var(--kn-type-heading-2-size));`));
+  assert.ok(cards.includes(`inline-size: ${SYMBOL.size}em;\n    block-size: ${SYMBOL.size}em;`));
+  const accordion = read('../src/components/accordion.css');
+  assert.ok(accordion.includes(`.kn-accordion-content { padding-block-end: 1em; padding-inline: ${ACCORDION.padding / 2}em; }`));
+  assert.ok(accordion.includes(`> .kn-accordion-content { position: relative; padding-inline: ${ACCORDION.questions - ACCORDION.padding / 2}em ${ACCORDION.padding / 2}em; }`));
+});
+
 test('every context\'s widths cover it from the narrowest window at density 1 to its widest drawing at density 2, up to the cap, and no two widths of a design are near duplicates', () => {
   for (const [name, inputs] of Object.entries(DESIGNS)) {
     const r = design(inputs);
@@ -238,6 +265,13 @@ test('every context\'s widths cover it from the narrowest window at density 1 to
 // A type size from page.md's words: from its least at a window of 390 px to its most at 1440 px (the design's type
 // breakpoints).
 const typeSize = ({ min, max }, px) => Math.min(Math.max(min, max), Math.max(Math.min(min, max), min + (max - min) * (px - 390) / 1050));
+// A heading's size by the owner's formula: the body size times the base to the power of its step, the base, too, a
+// straight line from its least at 390 px to its most at 1440 px.
+function scaleSize(r, name, px) {
+  const { ratio, 'body-size': body } = r['type-scale'];
+  const share = Math.min(1, Math.max(0, (px - 390) / 1050));
+  return (body.min + (body.max - body.min) * share) * (ratio.min + (ratio.max - ratio.min) * share) ** r.type[name].step;
+}
 const gaps = (r, px) => ({ column: fluid(r.space.roles['column-gap'], px), component: fluid(r.space.roles['component-gap'], px) });
 const halfOf = (r, px) => (contentArea(r, px) - gaps(r, px).column) / 2;
 // A section lays its picture beside its text from a window of 48rem, and its head beside an accordion from 60rem; a
@@ -365,8 +399,8 @@ function otherPictures(r) {
     // A card's symbol is shown whole in a box twice as wide as high at 1.25 times the size of a heading 2, or in a square
     // of 1.25em of the card's heading, a heading 5 (cards.css).
     ...[0.5, 1.5, 4, undefined].flatMap((ratio) => [
-      { picture: 'symbol', options: { layout: 'item', ratio }, drawn: (px) => 1.25 * typeSize(r.type['heading-2'].size, px) * Math.min(2, ratio ?? Infinity) },
-      { picture: 'symbol', options: { layout: 'heading', ratio }, drawn: (px) => 1.25 * typeSize(r.type['heading-5'].size, px) * Math.min(1, ratio ?? Infinity) },
+      { picture: 'symbol', options: { layout: 'item', ratio }, drawn: (px) => 1.25 * scaleSize(r, 'heading-2', px) * Math.min(2, ratio ?? Infinity) },
+      { picture: 'symbol', options: { layout: 'heading', ratio }, drawn: (px) => 1.25 * scaleSize(r, 'heading-5', px) * Math.min(1, ratio ?? Infinity) },
     ]),
   ];
   return pictures;
@@ -604,6 +638,129 @@ for (const name of ['default', 'other', 'small', 'large']) {
         for (const [context, more] of [['gallery', 'gallery3'], ['gallery', 'gallery4'], ['card', 'card3']]) assert.ok(is[more] <= says[context] + near, where(more));
         // The core's lightbox leaves room for its arrows beside the picture on a wide window.
         assert.ok(is.lightbox <= says.lightbox + near && is.lightbox >= says.lightbox - 8 * 16 - near, where('lightbox'));
+      }
+      await context.close();
+    }
+  });
+}
+
+// ---------- In the browser: the pictures the package draws from a body (issue #38) ----------
+
+// A picture of `width` × `height` pixels, all of one colour, as a PNG, to stand for a version of `width` px: a browser
+// draws it at its sizes' width wherever the CSS sizes it by its own, as the density its descriptor gives says.
+const PNGS = new Map();
+function png(width, height) {
+  const key = `${width}x${height}`;
+  if (PNGS.has(key)) return PNGS.get(key);
+  const chunk = (type, data) => {
+    const length = Buffer.alloc(4);
+    length.writeUInt32BE(data.length);
+    const crc = Buffer.alloc(4);
+    crc.writeUInt32BE(crc32(Buffer.concat([Buffer.from(type), data])));
+    return Buffer.concat([length, Buffer.from(type), data, crc]);
+  };
+  const header = Buffer.alloc(13);
+  header.writeUInt32BE(width, 0);
+  header.writeUInt32BE(height, 4);
+  header.set([8, 2, 0, 0, 0], 8);
+  const row = Buffer.concat([Buffer.from([0]), Buffer.alloc(width * 3, Buffer.from([0x88, 0xaa, 0x88]))]);
+  const data = Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), chunk('IHDR', header), chunk('IDAT', deflateSync(Buffer.concat(Array.from({ length: height }, () => row)))), chunk('IEND', Buffer.alloc(0))]);
+  const url = `data:image/png;base64,${data.toString('base64')}`;
+  PNGS.set(key, url);
+  return url;
+}
+
+// A body as Markdown, as an editor writes it, each picture `![](../media/<id>-<width>x<height>.webp)`, which the core
+// writes with versions, a single one here, and the body's sizes, at its widest version's size.
+const pic = (id, width = 2520, height = 1680) => `![](../media/${id}-${width}x${height}.webp)`;
+// The version is 720 px wide, which every picture's proportions here divide, so it has them exactly.
+const withVersions = (html) => html.replace(/<img src="\/_astro\/([\w-]+)-(\d+)x(\d+)\.webp" alt(?:="[^"]*")?>/g, (_, id, width, height) => {
+  const version = png(720, 720 * Number(height) / Number(width));
+  return `<img id="${id}" src="${version}" srcset="${version} 720w" sizes="${BODY_SIZES}" alt="" width="${width}" height="${height}" loading="eager" decoding="async">`;
+});
+const cardsMd = (id, count, colons = 3) => `${':'.repeat(colons)}cards\n\n${Array.from({ length: count }, (_, i) => `### Card ${i}\n\n${pic(`${id}-${i}`, 1600, 900)}\n\nIts words.`).join('\n\n')}\n\n${':'.repeat(colons)}`;
+const COUNTS = [2, 3, 4, 7];
+// Each place a series stands in, as a body holds it, for a series of `count`: its first card's picture is `s-<place>-<count>-0`.
+const SERIES_PLACES = {
+  band: (count) => `::::section\n\n## Plans\n\n${cardsMd(`s-band-${count}`, count)}\n\n::::`,
+  beside: (count) => `::::section\n\n${pic(`p-beside-${count}`)}\n\n${pic(`b-beside-${count}`, 800, 400)}\n\n## Plans\n\n${cardsMd(`s-beside-${count}`, count)}\n\n::::`,
+  cropped: (count) => `::::section\n\n${pic(`p-cropped-${count}`)}\n\n## Plans\n\n${cardsMd(`s-cropped-${count}`, count)}\n\n::::`,
+  form: (count) => `::::section\n\n## Order\n\n::form{name="contact"}\n\n${cardsMd(`s-form-${count}`, count)}\n\n::::`,
+  narrow: (count) => `::::section{align="center"}\n\n## Plans\n\n${cardsMd(`s-narrow-${count}`, count)}\n\n::::`,
+  columns: (count) => `::::section{body="columns"}\n\n## Plans\n\n${cardsMd(`s-columns-${count}`, count)}\n\n> A quotation.\n\n::::`,
+  accordion: (count) => `:::::section\n\n::::accordion{first="open"}\n\n### Plans\n\n${cardsMd(`s-accordion-${count}`, count)}\n\n::::\n\n:::::`,
+  questions: (count) => `:::::section\n\n::::accordion{first="open"}\n\n### Which plan?\n\n${cardsMd(`s-questions-${count}`, count)}\n\n::::\n\n:::::`,
+  head: (count) => `:::::section\n\n## Plans\n\n::::accordion{first="open"}\n\n### Plans\n\n${cardsMd(`s-head-${count}`, count)}\n\n::::\n\n:::::`,
+  headQuestions: (count) => `:::::section\n\n## Plans\n\n::::accordion{first="open"}\n\n### Which plan?\n\n${cardsMd(`s-headQuestions-${count}`, count)}\n\n::::\n\n:::::`,
+};
+// The other pictures, by id: a section's photo cropped, with badges and offered; a figure in a section's body in each
+// layout; a hero's logo and its picture beside its text; badges, logos and symbols of several proportions.
+const OTHERS_MD = [
+  `::::hero\n\n${pic('hero-logo', 1000, 250)}\n\nStart small.\n\n${pic('hero-picture')}\n\n::::`,
+  `::::section\n\n${pic('photo-offered')}\n\n## Order\n\n::form{name="contact"}\n\n::::`,
+  `::::section\n\n${pic('photo-badged')}\n\n${pic('badge-wide', 1200, 400)}\n\n${pic('badge-narrow', 600, 400)}\n\n## Plans\n\nWords.\n\n${pic('figure-beside')}\n\n::::`,
+  `::::section\n\n${pic('photo-cropped')}\n\n## Plans\n\nWords.\n\n${pic('figure-cropped')}\n\n::::`,
+  `::::section\n\n## Plans\n\nWords.\n\nMore words.\n\n${pic('figure-across')}\n\n::::`,
+  `::::section{align="center"}\n\n## Plans\n\nWords.\n\nMore words.\n\n${pic('figure-narrow')}\n\n::::`,
+  `::::section\n\n## Order\n\n::form{name="contact"}\n\n${pic('figure-form')}\n\n::::`,
+  `::::section\n\n:::list{type="logos"}\n\nTrusted by\n\n- ${pic('logo-wide', 900, 300)}\n- ${pic('logo-long', 1800, 200)}\n- ${pic('logo-tall', 300, 600)}\n\n:::\n\n::::`,
+  `::::section\n\n:::cards{symbol="item"}\n\n### One\n\n${pic('symbol-item', 1600, 800)}\n\nWords.\n\n### Two\n\n${pic('symbol-tall', 400, 800)}\n\nWords.\n\n:::\n\n:::cards{symbol="heading"}\n\n### One\n\n${pic('symbol-heading', 1600, 800)}\n\nWords.\n\n:::\n\n::::`,
+].join('\n\n');
+
+async function picturesPage(r) {
+  const ctx = pageContext({ design: { resolved: r, project: { name: 'Example' } }, title: 'A page', warn: () => {} });
+  const markdown = [OTHERS_MD, ...COUNTS.flatMap((count) => Object.values(SERIES_PLACES).map((place) => place(count)))].join('\n\n');
+  const html = renderBody(withVersions(bodyHtml(markdown)), ctx);
+  const styles = [coreCss(r), flat('../src/konzilo/body-styles.css'), read('../src/konzilo/konzilo.css'), components].join('\n');
+  // What each picture's sizes says, by its id; and the page with every one of them so wide that the CSS alone draws
+  // each picture, one it draws at its own width at the most the CSS lets it be.
+  // The lightbox's dialog after a figure holds the picture again, which keeps the body's sizes, and stands after it.
+  const sizes = {};
+  for (const image of imagesIn(html)) if (image.id && image.srcset && !(image.id in sizes)) sizes[image.id] = image.sizes;
+  const page = html.replace(/ sizes="[^"]*"/g, ' sizes="10000px"');
+  return { sizes, html: `<!doctype html><html lang="en"><head><meta charset="utf-8"><style>${styles}:root { scrollbar-width: none; }</style></head><body data-kn-surface="page"><main class="kn-page-main">${page}</main></body></html>` };
+}
+
+// The width each picture is drawn at, by its id; a symbol's the picture's own within its box, which shows it whole.
+const drawnPictures = (tab, ids) => tab.evaluate((ids) => Object.fromEntries(ids.map((id) => {
+  const image = document.getElementById(id);
+  const { width, height } = image.getBoundingClientRect();
+  if (!image.closest('.kn-card-symbol')) return [id, width];
+  return [id, Math.min(width, height * image.naturalWidth / image.naturalHeight)];
+})), ids);
+
+for (const name of ['default', 'other', 'small', 'large']) {
+  test(`in every engine each picture the package draws from a body says the width the CSS draws it at, on each side of every breakpoint: ${name}`, { timeout: 600000 }, async () => {
+    const r = design(DESIGNS[name]);
+    const { sizes, html } = await picturesPage(r);
+    const ids = Object.keys(sizes);
+    for (const required of ['hero-logo', 'photo-offered', 'photo-badged', 'photo-cropped', 'badge-wide', 'figure-across', 'figure-narrow', 'figure-form', 'figure-beside', 'logo-wide', 'symbol-item', 'symbol-heading', 's-band-3-0', 's-head-7-0']) assert.ok(ids.includes(required), `${name}: ${required} is drawn with versions`);
+    // One sizes for every series of a number, wherever it stands.
+    for (const count of COUNTS) assert.equal(new Set(Object.keys(SERIES_PLACES).map((place) => sizes[`s-${place}-${count}-0`])).size, 1, `${name}: a series of ${count}`);
+    const distinct = Object.fromEntries([...new Set(Object.values(sizes))].map((text, i) => [i, text]));
+    const edges = Object.values(distinct).flatMap((text) => [...text.matchAll(/\(min-width: ([\d.]+)rem\)/g)].map((match) => Number(match[1]) * 16));
+    // A pixel either side of every edge; on the edge of 48rem itself, where the section sets its picture beside its text,
+    // the sizes says the wider stacked width for a 32nd of a pixel, as every narrowing does (konzilo.md, The edges).
+    const windows = [...new Set([320, 390, 600, 1024, 1440, 1920, 2560, ...edges.flatMap((edge) => [Math.floor(edge) - 1, Math.ceil(edge) + 1])])].filter((px) => px >= 320 && px <= 3200).sort((a, b) => a - b);
+    for (const [engine, browser] of browsers) {
+      const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+      const tab = await context.newPage();
+      await tab.setContent(html);
+      for (const px of windows) {
+        await tab.setViewportSize({ width: px, height: 900 });
+        const read = await said(tab, distinct, engine);
+        const told = Object.fromEntries(ids.map((id) => [id, read[Object.keys(distinct).find((key) => distinct[key] === sizes[id])]]));
+        const drawn = await drawnPictures(tab, ids);
+        // Chromium's reading is a natural width, a whole pixel, and its layout a 64th of one.
+        const near = engine === 'chromium' ? 1 + 2 / 64 : 0.6;
+        const where = (id, is) => `${engine}, ${name}, ${id} at ${px}px: drawn ${is}, sizes ${sizes[id] ?? ''} says ${told[id]}`;
+        for (const id of ids.filter((one) => !one.startsWith('s-'))) assert.ok(Math.abs(drawn[id] - told[id]) <= near, where(id, drawn[id]));
+        // A series' item says the widest it is drawn in any place, and is drawn no wider in each.
+        for (const count of COUNTS) {
+          const first = Object.keys(SERIES_PLACES).map((place) => `s-${place}-${count}-0`);
+          const widest = Math.max(...first.map((id) => drawn[id]));
+          assert.ok(Math.abs(widest - told[first[0]]) <= near, `${engine}, ${name}, a series of ${count} at ${px}px: says ${told[first[0]]}, drawn ${first.map((id) => `${id.split('-')[1]} ${drawn[id]}`).join(', ')}`);
+        }
       }
       await context.close();
     }
