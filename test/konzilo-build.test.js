@@ -15,6 +15,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { defaultInputs, resolve as resolveDesign, DESIGN_FORMAT } from '../src/generator/index.js';
+import { copyFonts } from '../src/konzilo/fonts.js';
 
 const repo = fileURLToPath(new URL('..', import.meta.url));
 const core = process.env.KONZILO_CORE ? resolve(process.env.KONZILO_CORE.replace(/^~(?=\/)/, process.env.HOME ?? '~')) : null;
@@ -24,7 +25,7 @@ const why = !core ? 'set KONZILO_CORE to a checkout of the Konzilo core with its
 const md = String.raw;
 // The core's package, by the name a site imports it by, put together so that this file is not taken for an import of it.
 const CORE = ['@kntnt', 'konzilo'].join('/');
-const ELEMENTS = ['paragraph', 'heading', 'list', 'quote', 'image', 'gallery', 'post-list', 'form', 'hero', 'section', 'aside', 'list-directive', 'cards', 'accordion', 'tabs', 'toc', 'choice', 'eyebrow', 'small', 'breadcrumbs'];
+const ELEMENTS = ['paragraph', 'heading', 'list', 'quote', 'image', 'gallery', 'post-list', 'form', 'hero', 'section', 'aside', 'list-directive', 'cards', 'accordion', 'tabs', 'toc', 'choice', 'eyebrow', 'small', 'breadcrumbs', 'inline-math', 'block-math'];
 const description = {
   language: 'en_GB',
   componentsFrom: '@kntnt/konzilo-design/directives/components.json',
@@ -111,6 +112,15 @@ The month's guides, and nothing else.
 :::`;
 
 // A page with no hero, as a legal page is written: its blocks loose at the top.
+// Formulas in a page's body, in the text and as a block, which the core writes as Temml's MathML (issue #33).
+const FORMULAS = md`Euler's identity, $e^{i\pi} + 1 = 0$, ties five constants together.
+
+$$
+\int_0^\infty e^{-x^2}\,dx = \frac{\sqrt{\pi}}{2}
+$$
+
+The words after it.`;
+
 const LEGAL = md`## What we keep
 
 What you write in a form, for ninety days.
@@ -454,6 +464,7 @@ before(() => {
   copyFileSync(join(core, 'site-template/demo-content/media/every-element-898a545757.webp'), join(site, 'content/media', PICTURE));
   write('content/pages/garden.md', page('Planning a garden', GARDEN));
   write('content/pages/legal.md', page('What we keep about you', LEGAL));
+  write('content/pages/formulas.md', page('Formulas', FORMULAS));
   write('content/pages/bands.md', page('Bands', BANDS));
   write('content/not-found.md', '---\ntitle: "This page is not here"\n---\n\nTry the [start page](/pages/garden/).\n');
   // The core's own demo settings, which hold every group the core asks for, with the articles' meta line in a format of the
@@ -493,8 +504,10 @@ function build(out, environment = {}) {
   const designFile = join(site, 'design/site.design.json');
   if (!existsSync(designFile)) {
     mkdirSync(dirname(designFile), { recursive: true });
-    return resolveDesign(inputs).then((resolved) => {
+    return resolveDesign(inputs).then(async (resolved) => {
       writeFileSync(designFile, JSON.stringify({ format: DESIGN_FORMAT, inputs, project: { name: 'Example Gardens' }, resolved }));
+      // Every design takes its fonts folder, for the formulas' font, copied from this repository as a site's is.
+      await copyFonts(designFile, join(site, 'design/fonts'));
       return build(out, environment);
     });
   }
@@ -587,6 +600,23 @@ test('a site built by the core draws every directive with the package\'s compone
   const term = main(built.page('category/guides'));
   assert.match(term, /^<section class="kn-band kn-section" data-kn-surface="tint"><div class="kn-band-content"><header class="kn-section-head"><nav class="kn-breadcrumbs".*<p class="kn-heading-group-eyebrow" data-kn-type="label">Category<\/p><h1 class="kn-heading-group-heading" data-kn-type="heading-1">Guides<\/h1><p class="kn-heading-group-deck" data-kn-type="lead">On guides\.<\/p>/s);
   assert.match(term, /<div class="kn-section-body kn-body-text"><div class="kn-post-list" data-kn-presentation="filtered"><form class="kn-visitor-filters" role="search" method="get" action="\/search\/"><input type="hidden" name="type" value="article"><input type="hidden" name="category" value="guides"><div class="kn-visitor-filter-panel"><fieldset class="kn-visitor-filter-group"><legend>Topic<\/legend>/);
+});
+
+test('a site built by the core writes a body\'s formulas as konzilo.css draws them, and serves the formulas\' font from its fonts folder', { skip: why ?? false, timeout: 600000 }, async () => {
+  const built = await build('dist');
+  assert.equal(built.status, 0, built.output);
+  const html = main(built.page('pages/formulas'));
+  assert.match(html, /<p>Euler's identity, <math><semantics>[\s\S]*?<annotation encoding="application\/x-tex">e\^\{i\\pi\} \+ 1 = 0<\/annotation><\/semantics><\/math>, ties five constants together\.<\/p>/);
+  assert.match(html, /<div class="konzilo-math"><math display="block" class="tml-display" style="display:block math;"><semantics>[\s\S]*?<msubsup>/);
+  // The site's stylesheets, as the core bundles bodyStyles: konzilo.css's rules on math, and the fonts folder's
+  // @font-face, its font served by the site itself.
+  const assets = join(site, 'dist/_astro');
+  const css = readdirSync(assets).filter((name) => name.endsWith('.css')).map((name) => readFileSync(join(assets, name), 'utf8')).join('\n');
+  assert.match(css, /font-family:\s*"?STIX Two Math"?,\s*math/);
+  const face = /@font-face\s*\{[^}]*font-family:\s*"?STIX Two Math"?;[^}]*src:\s*url\("?([^)"]+)"?\)/.exec(css);
+  assert.ok(face, 'the formulas\' font is declared');
+  assert.match(face[1], /^\/_astro\/STIXTwoMath-Regular\.[\w-]+\.woff2$/);
+  assert.deepEqual(readFileSync(join(site, 'dist', face[1])), readFileSync(join(repo, 'src/fonts/STIXTwoMath-Regular.woff2')));
 });
 
 test('in the core\'s live preview every part keeps its block\'s mark, and a section still finds its body', { skip: why ?? false, timeout: 600000 }, async () => {

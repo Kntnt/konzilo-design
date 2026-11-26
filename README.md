@@ -134,7 +134,7 @@ The command writes `name-design-md.zip` beside the design file. It holds:
 - `DESIGN.md`, in Google Labs' open format: every token, every surface in both modes, a recipe
   for every component, and how to draw a figure with text in it for the design's column;
 - the logos;
-- the font files, with their licences and `fonts.css`;
+- the font files, the formulas' font among them, with their licences and `fonts.css`;
 - the icons the components use, with their licences.
 
 An agent can build a site from it with any technique. With `-o out.md` you get `DESIGN.md` alone.
@@ -151,7 +151,8 @@ bin/konzilo-design.js logos <design-file> -o logos
 - `design.css` holds the design's values as `--kn-*` custom properties, for each surface and mode.
 - `components.css` styles the components' `kn-*` classes. It is the same for every design and
   reads its values from `design.css`.
-- `fonts` copies the typefaces the design uses, with licences and `fonts.css`.
+- `fonts` copies the typefaces the design uses, and STIX Two Math for formulas, with licences
+  and `fonts.css`.
 - `logos` writes the logo files.
 
 Load the stylesheets in a theme or page. The markup each component expects is shown in the
@@ -188,7 +189,7 @@ directive, the Markdown an editor writes for it, and what its components, declar
 | `design-restore <file>` | Puts back the backup from before the last session's first change |
 | `design-gallery` | Builds the component gallery and opens it |
 | `design-test` | Runs the tests |
-| `design-fonts` | Fetches the typefaces again into `src/fonts/` (needs uv) |
+| `design-fonts` | Fetches the typefaces and the formulas' font again into `src/fonts/` (needs uv) |
 | `konzilo-design.js <command>` | The underlying command. Besides the above: `resolve`, `css`, `components-css`, `fonts`, `logos` |
 
 Every command that takes a design file needs one, and keeps no hidden state. Only `design-tool`

@@ -390,6 +390,24 @@ test('the six content families render complete examples and the lab includes tab
   for (const cls of ['kn-table-scroll', 'kn-callout', 'kn-breadcrumbs']) assert.ok(one(sample, `.${cls}`));
 });
 
+// Formulas in body text (issue #33), as the Konzilo core writes them: Temml's MathML, a block formula in its box.
+test('the gallery shows formulas inline and in blocks, integrals, fractions, matrices and stretchy brackets, light and dark, wide and on a phone, in STIX Two Math', () => {
+  const tree = parse(html);
+  const band = one(tree, '#formulas');
+  assert.ok(band, 'a band of formulas');
+  assert.ok(all(band, 'p > math').length >= 3, 'formulas in the text');
+  const blocks = all(band, '.konzilo-math > math');
+  assert.ok(blocks.length >= 4 && blocks.every((math) => math.attributes.display === 'block'), 'block formulas in the core\'s box');
+  assert.ok(all(band, 'msubsup > mo').some((mo) => textOf(mo) === '∫'), 'an integral');
+  assert.ok(all(band, 'mfrac').length >= 2, 'fractions');
+  assert.ok(all(band, 'mtable').length >= 1, 'a matrix');
+  assert.ok(all(band, 'mo').some((mo) => mo.attributes.fence === 'true' && mo.attributes.stretchy !== 'false' && ['(', '['].includes(textOf(mo))), 'stretchy brackets');
+  const phones = all(band, '.g-formula-phone');
+  assert.deepEqual(phones.map((phone) => phone.attributes['data-kn-mode']), ['light', 'dark'], 'a phone\'s column in either mode');
+  for (const phone of phones) assert.ok(all(phone, '.konzilo-math mtable').length && all(phone, '.konzilo-math munderover').length, 'each with the matrix and the wide series');
+  assert.match(html, /@font-face\s*\{\s*font-family:\s*"?STIX Two Math"?;\s*src:\s*url\("?data:font\/woff2;base64,/, 'the formulas\' font, inside the page');
+});
+
 test('contents examples point to real semantic headings and the sticky Aside has no conflicting rows', () => {
   const tree = parse(html);
   const area = one(tree, '#contents-reading-area');

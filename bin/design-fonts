@@ -2,7 +2,7 @@
 # /// script
 # dependencies = ["fonttools", "brotli"]
 # ///
-"""Fetches every typeface from its best source into src/fonts/, then writes catalog.js and fonts.css.
+"""Fetches every typeface, and the formulas' math font, from its best source into src/fonts/, then writes catalog.js and fonts.css.
 
 The list below decides the typefaces, their order, category, use and source. Everything else in the
 catalogue, the axes above all, is read from the files. A file is used as published, recompressed to
@@ -85,6 +85,11 @@ FACES = [
     ('Red Hat Text', 'partner', 'partner', 'italic', GOOGLE, {}),
     ('Cormorant Garamond', 'partner', 'partner', 'italic', GOOGLE, {}),
 ]
+
+# The one math font, in which every design draws its formulas: no typeface a role may take, so it stands apart from the
+# list above. Used whole, as published: its licence reserves the name "TM Math", and "STIX Two" is a trademark of the
+# IEEE, so a cut version could not be called by its name.
+MATH = ('STIX Two Math', tree('stipub/stixfonts', 'v2.13b171', 'fonts/static_otf_woff2/STIXTwoMath-Regular.woff2', None, 'OFL.txt'))
 
 def get(url, cache=None):
     if cache:
@@ -188,6 +193,16 @@ def main():
         if options.get('subset'): face['subset'] = 'latin'
         faces.append(face)
         print(f"{family:28}{face['version']:10}{(OUT / face['upright']).stat().st_size // 1024:6} kB  {' '.join(f'{t} {a[0]}-{a[2]}' for t, a in axes.items())}", flush=True)
+    family, source = MATH
+    upright, _, licence, url = fetch(family, source, {}, cache)
+    font, bytes_up = prepared(upright, {})
+    name = font['name'].getDebugName(6)
+    (OUT / f'{name}.woff2').write_bytes(bytes_up)
+    licence_file = f"LICENSE-{family.lower().replace(' ', '-')}.txt"
+    (OUT / licence_file).write_bytes(licence)
+    version = re.sub(r'^Version\s+', '', font['name'].getDebugName(5).split(';')[0])
+    math = dict(family=family, weight='400', upright=f'{name}.woff2', italic=None, licence=licence_file, version=version, source=url)
+    print(f"{family:28}{version:10}{(OUT / math['upright']).stat().st_size // 1024:6} kB  math", flush=True)
     lines = ',\n  '.join(js(f) for f in faces)
     (OUT / 'catalog.js').write_text(f"""// The typefaces the library ships, in the owner's order: written by bin/design-fonts, which holds the
 // list and reads everything else from the files. `value` is what a design file stores, `roles` where a
@@ -198,6 +213,9 @@ export const CATEGORIES = {js([list(c) for c in CATEGORIES])};
 export const TYPEFACES = [
   {lines},
 ];
+
+// The one math font, in which every design draws its formulas (konzilo.md, Formulas): no typeface a role may take.
+export const MATH = {js(math)};
 
 // A stack's first family, without quotes and in lower case, since CSS matches a family's name in any case.
 export const familyOf = (stack) => stack.split(',')[0].trim().replace(/^["']|["']$/g, '').toLowerCase();
@@ -223,8 +241,8 @@ export const shippedIn = (stacks) => {{
         return '\n'.join(out) + '\n'
     (OUT / 'fonts.css').write_text("""/* The typefaces, served by the site itself so that no request reaches a third party. Written by
    bin/design-fonts. A browser fetches a file only when the page uses that face. */
-""" + rules(faces, './'))
+""" + rules(faces + [math], './'))
     gallery = ROOT / 'gallery/src/fonts.css'
-    gallery.write_text(gallery.read_text().split('@font-face')[0] + rules([f for f in faces if f['family'] in ('Mona Sans', 'Geist Mono')], '../../src/fonts/'))
+    gallery.write_text(gallery.read_text().split('@font-face')[0] + rules([f for f in faces if f['family'] in ('Mona Sans', 'Geist Mono')] + [math], '../../src/fonts/'))
 
 main()

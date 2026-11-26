@@ -1,7 +1,8 @@
-// A design's typefaces, copied beside its file for a site's repository, since the package a site installs holds no fonts.
+// A design's typefaces, and the formulas' font every design has, copied beside its file for a site's repository, since the
+// package a site installs holds no fonts.
 import { copyFile, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { TYPEFACES, familyOf, shippedIn } from '../fonts/catalog.js';
+import { MATH, TYPEFACES, familyOf, shippedIn } from '../fonts/catalog.js';
 import { SYSTEM_MONOSPACE, SYSTEM_SANS, SYSTEM_SERIF } from '../generator/defaults.js';
 import { checkFingerprint } from '../generator/fingerprint.js';
 import { checkFormat, validateDesignFile } from '../generator/validate.js';
@@ -19,7 +20,7 @@ export function fontFaceRules(css, faces) {
   return css.split('\n').filter((line) => families.has(line.match(/^@font-face \{ font-family: "([^"]+)"/)?.[1])).join('\n');
 }
 
-const known = new Set(TYPEFACES.flatMap((face) => [...filesOf(face), face.licence]));
+const known = new Set([...TYPEFACES, MATH].flatMap((face) => [...filesOf(face), face.licence]));
 
 // The families a computer has without a font file: CSS's generic ones and those the tool offers as the computer's own.
 const SYSTEM = new Set(['serif', 'sans-serif', 'monospace', 'cursive', 'fantasy', 'system-ui', 'ui-serif', 'ui-sans-serif', 'ui-monospace', 'ui-rounded', ...[SYSTEM_SANS, SYSTEM_MONOSPACE, SYSTEM_SERIF].map(familyOf)]);
@@ -47,8 +48,9 @@ export function unshippedIn(stacks) {
   });
 }
 
-// Copies the typefaces the design file uses into the folder, with their licences, which must travel with them, and a
-// stylesheet of their @font-face rules, a typeface named in any case. A file of the library's that a design no longer
+// Copies the typefaces the design file uses into the folder, and STIX Two Math, in which every design draws its formulas,
+// with their licences, which must travel with them, and a stylesheet of their @font-face rules, a typeface named in any
+// case. A browser fetches the formulas' font only for a page that holds a formula. A file of the library's that a design no longer
 // uses goes, and nothing else there does, unless the design names a family the library does not ship and a computer does
 // not have of itself: that may be a typeface's name misread, so nothing goes then, and the family is returned under
 // `unshipped`, with the typeface it may have meant.
@@ -70,10 +72,9 @@ export async function copyFonts(designFile, folder) {
   });
   if (present !== null && !present.includes(MARKER)) throw new Error(`${target} was not written by this command, so it is left alone. Move it away, or name another folder with -o.`);
   await mkdir(folder, { recursive: true });
-  const wanted = new Set(faces.flatMap((face) => [...filesOf(face), face.licence]));
+  const wanted = new Set([...faces, MATH].flatMap((face) => [...filesOf(face), face.licence]));
   await Promise.all([...wanted].map((name) => copyFile(new URL(name, shipped), join(folder, name))));
   if (!unshipped.length) await Promise.all([...known].filter((name) => !wanted.has(name)).map((name) => rm(join(folder, name), { force: true })));
-  if (faces.length) await writeFile(target, `/* ${MARKER}: the typefaces this design uses. */\n${fontFaceRules(css, faces)}\n`);
-  else if (!unshipped.length) await rm(target, { force: true });
+  await writeFile(target, `/* ${MARKER}: the typefaces this design uses, and the formulas' font. */\n${fontFaceRules(css, [...faces, MATH])}\n`);
   return { folder, families: faces.map(({ family }) => family), files: [...wanted].filter((name) => name.endsWith('.woff2')).sort(), unshipped };
 }

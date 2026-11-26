@@ -47,6 +47,7 @@ import '../../../src/components/index.css';
 import '../../../src/konzilo/konzilo.css';
 import '../gallery.css';
 import { landscape, portrait } from '../samples.js';
+import { BLOCK, INLINE } from '../formula-samples.js';
 import DirectiveOpenings from '../directives/Openings.astro';
 import DirectiveSections from '../directives/Sections.astro';
 import DirectiveTextRoles from '../directives/TextRoles.astro';
@@ -235,6 +236,33 @@ const bandRows = { page: ['Link', 'Article', 'Person'], tint: ['Link', 'Article'
           <p>Use <code>currentColor</code> for a mark that follows its text. A small footnote<sup>1</sup> and a formula such as H<sub>2</sub>O should sit comfortably in a sentence.</p>
           <p><small>1. These words and every illustration on this page are neutral examples.</small></p>
         </BodyText>
+      </Band>
+      <Band surface="page" id="formulas">
+        <HeadingGroup heading="01 / Body Text · Formulas" deck="Formulas as the Konzilo core writes them, in STIX Two Math, at the size and in the colour of the text round them. A block formula stands in the middle of the column, and one wider than its column scrolls in a box of its own." />
+        <BodyText class="g-reading">
+          <p>Euler's identity, <Fragment set:html={INLINE.euler} />, ties five constants together. The slope of a function is <Fragment set:html={INLINE.derivative} />, a point in the plane lies at a distance of <Fragment set:html={INLINE.root} /> from its origin, and <Fragment set:html={INLINE.reals} /> says that a number is real. A fraction in a line, such as <Fragment set:html={INLINE.half} />, keeps the line's height.</p>
+          <p>An integral with its limits, and a fraction under a root:</p>
+          <Fragment set:html={BLOCK.integral} />
+          <p>Brackets stretch to what they hold, round a fraction and round a sum:</p>
+          <Fragment set:html={BLOCK.quotient} />
+          <Fragment set:html={BLOCK.brackets} />
+          <p>A matrix, and a function defined in cases:</p>
+          <Fragment set:html={BLOCK.matrix} />
+          <Fragment set:html={BLOCK.cases} />
+          <p>A struck-out term, a vector, a wide hat, a script letter and a boxed result:</p>
+          <Fragment set:html={BLOCK.notations} />
+          <p>A series wider than a phone's column:</p>
+          <Fragment set:html={BLOCK.wide} />
+        </BodyText>
+        <div class="g-formula-phones">
+          {['light', 'dark'].map((mode) => <div class="g-formula-phone" data-kn-mode={mode} data-kn-surface="page">
+            <BodyText>
+              <p>On a phone, in {mode} mode, the series scrolls sideways in its own box, and the page stays as wide as the window.</p>
+              <Fragment set:html={BLOCK.wide} />
+              <Fragment set:html={BLOCK.matrix} />
+            </BodyText>
+          </div>)}
+        </div>
       </Band>
       <Band surface="tint">
         <HeadingGroup heading="02 / Heading Group" />

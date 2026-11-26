@@ -47,6 +47,140 @@
   .kn-body-text [data-footnotes] { margin-block-start: 2em; padding-block-start: 1em; border-block-start: 1px solid var(--kn-border); color: var(--kn-text-muted); font-size: var(--kn-type-small-size); line-height: var(--kn-type-small-line-height); letter-spacing: var(--kn-type-small-letter-spacing); }
   /* The footnotes' heading is for a screen reader alone. */
   .sr-only { position: absolute; inline-size: 0.0625rem; block-size: 0.0625rem; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+  /* A formula: the MathML the core writes into a body, made by Temml 0.14.0 (the core's docs/site-design.md, Formulas in a
+     body). Every design draws it in STIX Two Math, which the fonts command copies into a site's fonts folder and a
+     browser fetches only for a page that holds a formula. It takes the size and the colour of the text round it, and
+     none of the main typeface's weight, spacing, features or axes. */
+  math {
+    font-family: "STIX Two Math", math;
+    font-style: normal;
+    font-weight: normal;
+    font-stretch: normal;
+    font-variation-settings: normal;
+    font-size-adjust: none;
+    line-height: normal;
+    text-indent: 0;
+    text-transform: none;
+    letter-spacing: normal;
+    overflow-wrap: normal;
+    direction: ltr;
+    /* Firefox drops the dot on an i or a j without this. */
+    font-feature-settings: "dtls" off;
+  }
+  /* A block formula is as wide as itself, in the middle of its box. Chromium centres block math inside its own box,
+     whatever the text's alignment, so the box is the formula's width and is placed; Firefox and WebKit draw it as a
+     block only when told to. A body's block formula stands in the core's box, as a paragraph stands, with 1em after it,
+     and weighs nothing, so that a part which spaces what it holds keeps its own rule. */
+  math[display="block"] { display: block; inline-size: fit-content; margin-inline: auto; }
+  :where(.kn-body-text .konzilo-math:not(:last-child)) { margin-block-end: 1em; }
+
+  /* What Temml's MathML relies on, from its own stylesheet (Temml-STIX2.css) without its font rules, its line breaking,
+     which a formula the core writes never asks for, or its equation numbers, which the design does not draw. Each class
+     stands inside a formula, so that a site's own class of the same name is left alone. */
+  math * { border-color: currentColor; }
+  :where(math) .mathscr { font-feature-settings: "ss01"; }
+  /* The prime, aligned as STIX Two Math's ss04 draws it. */
+  mo.tml-prime { font-feature-settings: "ss04"; }
+  /* Cramped superscripts in WebKit. */
+  mfrac > :nth-child(2), msqrt, mover > :first-child { math-shift: compact; }
+  :where(math) .menclose { display: inline-block; position: relative; padding: 0.5ex 0ex; }
+  :where(math) .tml-cancelto {
+    display: inline-block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    padding: 0.5ex 0ex;
+    background-color: currentColor;
+    -webkit-mask-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg'><defs><marker id='a' markerHeight='5' markerUnits='strokeWidth' markerWidth='7' orient='auto' refX='7' refY='2.5'><path fill='black' d='m0 0 7 2.5L0 5z'/></marker></defs><line x2='100%25' y1='100%25' stroke='black' stroke-width='.06em' marker-end='url(%23a)' vector-effect='non-scaling-stroke'/></svg>");
+    mask-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg'><defs><marker id='a' markerHeight='5' markerUnits='strokeWidth' markerWidth='7' orient='auto' refX='7' refY='2.5'><path fill='black' d='m0 0 7 2.5L0 5z'/></marker></defs><line x2='100%25' y1='100%25' stroke='black' stroke-width='.06em' marker-end='url(%23a)' vector-effect='non-scaling-stroke'/></svg>");
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-size: 100% 100%;
+    mask-size: 100% 100%;
+    -webkit-mask-position: 0 0;
+    mask-position: 0 0;
+  }
+  /* \cancel and \phase draw with backgrounds, which print too. */
+  menclose { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  /* An array's cells, aligned in Firefox and WebKit. */
+  :where(math) .tml-right { text-align: right; }
+  :where(math) .tml-left { text-align: left; }
+  /* A commutative diagram's labels that grow to the left, in Firefox and WebKit. */
+  :where(math) .tml-shift-left { margin-left: -200%; }
+  /* An array's rows: MathML Core pads a cell 0.5ex above and below, and Temml's jot and small arrays ask for other. */
+  mtable.tml-jot > mtr > mtd { padding-top: 0.7ex; padding-bottom: 0.7ex; }
+  mtable.tml-small mtd { padding-top: 0.35ex; padding-bottom: 0.35ex; }
+  /* Firefox. */
+  @supports (-moz-appearance: none) {
+    /* \vec without italic correction. */
+    :where(math) .tml-vec { transform: scale(0.75); }
+    /* \cancelto. */
+    :where(math) .ff-narrow { width: 0em; }
+    :where(math) .ff-nudge-left { margin-left: -0.2em; }
+    /* The hidden rows of a \bordermatrix. */
+    :where(math) .ff-squash mtd { display: block; height: 0; }
+    /* The space between an array's rows. */
+    mtd, mtable.tml-small mtd { padding-top: 0; padding-bottom: 0; }
+    mtable.tml-jot > mtr > mtd { padding-top: 0.2ex; padding-bottom: 0.2ex; }
+  }
+  /* Chromium and WebKit: italic correction on a superscript. */
+  @supports (not (-moz-appearance: none)) {
+    :where(math) .tml-sml-pad { padding-left: 0.05em; }
+    :where(math) .tml-med-pad { padding-left: 0.1em; }
+    :where(math) .tml-lrg-pad { padding-left: 0.15em; }
+  }
+  /* WebKit: an accent's italic correction, lowered by the x-height. */
+  @supports (-webkit-backdrop-filter: blur(0.0625rem)) {
+    :where(math) .wbk-acc { transform: translate(0em, 0.431em); }
+    :where(math) .wbk-sml { transform: translate(0.07em, 0); }
+    :where(math) .wbk-sml-acc { transform: translate(0.07em, 0.431em); }
+    :where(math) .wbk-sml-vec { transform: scale(0.75) translate(0.07em, 0); }
+    :where(math) .wbk-med { transform: translate(0.14em, 0); }
+    :where(math) .wbk-med-acc { transform: translate(0.14em, 0.431em); }
+    :where(math) .wbk-med-vec { transform: scale(0.75) translate(0.14em, 0); }
+    :where(math) .wbk-lrg { transform: translate(0.21em, 0); }
+    :where(math) .wbk-lrg-acc { transform: translate(0.21em, 0.431em); }
+    :where(math) .wbk-lrg-vec { transform: scale(0.75) translate(0.21em, 0); }
+  }
+  /* Chromium alone: an accent's italic correction, and the notations of MathML 3's menclose, which MathML Core and
+     Chromium do not draw, drawn by styles. */
+  @supports (not (-webkit-backdrop-filter: blur(0.0625rem))) and (not (-moz-appearance: none)) {
+    :where(math) .chr-sml { transform: translate(0.07em, 0); }
+    :where(math) .chr-sml-vec { transform: scale(0.75) translate(0.07em, 0); }
+    :where(math) .chr-med { transform: translate(0.14em, 0); }
+    :where(math) .chr-med-vec { transform: scale(0.75) translate(0.14em, 0); }
+    :where(math) .chr-lrg { transform: translate(0.21em, 0); }
+    :where(math) .chr-lrg-vec { transform: scale(0.75) translate(0.21em, 0); }
+    :where(math) .tml-shift-left { margin-left: -100%; }
+    menclose { position: relative; padding: 0.5ex 0ex; }
+    :where(math) .tml-overline { padding: 0.1em 0 0 0; border-top: 0.065em solid; }
+    :where(math) .tml-underline { padding: 0 0 0.1em 0; border-bottom: 0.065em solid; }
+    :where(math) .tml-cancel { display: inline-block; position: absolute; left: 0.03125rem; bottom: 0; width: 100%; height: 100%; background-color: currentColor; }
+    :where(math) .upstrike { clip-path: polygon(0.05em 100%, 0em calc(100% - 0.05em), calc(100% - 0.05em) 0em, 100% 0.05em); }
+    :where(math) .downstrike { clip-path: polygon(0em 0.05em, 0.05em 0em, 100% calc(100% - 0.05em), calc(100% - 0.05em) 100%); }
+    :where(math) .sout { clip-path: polygon(0em calc(55% + 0.0333em), 0em calc(55% - 0.0333em), 100% calc(55% - 0.0333em), 100% calc(55% + 0.0333em)); }
+    :where(math) .tml-xcancel { clip-path: polygon(0.05em 0em, 0em 0.05em, calc(50% - 0.05em) 50%, 0em calc(100% - 0.05em), 0.05em 100%, 50% calc(50% + 0.05em), calc(100% - 0.05em) 100%, 100% calc(100% - 0.05em), calc(50% + 0.05em) 50%, 100% 0.05em, calc(100% - 0.05em) 0%, 50% calc(50% - 0.05em)); }
+    :where(math) .longdiv-top { border-top: 0.067em solid; padding: 0.1em 0.2em 0.2em 0.433em; }
+    :where(math) .longdiv-arc { position: absolute; top: 0; bottom: 0.1em; left: -0.4em; width: 0.7em; border: 0.067em solid; transform: translateY(-0.067em); border-radius: 70%; clip-path: inset(0 0 0 0.4em); box-sizing: border-box; }
+    :where(math) .menclose { display: inline-block; text-align: left; position: relative; }
+    :where(math) .phasor-bottom { border-bottom: 0.067em solid; padding: 0.2em 0.2em 0.1em 0.6em; }
+    :where(math) .phasor-angle { display: inline-block; position: absolute; left: 0.03125rem; bottom: -0.04em; height: 100%; aspect-ratio: 0.5; background-color: currentColor; clip-path: polygon(0.05em 100%, 0em calc(100% - 0.05em), calc(100% - 0.05em) 0em, 100% 0.05em); }
+    :where(math) .tml-fbox { padding: 0.25rem; border: 1px solid; }
+    :where(math) .circle-pad { padding: 0.267em; }
+    :where(math) .textcircle { position: absolute; top: 0; bottom: 0; right: 0; left: 0; border: 0.067em solid; border-radius: 50%; }
+    :where(math) .actuarial { padding: 0.03889em 0.03889em 0 0.03889em; border-width: 0.08em 0.08em 0em 0em; border-style: solid; margin-right: 0.03889em; }
+    /* A stretched \widetilde and \widehat. */
+    :where(math) .tml-tilde-2 { transform: scale(2, 1.1); }
+    :where(math) .tml-tilde-3 { transform: scale(3, 1.1); }
+    :where(math) .tml-tilde-4 { transform: scale(4, 1.1); }
+    :where(math) .tml-hat-1 { transform: scale(1.9, 1); }
+    :where(math) .tml-hat-2 { transform: scale(3.9, 1); }
+    :where(math) .tml-hat-3 { transform: scale(5.8, 1.1); }
+    :where(math) .tml-hat-4 { transform: scale(7.8, 1.1); }
+    :where(math) .tml-right { text-align: -webkit-right; }
+    :where(math) .tml-left { text-align: -webkit-left; }
+  }
 }
 @layer kn-konzilo {
   /* The lightbox's dark overlay is the same in both modes, so these are colours, not roles of the page. A photograph
@@ -338,6 +472,17 @@
   .konzilo-table > table { display: table; inline-size: 100%; margin: 0; }
   @media print {
     .konzilo-table { overflow: visible; }
+  }
+
+  /* A block formula's box, which the core writes round its `math`: as wide as its column, and where the formula is
+     wider, the box scrolls and the page does not widen. A formula reads left to right on a right-to-left page too, so
+     its box scrolls from the left, and the whole formula can be reached in every engine. In a section's body it stands in
+     the reading column, as the section's running text does, and is a part, a column gap from its neighbours, as a table
+     is. In print it shows whole, and is kept on one page. */
+  .konzilo-math { min-inline-size: 0; overflow-x: auto; overscroll-behavior-inline: contain; direction: ltr; }
+  .kn-section-body > .konzilo-math { max-inline-size: var(--kn-layout-narrow); margin-inline: var(--kn-section-text-margin, 0); }
+  @media print {
+    .konzilo-math { overflow: visible; break-inside: avoid; }
   }
 
   /* An embed: as Embed, a panel that loads nothing until the visitor allows it. Once allowed it holds the player alone. */
