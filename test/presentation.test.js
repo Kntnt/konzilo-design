@@ -21,6 +21,7 @@ import { copyFor } from '../presentation/copy-override.mjs';
 import { validateDesignFile, resolve } from '../src/generator/index.js';
 import { pageWidths, readingBoxes, SKETCH_WINDOWS } from '../presentation/src/page-sketch.js';
 import { bodyPictures, imageContexts, drawnWidths, teaserRows } from '../src/konzilo/images.js';
+import { SECTION_LAYOUTS } from '../src/directives/section.js';
 const exec = promisify(execFile);
 const root = pathResolve('node_modules/.cache/presentation-tests');
 const copy = JSON.parse(await readFile('presentation/copy.json', 'utf8'));
@@ -211,7 +212,7 @@ test('copy has no unused keys and all values are strings', async () => {
     ...['body', 'gallery', 'lightbox', 'hero', 'card'].map((name) => `images.${name}`),
     ...['behind', 'beside', 'none'].map((name) => `images.hero.${name}`),
     ...['context', 'widths', 'sizes', 'ratio', 'picture'].map((name) => `details.images.${name}`),
-    ...['series', 'section-photo.cropped', 'section-photo.badges', 'section-photo.offered', 'section-body.across', 'section-body.beside', 'section-body.corners', 'section-body.narrow', 'section-body.form', 'hero', 'hero-logo', 'badge', 'logo', 'symbol.item', 'symbol.heading', 'teaser', 'teaser-lone', 'featured-first', 'featured-other'].map((name) => `details.picture.${name}`),
+    ...['series', 'series-behind', ...SECTION_LAYOUTS.photo.map((layout) => `section-photo.${layout}`), ...SECTION_LAYOUTS.body.map((layout) => `section-body.${layout}`), 'hero', 'band', 'hero-logo', 'badge', 'logo', 'symbol.item', 'symbol.heading', 'teaser', 'teaser-lone', 'featured-first', 'featured-other'].map((name) => `details.picture.${name}`),
     ...['display', 'heading-1', 'heading-2', 'heading-3', 'heading-4', 'heading-5', 'heading-6', 'lead', 'body', 'small', 'label', 'before', 'after'].map((name) => `type.${name}`),
     ...['main', 'heading', 'heading-1', 'display', 'label', 'monospace'].map((name) => `role.${name}`),
     ...[100, 200, 300, 400, 500, 600, 700, 800, 900].map((name) => `weight.${name}`),

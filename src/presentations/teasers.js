@@ -47,10 +47,26 @@ async function termName(reference, taxonomy, { list, getEntry }) {
   return entry?.data?.name ?? reference.id;
 }
 
+/**
+ * The picture a post shows as its teaser: the teaser's image, or else its featured image.
+ * @param {object | undefined} entry The post's entry.
+ */
+export const teaserImageOf = (entry) => entry?.data?.teaser?.image ?? entry?.data?.image;
+
+/**
+ * A post's image's width over its height, from the master Astro's image import gives, or undefined where it is not known,
+ * as for an image given by its address.
+ * @param {{ src?: { width?: number, height?: number } | string } | undefined} image
+ */
+export function ratioOf(image) {
+  const { width, height } = typeof image?.src === 'object' && image.src ? image.src : {};
+  return width > 0 && height > 0 ? width / height : undefined;
+}
+
 // A post's picture as the attributes of its <img>, for a teaser or an opening: made by Astro's getImage() from the
 // post's image in the widths and with the sizes of where the design draws it (`drawn`, as src/konzilo/images.js gives
 // them), or as given; null for none.
-export async function pictureOf(image, drawn, getImage) {
+export async function postPicture(image, drawn, getImage) {
   if (!image?.src) return null;
   const alt = image.alt ?? '';
   if (typeof image.src === 'string' || !getImage || !drawn) return { src: String(image.src?.src ?? image.src), alt };
@@ -84,7 +100,7 @@ export async function teaserOf({ entry, url }, { list, getEntry, getImage, pictu
     headline: data.teaser?.headline ?? data.headline ?? data.title ?? '',
     text: ownSummary(data),
     label,
-    picture: await pictureOf(data.teaser?.image ?? data.image, picture, getImage),
+    picture: await postPicture(teaserImageOf(entry), picture, getImage),
     terms: Object.fromEntries(taxonomies.map((taxonomy) => [taxonomy, termsOf(entry, taxonomy).map((reference) => reference.id)])),
   };
 }
@@ -223,8 +239,9 @@ export async function presentationHtml(name, props, ctx, { getEntry, getImage } 
   const root = (...content) => withMark(tag('div', { class: 'kn-post-list', 'data-kn-presentation': name }, ...content), block);
   if (posts.length === 0) return root(empty ? tag('p', {}, escapeText(empty)) : '');
   const taxonomies = name === 'filtered' ? filterRowsOf(options.filters, settled).taxonomies : [];
-  // Each teaser's picture as wide as the design draws it in this presentation with so many posts.
-  const pictures = teaserPictures(ctx.design.resolved, name, posts.length);
+  // Each teaser's picture as wide as the design draws it in this post-list presentation with so many posts, by its
+  // proportions.
+  const pictures = teaserPictures(ctx.design.resolved, name, posts.length, posts.map((post) => ratioOf(teaserImageOf(post.entry))));
   const teasers = await Promise.all(posts.map((post, at) => teaserOf(post, { list, getEntry, getImage, taxonomies, picture: pictures[at] })));
   if (name === 'featured') {
     return root(tag('div', { class: 'kn-featured' }, teasers.map((teaser, at) => teaserCard(teaser, { ground: ctx.ground, type: at === 0 ? 'heading-3' : 'heading-5' }))), pagerHtml(pager));

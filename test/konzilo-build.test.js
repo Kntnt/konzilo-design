@@ -19,7 +19,7 @@ import { defaultInputs, resolve as resolveDesign, DESIGN_FORMAT } from '../src/g
 import { MATH } from '../src/fonts/catalog.js';
 import { copyFonts } from '../src/konzilo/fonts.js';
 import { imageContexts } from '../src/konzilo/index.js';
-import { seriesPicture, teaserPictures } from '../src/konzilo/images.js';
+import { heroPictureOf, pictureSizes, seriesPicture, teaserPictures } from '../src/konzilo/images.js';
 import { serve } from './helpers/serve.js';
 
 const repo = fileURLToPath(new URL('..', import.meta.url));
@@ -740,6 +740,14 @@ test('the core\'s body check reads the package\'s declarations and runs its chec
 // version of it that covers the width the design draws it at, at the screen's density, and no other (issue #36; the
 // core's ADR 0022 measured the same of its own defaults).
 const ENGINES = Object.entries({ firefox, webkit, chromium }).filter(([, type]) => existsSync(type.executablePath()));
+// An attribute of an <img> as the built HTML writes it, its entities read; and its srcset's candidates, each its address
+// and width.
+const ENTITIES = { amp: '&', lt: '<', gt: '>', quot: '"', '#38': '&', '#39': "'" };
+const attributeOf = (img, name) => new RegExp(`\\b${name}="([^"]*)"`).exec(img)?.[1].replace(/&(amp|lt|gt|quot|#38|#39);/g, (_, entity) => ENTITIES[entity]);
+const candidatesOf = (img) => attributeOf(img, 'srcset').split(', ').map((candidate) => {
+  const [url, w] = candidate.trim().split(/\s+/);
+  return { url, width: Number(w.slice(0, -1)) };
+});
 test('in a designed site built by the core, a body\'s image at a phone\'s width loads the version that covers how wide the design draws it, and about twice as wide at density 2', { skip: why ?? false, timeout: 600000 }, async (t) => {
   if (!existsSync(join(site, 'dist/articles/water/index.html'))) {
     const built = await build('dist');
@@ -749,13 +757,8 @@ test('in a designed site built by the core, a body\'s image at a phone\'s width 
   const html = readFileSync(join(site, 'dist/articles/water/index.html'), 'utf8');
   const img = /<div class="kn-reading-area-flow kn-body-text">[\s\S]*?<figure><button class="konzilo-lightbox-open"[^>]*><img ([^>]*)>/.exec(html)?.[1];
   assert.ok(img, 'the article\'s body draws its image');
-  const entities = { amp: '&', lt: '<', gt: '>', quot: '"', '#38': '&', '#39': "'" };
-  const attribute = (name) => new RegExp(`\\b${name}="([^"]*)"`).exec(img)?.[1].replace(/&(amp|lt|gt|quot|#38|#39);/g, (_, entity) => entities[entity]);
-  assert.equal(attribute('sizes'), body.sizes, 'the core writes the design\'s sizes');
-  const candidates = attribute('srcset').split(', ').map((candidate) => {
-    const [url, w] = candidate.trim().split(/\s+/);
-    return { url, width: Number(w.slice(0, -1)) };
-  });
+  assert.equal(attributeOf(img, 'sizes'), body.sizes, 'the core writes the design\'s sizes');
+  const candidates = candidatesOf(img);
   // The master is 1600 px wide, so each of the body's and the lightbox's widths up to it, and the master's own in place
   // of those wider and of 1440, within a tenth of it (the core's ADR 0022).
   assert.deepEqual(candidates.map(({ width }) => width), [360, 509, 720, 1018, 1600]);
@@ -805,23 +808,23 @@ test('in a designed site built by the core, a body\'s image at a phone\'s width 
 });
 
 // A hero's picture behind its text in a site the core builds, at a phone's width: a browser loads the version of it that
-// covers the band, the window's width, at the screen's density, where as a CSS background it loaded the widest (issue #40).
-test('in a designed site built by the core, a hero\'s picture behind its text at a phone\'s width loads the version that covers the band, and about twice as wide at density 2', { skip: why ?? false, timeout: 600000 }, async (t) => {
+// covers the picture as the band draws it, at the screen's density, where as a CSS background it loaded the widest
+// (issue #40). The band is half the window's height less the header's, taller in its proportions than the picture, so
+// the picture is drawn wider than the band, as its height makes it, which its sizes says (konzilo.md, Images).
+test('in a designed site built by the core, a hero\'s picture behind its text at a phone\'s width loads the version that covers it as the band draws it, and about twice as wide at density 2', { skip: why ?? false, timeout: 600000 }, async (t) => {
   if (!existsSync(join(site, 'dist/pages/garden/index.html'))) {
     const built = await build('dist');
     assert.equal(built.status, 0, built.output);
   }
-  const { hero } = imageContexts(JSON.parse(readFileSync(join(site, 'design/site.design.json'), 'utf8')).resolved);
+  const resolved = JSON.parse(readFileSync(join(site, 'design/site.design.json'), 'utf8')).resolved;
   const html = readFileSync(join(site, 'dist/pages/garden/index.html'), 'utf8');
   const img = /<img class="kn-band-picture" ([^>]*)>/.exec(html)?.[1];
   assert.ok(img, 'the hero draws its picture behind');
-  const entities = { amp: '&', lt: '<', gt: '>', quot: '"', '#38': '&', '#39': "'" };
-  const attribute = (name) => new RegExp(`\\b${name}="([^"]*)"`).exec(img)?.[1].replace(/&(amp|lt|gt|quot|#38|#39);/g, (_, entity) => entities[entity]);
-  assert.equal(attribute('sizes'), hero.sizes, 'the band\'s sizes, the design\'s hero context behind the text');
-  const candidates = attribute('srcset').split(', ').map((candidate) => {
-    const [url, w] = candidate.trim().split(/\s+/);
-    return { url, width: Number(w.slice(0, -1)) };
-  });
+  // The band's, by the hero's height and the picture's proportions, 1600 × 1000.
+  assert.deepEqual([attributeOf(img, 'width'), attributeOf(img, 'height')], ['1600', '1000']);
+  assert.equal(attributeOf(img, 'sizes'), pictureSizes(resolved, 'band', { height: resolved.hero.height, ratio: 1.6 }), 'the band\'s sizes, as tall as the hero');
+  assert.equal(attributeOf(img, 'sizes'), 'max(100vw, 80vh)');
+  const candidates = candidatesOf(img);
   // The core gives a body's image the body's and the lightbox's widths, up to the master's 1600 px.
   assert.deepEqual(candidates.map(({ width }) => width), [360, 509, 720, 1018, 1600]);
   const server = await serve(join(site, 'dist'));
@@ -839,19 +842,23 @@ test('in a designed site built by the core, a hero\'s picture behind its text at
           await tab.waitForFunction(() => { const image = document.querySelector('.kn-band-picture'); return image.complete && image.naturalWidth > 0; });
           const { band, drawn, current, elsewhere } = await tab.evaluate(() => {
             const image = document.querySelector('.kn-band-picture');
+            const box = image.getBoundingClientRect();
             return {
-              band: image.parentElement.getBoundingClientRect().width,
-              drawn: image.getBoundingClientRect().width,
+              band: image.parentElement.getBoundingClientRect(),
+              // Covering its box, as wide as the box or as its height times the picture's proportions.
+              drawn: Math.max(box.width, box.height * image.naturalWidth / image.naturalHeight),
               current: new URL(image.currentSrc).pathname,
               // The same master's versions other pictures on the page draw, as the section's photo and a card's.
               elsewhere: [...document.querySelectorAll('img')].filter((other) => other !== image && other.currentSrc).map((other) => new URL(other.currentSrc).pathname),
             };
           });
           const where = `${engine} at density ${density}: drawn ${drawn} px, ${current} loaded of ${candidates.map(({ width }) => width)}`;
-          assert.equal(drawn, band, `${where}: as wide as the band`);
+          // The band is taller in its proportions than the picture, so the picture is drawn wider than it, by its height.
+          assert.ok(drawn > band.width * 1.2, `${where}: wider than the band, ${band.width} × ${band.height} px`);
           const chosen = candidates.find(({ url }) => url === current);
           assert.ok(chosen, where);
-          // The narrowest version at least as wide as the band at this density, which all three engines take here.
+          // The narrowest version at least as wide as the picture is drawn at this density, which all three engines take
+          // here; with the band's width alone, 100vw, they took 509 px and 1018 px, narrower than drawn.
           assert.equal(chosen, candidates.find(({ width }) => width >= drawn * density), where);
           assert.deepEqual([...requested].filter((path) => candidates.some(({ url }) => url === path) && (path === current || !elsewhere.includes(path))), [current], `${where}: no other version of it is loaded`);
           loaded[density] = chosen.width;
@@ -880,13 +887,9 @@ test('in a designed site built by the core, a card\'s picture in :::cards loads 
   const html = readFileSync(join(site, 'dist/pages/beds/index.html'), 'utf8');
   const pictures = [...html.matchAll(/<img class="kn-card-picture" ([^>]*)>/g)].map(([, attributes]) => attributes);
   assert.equal(pictures.length, 3, 'the series draws its three pictures');
-  const entities = { amp: '&', lt: '<', gt: '>', quot: '"', '#38': '&', '#39': "'" };
-  const attribute = (img, name) => new RegExp(`\\b${name}="([^"]*)"`).exec(img)?.[1].replace(/&(amp|lt|gt|quot|#38|#39);/g, (_, entity) => entities[entity]);
-  for (const img of pictures) assert.equal(attribute(img, 'sizes'), seriesPicture(resolved, 3).sizes, 'a series of three\'s sizes, in place of the body\'s');
-  const candidates = attribute(pictures[0], 'srcset').split(', ').map((candidate) => {
-    const [url, w] = candidate.trim().split(/\s+/);
-    return { url, width: Number(w.slice(0, -1)) };
-  });
+  // A picture of 16:10 in a crop of 16:9 is as wide as its card.
+  for (const img of pictures) assert.equal(attributeOf(img, 'sizes'), seriesPicture(resolved, 3, { ratio: 1.6 }).sizes, 'a series of three\'s sizes, in place of the body\'s');
+  const candidates = candidatesOf(pictures[0]);
   // The core's body's and lightbox's widths, up to the master's 1600 px.
   assert.deepEqual(candidates.map(({ width }) => width), [360, 509, 720, 1018, 1600]);
   const server = await serve(join(site, 'dist'));
@@ -927,12 +930,6 @@ test('in a designed site built by the core, a card\'s picture in :::cards loads 
 
 // The pictures the package's presentations, "Read more" and an article's opening make through Astro's getImage(), in
 // a site the core builds: each in the widths and with the sizes of where the design draws it (issue #39).
-const ENTITIES = { amp: '&', lt: '<', gt: '>', quot: '"', '#38': '&', '#39': "'" };
-const attributeOf = (img, name) => new RegExp(`\\b${name}="([^"]*)"`).exec(img)?.[1].replace(/&(amp|lt|gt|quot|#38|#39);/g, (_, entity) => ENTITIES[entity]);
-const candidatesOf = (img) => attributeOf(img, 'srcset').split(', ').map((candidate) => {
-  const [url, w] = candidate.trim().split(/\s+/);
-  return { url, width: Number(w.slice(0, -1)) };
-});
 // Each post list on a page, its presentation and its teasers' pictures, up to the next list or the end of its section.
 const listsOf = (html) => html.split('<div class="kn-post-list"').slice(1).map((chunk) => ({
   presentation: /^[^>]*data-kn-presentation="(\w+)"/.exec(chunk)[1],
@@ -968,11 +965,13 @@ test('in a designed site built by the core, each teaser\'s picture and an articl
   const related = [...more.matchAll(/<img class="kn-card-picture" ([^>]*)>/g)].map(([, attributes]) => attributes);
   assert.ok(related.length > 0);
   for (const img of related) assert.equal(attributeOf(img, 'sizes'), seriesPicture(resolved, related.length, { list: true }).sizes);
-  // The opening's main image behind its text, as the default design puts it, across the band.
+  // The opening's main image behind its text, as the default design puts it, across the band and as tall as the hero, by
+  // the picture's proportions, 1600 × 1000.
   const opening = /<section class="kn-band kn-hero kn-article-opening"[\s\S]*?<img class="kn-band-picture" ([^>]*)><\/section>/.exec(soil)?.[1];
   assert.ok(opening, 'the opening draws its main image behind its text');
-  const { hero } = imageContexts(resolved);
+  const hero = heroPictureOf(resolved, { ratio: 1.6 });
   assert.equal(attributeOf(opening, 'sizes'), hero.sizes);
+  assert.equal(hero.sizes, 'max(100vw, 80vh)');
   assert.deepEqual(candidatesOf(opening).map(({ width }) => width), made(hero.widths));
 });
 

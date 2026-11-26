@@ -9,7 +9,8 @@
 //
 // What the core wrote is kept: every element drawn for a block of the tree keeps the block's mark from the live
 // preview, an image keeps its srcset, width, height, loading and decoding, and a heading keeps its id. A picture the
-// package draws itself takes the sizes of the width it draws it at in place of the body's (pictureSizes()).
+// package draws itself takes the sizes of the width it draws it at in place of the body's (imageSizes()), and so does
+// a figure a part drawn from its tree passes through, by the room the parts it stands in leave it.
 import { allQuestions } from '../accordion.js';
 import { serviceOf } from '../actions.js';
 import { contactOf } from '../cards.js';
@@ -22,7 +23,7 @@ import { surfaceOf } from '../surfaces.js';
 import { RANK_KINDS } from '../../generator/surface.js';
 import { breadcrumbProps } from '../../components/design-props.js';
 import { heroAttributes } from '../../components/hero-attributes.js';
-import { bandPictureSizes, displayWidthOf, pictureSizes, seriesPicture } from '../../konzilo/images.js';
+import { cornerToCorner, imageSizes } from '../../konzilo/images.js';
 import {
   BLOCK, attributesFrom, attributesOf, blocksOf, directiveOf, escapeAttribute, escapeText, inner, isElement, isHeading,
   levelOf, markOf, outer, tag, textOf, voidTag, walk,
@@ -34,6 +35,11 @@ import components from '../components.json' with { type: 'json' };
 export const DIRECTIVES = Object.freeze(['hero', 'section', 'aside', 'list', 'cards', 'accordion', 'tabs', 'toc', 'choice', 'eyebrow', 'small', 'breadcrumbs']);
 
 const within = (ctx, ground) => ({ ...ctx, ground });
+// What a part draws from its tree stands in it, `part`, besides the parts around it, from the outermost in: a name, or
+// `{ series: count }` for a card's, a step's or a reason's words, by which the pictures in it take their sizes.
+const placed = (ctx, part) => ({ ...ctx, place: [...(ctx.place ?? []), part] });
+// The sizes of a picture the package draws, by its attributes, where the design draws it, in the parts it stands in.
+const drawnSizes = (image, ctx, picture, options = {}) => imageSizes(image, ctx.design.resolved, picture, { within: ctx.place ?? [], ...options });
 
 // ---------- Reading blocks ----------
 
@@ -51,24 +57,6 @@ export function pictureOf(node) {
   const parts = blocksOf(node.children);
   const image = parts.find((part) => isElement(part, 'img'));
   return image && parts.every((part) => isElement(part, 'img', 'figcaption')) ? image : null;
-}
-
-/**
- * The sizes of the width the design draws a picture at, as an image's attributes, in place of the body's the core gives
- * every image in a body (konzilo.md, Images): a series' item's by its number of items, `count`, and any other's by
- * pictureSizes(), with the picture's proportions from its width and height, and its display width from the core's sizes.
- * Nothing for a picture with no versions, such as an SVG, which the core keeps as it is, and which keeps what it wrote.
- * @param {Record<string, string>} image The image's attributes, as attributesFrom() or scan.js gives them.
- * @param {object} ctx The page's context. @param {string} picture @param {object} [options]
- * @returns {{ sizes?: string }}
- */
-export function drawnSizes(image, ctx, picture, { count, ...options } = {}) {
-  const { srcset, sizes, width, height } = image ?? {};
-  if (!srcset) return {};
-  const r = ctx.design.resolved;
-  if (picture === 'series') return { sizes: seriesPicture(r, count).sizes };
-  const ratio = Number(width) > 0 && Number(height) > 0 ? Number(width) / Number(height) : undefined;
-  return { sizes: pictureSizes(r, picture, { ...options, ratio, display: displayWidthOf(sizes) }) };
 }
 
 /**
@@ -122,8 +110,6 @@ function photo(block, sizes) {
   return sectionPhoto(picture(block, { class: 'kn-section-picture', ...sizes }), caption && inner(caption));
 }
 const imageAttributes = (block) => attributesFrom(pictureOf(block));
-// Whether the design sets a section's cropped photo corner to corner (section.css, The side of the picture).
-export const cornerToCorner = (ctx) => String(ctx.design.resolved.section?.['picture-side'] ?? '').startsWith('corners');
 
 const isActions = (node) => directiveOf(node) === 'list' && attributesOf(node).type === 'actions';
 const isEyebrow = (node) => directiveOf(node) === 'eyebrow';
@@ -217,6 +203,16 @@ function headingGroup(eyebrows, heading) {
     tag(heading.tagName, { class: 'kn-heading-group-heading', ...headingAttributes(heading) }, inner(heading)));
 }
 
+// A block the package passes through as the core wrote it; a figure of one picture in a part drawn from its tree, with
+// the sizes of the room the parts it stands in leave it, in place of the body's, since a tab, an answer or a panel may
+// stand wider than the reading column (konzilo.md, Images).
+function passed(node, ctx) {
+  const image = ctx.place?.length ? pictureOf(node) : null;
+  const { sizes } = image ? drawnSizes(attributesFrom(image), ctx, 'figure') : {};
+  if (sizes !== undefined) image.properties.sizes = sizes;
+  return outer(node);
+}
+
 // Blocks inside a part, in order: an eyebrow before a heading stands with it in a heading group, and one with no heading
 // after it is a plain label; a directive is drawn by its renderer, and everything else as the core wrote it.
 export function renderBlocks(blocks, ctx) {
@@ -230,7 +226,7 @@ export function renderBlocks(blocks, ctx) {
       else out.push(...run.map((eyebrow) => tag('p', { 'data-kn-type': 'label', ...markOf(eyebrow) }, inner(eyebrow))));
       continue;
     }
-    out.push(directiveOf(node) ? renderNested(node, ctx) : outer(node));
+    out.push(directiveOf(node) ? renderNested(node, ctx) : passed(node, ctx));
   }
   return out.join('');
 }
@@ -275,11 +271,12 @@ function hero(attrs, blocks, ctx) {
     eyebrows.map((eyebrow) => tag('p', { class: 'kn-heading-group-eyebrow', 'data-kn-type': 'label', ...markOf(eyebrow) }, inner(eyebrow))),
     tag(below ? 'p' : 'h1', { class: 'kn-heading-group-heading', 'data-kn-type': settings.type ?? 'heading-1' }, escapeText(ctx.title)),
     deck ? tag('p', { class: 'kn-heading-group-deck', 'data-kn-type': 'lead', ...markOf(deck) }, inner(deck)) : '');
-  const band = within(ctx, surface === 'page' ? undefined : surface);
+  const band = placed(within(ctx, surface === 'page' ? undefined : surface), 'hero');
+  const height = HERO_HEIGHTS.includes(attrs.height) ? attrs.height : settings.height;
   return tag('section', {
     class: 'kn-band kn-hero',
     'data-kn-surface': surface === 'page' ? undefined : surface,
-    ...heroAttributes({ side, height: HERO_HEIGHTS.includes(attrs.height) ? attrs.height : settings.height, place: settings.place, align: settings.align }),
+    ...heroAttributes({ side, height, place: settings.place, align: settings.align }),
   }, tag('div', { class: 'kn-band-content kn-hero-content' },
     tag('div', { class: 'kn-hero-text' },
       // Where the H1 stands under the hero, the trail stands before it there, which PageBody writes.
@@ -287,17 +284,18 @@ function hero(attrs, blocks, ctx) {
       logo ? picture(logo, { class: 'kn-hero-logo', loading: 'eager', ...drawnSizes(imageAttributes(logo), ctx, 'hero-logo', { side }) }) : '',
       group,
       renderBlocks(rest, band)),
-    main && !behind ? tag('div', { class: 'kn-hero-media' }, picture(main, { loading: 'eager', ...drawnSizes(imageAttributes(main), ctx, 'hero', { side }) })) : ''),
+    main && !behind ? tag('div', { class: 'kn-hero-media' }, picture(main, { loading: 'eager', ...drawnSizes(imageAttributes(main), ctx, 'hero', { side, height }) })) : ''),
   // A picture behind is the band's, as Band draws it, after the text, which a screen reader meets first. It keeps the
-  // core's srcset, and its sizes is the band's, where the core gives every image in a body the body's.
-  behind ? picture(main, { class: 'kn-band-picture', sizes: attributesFrom(pictureOf(main)).srcset ? bandPictureSizes() : undefined, loading: 'eager' }) : '');
+  // core's srcset, and its sizes is the band's, by the hero's height, where the core gives every image in a body the
+  // body's.
+  behind ? picture(main, { class: 'kn-band-picture', loading: 'eager', ...drawnSizes(imageAttributes(main), ctx, 'band', { height }) }) : '');
 }
 
 // ---------- section ----------
 
 // How many elements the core draws at the top of a body for a block of a section's head or media: a figure and the
 // lightbox's dialog after it, a directive as its component draws it, and one element for anything else.
-function drawnFor(node, ctx) {
+function elementsFor(node, ctx) {
   if (isElement(node, 'figure') && pictureOf(node)) return 2;
   if (directiveOf(node)) return topElements(renderNested(node, { ...ctx, id: (prefix) => `${prefix}-0`, warn: () => {} })).length;
   return 1;
@@ -306,10 +304,10 @@ function drawnFor(node, ctx) {
 // A section's body, as its slot holds it: what the core drew there after the section's media and head, which the section
 // drew itself. In the live preview each block is marked, so the body begins at the first element marked as its first
 // block or a block within it; on the public site the elements drawn for the media and head are counted.
-export function bodyFromSlot(slot, blocks, drawn, ctx) {
+export function bodyFromSlot(slot, blocks, grouped, ctx) {
   const html = String(slot ?? '');
   const elements = topElements(html);
-  const first = blocks[drawn];
+  const first = blocks[grouped];
   if (!first) return '';
   const mark = markOf(first)[BLOCK];
   if (mark !== undefined) {
@@ -318,7 +316,7 @@ export function bodyFromSlot(slot, blocks, drawn, ctx) {
     if (found) return html.slice(found.start);
   }
   let count = 0;
-  for (const node of blocks.slice(0, drawn)) count += drawnFor(node, ctx);
+  for (const node of blocks.slice(0, grouped)) count += elementsFor(node, ctx);
   return count < elements.length ? html.slice(elements[count].start) : '';
 }
 
@@ -369,7 +367,7 @@ function section(attrs, blocks, ctx, { body } = {}) {
   const band = within(ctx, surface);
   const kinds = blocks.map((node) => ({ kind: kindOf(node), text: isElement(node, 'p') ? textOf(node) : undefined }));
   const parts = sectionParts(kinds);
-  const layout = sectionLayout(kinds, parts, { align: attrs.align, body: attrs.body, corners: cornerToCorner(ctx) });
+  const layout = sectionLayout(kinds, parts, { align: attrs.align, body: attrs.body, corners: cornerToCorner(ctx.design.resolved) });
   const out = [];
   if (parts.media.length) {
     const [first, ...badges] = parts.media.map((at) => blocks[at]);
@@ -389,8 +387,8 @@ function section(attrs, blocks, ctx, { body } = {}) {
         parts.deck !== null ? tag('p', { class: 'kn-heading-group-deck', 'data-kn-type': 'lead', 'data-kn-deck': parts.deckLong ? 'long' : undefined, ...markOf(blocks[parts.deck]) }, inner(blocks[parts.deck])) : ''),
       head.filter(isActions).map((node) => renderNested(node, band))));
   }
-  const drawn = parts.media.length + parts.head.length;
-  const rest = withBodySizes(body === undefined ? renderBlocks(blocks.slice(drawn), band) : groupEyebrows(bodyFromSlot(body, blocks, drawn, band)).trim(), ctx, layout.body);
+  const grouped = parts.media.length + parts.head.length;
+  const rest = withBodySizes(body === undefined ? renderBlocks(blocks.slice(grouped), band) : groupEyebrows(bodyFromSlot(body, blocks, grouped, band)).trim(), ctx, layout.body);
   if (rest !== '') out.push(tag('div', { class: 'kn-section-body kn-body-text' }, rest));
   return tag('section', sectionAttributes({ anchor: attrs.anchor, surface, body: attrs.body, align: attrs.align }), tag('div', { class: 'kn-band-content' }, out));
 }
@@ -400,7 +398,7 @@ function section(attrs, blocks, ctx, { body } = {}) {
 function aside(attrs, blocks, ctx) {
   const heading = blocks.find(isHeading);
   const plate = surfaceOf('fact-box', ctx.ground);
-  const inside = within(ctx, plate);
+  const inside = placed(within(ctx, plate), 'aside');
   return tag('aside', { class: 'kn-fact-box', id: attrs.anchor || undefined, 'data-kn-surface': plate },
     blocks.map((node) => {
       if (isEyebrow(node)) return tag('p', { class: 'kn-fact-box-label', 'data-kn-type': 'label', ...markOf(node) }, inner(node));
@@ -458,7 +456,7 @@ function list(attrs, blocks, ctx) {
     return renderBlocks(blocks, ctx);
   }
   const [intro, body, outro] = [blocks.slice(0, at), blocks[at], blocks.slice(at + 1)];
-  const after = renderBlocks(outro, ctx);
+  const after = renderBlocks(outro, placed(ctx, 'list'));
   switch (attrs.type) {
     case 'description':
       return labels(intro, ctx) + tag('dl', { class: 'kn-description-list', ...markOf(body) }, itemsOfList(body).map((item) => {
@@ -480,8 +478,8 @@ function list(attrs, blocks, ctx) {
           const link = [...walk(item)].find((node) => node.tagName === 'a');
           const image = [...walk(item)].find((node) => node.tagName === 'img');
           if (!image) return tag('li', markOf(item), inner(item));
-          const drawn = voidTag('img', { ...attributesFrom(image), alt: image.properties.alt ?? '', ...drawnSizes(attributesFrom(image), ctx, 'logo') });
-          return tag('li', markOf(item), link ? tag('a', attributesFrom(link), drawn) : drawn);
+          const logo = voidTag('img', { ...attributesFrom(image), alt: image.properties.alt ?? '', ...drawnSizes(attributesFrom(image), ctx, 'logo') });
+          return tag('li', markOf(item), link ? tag('a', attributesFrom(link), logo) : logo);
         }))) + after;
     }
     case 'actions':
@@ -489,7 +487,7 @@ function list(attrs, blocks, ctx) {
     default:
       if (attrs.type) ctx.warn(`a :::list of the type ${attrs.type}, which this package does not draw, stands as a plain list`);
       if (attrs.markers) markList(body, attrs.markers);
-      return renderBlocks(intro, ctx) + outer(body) + after;
+      return renderBlocks(intro, placed(ctx, 'list')) + outer(body) + after;
   }
 }
 
@@ -504,11 +502,11 @@ function cards(attrs, blocks, ctx) {
   const headingOf = (item, name) => tag(item.heading.tagName, { class: name, 'data-kn-type': 'heading-5', ...headingAttributes(item.heading) }, inner(item.heading));
   if (numbering['data-kn-numbering'] && !navigation) {
     return renderBlocks(intro, ctx) + tag('ol', { class: 'kn-timeline', ...numbering }, items.map((item) => tag('li', { class: 'kn-timeline-item' },
-      headingOf(item, 'kn-timeline-heading'), renderBlocks([...item.before, ...item.blocks], ctx))));
+      headingOf(item, 'kn-timeline-heading'), renderBlocks([...item.before, ...item.blocks], placed(ctx, { series: items.length })))));
   }
   if (sign['data-kn-sign'] && !pictured && !attrs.picture && !attrs.symbol && !navigation) {
     return renderBlocks(intro, ctx) + tag('ul', { class: 'kn-reasons', role: 'list', ...sign }, items.map((item) => tag('li', { class: 'kn-reason' },
-      headingOf(item, 'kn-reason-heading'), renderBlocks([...item.before, ...item.blocks], ctx))));
+      headingOf(item, 'kn-reason-heading'), renderBlocks([...item.before, ...item.blocks], placed(ctx, { series: items.length })))));
   }
   const withActions = items.map((item) => item.blocks.some(isActions));
   const options = {
@@ -548,10 +546,10 @@ function card(item, { behind, symbol, navigation, actionCards, count }, ctx) {
   if (whole) link.properties = { className: ['kn-card-link'], ...link.properties };
   // A symbol is decorative beside the heading that names the card, so its alternative text is empty.
   const mark = symbol && pictureBlock ? tag('span', { class: 'kn-card-symbol' }, picture(pictureBlock, { alt: '', ...drawnSizes(imageAttributes(pictureBlock), ctx, 'symbol', { layout: symbol }) })) : '';
-  const inside = within(ctx, surface ?? ctx.ground);
+  const inside = placed(within(ctx, surface ?? ctx.ground), { series: count });
   const heading = headingAttributes(item.heading);
   return tag('article', { class: 'kn-card', 'data-kn-variant': navigation ? 'link' : undefined, 'data-kn-surface': surface ?? undefined },
-    pictureBlock && !symbol ? picture(pictureBlock, { class: 'kn-card-picture', ...drawnSizes(imageAttributes(pictureBlock), ctx, 'series', { count }) }) : '',
+    pictureBlock && !symbol ? picture(pictureBlock, { class: 'kn-card-picture', ...drawnSizes(imageAttributes(pictureBlock), ctx, 'series', { count, behind }) }) : '',
     symbol === 'item' ? mark : '',
     eyebrows.map((eyebrow) => tag('p', { class: 'kn-card-eyebrow', 'data-kn-type': 'label', ...markOf(eyebrow) }, inner(eyebrow))),
     tag(item.heading.tagName, { class: 'kn-card-heading', 'data-kn-type': 'heading-5', ...heading }, symbol === 'heading' ? mark : '', inner(item.heading)),
@@ -578,7 +576,7 @@ function accordion(attrs, blocks, ctx) {
     tag('summary', { class: 'kn-accordion-summary' },
       tag(item.heading.tagName, { class: 'kn-accordion-label', 'data-kn-type': 'heading-6', ...headingAttributes(item.heading) }, inner(item.heading)),
       iconHtml('chevron-down', 'kn-accordion-chevron')),
-    tag('div', { class: 'kn-body-text kn-accordion-content' }, renderBlocks(item.blocks, ctx)))));
+    tag('div', { class: 'kn-body-text kn-accordion-content' }, renderBlocks(item.blocks, placed(ctx, 'accordion'))))));
 }
 
 function tabs(attrs, blocks, ctx) {
@@ -590,9 +588,10 @@ function tabs(attrs, blocks, ctx) {
     items.map((item, index) => {
       raise(item.blocks);
       const parts = panelParts(item.blocks.map((node) => ({ component: isComponent(node) })));
+      const inside = placed(ctx, 'tabs');
       const panel = parts
-        ? tag('div', { class: 'kn-tabs-text' }, renderBlocks(parts.text.map((at) => item.blocks[at]), ctx)) + tag('div', { class: 'kn-tabs-parts' }, renderBlocks(parts.parts.map((at) => item.blocks[at]), ctx))
-        : renderBlocks(item.blocks, ctx);
+        ? tag('div', { class: 'kn-tabs-text' }, renderBlocks(parts.text.map((at) => item.blocks[at]), inside)) + tag('div', { class: 'kn-tabs-parts' }, renderBlocks(parts.parts.map((at) => item.blocks[at]), inside))
+        : renderBlocks(item.blocks, inside);
       // A tab has no element of its own for its heading's mark but its summary.
       return tag('details', { class: 'kn-tabs-item', name, open: index === 0 },
         tag('summary', { class: 'kn-tabs-tab', ...markOf(item.heading) }, inner(item.heading)), tag('div', { class: 'kn-tabs-panel' }, panel));
@@ -611,7 +610,7 @@ function toc(attrs, blocks, ctx, { loader = '' } = {}) {
         tag('ol', { role: 'list' }, items.filter((item) => item.heading.properties?.id !== undefined)
           .map((item) => tag('li', {}, tag('a', { href: `#${item.heading.properties.id}` }, escapeText(textOf(item.heading).trim()))))),
         loader))),
-    tag('div', { class: 'kn-reading-area-flow' }, items.map((item) => outer(item.heading) + renderBlocks(item.blocks, ctx))));
+    tag('div', { class: 'kn-reading-area-flow' }, items.map((item) => outer(item.heading) + renderBlocks(item.blocks, placed(ctx, 'toc')))));
 }
 
 function choice(attrs, blocks, ctx) {
@@ -626,7 +625,7 @@ function choice(attrs, blocks, ctx) {
       const plate = onlyForm ? undefined : surfaceOf('choice-panel', ctx.ground);
       return tag('details', { class: 'kn-choice-item', name },
         tag('summary', { class: 'kn-choice-answer', 'data-kn-surface': surfaceOf('choice-answer', ctx.ground), ...markOf(item.heading) }, inner(item.heading)),
-        tag('div', { class: 'kn-choice-panel', 'data-kn-surface': plate }, renderBlocks(item.blocks, within(ctx, plate ?? ctx.ground))));
+        tag('div', { class: 'kn-choice-panel', 'data-kn-surface': plate }, renderBlocks(item.blocks, placed(within(ctx, plate ?? ctx.ground), 'choice'))));
     }));
 }
 
