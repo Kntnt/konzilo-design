@@ -99,3 +99,10 @@ export function contextOf(Astro) {
   }
   return found;
 }
+
+/**
+ * The page's context where its template gave one, or undefined: for a part that draws without it too, as Section,
+ * whose pictures then keep the core's sizes.
+ * @param {object} Astro The component's Astro global.
+ */
+export const contextIfAny = (Astro) => Astro?.locals?.[KEY];

@@ -24,30 +24,54 @@ const fluid = (css) => {
 const sum = (...parts) => width((v) => parts.reduce((total, part) => total + part.at(v), 0), parts.flatMap((part) => part.bends));
 const times = (part, factor) => width((v) => factor * part.at(v), part.bends);
 
-// The windows, past the narrowest, where `one` and `other` cross.
+// The windows, past the narrowest, where `one` and `other` cross. Each is straight between its bends, where it may also
+// jump, as a series does where it changes its columns, so the two are compared just inside each stretch.
+const INSIDE = 1e-7;
 function crossings(one, other) {
   const xs = [...new Set([NARROWEST, ...one.bends, ...other.bends].filter((x) => x >= NARROWEST))].sort((a, b) => a - b);
   xs.push(xs.at(-1) + 1000);
   const found = [];
   for (let i = 0; i < xs.length - 1; i++) {
-    const [a, b] = [xs[i], xs[i + 1]];
+    const [a, b] = [xs[i] + INSIDE, xs[i + 1] - INSIDE];
     const [da, db] = [one.at(a) - other.at(a), one.at(b) - other.at(b)];
     if (da * db < 0) found.push(a + da * (b - a) / (da - db));
   }
   return found;
 }
 const least = (one, other) => width((v) => Math.min(one.at(v), other.at(v)), [...one.bends, ...other.bends, ...crossings(one, other)]);
+const greatest = (...parts) => parts.reduce((one, other) => width((v) => Math.max(one.at(v), other.at(v)), [...one.bends, ...other.bends, ...crossings(one, other)]));
 // `then` where `test` is at least `limit`, or past it where `strict`, and `otherwise` short of it.
 function switched(test, limit, then, otherwise, { strict = false } = {}) {
   const holds = (v) => (strict ? test.at(v) > limit.at(v) : test.at(v) >= limit.at(v));
   return width((v) => (holds(v) ? then : otherwise).at(v), [...test.bends, ...limit.bends, ...then.bends, ...otherwise.bends, ...crossings(test, limit)]);
 }
+// The columns a series of `count` items takes (cards.css, the owner's rule of 2026-11-10): at most two for two; three
+// for one, three, and 5, 6 or 9 more than a multiple of 12; and four for any other, which falls to two where it is 4
+// more than a multiple of 6 and to three otherwise. Every series falls to two and then one as its row narrows.
+function columnsOf(count) {
+  if (!Number.isInteger(count) || count < 1) throw new Error(`a series of at least one item, not ${count}`);
+  if (count === 2) return { most: 2, three: false };
+  if (count === 1 || count === 3 || [5, 6, 9].includes(count % 12)) return { most: 3, three: true };
+  return { most: 4, three: count % 6 !== 4 };
+}
+
+// An item of a series of `count` items in a row `row` wide, `gap` apart, each column at least `minimum`. The CSS
+// switches to k columns by a term times SWITCH, `(k × minimum + (k − 1) × gap − row) × 999`, which falls under a k-th of
+// the row a hair before the row holds k columns: k columns where (km + (k − 1)g − row) × 999 ≤ (row − (k − 1)g) / k, so
+// from row ≥ km × 999k / (999k + 1) + (k − 1)g, two from 2m × 1998/1999 + g. Where four fall to two, three stand for a
+// sliver of a pixel between, narrower than two, which the series' width leaves out, since it says the wider.
+function seriesItem(row, gap, count, minimum = CARD.minimum) {
+  const { most, three } = columnsOf(count);
+  const share = (k) => times(sum(row, times(gap, -(k - 1))), 1 / k);
+  const from = (k) => sum(fixed(k * minimum * (k * SWITCH) / (k * SWITCH + 1)), times(gap, k - 1));
+  let drawn = switched(row, from(2), share(2), row);
+  if (three) drawn = switched(row, from(3), share(3), drawn);
+  if (most === 4) drawn = switched(row, from(4), share(4), drawn);
+  return drawn;
+}
 // The widest a series' item is drawn in a row `row` wide: two columns where two of at least `minimum` fit, `gap` apart,
-// and else one, whatever the number of items, since a lone item takes a third (cards.css, the owner's rule of
-// 2026-11-10). The CSS switches by a term times SWITCH, `(2 × minimum + gap − row) × 999`, which outgrows half the row a
-// hair before the row is short of two columns: one column where (2m + g − row) × 999 > (row − g) / 2, so two from
-// row ≥ 2m × 1998/1999 + g.
-const widestOfSeries = (row, minimum, gap) => switched(row, sum(fixed(2 * minimum * (2 * SWITCH) / (2 * SWITCH + 1)), gap), times(sum(row, times(gap, -1)), 1 / 2), row);
+// and else one, whatever the number of items, since a lone item takes a third.
+const widestOfSeries = (row, minimum, gap) => seriesItem(row, gap, 2, minimum);
 
 // The straight stretches of a width, `drawn`, from the narrowest window on, each { from, slope, intercept }, `from` in
 // rem.
@@ -57,8 +81,10 @@ function stretches(drawn) {
   starts.forEach((from, i) => {
     const to = starts[i + 1] ?? from + 2;
     // Where two clamps end within a hundredth of a rem of each other, the stretch between them is a sliver the one
-    // before it covers to within a ten-thousandth of a pixel.
-    if (i > 0 && starts[i + 1] !== undefined && to - from < 0.01) return;
+    // before it covers to within a ten-thousandth of a pixel. One where a width jumps wider, as where two places a
+    // series stands in change their columns together, it does not cover, and it stays.
+    const middle = (from + to) / 2;
+    if (i > 0 && starts[i + 1] !== undefined && to - from < 0.01 && drawn.at(middle) <= stretchAt(found.at(-1), middle) + 1e-4) return;
     const [p, q] = [from + (to - from) / 3, from + 2 * (to - from) / 3];
     const slope = (drawn.at(q) - drawn.at(p)) / (q - p);
     const stretch = { from, slope, intercept: drawn.at(p) - slope * p };
@@ -158,15 +184,23 @@ function heroPicture(place = 'behind', contentArea, columnGap) {
   return switched(WINDOW, fixed(HERO_STACKED), beside, whole, { strict: true });
 }
 
-// How wide the design draws a picture in each context, as a function of the window.
-function drawings(r) {
-  const inRem = (px) => px / 16;
-  const componentGap = fluid(r.space.roles['component-gap'].css);
-  const columnGap = fluid(r.space.roles['column-gap'].css);
+// The design's measures a picture is drawn by, each a function of the window.
+function measures(r) {
   // The content area, min(window − 2 × side margin, Wide), as the layout works it out for the Reading Area too.
   const area = contentAreaLine(r.layout);
-  const contentArea = width(area.at, area.bends);
-  const column = least(contentArea, fixed(inRem(r.layout.narrow)));
+  return {
+    contentArea: width(area.at, area.bends),
+    narrow: fixed(r.layout.narrow / 16),
+    columnGap: fluid(r.space.roles['column-gap'].css),
+    componentGap: fluid(r.space.roles['component-gap'].css),
+    body: fluid(r.type.body.size.css),
+  };
+}
+
+// How wide the design draws a picture in each context, as a function of the window.
+function drawings(r) {
+  const { contentArea, narrow, columnGap, componentGap } = measures(r);
+  const column = least(contentArea, narrow);
   return {
     // A body's figure, in the reading column: Narrow, or the content area where that is narrower (page.md).
     body: column,
@@ -210,3 +244,151 @@ export function drawnWidths(r, px) {
  * @returns {string}
  */
 export const bandPictureSizes = () => sizesOf(BAND);
+
+// ---------- The pictures the package draws from a body (issue #38; konzilo.md, Images) ----------
+
+// What the package's CSS draws these pictures by that the design file does not hold, each held to its stylesheet by a
+// test. A section sets its picture beside its text from a window of `beside` rem, and its head beside an accordion from
+// `wide` rem, in parts of 2fr and 3fr, `share` the second (section.css); a body in columns takes two of at least
+// `columns` rem (section.css); an accordion's answer stands `padding` em from its edges together, `questions` where it
+// is of questions (accordion.css).
+export const SECTION = Object.freeze({ beside: 48, wide: 60, share: 3 / 5, columns: 18 });
+export const ACCORDION = Object.freeze({ padding: 1.5, questions: 2.5 });
+
+// The places a series of the directives stands in, each its row and its gap: across a band's content area, the place
+// the criteria hold exactly; in a section's body beside its picture, beside a heading with a form right after it, at
+// Narrow, as a centred section's or one with a form or a choice, and as an article's reading column is, and in two
+// columns; and in an accordion across a band or beside its head, whose series takes the component gap. A renderer does
+// not know which it stands in, so a series' picture says the widest it is drawn in any of them.
+function seriesPlaces(r) {
+  const { contentArea: area, narrow, columnGap: gap, componentGap, body } = measures(r);
+  const from = (window, then) => switched(WINDOW, fixed(window), then, area);
+  const half = times(sum(area, times(gap, -1)), 1 / 2);
+  const share = times(sum(area, times(gap, -1)), SECTION.share);
+  const accordion = (row) => [ACCORDION.padding, ACCORDION.questions].map((padding) => [sum(row, times(body, -padding)), componentGap]);
+  const places = [
+    [area, gap],
+    [from(SECTION.beside, half), gap],
+    [from(SECTION.beside, share), gap],
+    [least(area, narrow), gap],
+    [switched(area, sum(fixed(2 * SECTION.columns), gap), half, area), gap],
+    ...accordion(area),
+    ...accordion(from(SECTION.wide, share)),
+  ];
+  // Corner to corner, the text beside a picture the section crops stands in half the content area less the column gap.
+  if (cornerToCorner(r)) places.push([from(SECTION.beside, sum(times(area, 1 / 2), times(gap, -1))), gap]);
+  return places;
+}
+const cornerToCorner = (r) => String(r.section?.['picture-side'] ?? '').startsWith('corners');
+
+// The ladder of a design's widths.
+const ladderOf = (r) => ladder(Math.min(r.layout.narrow, r.layout.wide));
+
+/**
+ * The widths and sizes of a picture that fills an item of a series of `count` items, as a card's picture in `:::cards`,
+ * or a post list's teaser: the widest its item is drawn in any place a series stands in, at each window, and the
+ * ladder's steps that cover it from the narrowest window at density 1 to its widest at density 2 (konzilo.md, Images).
+ * @param {object} r A design file's `resolved`.
+ * @param {number} count The number of items the series draws, at least one.
+ * @returns {{ widths: number[], sizes: string }}
+ */
+export function seriesPicture(r, count) {
+  const drawn = greatest(...seriesPlaces(r).map(([row, gap]) => seriesItem(row, gap, count)));
+  return { widths: widthsOf(drawn, ladderOf(r)), sizes: sizesOf(drawn) };
+}
+
+// A picture shown whole at a height, its width by its proportions, `ratio` its width over its height, at most `widest`:
+// a hero's logo and a section's badge are 4rem high, at most 16rem and 8rem wide (hero.css, section.css); a logo in a list
+// of logos is as high as the list's logos, a clamp of the window, at most four times as wide (logos.css); and a card's
+// symbol is shown whole in a box twice as wide as high at 1.25 times the size of a heading 2, or in a square of 1.25em
+// of the card's heading, a heading 5 (cards.css).
+export const LOGO = Object.freeze({ height: 4, widest: 16 });
+export const BADGE = Object.freeze({ height: 4, widest: 8 });
+export const LOGOS = Object.freeze({ height: 'clamp(2.5rem, 1.9286rem + 2.8571vw, 4.5rem)', widest: 4 });
+export const SYMBOL = Object.freeze({ size: 1.25, item: 2 });
+// A picture a form offers beside it stands at most 16rem wide, and 26rem from a window of 48rem (section.css).
+export const OFFER = Object.freeze({ narrow: 16, wide: 26 });
+const whole = (height, ratio, widest) => times(height, Math.min(widest, ratio > 0 && Number.isFinite(ratio) ? ratio : Infinity));
+
+// How wide the package's CSS draws each other picture it draws from a body, and whether that is at most the picture's
+// own width, its display width where the editor gave it one (`capped`), or stretched to its box whatever that is.
+function pictureDrawing(r, picture, { layout, side, ratio } = {}) {
+  const { contentArea: area, narrow, columnGap: gap } = measures(r);
+  const beside = (then, otherwise = area) => switched(WINDOW, fixed(SECTION.beside), then, otherwise);
+  const half = times(sum(area, times(gap, -1)), 1 / 2);
+  const heroText = side ? heroPicture('end', area, gap) : area;
+  switch (picture) {
+    // A section's photo fills its media (section.css): beside the text half the content area less half the column
+    // gap, and corner to corner, which the section does to a picture neither a form offers nor badges stand with,
+    // exactly half of it, or from the middle to the window's edge; above the text, on a narrower window, the content
+    // area's width or, bleeding, the window's. One a form offers is shown whole at most so wide.
+    case 'section-photo': {
+      if (layout === 'offered') return { drawn: beside(least(half, fixed(OFFER.wide)), least(area, fixed(OFFER.narrow))), capped: true };
+      const corners = layout === 'cropped' ? r.section?.['picture-side'] : undefined;
+      if (corners === 'corners') return { drawn: beside(times(area, 1 / 2)) };
+      if (corners === 'corners-bleed') return { drawn: beside(times(WINDOW, 1 / 2), WINDOW) };
+      return { drawn: beside(half) };
+    }
+    // A figure in a section's body is drawn at most its width and the body's (konzilo.css): across the content area,
+    // beside the picture, beside a picture corner to corner, at Narrow, or in three fifths after a form beside the
+    // heading (section.css).
+    case 'section-body': {
+      const body = {
+        across: area,
+        beside: beside(half),
+        corners: beside(sum(times(area, 1 / 2), times(gap, -1))),
+        narrow: least(area, narrow),
+        form: beside(times(sum(area, times(gap, -1)), SECTION.share)),
+      }[layout];
+      if (!body) throw new Error(`a section's body stands across, beside, corners, narrow or form, not ${layout}`);
+      return { drawn: body, capped: true };
+    }
+    // A hero's picture beside its text fills its media (hero.css).
+    case 'hero': return { drawn: heroPicture(side ?? 'end', area, gap) };
+    case 'hero-logo': return { drawn: least(whole(fixed(LOGO.height), ratio, LOGO.widest / LOGO.height), heroText), capped: true };
+    case 'badge': return { drawn: whole(fixed(BADGE.height), ratio, BADGE.widest / BADGE.height), capped: true };
+    case 'logo': return { drawn: whole(fluid(LOGOS.height), ratio, LOGOS.widest) };
+    case 'symbol': {
+      const heading = layout === 'heading';
+      const size = times(fluid(r.type[heading ? 'heading-5' : 'heading-2'].size.css), SYMBOL.size);
+      return { drawn: whole(size, ratio, heading ? 1 : SYMBOL.item) };
+    }
+    default: throw new Error(`the package draws no picture ${picture} from a body`);
+  }
+}
+
+/**
+ * A `sizes` that says no picture is drawn wider than `px` pixels: each size no wider, by min(), as the core writes the
+ * sizes of a picture the editor gave a display width (its sizesNoWider()).
+ * @param {string} sizes @param {number} px
+ */
+export const noWider = (sizes, px) => sizes.split(', ').map((size) => size.replace(/^(\(min-width: [\d.]+rem\) )?(.+)$/, `$1min($2, ${number(px)}px)`)).join(', ');
+
+/**
+ * The display width the editor gave a picture, which the core writes into each of its `sizes` as min(…, <n>px), or null.
+ * @param {string | undefined} sizes The core's.
+ */
+export function displayWidthOf(sizes) {
+  const found = /,\s*(\d+(?:\.\d+)?)px\)\s*$/.exec(String(sizes ?? ''));
+  return found ? Number(found[1]) : null;
+}
+
+/**
+ * The `sizes` of a picture this package draws from a body, other than a series' (seriesPicture()), the width its CSS
+ * draws it at, in place of the body's the core gives every image in a body (konzilo.md, Images): `section-photo`, by
+ * its `layout`, `cropped`, `badges` or `offered`; `section-body`, a figure in a section's body, by the body's `layout`,
+ * `across`, `beside`, `corners`, `narrow` or `form`; `hero`, a hero's picture beside its text, by its `side`;
+ * `hero-logo` and `badge`, by the picture's `ratio` and, for a logo, whether the hero has a picture at its `side`;
+ * `logo`, in a list of logos, by its `ratio`; and `symbol`, a card's, by its `layout`, `item` or `heading`, and `ratio`.
+ * A picture with a display width says each size no wider where the CSS draws it no wider than its own width.
+ * @param {object} r A design file's `resolved`.
+ * @param {string} picture
+ * @param {{ layout?: string, side?: string, ratio?: number, display?: number | null }} [options] `ratio` its width over
+ *   its height, the widest the CSS allows where it is not known; `display` the editor's display width in px.
+ * @returns {string}
+ */
+export function pictureSizes(r, picture, { display = null, ...options } = {}) {
+  const { drawn, capped = false } = pictureDrawing(r, picture, options);
+  const sizes = sizesOf(drawn);
+  return capped && display ? noWider(sizes, display) : sizes;
+}
