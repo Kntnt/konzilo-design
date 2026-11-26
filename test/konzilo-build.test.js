@@ -583,7 +583,8 @@ test('a site built by the core draws every directive with the package\'s compone
   assert.doesNotMatch(hero, /^<section[^>]*\sstyle=/);
   const behind = /<\/div><\/div><img class="kn-band-picture" ([^>]*)><\/section>$/.exec(hero)?.[1];
   assert.ok(behind, 'the band\'s last child');
-  for (const attribute of [/\bsrc="\/_astro\/[^"]+\.webp"/, /\bsrcset="[^"]+ \d+w"/, /\bsizes="100vw"/, /\balt="Raised beds"/, /\bloading="eager"/]) assert.match(behind, attribute);
+  // Its sizes the band's, as wide as half the window's height makes a picture of 16:10 where that is wider than the window.
+  for (const attribute of [/\bsrc="\/_astro\/[^"]+\.webp"/, /\bsrcset="[^"]+ \d+w"/, /\bsizes="max\(100vw, 80vh\)"/, /\balt="Raised beds"/, /\bloading="eager"/]) assert.match(behind, attribute);
   // The core's image service made the pictures, and the components keep what it wrote.
   assert.match(html, /<img class="kn-section-picture" src="\/_astro\/[^"]+\.webp" alt="A shed"[^>]* width="\d+" height="\d+"/);
   // A section's photo keeps its caption under it; a hero's picture drops its own, with no warning (issue #35).
