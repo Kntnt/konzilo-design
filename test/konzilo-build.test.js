@@ -16,6 +16,7 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium, firefox, webkit } from 'playwright-core';
 import { defaultInputs, resolve as resolveDesign, DESIGN_FORMAT } from '../src/generator/index.js';
+import { MATH } from '../src/fonts/catalog.js';
 import { copyFonts } from '../src/konzilo/fonts.js';
 import { imageContexts } from '../src/konzilo/index.js';
 import { serve } from './helpers/serve.js';
@@ -603,6 +604,13 @@ test('a site built by the core draws every directive with the package\'s compone
   const term = main(built.page('category/guides'));
   assert.match(term, /^<section class="kn-band kn-section" data-kn-surface="tint"><div class="kn-band-content"><header class="kn-section-head"><nav class="kn-breadcrumbs".*<p class="kn-heading-group-eyebrow" data-kn-type="label">Category<\/p><h1 class="kn-heading-group-heading" data-kn-type="heading-1">Guides<\/h1><p class="kn-heading-group-deck" data-kn-type="lead">On guides\.<\/p>/s);
   assert.match(term, /<div class="kn-section-body kn-body-text"><div class="kn-post-list" data-kn-presentation="filtered"><form class="kn-visitor-filters" role="search" method="get" action="\/search\/"><input type="hidden" name="type" value="article"><input type="hidden" name="category" value="guides"><div class="kn-visitor-filter-panel"><fieldset class="kn-visitor-filter-group"><legend>Topic<\/legend>/);
+});
+
+// The formulas' font is cut to the characters of one Temml, bin/design-fonts' TEMML, the one the core installs. A core
+// that moves to another Temml may write a character the cut lacks, which a browser then draws in another font, unseen.
+test('the formulas\' font is cut to the characters of the Temml the core installs', { skip: why ?? false }, () => {
+  const installed = JSON.parse(readFileSync(join(core, 'node_modules/temml/package.json'), 'utf8')).version;
+  assert.equal(MATH.subset, `temml ${installed}`, `The core installs Temml ${installed}, but the formulas' font is cut to ${MATH.subset}: set TEMML in bin/design-fonts to ${installed} and run it again.`);
 });
 
 test('a site built by the core writes a body\'s formulas as konzilo.css draws them, and serves the formulas\' font from its fonts folder', { skip: why ?? false, timeout: 600000 }, async () => {
