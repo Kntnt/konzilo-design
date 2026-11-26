@@ -49,9 +49,10 @@ function switched(test, limit, then, otherwise, { strict = false } = {}) {
 // row ≥ 2m × 1998/1999 + g.
 const widestOfSeries = (row, minimum, gap) => switched(row, sum(fixed(2 * minimum * (2 * SWITCH) / (2 * SWITCH + 1)), gap), times(sum(row, times(gap, -1)), 1 / 2), row);
 
-// The straight stretches of a width from the narrowest window on, each { from, slope, intercept }, `from` in rem.
-function stretches(of) {
-  const starts = [NARROWEST, ...of.bends.filter((x) => x > NARROWEST)];
+// The straight stretches of a width, `drawn`, from the narrowest window on, each { from, slope, intercept }, `from` in
+// rem.
+function stretches(drawn) {
+  const starts = [NARROWEST, ...drawn.bends.filter((x) => x > NARROWEST)];
   const found = [];
   starts.forEach((from, i) => {
     const to = starts[i + 1] ?? from + 2;
@@ -59,8 +60,8 @@ function stretches(of) {
     // before it covers to within a ten-thousandth of a pixel.
     if (i > 0 && starts[i + 1] !== undefined && to - from < 0.01) return;
     const [p, q] = [from + (to - from) / 3, from + 2 * (to - from) / 3];
-    const slope = (of.at(q) - of.at(p)) / (q - p);
-    const stretch = { from, slope, intercept: of.at(p) - slope * p };
+    const slope = (drawn.at(q) - drawn.at(p)) / (q - p);
+    const stretch = { from, slope, intercept: drawn.at(p) - slope * p };
     // A bend of a part that leaves the whole straight, such as the content area reaching Wide under Narrow, is none.
     const last = found.at(-1);
     if (last && Math.abs(last.slope - slope) < 1e-7 && Math.abs(last.intercept - stretch.intercept) < 5e-4) return;
@@ -78,20 +79,21 @@ function lengthOf({ slope, intercept }) {
   return `calc(${vw}vw ${intercept < 0 ? '-' : '+'} ${rem}rem)`;
 }
 
-const at = ({ slope, intercept }, v) => slope * v + intercept;
+// A stretch's width at a window `v` rem wide.
+const stretchAt = ({ slope, intercept }, v) => slope * v + intercept;
 const floor = (x) => Math.floor(x * 1e4) / 1e4;
 
-// A width as a `sizes`, its widest windows first, each stretch from its window on by `min-width`, which every engine
-// reads in a `sizes`, where a range such as `(width >= 40rem)` Safari has read only since 16.4, and whose text holds no
-// angle bracket for a reader of the HTML to stop at. A stretch that goes on from the one before starts at its edge; one
-// that starts wider or narrower than it, as a series' second column or a hero's picture beside its text past the window
-// it stands above it on, starts APART on the side where the wider of the two holds, so a `sizes` never says less than
-// is drawn.
-function sizesOf(of) {
-  const found = stretches(of);
+// A width, `drawn`, as a `sizes`, its widest windows first, each stretch from its window on by `min-width`, which every
+// engine reads in a `sizes`, where a range such as `(width >= 40rem)` Safari has read only since 16.4, and whose text
+// holds no angle bracket for a reader of the HTML to stop at. A stretch that goes on from the one before starts at its
+// edge; one that starts wider or narrower than it, as a series' second column or a hero's picture beside its text past
+// the window it stands above it on, starts APART on the side where the wider of the two holds, so a `sizes` never says
+// less than is drawn.
+function sizesOf(drawn) {
+  const found = stretches(drawn);
   return found.map((stretch, i) => {
     if (i === 0) return lengthOf(stretch);
-    const [after, before] = [at(stretch, stretch.from), at(found[i - 1], stretch.from)];
+    const [after, before] = [stretchAt(stretch, stretch.from), stretchAt(found[i - 1], stretch.from)];
     const edge = floor(stretch.from) + (Math.abs(after - before) < 1e-6 ? 0 : after > before ? -APART : APART);
     return `(min-width: ${number(edge)}rem) ${lengthOf(stretch)}`;
   }).reverse().join(', ');
@@ -128,14 +130,14 @@ function ladder(anchor) {
   return [...new Set(steps)].sort((a, b) => a - b);
 }
 
-// The widths of a context drawn at `of`: from the step that covers it at the narrowest window at density 1 to the
-// step that covers it at its widest at density 2, or the cap.
-function widthsOf(of, steps) {
-  const runs = stretches(of);
+// The widths of a context whose picture is `drawn` wide: from the step that covers it at the narrowest window at
+// density 1 to the step that covers it at its widest at density 2, or the cap.
+function widthsOf(drawn, steps) {
+  const runs = stretches(drawn);
   // In px, to a thousandth, so that arithmetic's last digit does not take a step past the one a width meets.
   const px = (rem) => Math.round(rem * 16 * 1000) / 1000;
-  const narrowest = px(at(runs[0], NARROWEST));
-  const ends = runs.flatMap((run, i) => [at(run, run.from), at(run, runs[i + 1]?.from ?? run.from)]);
+  const narrowest = px(stretchAt(runs[0], NARROWEST));
+  const ends = runs.flatMap((run, i) => [stretchAt(run, run.from), stretchAt(run, runs[i + 1]?.from ?? run.from)]);
   const widest = runs.at(-1).slope > 1e-9 ? Infinity : px(Math.max(...ends));
   const first = steps.find((step) => step >= narrowest) ?? WIDEST;
   const last = steps.find((step) => step >= Math.min(2 * widest, WIDEST)) ?? WIDEST;
@@ -159,13 +161,13 @@ function heroPicture(place = 'behind', contentArea, columnGap) {
  * @returns {Record<'body' | 'gallery' | 'lightbox' | 'hero' | 'card', { widths: number[], sizes: string, ratio?: string }>}
  */
 export function imageContexts(r) {
-  const rem = (px) => px / 16;
+  const inRem = (px) => px / 16;
   const componentGap = fluid(r.space.roles['component-gap'].css);
   const columnGap = fluid(r.space.roles['column-gap'].css);
   // The content area, min(window − 2 × side margin, Wide), as the layout works it out for the Reading Area too.
   const area = contentAreaLine(r.layout);
   const contentArea = width(area.at, area.bends);
-  const column = least(contentArea, fixed(rem(r.layout.narrow)));
+  const column = least(contentArea, fixed(inRem(r.layout.narrow)));
   const steps = ladder(Math.min(r.layout.narrow, r.layout.wide));
   const context = (drawn) => ({ widths: widthsOf(drawn, steps), sizes: sizesOf(drawn) });
   return {
