@@ -121,13 +121,20 @@ test('a presentation carries each picture once, and a design\'s own in place of 
       };
       assert.match(await page.evaluate(() => getComputedStyle(document.querySelector('.surface-example[data-kn-surface="picture-dark"]')).backgroundImage), /url\("data:image\/jpeg/, 'a picture Surface in the document shows the picture');
       const hero = await frame('hero');
-      const background = () => hero.evaluate(() => getComputedStyle(document.querySelector('.kn-hero')).backgroundImage);
-      await hero.waitForFunction(() => getComputedStyle(document.querySelector('.kn-hero')).backgroundImage.includes('url("data:image/'));
+      // The hero's picture behind its text, the band's <img> (band.css).
+      const picture = () => hero.evaluate(() => {
+        const image = document.querySelector('.kn-hero > .kn-band-picture');
+        return { src: image.getAttribute('src'), shown: getComputedStyle(image).display !== 'none' && image.naturalWidth > 0 };
+      });
+      await hero.waitForFunction(() => document.querySelector('.kn-hero > .kn-band-picture')?.getAttribute('src').startsWith('data:image/'));
       assert.deepEqual(external, [], 'nothing is fetched');
       await page.locator('#opening [data-frame-pictures] [data-value="off"]').click();
-      assert.doesNotMatch(await background(), /url\(/);
+      await hero.waitForFunction(() => getComputedStyle(document.querySelector('.kn-hero > .kn-band-picture')).display === 'none');
       await page.locator('#opening [data-frame-pictures] [data-value="on"]').click();
-      assert.match(await background(), /url\("data:image\//);
+      await hero.waitForFunction(() => getComputedStyle(document.querySelector('.kn-hero > .kn-band-picture')).display !== 'none');
+      const shown = await picture();
+      assert.match(shown.src, /^data:image\//);
+      assert.ok(shown.shown, 'the picture shows again');
     } finally {
       await browser.close();
     }

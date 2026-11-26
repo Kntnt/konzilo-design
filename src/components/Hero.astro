@@ -9,6 +9,7 @@ import { heroAttributes } from './hero-attributes.js';
 // the side named by side, inside the content width or, with -bleed, out to the window's edge and the hero's top and bottom.
 // A page's first heading is its H1, so the hero that opens a page has level 1, or false where the H1 stands under it, and one
 // further down has level 2. The slot before holds the trail, where the H1 is the hero's: it stands above the eyebrow.
+// A picture behind is the band's, with its alt text, empty where it is left out, and its srcset and sizes (Band.astro).
 interface Props extends HTMLAttributes<'section'> {
   heading: string;
   eyebrow?: string;
@@ -19,17 +20,19 @@ interface Props extends HTMLAttributes<'section'> {
   picture?: string;
   side?: 'start' | 'end' | 'start-bleed' | 'end-bleed';
   alt?: string;
+  srcset?: string;
+  sizes?: string;
   loading?: 'lazy' | 'eager';
   height?: 'third' | 'half' | 'two-thirds' | 'full';
   place?: 'top' | 'center' | 'bottom';
   align?: 'start' | 'center' | 'end';
 }
-const { heading, eyebrow, deck, level = 1, type = 'heading-1', surface, picture, side = 'end', alt, loading = 'eager', height, place, align, class: className, ...attributes } = Astro.props;
+const { heading, eyebrow, deck, level = 1, type = 'heading-1', surface, picture, side = 'end', alt, srcset, sizes, loading = 'eager', height, place, align, class: className, ...attributes } = Astro.props;
 const behind = surface?.startsWith('picture-');
 const beside = picture && !behind;
 if (beside && alt === undefined) throw new TypeError('A picture beside a Hero requires alternative text');
 ---
-<Band {...attributes} {...heroAttributes({ side: beside ? side : undefined, height, place, align })} class:list={['kn-hero', className]} contentClass="kn-hero-content" surface={surface} picture={behind ? picture : undefined}>
+<Band {...attributes} {...heroAttributes({ side: beside ? side : undefined, height, place, align })} class:list={['kn-hero', className]} contentClass="kn-hero-content" surface={surface} {...(behind && picture ? { picture, alt, srcset, sizes } : {})}>
   <div class="kn-hero-text">
     <slot name="before" />
     <HeadingGroup heading={heading} eyebrow={eyebrow} deck={deck} level={level} type={type} />

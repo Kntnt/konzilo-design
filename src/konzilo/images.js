@@ -144,12 +144,15 @@ function widthsOf(drawn, steps) {
   return steps.filter((step) => step >= first && step <= last);
 }
 
+// A picture behind a band's text covers the band, which is as wide as the window (band.css).
+const BAND = WINDOW;
+
 // A hero's picture where the design puts it (hero.css): behind the text it covers the band, the window's width; beside
 // it, half the content area less half the column gap, or from the middle to the window's edge where it bleeds; and on a
 // window up to 40rem above the text, the content area's width or, bleeding, the window's. A design with no picture in
 // its hero puts one a page gives at the end (directives.md, hero).
 function heroPicture(place = 'behind', contentArea, columnGap) {
-  if (place === 'behind') return WINDOW;
+  if (place === 'behind') return BAND;
   const whole = place.endsWith('-bleed') ? WINDOW : contentArea;
   const beside = sum(times(whole, 1 / 2), times(columnGap, -1 / 2));
   return switched(WINDOW, fixed(HERO_STACKED), beside, whole, { strict: true });
@@ -200,3 +203,10 @@ export function imageContexts(r) {
 export function drawnWidths(r, px) {
   return Object.fromEntries(Object.entries(drawings(r)).map(([name, drawn]) => [name, drawn.at(px / 16) * 16]));
 }
+
+/**
+ * The `sizes` of a picture behind a band's text, the band's width, whatever the design: what the hero directive writes
+ * on its picture behind in place of the body's `sizes` the core gives every image in a body (konzilo.md, Images).
+ * @returns {string}
+ */
+export const bandPictureSizes = () => sizesOf(BAND);

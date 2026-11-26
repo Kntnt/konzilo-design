@@ -917,7 +917,7 @@ test('tool saves presentation prose, keeps controls still and serves the exporte
 
     // Dragging touches only what changed: the logo stays the same element, and so does the picture.
     const stable = (frame) => frame.evaluate(() => {
-      window.__stable = { hero: document.querySelector('.kn-hero').style.getPropertyValue('--kn-picture-image').length };
+      window.__stable = { hero: document.querySelector('.kn-hero .kn-band-picture')?.getAttribute('src') };
       window.__mutations = 0;
       new MutationObserver((list) => {
         for (const change of list) if (change.type === 'childList' && change.target.id !== 'kn-live-core') window.__mutations += 1;

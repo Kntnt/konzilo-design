@@ -51,11 +51,16 @@ export function setHero(node, settings, images) {
   if (next) setHeading(next, nextHeadingProps(settings));
   const trail = trailOf(node);
   if (trail) placeTrail(trail, node);
-  const image = settings.picture === 'behind' ? `url(${JSON.stringify(picture)})` : '';
-  if (node.style.getPropertyValue('--kn-picture-image') !== image) {
-    if (image) node.style.setProperty('--kn-picture-image', image);
-    else node.style.removeProperty('--kn-picture-image');
-  }
+  // A picture behind is the band's <img> after its content, as Band draws it.
+  let behind = node.querySelector(':scope > .kn-band-picture');
+  if (surface?.startsWith('picture-') && picture) {
+    if (!behind) {
+      behind = Object.assign(document.createElement('img'), { className: 'kn-band-picture', alt: '' });
+      behind.setAttribute('loading', 'eager');
+      node.append(behind);
+    }
+    if (behind.getAttribute('src') !== picture) behind.src = picture;
+  } else behind?.remove();
   let media = node.querySelector(':scope > .kn-hero-content > .kn-hero-media');
   if (side && !media) {
     media = document.createElement('div');
