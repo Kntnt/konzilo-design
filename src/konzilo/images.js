@@ -341,6 +341,26 @@ export function teaserPictures(r, presentation, count) {
   return Array(count).fill(drawnPicture(r, drawn));
 }
 
+/**
+ * Every teaser's picture a resolved design makes in its presentations of a post list, its widths and its sizes, for the
+ * presentation's Details page (tool.md, Pictures at the right size): in `cards` and `filtered` by the number of posts,
+ * from one to eight, those of the same sizes together; a lone teaser of `cards`; and the latest post of `featured` and
+ * another.
+ * @param {object} r A design file's `resolved`.
+ * @returns {{ key: string, picture: string, counts?: number[], widths: number[], sizes: string }[]}
+ */
+export function teaserRows(r) {
+  const series = new Map();
+  for (let count = 1; count <= 8; count++) {
+    const [picture] = teaserPictures(r, 'filtered', count);
+    series.set(picture.sizes, { ...picture, counts: [...(series.get(picture.sizes)?.counts ?? []), count] });
+  }
+  const rows = [...series.values()].map(({ counts, widths, sizes }) => ({ key: `teaser-${counts.join('-')}`, picture: 'teaser', counts, widths, sizes }));
+  const [first, other] = teaserPictures(r, 'featured', 2);
+  rows.push({ key: 'teaser-lone', picture: 'teaser-lone', ...teaserPictures(r, 'cards', 1)[0] }, { key: 'featured-first', picture: 'featured-first', ...first }, { key: 'featured-other', picture: 'featured-other', ...other });
+  return rows;
+}
+
 // A picture shown whole at a height, its width by its proportions, `ratio` its width over its height, at most `widest`:
 // a hero's logo and a section's badge are 4rem high, at most 16rem and 8rem wide (hero.css, section.css); a logo in a list
 // of logos is as high as the list's logos, a clamp of the window, at most four times as wide (logos.css); and a card's

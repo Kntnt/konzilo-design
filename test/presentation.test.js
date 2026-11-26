@@ -20,7 +20,7 @@ import { startTool, loadCopy } from '../tool/server.js';
 import { copyFor } from '../presentation/copy-override.mjs';
 import { validateDesignFile, resolve } from '../src/generator/index.js';
 import { pageWidths, readingBoxes, SKETCH_WINDOWS } from '../presentation/src/page-sketch.js';
-import { bodyPictures, imageContexts, drawnWidths } from '../src/konzilo/images.js';
+import { bodyPictures, imageContexts, drawnWidths, teaserRows } from '../src/konzilo/images.js';
 const exec = promisify(execFile);
 const root = pathResolve('node_modules/.cache/presentation-tests');
 const copy = JSON.parse(await readFile('presentation/copy.json', 'utf8'));
@@ -157,6 +157,18 @@ async function checkImages(page, inputs, fixture) {
   assert.deepEqual(pictures.filter(({ picture }) => picture === 'series').flatMap(({ counts }) => counts).sort((a, b) => a - b), [1, 2, 3, 4, 5, 6, 7, 8], `${fixture}: each number of cards once`);
   // The row of three cards names them in words.
   assert.match(await drawn.locator('[data-picture^="series-"]').nth(0).locator('th').textContent(), /cards/);
+  // And the widths and sizes of each teaser's picture the design's presentations of a post list make (issue #39), in
+  // cards and filtered by the number of posts, from one to eight, a lone teaser in cards, and featured's.
+  const lists = page.locator('#details [data-teaser-pictures]');
+  const teasers = teaserRows(resolved);
+  assert.deepEqual(await lists.locator('[data-picture]').evaluateAll((rows) => rows.map((row) => row.dataset.picture)), teasers.map(({ key }) => key), `${fixture}: the teasers`);
+  for (const { key, sizes, widths } of teasers) {
+    assert.equal(await lists.locator(`[data-picture="${key}"] [data-sizes]`).textContent(), sizes, `${fixture}: ${key}'s sizes`);
+    assert.equal(await lists.locator(`[data-picture="${key}"] [data-widths]`).textContent(), widths.join(', '), `${fixture}: ${key}'s widths`);
+  }
+  assert.deepEqual(teasers.filter(({ picture }) => picture === 'teaser').flatMap(({ counts }) => counts).sort((a, b) => a - b), [1, 2, 3, 4, 5, 6, 7, 8], `${fixture}: each number of posts once`);
+  assert.deepEqual(teasers.filter(({ picture }) => picture !== 'teaser').map(({ key }) => key), ['teaser-lone', 'featured-first', 'featured-other']);
+  assert.match(await lists.locator('[data-picture^="teaser-"]').nth(0).locator('th').textContent(), /posts/);
 }
 
 test('catalogue covers the specification and has the requested order', async () => {
@@ -199,7 +211,7 @@ test('copy has no unused keys and all values are strings', async () => {
     ...['body', 'gallery', 'lightbox', 'hero', 'card'].map((name) => `images.${name}`),
     ...['behind', 'beside', 'none'].map((name) => `images.hero.${name}`),
     ...['context', 'widths', 'sizes', 'ratio', 'picture'].map((name) => `details.images.${name}`),
-    ...['series', 'section-photo.cropped', 'section-photo.badges', 'section-photo.offered', 'section-body.across', 'section-body.beside', 'section-body.corners', 'section-body.narrow', 'section-body.form', 'hero', 'hero-logo', 'badge', 'logo', 'symbol.item', 'symbol.heading'].map((name) => `details.picture.${name}`),
+    ...['series', 'section-photo.cropped', 'section-photo.badges', 'section-photo.offered', 'section-body.across', 'section-body.beside', 'section-body.corners', 'section-body.narrow', 'section-body.form', 'hero', 'hero-logo', 'badge', 'logo', 'symbol.item', 'symbol.heading', 'teaser', 'teaser-lone', 'featured-first', 'featured-other'].map((name) => `details.picture.${name}`),
     ...['display', 'heading-1', 'heading-2', 'heading-3', 'heading-4', 'heading-5', 'heading-6', 'lead', 'body', 'small', 'label', 'before', 'after'].map((name) => `type.${name}`),
     ...['main', 'heading', 'heading-1', 'display', 'label', 'monospace'].map((name) => `role.${name}`),
     ...[100, 200, 300, 400, 500, 600, 700, 800, 900].map((name) => `weight.${name}`),
