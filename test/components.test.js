@@ -23,8 +23,7 @@ test('component CSS uses only logical properties, role reads and permitted drawi
   // The quiet edge adds --kn-frame-ring, a filled button's ring, which the core emits only with it.
   const quiet = { ...defaultInputs(), frame: { width: 1, color: 'border' } };
   const emitted = new Set([defaultInputs(), withRoles, quiet].flatMap((inputs) => [...coreCss(derive(inputs)).matchAll(/(--kn-[\w-]+)\s*:/g)].map(([, name]) => name)));
-  // Band sets the picture in its markup, for the Surface and a component to read.
-  const shared = new Set(['--kn-picture-image', ...css.flatMap((source) => [...source.matchAll(/(--kn-[\w-]+)\s*:/g)].map(([, name]) => name))]);
+  const shared = new Set(css.flatMap((source) => [...source.matchAll(/(--kn-[\w-]+)\s*:/g)].map(([, name]) => name)));
   for (const [i, source] of css.entries()) {
     const name = files[i];
     const ast = parse(source, { parseCustomProperty: true });

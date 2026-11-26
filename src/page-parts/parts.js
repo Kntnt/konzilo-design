@@ -8,19 +8,20 @@
 //   otherwise only a directive draws, with the markup a :::section in a body gets.
 // - pageBody(): a body as bands: a run of loose blocks at its top in a section of its own, the title band first where
 //   the body opens with no hero, and the H1 under the hero where the design puts it there.
-// - articleOpening(): an article's opening, a Hero of its main image, headline in three parts, standfirst and meta line.
+// - articleOpening(): an article's opening, a Hero of its main image, headline in three parts, standfirst and meta line;
+//   openingPicture() makes its main image in the widths and sizes of where the design draws it.
 // - articleBody(): an article's body in a Reading Area, its following menu beside it and its interview's questions marked.
 // - readMore(): a section of teasers under a heading, and a lone main action to the rest.
-import { DECK_LINE, sectionParts } from '../directives/section.js';
+import { DECK_LINE, sectionLayout, sectionParts } from '../directives/section.js';
 import { heroAttributes } from '../components/hero-attributes.js';
-import { pictureImage } from '../components/picture-image.js';
 import { contactOf } from '../directives/cards.js';
 import { serviceOf } from '../directives/actions.js';
 import { iconHtml } from '../directives/icons.js';
 import { escapeAttribute, escapeText, tag, voidTag } from '../directives/render/html.js';
-import { breadcrumbsHtml, groupEyebrows, sectionAttributes, sectionPhoto } from '../directives/render/render.js';
+import { breadcrumbsHtml, groupEyebrows, sectionAttributes, sectionPhoto, withBodySizes } from '../directives/render/render.js';
 import { allElements, innerHtml, retagged, textOfHtml, topElements } from '../directives/render/scan.js';
-import { teaserCard } from '../presentations/teasers.js';
+import { postPicture, ratioOf, teaserCard } from '../presentations/teasers.js';
+import { cornerToCorner, heroPictureOf, imageSizes } from '../konzilo/images.js';
 
 const classesOf = (element) => String(element?.attributes?.class ?? '').split(/\s+/).filter(Boolean);
 const hasClass = (element, name) => classesOf(element).includes(name);
@@ -88,32 +89,37 @@ function kindOf(html, element) {
 }
 const isDialog = (element) => element.name === 'dialog' && hasClass(element, 'konzilo-modal');
 
-// A figure's image as a section's picture: its start tag again, with a class of the design's and the figure's mark.
-function pictureFrom(html, element, className) {
+// A figure's image as a section's picture: its start tag again, with a class of the design's, the figure's mark and the
+// sizes of the width the section draws it at, by `sizesFor(image's attributes)`.
+function pictureFrom(html, element, className, sizesFor = () => ({})) {
   const inside = innerOf(html, element);
   const image = allElements(inside).find((one) => one.name === 'img');
   const mark = element.attributes['data-konzilo-block'];
-  return retagged(inside, image, { set: { class: className, ...(mark === undefined ? {} : { 'data-konzilo-block': mark }) } });
+  return retagged(inside, image, { set: { class: className, ...(mark === undefined ? {} : { 'data-konzilo-block': mark }), ...sizesFor(image.attributes) } });
 }
 
 // A figure as a section's photo, its caption as the core drew it, as a :::section draws it (render.js, sectionPhoto()).
-function photoFrom(html, element) {
+function photoFrom(html, element, sizesFor) {
   const inside = innerOf(html, element);
   const caption = topElements(inside).find((one) => one.name === 'figcaption');
-  return sectionPhoto(pictureFrom(html, element, 'kn-section-picture'), caption && innerOf(inside, caption));
+  return sectionPhoto(pictureFrom(html, element, 'kn-section-picture', sizesFor), caption && innerOf(inside, caption));
 }
 
 // A section from its blocks in order, by the section's rules (directives.md, `section`): each block { kind, text, plain,
 // head, picture, photo }, its kind and text as sectionParts() reads them, `plain` its HTML in a section's body,
-// `head({ long })` its HTML in the head, `picture()` a picture's image as a badge, and `photo()` the media's first picture
-// with its caption.
-function sectionFrom(blocks, { surface, anchor, align } = {}) {
+// `head({ long })` its HTML in the head, `picture(sizesFor)` a picture's image as a badge, and `photo(sizesFor)` the
+// media's first picture with its caption, each at the sizes `sizesFor(image's attributes)` gives. With the page's
+// context, its pictures and the figures in its body take the sizes of the widths the section draws them at (konzilo.md,
+// Images).
+function sectionFrom(blocks, { surface, anchor, align, ctx } = {}) {
   const parts = sectionParts(blocks);
+  const layout = sectionLayout(blocks, parts, { align, corners: ctx ? cornerToCorner(ctx.design.resolved) : false });
+  const sizesFor = (picture, options) => (image) => (ctx ? imageSizes(image, ctx.design.resolved, picture, options) : {});
   const out = [];
   if (parts.media.length) {
     const [first, ...badges] = parts.media.map((at) => blocks[at]);
-    out.push(tag('div', { class: 'kn-section-media' }, first.photo(),
-      badges.length ? tag('ul', { class: 'kn-section-badges', role: 'list' }, badges.map((badge) => tag('li', {}, badge.picture()))) : ''));
+    out.push(tag('div', { class: 'kn-section-media' }, first.photo(sizesFor('section-photo', { layout: layout.photo })),
+      badges.length ? tag('ul', { class: 'kn-section-badges', role: 'list' }, badges.map((badge) => tag('li', {}, badge.picture(sizesFor('badge'))))) : ''));
   }
   if (parts.head.length) {
     const head = parts.head.map((at) => blocks[at]);
@@ -121,9 +127,9 @@ function sectionFrom(blocks, { surface, anchor, align } = {}) {
       tag('hgroup', { class: 'kn-heading-group' }, head.filter((block) => block.kind !== 'actions').map((block) => block.head({ long: parts.deckLong }))),
       head.filter((block) => block.kind === 'actions').map((block) => block.plain)));
   }
-  const drawn = parts.media.length + parts.head.length;
-  const rest = groupEyebrows(blocks.slice(drawn).map((block) => block.plain).join('')).trim();
-  if (rest !== '') out.push(tag('div', { class: 'kn-section-body kn-body-text' }, rest));
+  const grouped = parts.media.length + parts.head.length;
+  const rest = groupEyebrows(blocks.slice(grouped).map((block) => block.plain).join('')).trim();
+  if (rest !== '') out.push(tag('div', { class: 'kn-section-body kn-body-text' }, ctx ? withBodySizes(rest, ctx, layout.body) : rest));
   return tag('section', sectionAttributes({ anchor, surface: surface && surface !== 'page' ? surface : undefined, align }), tag('div', { class: 'kn-band-content' }, out));
 }
 
@@ -142,8 +148,8 @@ function blocksOfHtml(html) {
         if (kind === 'paragraph') return retagged(html, element, { set: { class: 'kn-heading-group-deck', 'data-kn-type': 'lead', 'data-kn-deck': long ? 'long' : undefined } });
         return retagged(html, element, { set: { class: 'kn-heading-group-eyebrow' } });
       },
-      picture: (className) => pictureFrom(html, element, className),
-      photo: () => photoFrom(html, element),
+      picture: (sizesFor) => pictureFrom(html, element, undefined, sizesFor),
+      photo: (sizesFor) => photoFrom(html, element, sizesFor),
     };
   });
 }
@@ -153,8 +159,9 @@ function blocksOfHtml(html) {
  * :::section around them (directives.md, The body of a page): its pictures first as its media, its eyebrows, heading,
  * deck and actions as its head, and the rest as its body.
  * @param {string} html The run, as the core drew it.
+ * @param {object} [ctx] The page's context, by whose design its pictures take the sizes of where the section draws them.
  */
-export const looseSection = (html) => sectionFrom(blocksOfHtml(String(html ?? '')));
+export const looseSection = (html, ctx) => sectionFrom(blocksOfHtml(String(html ?? '')), { ctx });
 
 // A heading's id, as Astro gives a body's heading one from its words: in lower case, its punctuation left out, its
 // spaces hyphens.
@@ -174,8 +181,9 @@ export const headingIdOf = (text) => String(text ?? '').toLowerCase().trim().rep
  * @param {string} [options.deck] The deck's HTML, its words, which a template has written safe.
  * @param {{ label: string, href: string, main?: boolean }[]} [options.actions]
  * @param {string} [options.body] The body's HTML, as Astro drew the template's slot.
+ * @param {object} [ctx] The page's context, by whose design its pictures take the sizes of where the section draws them.
  */
-export function section({ surface, anchor, align, eyebrow, heading, level = 2, headingId, deck, actions = [], body = '' } = {}) {
+export function section({ surface, anchor, align, eyebrow, heading, level = 2, headingId, deck, actions = [], body = '' } = {}, ctx = undefined) {
   const blocks = [];
   for (const words of [].concat(eyebrow ?? []).filter(Boolean)) {
     blocks.push({ kind: 'eyebrow', plain: tag('p', { 'data-kn-type': 'label' }, escapeText(words)), head: () => tag('p', { class: 'kn-heading-group-eyebrow', 'data-kn-type': 'label' }, escapeText(words)) });
@@ -192,7 +200,7 @@ export function section({ surface, anchor, align, eyebrow, heading, level = 2, h
   const links = actionsList(actions);
   if (links) blocks.push({ kind: 'actions', plain: links });
   blocks.push(...blocksOfHtml(String(body ?? '')));
-  return sectionFrom(blocks, { surface, anchor, align });
+  return sectionFrom(blocks, { surface, anchor, align, ctx });
 }
 
 /**
@@ -295,7 +303,7 @@ export function pageBody(html, ctx, { title = true } = {}) {
   const flush = (end) => {
     if (run === null) return;
     const piece = source.slice(run, end);
-    if (piece.trim() !== '') out.push(looseSection(piece));
+    if (piece.trim() !== '') out.push(looseSection(piece, ctx));
     run = null;
   };
   for (const element of elements) {
@@ -347,6 +355,16 @@ export function metaLineHtml(pieces = [], topics = []) {
 }
 
 /**
+ * An article's main image as its opening draws it, made by Astro's getImage() in the widths and with the sizes of
+ * where the design puts a hero's picture, behind its text across the window or beside it, as tall as the hero's height
+ * makes its box, by the picture's own proportions (heroPictureOf(); konzilo.md, Images); as given where it is no master.
+ * @param {{ src: object | string, alt?: string } | undefined} image The article's `image`.
+ * @param {object} ctx The page's context.
+ * @param {Function} [getImage] Astro's getImage().
+ */
+export const openingPicture = (image, ctx, getImage) => postPicture(image, heroPictureOf(ctx.design.resolved, { ratio: ratioOf(image) }), getImage);
+
+/**
  * An article's opening (directives.md, An article, The opening): a Hero, its picture the article's main image, behind
  * the text or beside it as the design has it; the trail, the headline in up to three parts, the standfirst as its deck,
  * the meta line, and what a type adds after it.
@@ -372,8 +390,6 @@ export function articleOpening(ctx, { data = {}, eyebrow, picture, metaLine = []
     class: 'kn-band kn-hero kn-article-opening',
     'data-kn-surface': ground && ground !== 'page' ? ground : undefined,
     ...heroAttributes({ side, height: settings.height, place: settings.place, align: settings.align }),
-    // The main image behind is the band's, as Band writes it; a relative address stops the build (picture-image.js).
-    style: behind ? `--kn-picture-image:${pictureImage(picture.src)}` : undefined,
   }, tag('div', { class: 'kn-band-content kn-hero-content' },
     tag('div', { class: 'kn-hero-text' },
       breadcrumbsHtml(ctx),
@@ -384,7 +400,9 @@ export function articleOpening(ctx, { data = {}, eyebrow, picture, metaLine = []
         data.standfirst ? tag('p', { class: 'kn-heading-group-deck', 'data-kn-type': 'lead' }, escapeText(data.standfirst)) : ''),
       metaLineHtml(metaLine, topics),
       after),
-    picture && !behind ? tag('div', { class: 'kn-hero-media' }, voidTag('img', { ...picture, alt: picture.alt ?? '', loading: 'eager' })) : ''));
+    picture && !behind ? tag('div', { class: 'kn-hero-media' }, voidTag('img', { ...picture, alt: picture.alt ?? '', loading: 'eager' })) : ''),
+  // The main image behind is the band's, as Band draws it, after the text, with the srcset and sizes it is given.
+  behind ? voidTag('img', { class: 'kn-band-picture', ...picture, alt: picture.alt ?? '', loading: 'eager' }) : '');
 }
 
 /**

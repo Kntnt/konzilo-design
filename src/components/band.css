@@ -1,6 +1,31 @@
 @layer kn-components {
-  .kn-band { padding-block: var(--kn-space-band); background-size: cover; background-position: center; }
+  .kn-band { padding-block: var(--kn-space-band); }
   .kn-band-content { inline-size: var(--kn-layout-content-area); margin-inline: auto; min-inline-size: 0; }
+  /* A picture behind the text, a band's (issue #40) or a card's (cards.css): an <img>, so a browser loads the version of
+     its srcset near the width it is drawn at, covering its box from the centre, as a band's CSS background did. Over it
+     lies the picture Surface's scrim, whose strength the generator checked for every role on any picture, on ::after,
+     since a band's ::before is the hairline between two bands; the box isolates the two, so they stand under its text
+     and over nothing else. Each selector keeps its own weight, so a card's outweighs card.css's rules for its picture
+     on a Surface, and a band's stays under hero.css's fade, which takes the even scrim away. */
+  .kn-band:has(> .kn-band-picture),
+  .kn-cards[data-kn-picture="behind"] .kn-card:has(> .kn-card-picture) { isolation: isolate; }
+  .kn-band > .kn-band-picture,
+  .kn-cards[data-kn-picture="behind"] .kn-card > .kn-card-picture,
+  .kn-band:has(> .kn-band-picture)::after,
+  .kn-cards[data-kn-picture="behind"] .kn-card:has(> .kn-card-picture)::after { position: absolute; inset: 0; inline-size: 100%; block-size: 100%; }
+  .kn-band > .kn-band-picture,
+  .kn-cards[data-kn-picture="behind"] .kn-card > .kn-card-picture { z-index: -2; max-inline-size: none; object-fit: cover; object-position: center; }
+  .kn-band:has(> .kn-band-picture)::after,
+  .kn-cards[data-kn-picture="behind"] .kn-card:has(> .kn-card-picture)::after { content: ""; z-index: -1; background: var(--kn-scrim, transparent); pointer-events: none; }
+  /* A band after its content, which a screen reader meets first. The Surface's own scrim, a background under the
+     picture, gives way to the one above, so a picture that does not show leaves one scrim, not two. */
+  .kn-band:has(> .kn-band-picture) { position: relative; background-image: none; }
+  /* A browser prints an <img> whether or not it prints backgrounds, and by default it does not: the scrim and the
+     Surface's colours would go, and its text be darkened for paper, over the picture. So the band prints them as they
+     are, as the picture showed in print before, when backgrounds were printed. */
+  @media print {
+    .kn-band:has(> .kn-band-picture) { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
   /* Two adjacent Bands on one background share one Band's space (the owner, 2026-11-25; page.md, point 3): the first
      keeps no end space, and the second starts with its own, the band space. A Hero keeps the band space under its text
      at every height (hero.css), so a band after it on its background starts with none, and the two share the Hero's

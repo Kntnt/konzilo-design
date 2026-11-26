@@ -20,7 +20,8 @@ import { startTool, loadCopy } from '../tool/server.js';
 import { copyFor } from '../presentation/copy-override.mjs';
 import { validateDesignFile, resolve } from '../src/generator/index.js';
 import { pageWidths, readingBoxes, SKETCH_WINDOWS } from '../presentation/src/page-sketch.js';
-import { imageContexts, drawnWidths } from '../src/konzilo/images.js';
+import { bodyPictures, imageContexts, drawnWidths, teaserRows } from '../src/konzilo/images.js';
+import { SECTION_LAYOUTS } from '../src/directives/section.js';
 const exec = promisify(execFile);
 const root = pathResolve('node_modules/.cache/presentation-tests');
 const copy = JSON.parse(await readFile('presentation/copy.json', 'utf8'));
@@ -148,6 +149,27 @@ async function checkImages(page, inputs, fixture) {
     assert.equal(await row.locator('[data-sizes]').textContent(), sizes, `${fixture}: ${name}'s sizes`);
     assert.equal(await row.locator('[data-widths]').textContent(), widths.join(', '), `${fixture}: ${name}'s widths`);
   }
+  // Beside them, the sizes of each picture the design's own parts draw from a body (issue #38), a series' by its number
+  // of cards, from one to eight.
+  const drawn = page.locator('#details [data-body-pictures]');
+  const pictures = bodyPictures(resolved);
+  assert.deepEqual(await drawn.locator('[data-picture]').evaluateAll((rows) => rows.map((row) => row.dataset.picture)), pictures.map(({ key }) => key), `${fixture}: the pictures from a body`);
+  for (const { key, sizes } of pictures) assert.equal(await drawn.locator(`[data-picture="${key}"] [data-sizes]`).textContent(), sizes, `${fixture}: ${key}'s sizes`);
+  assert.deepEqual(pictures.filter(({ picture }) => picture === 'series').flatMap(({ counts }) => counts).sort((a, b) => a - b), [1, 2, 3, 4, 5, 6, 7, 8], `${fixture}: each number of cards once`);
+  // The row of three cards names them in words.
+  assert.match(await drawn.locator('[data-picture^="series-"]').nth(0).locator('th').textContent(), /cards/);
+  // And the widths and sizes of each teaser's picture the design's presentations of a post list make (issue #39), in
+  // cards and filtered by the number of posts, from one to eight, a lone teaser in cards, and featured's.
+  const lists = page.locator('#details [data-teaser-pictures]');
+  const teasers = teaserRows(resolved);
+  assert.deepEqual(await lists.locator('[data-picture]').evaluateAll((rows) => rows.map((row) => row.dataset.picture)), teasers.map(({ key }) => key), `${fixture}: the teasers`);
+  for (const { key, sizes, widths } of teasers) {
+    assert.equal(await lists.locator(`[data-picture="${key}"] [data-sizes]`).textContent(), sizes, `${fixture}: ${key}'s sizes`);
+    assert.equal(await lists.locator(`[data-picture="${key}"] [data-widths]`).textContent(), widths.join(', '), `${fixture}: ${key}'s widths`);
+  }
+  assert.deepEqual(teasers.filter(({ picture }) => picture === 'teaser').flatMap(({ counts }) => counts).sort((a, b) => a - b), [1, 2, 3, 4, 5, 6, 7, 8], `${fixture}: each number of posts once`);
+  assert.deepEqual(teasers.filter(({ picture }) => picture !== 'teaser').map(({ key }) => key), ['teaser-lone', 'featured-first', 'featured-other']);
+  assert.match(await lists.locator('[data-picture^="teaser-"]').nth(0).locator('th').textContent(), /posts/);
 }
 
 test('catalogue covers the specification and has the requested order', async () => {
@@ -189,7 +211,8 @@ test('copy has no unused keys and all values are strings', async () => {
     ...['start', 'alternate', 'corners', 'corners-bleed'].map((name) => `sections.picture-side.${name}`),
     ...['body', 'gallery', 'lightbox', 'hero', 'card'].map((name) => `images.${name}`),
     ...['behind', 'beside', 'none'].map((name) => `images.hero.${name}`),
-    ...['context', 'widths', 'sizes', 'ratio'].map((name) => `details.images.${name}`),
+    ...['context', 'widths', 'sizes', 'ratio', 'picture'].map((name) => `details.images.${name}`),
+    ...['series', 'series-behind', ...SECTION_LAYOUTS.photo.map((layout) => `section-photo.${layout}`), ...SECTION_LAYOUTS.body.map((layout) => `section-body.${layout}`), 'hero', 'band', 'hero-logo', 'badge', 'logo', 'symbol.item', 'symbol.heading', 'teaser', 'teaser-lone', 'featured-first', 'featured-other'].map((name) => `details.picture.${name}`),
     ...['display', 'heading-1', 'heading-2', 'heading-3', 'heading-4', 'heading-5', 'heading-6', 'lead', 'body', 'small', 'label', 'before', 'after'].map((name) => `type.${name}`),
     ...['main', 'heading', 'heading-1', 'display', 'label', 'monospace'].map((name) => `role.${name}`),
     ...[100, 200, 300, 400, 500, 600, 700, 800, 900].map((name) => `weight.${name}`),
@@ -917,7 +940,7 @@ test('tool saves presentation prose, keeps controls still and serves the exporte
 
     // Dragging touches only what changed: the logo stays the same element, and so does the picture.
     const stable = (frame) => frame.evaluate(() => {
-      window.__stable = { hero: document.querySelector('.kn-hero').style.getPropertyValue('--kn-picture-image').length };
+      window.__stable = { hero: document.querySelector('.kn-hero .kn-band-picture')?.getAttribute('src') };
       window.__mutations = 0;
       new MutationObserver((list) => {
         for (const change of list) if (change.type === 'childList' && change.target.id !== 'kn-live-core') window.__mutations += 1;

@@ -6,6 +6,7 @@ import assert from 'node:assert/strict';
 import { pageContext } from '../src/directives/render/context.js';
 import { filterRowsOf, ownSummary, pagerHtml, presentationHtml, teaserCard, teaserOf, termsOf } from '../src/presentations/teasers.js';
 import { iconHtml } from '../src/directives/icons.js';
+import { teaserPictures } from '../src/konzilo/images.js';
 import { testDesign } from './helpers/konzilo-body.js';
 
 const ref = (collection, id) => ({ collection, id });
@@ -25,9 +26,10 @@ test('a teaser takes the core\'s summary, the category\'s name or else the eyebr
   assert.equal(ownSummary({ excerpt: '  ', teaser: { text: 'Teaser\n text' }, standfirst: 'Standfirst' }), 'Teaser text');
   assert.equal(ownSummary({ standfirst: 'Standfirst' }), 'Standfirst');
   assert.equal(ownSummary({ description: 'Not a summary' }), '');
-  assert.deepEqual(await teaserOf(POSTS[0], { getEntry, getImage, taxonomies: ['topics'] }), {
+  // Its picture in the widths and with the sizes the presentation gives it (test/image-sizes.test.js holds them).
+  assert.deepEqual(await teaserOf(POSTS[0], { getEntry, getImage, taxonomies: ['topics'], picture: { widths: [360, 509, 720], sizes: '(min-width: 40rem) 20rem, 100vw' } }), {
     href: '/soil/', headline: 'Know your soil', text: 'What lies below.', label: 'Guides',
-    picture: { src: '/_astro/soil.webp', srcset: '/_astro/soil-400.webp 400w, /_astro/soil-800.webp 800w, /_astro/soil-1200.webp 1200w', sizes: '(min-width: 64rem) 33vw, (min-width: 40rem) 50vw, 100vw', width: 1200, height: 800, alt: 'A spade in soil', loading: 'lazy', decoding: 'async' },
+    picture: { src: '/_astro/soil.webp', srcset: '/_astro/soil-360.webp 360w, /_astro/soil-509.webp 509w, /_astro/soil-720.webp 720w', sizes: '(min-width: 40rem) 20rem, 100vw', width: 1200, height: 800, alt: 'A spade in soil', loading: 'lazy', decoding: 'async' },
     terms: { topics: ['soil'] },
   });
   const water = await teaserOf(POSTS[2], { getEntry });
@@ -68,7 +70,10 @@ test('cards and featured write one root, the mark on it, the pager after the car
   const cards = await presentationHtml('cards', { posts: POSTS, options: {}, empty: 'Nothing yet.', pager, 'data-konzilo-block': '2.1' }, ctx, { getEntry, getImage });
   assert.match(cards, /^<div data-konzilo-block="2\.1" class="kn-post-list" data-kn-presentation="cards"><div class="kn-card-grid kn-cards">(<article class="kn-card" data-kn-surface="raised">.*?<\/article>){3}<\/div><nav class="konzilo-pager" aria-label="Pages">.*<\/nav><\/div>$/);
   const featured = await presentationHtml('featured', { posts: POSTS, options: {} }, ctx, { getEntry, getImage });
-  assert.match(featured, /^<div class="kn-post-list" data-kn-presentation="featured"><div class="kn-featured"><article class="kn-card" data-kn-surface="raised"><img class="kn-card-picture" src="\/_astro\/soil\.webp" srcset="[^"]*1800w" sizes="\(min-width: 50rem\) 66vw, 100vw"[^>]*><p class="kn-card-eyebrow" data-kn-type="label">Guides<\/p><h3 class="kn-card-heading" data-kn-type="heading-3">/);
+  assert.match(featured, /^<div class="kn-post-list" data-kn-presentation="featured"><div class="kn-featured"><article class="kn-card" data-kn-surface="raised"><img class="kn-card-picture" src="\/_astro\/soil\.webp" srcset="[^"]+" sizes="[^"]+"[^>]*><p class="kn-card-eyebrow" data-kn-type="label">Guides<\/p><h3 class="kn-card-heading" data-kn-type="heading-3">/);
+  // The latest post's picture in the widths and sizes of its place in the list.
+  const [latest] = teaserPictures(ctx.design.resolved, 'featured', POSTS.length);
+  assert.ok(featured.includes(`srcset="${latest.widths.map((width) => `/_astro/soil-${width}.webp ${width}w`).join(', ')}" sizes="${latest.sizes}"`));
   assert.equal((featured.match(/data-kn-type="heading-5"/g) ?? []).length, 2);
   assert.equal(await presentationHtml('filtered', { posts: [], options: {}, empty: 'Nothing yet.', 'data-konzilo-block': '4' }, ctx), '<div data-konzilo-block="4" class="kn-post-list" data-kn-presentation="filtered"><p>Nothing yet.</p></div>');
   await assert.rejects(presentationHtml('rows', { posts: [] }, ctx), /no presentation rows/);

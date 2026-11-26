@@ -185,9 +185,11 @@ test('an article\'s opening is a Hero of its main image, its headline in three p
     '<p class="kn-fine-print" data-kn-type="small">A note.</p>',
     '</div><div class="kn-hero-media"><img src="/_astro/soil.webp" srcset="/_astro/soil-800.webp 800w" sizes="100vw" width="1600" height="1000" alt="A spade in soil" loading="eager"></div></div></section>',
   ].join(''));
-  // Its own eyebrow wins over the category; behind the text, the picture is the band's.
+  // Its own eyebrow wins over the category; behind the text, the picture is the band's, after its content.
   const behind = articleOpening(context({ design: { hero: { picture: 'behind', overlay: 'dark' } } }), { data: { ...data, eyebrow: 'Interview' }, eyebrow: 'Guides', picture });
-  assert.match(behind, /^<section class="kn-band kn-hero kn-article-opening" data-kn-surface="picture-dark"[^>]* style="--kn-picture-image:url\(&quot;\/_astro\/soil\.webp&quot;\)">/);
+  assert.match(behind, /^<section class="kn-band kn-hero kn-article-opening" data-kn-surface="picture-dark"[^>]*>/);
+  assert.doesNotMatch(behind, /\sstyle=/);
+  assert.match(behind, /<\/div><\/div><img class="kn-band-picture" src="\/_astro\/soil\.webp" srcset="\/_astro\/soil-800\.webp 800w" sizes="100vw" width="1600" height="1000" alt="A spade in soil" loading="eager"><\/section>$/);
   assert.match(behind, /data-kn-type="label">Interview</);
   assert.doesNotMatch(behind, /kn-hero-media|kn-article-meta/);
   // Without a picture, on the Surface the template gives, or the design's own; the title where there is no headline.

@@ -1,6 +1,6 @@
 import { checkFingerprint } from '../generator/fingerprint.js';
 import { checkFormat, validateDesignFile } from '../generator/validate.js';
-import { number, rem, stepStart } from '../generator/fluid.js';
+import { number, rem, typeScaleCurve } from '../generator/fluid.js';
 import { checkContrast } from '../generator/surface.js';
 import { readingColumnQueries, readingColumnWindows } from '../generator/layout.js';
 import { surfaceCss } from './surface.js';
@@ -18,15 +18,17 @@ export async function emitCss(file) {
 // body size follow a straight line between the breakpoints. A browser without pow() or atan2() keeps the clamp().
 function scaleCurve(r) {
   if (!r['type-scale']) return '';
-  const { breakpoints: { min, max }, ratio, 'body-size': body } = r['type-scale'];
-  const start = stepStart(min, max);
+  const { ratio, 'body-size': body } = r['type-scale'];
+  // The windows the scale runs between, which src/konzilo/images.js reads by the same typeScaleCurve() for a picture's
+  // sizes.
+  const { from, to } = typeScaleCurve(r['type-scale']);
   const sizes = Object.entries(r.type).filter(([name]) => name !== 'body').map(([name, { step }]) => {
     const size = step ? `calc(var(--kn-type-body-size) * pow(var(--kn-type-base), ${step}))` : 'var(--kn-type-body-size)';
     return `  --kn-type-${name}-size: ${step < 0 ? `max(0.75rem, ${size})` : size};`;
   });
   return `@supports (width: calc(1rem * pow(tan(atan2(100vw, 1rem)), 2))) {
 :root {
-  --kn-type-window: clamp(0, (tan(atan2(100vw, 1rem)) - ${number(start / 16)}) / ${number((max - start) / 16)}, 1);
+  --kn-type-window: clamp(0, (tan(atan2(100vw, 1rem)) - ${number(from)}) / ${number(to - from)}, 1);
   --kn-type-base: calc(${ratio.min} + ${number(ratio.max - ratio.min)} * var(--kn-type-window));
   --kn-type-body-size: calc(${rem(body.min)} + ${rem(body.max - body.min)} * var(--kn-type-window));
 ${sizes.join('\n')}

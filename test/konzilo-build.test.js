@@ -19,6 +19,7 @@ import { defaultInputs, resolve as resolveDesign, DESIGN_FORMAT } from '../src/g
 import { MATH } from '../src/fonts/catalog.js';
 import { copyFonts } from '../src/konzilo/fonts.js';
 import { imageContexts } from '../src/konzilo/index.js';
+import { heroPictureOf, pictureSizes, seriesPicture, teaserPictures } from '../src/konzilo/images.js';
 import { serve } from './helpers/serve.js';
 
 const repo = fileURLToPath(new URL('..', import.meta.url));
@@ -114,6 +115,44 @@ The month's guides, and nothing else.
   - [jobs@gardens.example](mailto:jobs@gardens.example)
 
 :::`;
+
+// A series of three cards with pictures in a band across the content area (issue #38).
+const BEDS = md`::::section
+
+## Kinds of bed
+
+:::cards
+
+### Raised
+
+![A raised bed](../media/${PICTURE})
+
+Easy on the back.
+
+### Sunken
+
+![A sunken bed](../media/${PICTURE})
+
+Holds water.
+
+### Keyhole
+
+![A keyhole bed](../media/${PICTURE})
+
+Compost in the middle.
+
+:::
+
+::::`;
+
+// A post list of three teasers in a band across the content area (issue #39).
+const JOURNAL = md`::::section
+
+## From the journal
+
+::post-list{type="article" number="3" presentation="cards"}
+
+::::`;
 
 // A page with no hero, as a legal page is written: its blocks loose at the top.
 // Formulas in a page's body, in the text and as a block, which the core writes as Temml's MathML (issue #33).
@@ -470,6 +509,8 @@ before(() => {
   write('content/pages/legal.md', page('What we keep about you', LEGAL));
   write('content/pages/formulas.md', page('Formulas', FORMULAS));
   write('content/pages/bands.md', page('Bands', BANDS));
+  write('content/pages/beds.md', page('Kinds of bed', BEDS));
+  write('content/pages/journal.md', page('From the journal', JOURNAL));
   write('content/not-found.md', '---\ntitle: "This page is not here"\n---\n\nTry the [start page](/pages/garden/).\n');
   // The core's own demo settings, which hold every group the core asks for, with the articles' meta line in a format of the
   // owner's sentence and the pictures they name.
@@ -535,8 +576,15 @@ test('a site built by the core draws every directive with the package\'s compone
   // The hero: the trail, the post's title, the eyebrow, deck, actions, small print and the picture behind, as the
   // default design has it. The trail ends with the page itself, as the design's `current` says, though the core's setting
   // for the type, off by default, marks the level hidden.
-  assert.match(html, /^<section class="kn-band kn-hero" data-kn-surface="picture-dark"[^>]* style="--kn-picture-image:url\(&quot;\/_astro\/[^&]+\.webp&quot;\)"><div class="kn-band-content kn-hero-content"><div class="kn-hero-text"><nav class="kn-breadcrumbs"[^>]* data-kn-current="true"[^>]*>.*?<span aria-current="page">Planning a garden<\/span><\/li><\/ol><\/nav><hgroup class="kn-heading-group"><p class="kn-heading-group-eyebrow" data-kn-type="label">A guide<\/p><h1 class="kn-heading-group-heading" data-kn-type="heading-1">Planning a garden<\/h1><p class="kn-heading-group-deck" data-kn-type="lead">Start small/s);
+  assert.match(html, /^<section class="kn-band kn-hero" data-kn-surface="picture-dark"[^>]*><div class="kn-band-content kn-hero-content"><div class="kn-hero-text"><nav class="kn-breadcrumbs"[^>]* data-kn-current="true"[^>]*>.*?<span aria-current="page">Planning a garden<\/span><\/li><\/ol><\/nav><hgroup class="kn-heading-group"><p class="kn-heading-group-eyebrow" data-kn-type="label">A guide<\/p><h1 class="kn-heading-group-heading" data-kn-type="heading-1">Planning a garden<\/h1><p class="kn-heading-group-deck" data-kn-type="lead">Start small/s);
   assert.match(html, /<ul class="kn-actions" role="list"><li><a class="kn-action" href="\/pages\/garden\/" data-kn-main>Get started<\/a><\/li>/);
+  // Its picture behind is an <img> after its content, with the core's srcset, the band's sizes and its own alt text.
+  const hero = /^<section class="kn-band kn-hero"[\s\S]*?<\/section>/.exec(html)[0];
+  assert.doesNotMatch(hero, /^<section[^>]*\sstyle=/);
+  const behind = /<\/div><\/div><img class="kn-band-picture" ([^>]*)><\/section>$/.exec(hero)?.[1];
+  assert.ok(behind, 'the band\'s last child');
+  // Its sizes the band's, as wide as half the window's height makes a picture of 16:10 where that is wider than the window.
+  for (const attribute of [/\bsrc="\/_astro\/[^"]+\.webp"/, /\bsrcset="[^"]+ \d+w"/, /\bsizes="max\(100vw, 80vh\)"/, /\balt="Raised beds"/, /\bloading="eager"/]) assert.match(behind, attribute);
   // The core's image service made the pictures, and the components keep what it wrote.
   assert.match(html, /<img class="kn-section-picture" src="\/_astro\/[^"]+\.webp" alt="A shed"[^>]* width="\d+" height="\d+"/);
   // A section's photo keeps its caption under it; a hero's picture drops its own, with no warning (issue #35).
@@ -597,7 +645,7 @@ test('a site built by the core draws every directive with the package\'s compone
   const values = bands.slice(bands.indexOf('<dl class="kn-value-list">'), bands.indexOf('</dl>') + 5);
   assert.ok(tight(soil).includes(values), 'the value list is the Markdown\'s');
   assert.match(values, /<a href="mailto:jobs@gardens\.example" data-kn-contact="email">jobs@<wbr>gardens<wbr>\.example<\/a>/);
-  assert.match(tight(soil), /<\/dl><ul class="kn-actions" role="list"><li><a class="kn-action" href="#planting" data-kn-main>How to apply<\/a><\/li><\/ul><\/div><\/div><\/section>/);
+  assert.match(tight(soil), /<\/dl><ul class="kn-actions" role="list"><li><a class="kn-action" href="#planting" data-kn-main>How to apply<\/a><\/li><\/ul><\/div><\/div><img class="kn-band-picture"[^>]*><\/section>/);
   // A section's head over a list a presentation draws, and a lone action after the list in its body.
   assert.match(tight(soil), /<section class="kn-band kn-section" data-kn-surface="raised"><div class="kn-band-content"><header class="kn-section-head"><hgroup class="kn-heading-group"><h2 class="kn-heading-group-heading" data-kn-type="heading-2" id="other-articles">Other articles<\/h2><\/hgroup><\/header><div class="kn-section-body kn-body-text"><div class="kn-post-list" data-kn-presentation="cards">.*<\/div><ul class="kn-actions" role="list"><li><a class="kn-action" href="\/articles\/" data-kn-main>All articles<\/a><\/li><\/ul><\/div><\/div><\/section>/);
   // A term's page calls the presentation itself, the row it settles left out and kept with a search.
@@ -693,6 +741,14 @@ test('the core\'s body check reads the package\'s declarations and runs its chec
 // version of it that covers the width the design draws it at, at the screen's density, and no other (issue #36; the
 // core's ADR 0022 measured the same of its own defaults).
 const ENGINES = Object.entries({ firefox, webkit, chromium }).filter(([, type]) => existsSync(type.executablePath()));
+// An attribute of an <img> as the built HTML writes it, its entities read; and its srcset's candidates, each its address
+// and width.
+const ENTITIES = { amp: '&', lt: '<', gt: '>', quot: '"', '#38': '&', '#39': "'" };
+const attributeOf = (img, name) => new RegExp(`\\b${name}="([^"]*)"`).exec(img)?.[1].replace(/&(amp|lt|gt|quot|#38|#39);/g, (_, entity) => ENTITIES[entity]);
+const candidatesOf = (img) => attributeOf(img, 'srcset').split(', ').map((candidate) => {
+  const [url, w] = candidate.trim().split(/\s+/);
+  return { url, width: Number(w.slice(0, -1)) };
+});
 test('in a designed site built by the core, a body\'s image at a phone\'s width loads the version that covers how wide the design draws it, and about twice as wide at density 2', { skip: why ?? false, timeout: 600000 }, async (t) => {
   if (!existsSync(join(site, 'dist/articles/water/index.html'))) {
     const built = await build('dist');
@@ -702,13 +758,8 @@ test('in a designed site built by the core, a body\'s image at a phone\'s width 
   const html = readFileSync(join(site, 'dist/articles/water/index.html'), 'utf8');
   const img = /<div class="kn-reading-area-flow kn-body-text">[\s\S]*?<figure><button class="konzilo-lightbox-open"[^>]*><img ([^>]*)>/.exec(html)?.[1];
   assert.ok(img, 'the article\'s body draws its image');
-  const entities = { amp: '&', lt: '<', gt: '>', quot: '"', '#38': '&', '#39': "'" };
-  const attribute = (name) => new RegExp(`\\b${name}="([^"]*)"`).exec(img)?.[1].replace(/&(amp|lt|gt|quot|#38|#39);/g, (_, entity) => entities[entity]);
-  assert.equal(attribute('sizes'), body.sizes, 'the core writes the design\'s sizes');
-  const candidates = attribute('srcset').split(', ').map((candidate) => {
-    const [url, w] = candidate.trim().split(/\s+/);
-    return { url, width: Number(w.slice(0, -1)) };
-  });
+  assert.equal(attributeOf(img, 'sizes'), body.sizes, 'the core writes the design\'s sizes');
+  const candidates = candidatesOf(img);
   // The master is 1600 px wide, so each of the body's and the lightbox's widths up to it, and the master's own in place
   // of those wider and of 1440, within a tenth of it (the core's ADR 0022).
   assert.deepEqual(candidates.map(({ width }) => width), [360, 509, 720, 1018, 1600]);
@@ -716,41 +767,302 @@ test('in a designed site built by the core, a body\'s image at a phone\'s width 
   try {
     for (const [engine, type] of ENGINES) {
       const browser = await type.launch();
-      const loaded = {};
-      for (const density of [1, 2]) {
-        const context = await browser.newContext({ viewport: { width: 400, height: 800 }, deviceScaleFactor: density });
-        const tab = await context.newPage();
-        const requested = new Set();
-        tab.on('request', (request) => requested.add(new URL(request.url()).pathname));
-        await tab.goto(`${server.origin}/articles/water/`);
-        const figure = tab.locator('.kn-reading-area-flow figure img').first();
-        await figure.scrollIntoViewIfNeeded();
-        await tab.waitForFunction(() => { const image = document.querySelector('.kn-reading-area-flow figure img'); return image.complete && image.naturalWidth > 0; });
-        const { drawn, current, elsewhere } = await figure.evaluate((image) => ({
-          drawn: image.getBoundingClientRect().width,
-          current: new URL(image.currentSrc).pathname,
-          // The same master's versions other parts of the page draw, as the article's opening draws its own.
-          elsewhere: [...document.querySelectorAll('[style*="url("]')].map((element) => /url\(["']?([^"')]+)/.exec(element.getAttribute('style'))[1]),
-        }));
-        const where = `${engine} at density ${density}: drawn ${drawn} px, ${current} loaded of ${candidates.map(({ width }) => width)}`;
-        const chosen = candidates.find(({ url }) => url === current);
-        assert.ok(chosen, where);
-        // The narrowest version at least as wide as the image is drawn at this density, or the one under it, which
-        // Chromium takes where it is near enough: never one wider than covers it.
-        const need = drawn * density;
-        const covering = candidates.find(({ width }) => width >= need);
-        const under = candidates.filter(({ width }) => width < need).at(-1);
-        assert.ok(chosen === covering || chosen === under, where);
-        assert.deepEqual([...requested].filter((path) => candidates.some(({ url }) => url === path) && !elsewhere.includes(path)), [current], `${where}: no other version of it is loaded`);
-        loaded[density] = chosen.width;
-        t.diagnostic(`${engine}, density ${density}: drawn ${drawn} px, loaded the ${chosen.width} px version`);
-        await context.close();
+      try {
+        const loaded = {};
+        for (const density of [1, 2]) {
+          const context = await browser.newContext({ viewport: { width: 400, height: 800 }, deviceScaleFactor: density });
+          const tab = await context.newPage();
+          const requested = new Set();
+          tab.on('request', (request) => requested.add(new URL(request.url()).pathname));
+          await tab.goto(`${server.origin}/articles/water/`);
+          const figure = tab.locator('.kn-reading-area-flow figure img').first();
+          await figure.scrollIntoViewIfNeeded();
+          await tab.waitForFunction(() => { const image = document.querySelector('.kn-reading-area-flow figure img'); return image.complete && image.naturalWidth > 0; });
+          const { drawn, current, elsewhere } = await figure.evaluate((image) => ({
+            drawn: image.getBoundingClientRect().width,
+            current: new URL(image.currentSrc).pathname,
+            // The same master's versions other pictures on the page draw, as the article's opening and the lightbox do.
+            elsewhere: [...document.querySelectorAll('img')].filter((other) => other !== image && other.currentSrc).map((other) => new URL(other.currentSrc).pathname),
+          }));
+          const where = `${engine} at density ${density}: drawn ${drawn} px, ${current} loaded of ${candidates.map(({ width }) => width)}`;
+          const chosen = candidates.find(({ url }) => url === current);
+          assert.ok(chosen, where);
+          // The narrowest version at least as wide as the image is drawn at this density, or the one under it, which
+          // Chromium takes where it is near enough: never one wider than covers it.
+          const need = drawn * density;
+          const covering = candidates.find(({ width }) => width >= need);
+          const under = candidates.filter(({ width }) => width < need).at(-1);
+          assert.ok(chosen === covering || chosen === under, where);
+          assert.deepEqual([...requested].filter((path) => candidates.some(({ url }) => url === path) && (path === current || !elsewhere.includes(path))), [current], `${where}: no other version of it is loaded`);
+          loaded[density] = chosen.width;
+          t.diagnostic(`${engine}, density ${density}: drawn ${drawn} px, loaded the ${chosen.width} px version`);
+          await context.close();
+        }
+        assert.ok(loaded[2] / loaded[1] >= 1.4 && loaded[2] / loaded[1] <= 2.9, `${engine}: ${loaded[1]} px at density 1 and ${loaded[2]} px at density 2`);
+      } finally {
+        await browser.close();
       }
-      assert.ok(loaded[2] / loaded[1] >= 1.4 && loaded[2] / loaded[1] <= 2.9, `${engine}: ${loaded[1]} px at density 1 and ${loaded[2]} px at density 2`);
-      await browser.close();
     }
   } finally {
     await server.close();
+  }
+});
+
+// A hero's picture behind its text in a site the core builds, at a phone's width: a browser loads the version of it that
+// covers the picture as the band draws it, at the screen's density, where as a CSS background it loaded the widest
+// (issue #40). The band is half the window's height less the header's, taller in its proportions than the picture, so
+// the picture is drawn wider than the band, as its height makes it, which its sizes says (konzilo.md, Images).
+test('in a designed site built by the core, a hero\'s picture behind its text at a phone\'s width loads the version that covers it as the band draws it, and about twice as wide at density 2', { skip: why ?? false, timeout: 600000 }, async (t) => {
+  if (!existsSync(join(site, 'dist/pages/garden/index.html'))) {
+    const built = await build('dist');
+    assert.equal(built.status, 0, built.output);
+  }
+  const resolved = JSON.parse(readFileSync(join(site, 'design/site.design.json'), 'utf8')).resolved;
+  const html = readFileSync(join(site, 'dist/pages/garden/index.html'), 'utf8');
+  const img = /<img class="kn-band-picture" ([^>]*)>/.exec(html)?.[1];
+  assert.ok(img, 'the hero draws its picture behind');
+  // The band's, by the hero's height and the picture's proportions, 1600 × 1000.
+  assert.deepEqual([attributeOf(img, 'width'), attributeOf(img, 'height')], ['1600', '1000']);
+  assert.equal(attributeOf(img, 'sizes'), pictureSizes(resolved, 'band', { height: resolved.hero.height, ratio: 1.6 }), 'the band\'s sizes, as tall as the hero');
+  assert.equal(attributeOf(img, 'sizes'), 'max(100vw, 80vh)');
+  const candidates = candidatesOf(img);
+  // The core gives a body's image the body's and the lightbox's widths, up to the master's 1600 px.
+  assert.deepEqual(candidates.map(({ width }) => width), [360, 509, 720, 1018, 1600]);
+  const server = await serve(join(site, 'dist'));
+  try {
+    for (const [engine, type] of ENGINES) {
+      const browser = await type.launch();
+      try {
+        const loaded = {};
+        for (const density of [1, 2]) {
+          const context = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: density });
+          const tab = await context.newPage();
+          const requested = new Set();
+          tab.on('request', (request) => requested.add(new URL(request.url()).pathname));
+          await tab.goto(`${server.origin}/pages/garden/`);
+          await tab.waitForFunction(() => { const image = document.querySelector('.kn-band-picture'); return image.complete && image.naturalWidth > 0; });
+          const { band, drawn, current, elsewhere } = await tab.evaluate(() => {
+            const image = document.querySelector('.kn-band-picture');
+            const box = image.getBoundingClientRect();
+            return {
+              band: image.parentElement.getBoundingClientRect(),
+              // Covering its box, as wide as the box or as its height times the picture's proportions.
+              drawn: Math.max(box.width, box.height * image.naturalWidth / image.naturalHeight),
+              current: new URL(image.currentSrc).pathname,
+              // The same master's versions other pictures on the page draw, as the section's photo and a card's.
+              elsewhere: [...document.querySelectorAll('img')].filter((other) => other !== image && other.currentSrc).map((other) => new URL(other.currentSrc).pathname),
+            };
+          });
+          const where = `${engine} at density ${density}: drawn ${drawn} px, ${current} loaded of ${candidates.map(({ width }) => width)}`;
+          // The band is taller in its proportions than the picture, so the picture is drawn wider than it, by its height.
+          assert.ok(drawn > band.width * 1.2, `${where}: wider than the band, ${band.width} × ${band.height} px`);
+          const chosen = candidates.find(({ url }) => url === current);
+          assert.ok(chosen, where);
+          // The narrowest version at least as wide as the picture is drawn at this density, which all three engines take
+          // here; with the band's width alone, 100vw, they took 509 px and 1018 px, narrower than drawn.
+          assert.equal(chosen, candidates.find(({ width }) => width >= drawn * density), where);
+          assert.deepEqual([...requested].filter((path) => candidates.some(({ url }) => url === path) && (path === current || !elsewhere.includes(path))), [current], `${where}: no other version of it is loaded`);
+          loaded[density] = chosen.width;
+          t.diagnostic(`${engine}, density ${density}: drawn ${drawn} px, loaded the ${chosen.width} px version`);
+          await context.close();
+        }
+        assert.ok(loaded[2] / loaded[1] >= 1.4 && loaded[2] / loaded[1] <= 2.9, `${engine}: ${loaded[1]} px at density 1 and ${loaded[2]} px at density 2`);
+      } finally {
+        await browser.close();
+      }
+    }
+  } finally {
+    await server.close();
+  }
+});
+
+// A card's picture in a series of three across a band, in a site the core builds, at a phone's width and a wide window:
+// a browser loads the narrowest version that covers the width the design draws it at, by the number of cards, where it
+// loaded the body's, Narrow's on a wide window (issue #38).
+test('in a designed site built by the core, a card\'s picture in :::cards loads the version that covers how wide its series draws it, on a phone and a wide screen, at density 1 and 2', { skip: why ?? false, timeout: 600000 }, async (t) => {
+  if (!existsSync(join(site, 'dist/pages/beds/index.html'))) {
+    const built = await build('dist');
+    assert.equal(built.status, 0, built.output);
+  }
+  const resolved = JSON.parse(readFileSync(join(site, 'design/site.design.json'), 'utf8')).resolved;
+  const html = readFileSync(join(site, 'dist/pages/beds/index.html'), 'utf8');
+  const pictures = [...html.matchAll(/<img class="kn-card-picture" ([^>]*)>/g)].map(([, attributes]) => attributes);
+  assert.equal(pictures.length, 3, 'the series draws its three pictures');
+  // A picture of 16:10 in a crop of 16:9 is as wide as its card.
+  for (const img of pictures) assert.equal(attributeOf(img, 'sizes'), seriesPicture(resolved, 3, { ratio: 1.6 }).sizes, 'a series of three\'s sizes, in place of the body\'s');
+  const candidates = candidatesOf(pictures[0]);
+  // The core's body's and lightbox's widths, up to the master's 1600 px.
+  assert.deepEqual(candidates.map(({ width }) => width), [360, 509, 720, 1018, 1600]);
+  const server = await serve(join(site, 'dist'));
+  try {
+    for (const [engine, type] of ENGINES) {
+      const browser = await type.launch();
+      try {
+        for (const [width, height] of [[390, 844], [1440, 900]]) {
+          for (const density of [1, 2]) {
+            const context = await browser.newContext({ viewport: { width, height }, deviceScaleFactor: density });
+            const tab = await context.newPage();
+            const requested = new Set();
+            tab.on('request', (request) => requested.add(new URL(request.url()).pathname));
+            await tab.goto(`${server.origin}/pages/beds/`);
+            const card = tab.locator('.kn-card-picture').first();
+            await card.scrollIntoViewIfNeeded();
+            await tab.waitForFunction(() => [...document.querySelectorAll('.kn-card-picture')].every((image) => image.complete && image.naturalWidth > 0));
+            const { drawn, current } = await card.evaluate((image) => ({ drawn: image.getBoundingClientRect().width, current: new URL(image.currentSrc).pathname }));
+            const chosen = candidates.find(({ url }) => url === current);
+            const where = `${engine} at ${width} px, density ${density}: drawn ${drawn} px, ${current} loaded of ${candidates.map(({ width: w }) => w)}`;
+            assert.ok(chosen, where);
+            // The narrowest version at least as wide as the picture is drawn at this density, which all three engines
+            // take here; with the body's sizes a wide window loaded the 720 px version, and 1600 px at density 2.
+            assert.equal(chosen, candidates.find(({ width: w }) => w >= drawn * density), where);
+            assert.deepEqual([...requested].filter((path) => candidates.some(({ url }) => url === path)), [current], `${where}: the three cards load that version alone`);
+            t.diagnostic(`${engine}, ${width} px, density ${density}: drawn ${drawn} px, loaded the ${chosen.width} px version`);
+            await context.close();
+          }
+        }
+      } finally {
+        await browser.close();
+      }
+    }
+  } finally {
+    await server.close();
+  }
+});
+
+// The pictures the package's presentations, "Read more" and an article's opening make through Astro's getImage(), in
+// a site the core builds: each in the widths and with the sizes of where the design draws it (issue #39).
+// Each post list on a page, its presentation and its teasers' pictures, up to the next list or the end of its section.
+const listsOf = (html) => html.split('<div class="kn-post-list"').slice(1).map((chunk) => ({
+  presentation: /^[^>]*data-kn-presentation="(\w+)"/.exec(chunk)[1],
+  pictures: [...chunk.split('</section>')[0].matchAll(/<img class="kn-card-picture" ([^>]*)>/g)].map(([, attributes]) => attributes),
+}));
+
+test('in a designed site built by the core, each teaser\'s picture and an article opening\'s carry the widths and sizes of where the design draws them', { skip: why ?? false, timeout: 600000 }, async () => {
+  if (!existsSync(join(site, 'dist/pages/journal/index.html'))) {
+    const built = await build('dist');
+    assert.equal(built.status, 0, built.output);
+  }
+  const resolved = JSON.parse(readFileSync(join(site, 'design/site.design.json'), 'utf8')).resolved;
+  // The master is 1600 px wide, so the core's image service makes each width asked for, and where one is wider than the
+  // master, the master's own in place of those wider and of one within a tenth below it (its versionWidths(), ADR 0022).
+  const made = (widths) => (widths.every((width) => width <= 1600) ? widths : [...widths.filter((width) => width < 0.9 * 1600), 1600]);
+  // A section's featured and filtered lists, which stand at Narrow beside its form, and a lone teaser beside a quotation.
+  const garden = listsOf(readFileSync(join(site, 'dist/pages/garden/index.html'), 'utf8'));
+  assert.deepEqual(garden.map(({ presentation }) => presentation), ['featured', 'filtered', 'cards']);
+  // A term's page, a list across a band of its own; an article's "Other articles", a list a template places in a section.
+  const term = listsOf(readFileSync(join(site, 'dist/category/guides/index.html'), 'utf8'));
+  const soil = readFileSync(join(site, 'dist/articles/soil/index.html'), 'utf8');
+  for (const { presentation, pictures } of [...garden, ...term, ...listsOf(soil)]) {
+    const expected = teaserPictures(resolved, presentation, pictures.length);
+    assert.ok(pictures.length > 0, presentation);
+    pictures.forEach((img, at) => {
+      assert.equal(attributeOf(img, 'sizes'), expected[at].sizes, `${presentation} of ${pictures.length}, teaser ${at}`);
+      assert.deepEqual(candidatesOf(img).map(({ width }) => width), made(expected[at].widths), `${presentation} of ${pictures.length}, teaser ${at}`);
+    });
+  }
+  assert.equal(garden[2].pictures.length, 1, 'one teaser beside the quotation');
+  // "Read more", a series of its related posts across a band, where a list of posts stands.
+  const more = /<h2 class="kn-heading-group-heading" data-kn-type="heading-2">Read more<\/h2>[\s\S]*?<\/section>/.exec(soil)[0];
+  const related = [...more.matchAll(/<img class="kn-card-picture" ([^>]*)>/g)].map(([, attributes]) => attributes);
+  assert.ok(related.length > 0);
+  for (const img of related) assert.equal(attributeOf(img, 'sizes'), seriesPicture(resolved, related.length, { list: true }).sizes);
+  // The opening's main image behind its text, as the default design puts it, across the band and as tall as the hero, by
+  // the picture's proportions, 1600 × 1000.
+  const opening = /<section class="kn-band kn-hero kn-article-opening"[\s\S]*?<img class="kn-band-picture" ([^>]*)><\/section>/.exec(soil)?.[1];
+  assert.ok(opening, 'the opening draws its main image behind its text');
+  const hero = heroPictureOf(resolved, { ratio: 1.6 });
+  assert.equal(attributeOf(opening, 'sizes'), hero.sizes);
+  assert.equal(hero.sizes, 'max(100vw, 80vh)');
+  assert.deepEqual(candidatesOf(opening).map(({ width }) => width), made(hero.widths));
+});
+
+// A teaser card's picture in a list of three across a band, at a phone's width and a wide window: a browser loads the
+// narrowest version that covers the width the design draws it at, where the hand-set sizes loaded wider (issue #39).
+test('in a designed site built by the core, a teaser card\'s picture loads the version that covers how wide it is drawn, on a phone and a wide screen, at density 1 and 2', { skip: why ?? false, timeout: 600000 }, async (t) => {
+  if (!existsSync(join(site, 'dist/pages/journal/index.html'))) {
+    const built = await build('dist');
+    assert.equal(built.status, 0, built.output);
+  }
+  const resolved = JSON.parse(readFileSync(join(site, 'design/site.design.json'), 'utf8')).resolved;
+  const [list] = listsOf(readFileSync(join(site, 'dist/pages/journal/index.html'), 'utf8'));
+  assert.equal(list.pictures.length, 3, 'the list draws three teasers');
+  for (const img of list.pictures) assert.equal(attributeOf(img, 'sizes'), teaserPictures(resolved, 'cards', 3)[0].sizes);
+  const candidates = candidatesOf(list.pictures[0]);
+  // The ladder's steps from the one that covers it on the narrowest window to the one that covers it at its widest on a
+  // dense screen, all narrower than the 1600 px master.
+  assert.deepEqual(candidates.map(({ width }) => width), [360, 509, 720, 1018, 1440]);
+  const server = await serve(join(site, 'dist'));
+  try {
+    for (const [engine, type] of ENGINES) {
+      const browser = await type.launch();
+      try {
+        for (const [width, height] of [[390, 844], [1440, 900]]) {
+          for (const density of [1, 2]) {
+            const context = await browser.newContext({ viewport: { width, height }, deviceScaleFactor: density });
+            const tab = await context.newPage();
+            const requested = new Set();
+            tab.on('request', (request) => requested.add(new URL(request.url()).pathname));
+            await tab.goto(`${server.origin}/pages/journal/`);
+            const card = tab.locator('.kn-card-picture').first();
+            await card.scrollIntoViewIfNeeded();
+            await tab.waitForFunction(() => [...document.querySelectorAll('.kn-card-picture')].every((image) => image.complete && image.naturalWidth > 0));
+            const { drawn, current } = await card.evaluate((image) => ({ drawn: image.getBoundingClientRect().width, current: new URL(image.currentSrc).pathname }));
+            const chosen = candidates.find(({ url }) => url === current);
+            const where = `${engine} at ${width} px, density ${density}: drawn ${drawn} px, ${current} loaded of ${candidates.map(({ width: w }) => w)}`;
+            assert.ok(chosen, where);
+            // The narrowest version at least as wide as the picture is drawn at this density.
+            assert.equal(chosen, candidates.find(({ width: w }) => w >= drawn * density), where);
+            assert.deepEqual([...requested].filter((path) => candidates.some(({ url }) => url === path)), [current], `${where}: the three teasers load that version alone`);
+            t.diagnostic(`${engine}, ${width} px, density ${density}: drawn ${drawn} px, loaded the ${chosen.width} px version`);
+            await context.close();
+          }
+        }
+      } finally {
+        await browser.close();
+      }
+    }
+  } finally {
+    await server.close();
+  }
+});
+
+// A WebP's width and height, from its first chunk: lossy, lossless or extended.
+function webpSize(bytes) {
+  const chunk = bytes.toString('ascii', 12, 16);
+  if (chunk === 'VP8X') return { width: 1 + bytes.readUIntLE(24, 3), height: 1 + bytes.readUIntLE(27, 3) };
+  if (chunk === 'VP8L') {
+    const bits = bytes.readUInt32LE(21);
+    return { width: 1 + (bits & 0x3fff), height: 1 + ((bits >>> 14) & 0x3fff) };
+  }
+  if (chunk === 'VP8 ') return { width: bytes.readUInt16LE(26) & 0x3fff, height: bytes.readUInt16LE(28) & 0x3fff };
+  throw new Error(`not a WebP: ${chunk}`);
+}
+
+// A picture an article shows in its body and a list shows as its teaser, the same master, is made once at each width
+// the two share: the teaser's widths are the body's ladder, and Astro names a version by the options it is made with,
+// which the core's image service makes the same for both, WebP at the core's quality (issue #39).
+test('in a designed site built by the core, a picture shown both in an article\'s body and as its teaser is made once at each width the two share', { skip: why ?? false, timeout: 600000 }, async () => {
+  if (!existsSync(join(site, 'dist/pages/journal/index.html'))) {
+    const built = await build('dist');
+    assert.equal(built.status, 0, built.output);
+  }
+  const body = /<div class="kn-reading-area-flow kn-body-text">[\s\S]*?<figure><button class="konzilo-lightbox-open"[^>]*><img ([^>]*)>/.exec(readFileSync(join(site, 'dist/articles/water/index.html'), 'utf8'))?.[1];
+  assert.ok(body, 'the article\'s body draws its picture');
+  const teaser = /<article class="kn-card"[^>]*><img class="kn-card-picture" ([^>]*)>(?:(?!<\/article>)[\s\S])*href="\/articles\/water\/"/.exec(readFileSync(join(site, 'dist/pages/journal/index.html'), 'utf8'))?.[1];
+  assert.ok(teaser, 'the list draws the article\'s teaser with its picture');
+  const [inBody, asTeaser] = [body, teaser].map((img) => new Map(candidatesOf(img).map(({ width, url }) => [width, url])));
+  // The body's are the body's and the lightbox's widths, up to the master's 1600 px in place of 1440 and those wider; the
+  // teaser's go up to 1440, narrower than the master, which the core makes as asked.
+  const shared = [...asTeaser.keys()].filter((width) => inBody.has(width));
+  assert.deepEqual([[...inBody.keys()], [...asTeaser.keys()]], [[360, 509, 720, 1018, 1600], [360, 509, 720, 1018, 1440]]);
+  assert.deepEqual(shared, [360, 509, 720, 1018]);
+  // The build's files of the master, by their size: each version of the whole picture, 1600 × 1000, once.
+  const assets = join(site, 'dist/_astro');
+  const files = readdirSync(assets).filter((name) => name.startsWith(PICTURE.replace(/\.webp$/, '')) && name.endsWith('.webp'));
+  const whole = files.map((name) => ({ name, ...webpSize(readFileSync(join(assets, name))) })).filter(({ width, height }) => Math.abs(height - width * 1000 / 1600) <= 1);
+  for (const width of shared) {
+    assert.equal(inBody.get(width), asTeaser.get(width), `${width} px: one address`);
+    assert.deepEqual(whole.filter((file) => file.width === width).map(({ name }) => `/_astro/${name}`), [inBody.get(width)], `${width} px: one file, ${whole.map(({ name, width: w }) => `${name} ${w}`).join(', ')}`);
   }
 });
 

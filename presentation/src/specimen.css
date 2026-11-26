@@ -356,9 +356,10 @@ body[data-specimen='catalogue'] .text-image-stage { min-height: 0; }
 .hero-rest-group i:last-child { inline-size: 62%; }
 
 /* The pages without pictures: what can go goes, and what is itself a picture keeps an empty place. A video keeps its still. */
-[data-kn-pictures='off'] :is(.kn-hero-media, .kn-card-picture, .kn-content-picture, .kn-text-image-media) {
+[data-kn-pictures='off'] :is(.kn-hero-media, .kn-band-picture, .kn-card-picture, .kn-content-picture, .kn-text-image-media) {
   display: none;
 }
+/* A sample of a picture Surface on a plain element, as the Colour page shows one. */
 [data-kn-pictures='off'] [style*='--kn-picture-image'] {
   --kn-picture-image: none !important;
 }
