@@ -334,6 +334,19 @@ summary + *, .reference > h2 + * {
   max-width: 100%;
   overflow-x: auto;
 }
+/* The Details page's image widths and sizes: names and each stretch of a sizes kept whole, a stretch to a line, so the
+   table scrolls in its box where it is wider than the column rather than breaking them anywhere. */
+[data-image-sizes] :is(th, td) {
+  overflow-wrap: normal;
+  vertical-align: top;
+}
+[data-image-sizes] :is(th, td:last-child) {
+  white-space: nowrap;
+}
+[data-image-sizes] [data-sizes] > span {
+  display: block;
+  white-space: nowrap;
+}
 table {
   width: 100%;
   border-collapse: collapse;

@@ -2,6 +2,7 @@
 import { componentPages } from '../catalog.js';
 import { t, resolved } from '../data.js';
 import Specimen from '../Specimen.astro';
+import ImageSizes from '../ImageSizes.astro';
 const { page, specimens } = Astro.props;
 const entry = componentPages.find(([id]) => id === page?.id);
 const crumbs = resolved.breadcrumbs;
@@ -18,6 +19,11 @@ const variants = entry?.[3] || [];
 {page?.id === 'opening' && <p class="prose">{t(`opening.height.${resolved.hero.height}`)}</p>}
 {/* Where every section's picture stands is the design's (directives.md, section, The side of the picture; 2026-11-25). */}
 {page?.id === 'sections' && <p class="prose">{t(`sections.picture-side.${resolved.section?.['picture-side'] ?? 'start'}`)}</p>}
+{/* How every design draws a formula, told in words alone: a live one would need the math font, about 460 KB in every
+    presentation (the owner, 2026-11-26; konzilo.md, Formulas). */}
+{page?.id === 'text' && <p class="prose">{t('text.formulas')}</p>}
 {defaults.map((id) => <Specimen id={id} />)}
 {/* The variants follow the main specimen, each shown at once: a variant behind a disclosure is easily missed (owner, 2026-11-11). */}
 {variants.map((id) => <Specimen id={id} />)}
+{/* How the design serves its pictures, after the pictures, which the toolbar's switches do not change (konzilo.md, Images). */}
+{page?.id === 'media' && <ImageSizes />}

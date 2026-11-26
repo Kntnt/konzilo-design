@@ -1,0 +1,108 @@
+/* How the design serves its pictures (ImageSizes.astro): a table of the places a picture is shown, each row with the
+   whole ladder of widths, the steps made of that place's pictures filled and the rest dashed, so the rows line up as
+   one ladder, on one line where the column is wide enough for the table. In a narrower column each row stands as a
+   block, its figures labelled. */
+.image-sizes {
+  container-type: inline-size;
+}
+.image-sizes table {
+  margin-block: 1.5rem 0.75rem;
+  font-variant-numeric: tabular-nums;
+}
+.image-sizes :is(th, td) {
+  vertical-align: top;
+}
+.image-sizes thead th {
+  color: var(--kn-text-muted);
+  font-size: var(--kn-type-small-size);
+  font-weight: 600;
+}
+.image-sizes tbody th {
+  font-weight: 600;
+}
+.image-sizes-shape {
+  display: block;
+  max-inline-size: 22rem;
+  margin-block-start: 0.25rem;
+  color: var(--kn-text-muted);
+  font-size: var(--kn-type-small-size);
+  font-weight: 400;
+}
+.image-sizes td {
+  white-space: nowrap;
+}
+.image-sizes-ladder {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 0.25rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  white-space: normal;
+}
+.image-sizes-ladder li {
+  inline-size: 3.75rem;
+  flex: none;
+  box-sizing: border-box;
+  padding-block: 0.125rem;
+  border: 1px dashed var(--kn-border);
+  border-radius: var(--kn-radius-control);
+  color: var(--kn-text-muted);
+  font-size: var(--kn-type-small-size);
+  text-align: center;
+}
+.image-sizes-ladder li[data-made] {
+  border: 1px solid var(--kn-border-strong);
+  background: var(--kn-background-alt);
+  color: var(--kn-text);
+  font-weight: 600;
+}
+.image-sizes-note {
+  color: var(--kn-text-muted);
+  font-size: var(--kn-type-small-size);
+}
+.image-sizes h3 {
+  margin-block: 2rem 0.75rem;
+}
+@container (width < 52rem) {
+  .image-sizes :is(table, tbody, tr, th, td) {
+    display: block;
+  }
+  .image-sizes-ladder {
+    flex-wrap: wrap;
+  }
+  .image-sizes thead {
+    position: absolute;
+    inline-size: 0.0625rem;
+    block-size: 0.0625rem;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .image-sizes tr {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem 1rem;
+    padding-block: 1rem;
+    border-block-end: 1px solid var(--kn-border);
+  }
+  .image-sizes tbody :is(th, td) {
+    padding: 0;
+    border: 0;
+  }
+  .image-sizes tbody th, .image-sizes td:last-child {
+    grid-column: 1 / -1;
+  }
+  /* A phone's figure and a wide screen's stand on one line, though one label takes two. */
+  .image-sizes td {
+    align-self: end;
+  }
+  .image-sizes td::before {
+    content: attr(data-label);
+    display: block;
+    margin-block-end: 0.25rem;
+    color: var(--kn-text-muted);
+    font-size: var(--kn-type-small-size);
+    white-space: normal;
+  }
+}

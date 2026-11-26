@@ -20,6 +20,7 @@ import { startTool, loadCopy } from '../tool/server.js';
 import { copyFor } from '../presentation/copy-override.mjs';
 import { validateDesignFile, resolve } from '../src/generator/index.js';
 import { pageWidths, readingBoxes, SKETCH_WINDOWS } from '../presentation/src/page-sketch.js';
+import { imageContexts, drawnWidths } from '../src/konzilo/images.js';
 const exec = promisify(execFile);
 const root = pathResolve('node_modules/.cache/presentation-tests');
 const copy = JSON.parse(await readFile('presentation/copy.json', 'utf8'));
@@ -107,6 +108,48 @@ async function checkPageSketch(page, inputs) {
   }
 }
 
+// The Media page tells how this design serves its pictures, in its own numbers (konzilo.md, Images): for each of the
+// core's contexts how wide the design draws its picture on a phone and on a wide screen, the steps of the ladder a site
+// makes of it, and whether it is cropped. The Details page has each context's sizes, for those who build the site.
+async function checkImages(page, inputs, fixture) {
+  await navigate(page, 'media');
+  const resolved = derive(inputs);
+  const contexts = imageContexts(resolved);
+  const whole = (value) => new Intl.NumberFormat('en', { maximumFractionDigits: 0 }).format(value);
+  const px = (value) => `${whole(value)} px`;
+  const section = page.locator('#media [data-images]');
+  // A figure is kept on one line with its unit by a no-break space.
+  const words = async (locator) => (await locator.textContent()).replaceAll('\u00a0', ' ');
+  const ladder = [...new Set(Object.values(contexts).flatMap(({ widths }) => widths))].sort((a, b) => a - b);
+  for (const [name, { widths, ratio }] of Object.entries(contexts)) {
+    const row = section.locator(`[data-context="${name}"]`);
+    for (const [kind, width] of SKETCH_WINDOWS) {
+      const drawn = px(drawnWidths(resolved, width)[name]);
+      // A gallery's and a card's are the widest of a row of them, two side by side where two fit.
+      assert.equal(await words(row.locator(`[data-drawn="${kind}"]`)), ['gallery', 'card'].includes(name) ? `up to ${drawn}` : drawn, `${fixture}: ${name} on ${kind}`);
+    }
+    // Every row shows the whole ladder, the steps made of this context's pictures marked.
+    assert.deepEqual(await row.locator('[data-step]').allTextContents(), ladder.map(whole), `${fixture}: ${name}'s ladder`);
+    assert.deepEqual(await row.locator('[data-step][data-made]').allTextContents(), widths.map(whole), `${fixture}: ${name}'s widths`);
+    const shape = await row.locator('[data-shape]').textContent();
+    if (ratio) assert.ok(shape.includes(copy['images.gallery.shape'].replace('{ratio}', ratio)), `${fixture}: ${name} cropped to ${ratio}`);
+  }
+  const hero = resolved.hero.picture === 'behind' ? 'behind' : resolved.hero.picture === 'none' ? 'none' : 'beside';
+  assert.equal(await section.locator('[data-context="hero"] [data-shape]').textContent(), copy[`images.hero.${hero}`], `${fixture}: the hero's picture ${hero}`);
+  const text = await words(section);
+  assert.doesNotMatch(text, /min-width|vw|sizes/, 'no code for the reader');
+  // The worked example, in the example's own numbers: a body's picture on a phone and on a wide screen.
+  if (fixture === 'example') assert.match(text, /354 px wide, and a browser loads the 360 px version, or the 720 px one on a sharp screen/);
+  if (fixture === 'example') assert.match(text, /exactly as wide as the picture is shown: 720 px, or 1,440 px for a sharp screen/);
+  await navigate(page, 'details');
+  const reference = page.locator('#details [data-image-sizes]');
+  for (const [name, { widths, sizes }] of Object.entries(contexts)) {
+    const row = reference.locator(`[data-context="${name}"]`);
+    assert.equal(await row.locator('[data-sizes]').textContent(), sizes, `${fixture}: ${name}'s sizes`);
+    assert.equal(await row.locator('[data-widths]').textContent(), widths.join(', '), `${fixture}: ${name}'s widths`);
+  }
+}
+
 test('catalogue covers the specification and has the requested order', async () => {
   const spec = await readFile('docs/spec/components.md', 'utf8');
   const table = spec.split('## Build now')[1].split('## Not now')[0];
@@ -144,6 +187,9 @@ test('copy has no unused keys and all values are strings', async () => {
     ...['primary', 'secondary', 'tertiary'].map((name) => `colour.${name}.job`),
     ...['third', 'half', 'two-thirds', 'full'].map((name) => `opening.height.${name}`),
     ...['start', 'alternate', 'corners', 'corners-bleed'].map((name) => `sections.picture-side.${name}`),
+    ...['body', 'gallery', 'lightbox', 'hero', 'card'].map((name) => `images.${name}`),
+    ...['behind', 'beside', 'none'].map((name) => `images.hero.${name}`),
+    ...['context', 'widths', 'sizes', 'ratio'].map((name) => `details.images.${name}`),
     ...['display', 'heading-1', 'heading-2', 'heading-3', 'heading-4', 'heading-5', 'heading-6', 'lead', 'body', 'small', 'label', 'before', 'after'].map((name) => `type.${name}`),
     ...['main', 'heading', 'heading-1', 'display', 'label', 'monospace'].map((name) => `role.${name}`),
     ...[100, 200, 300, 400, 500, 600, 700, 800, 900].map((name) => `weight.${name}`),
@@ -188,9 +234,9 @@ test('offline ZIP reader works from file URLs for normal, primary-only and stres
         model.inputs.hero = { height: 'full' };
         model.inputs.header = { translucent: true };
       }
-      // Three colours that keep accent and focus in the primary, bands on one background parted by a hairline, and
-      // sections whose pictures meet corner to corner out to the window's edge.
-      if (fixture === 'stress') Object.assign(model.inputs, { 'accent-color': 'primary', page: { 'band-line': true }, section: { 'picture-side': 'corners-bleed' } });
+      // Three colours that keep accent and focus in the primary, bands on one background parted by a hairline,
+      // sections whose pictures meet corner to corner out to the window's edge, and an opening's picture beside its text.
+      if (fixture === 'stress') Object.assign(model.inputs, { 'accent-color': 'primary', page: { 'band-line': true }, section: { 'picture-side': 'corners-bleed' }, hero: { picture: 'end' } });
       model.project.introduction = 'A short introduction.\n\nA second paragraph with <literal> text.';
       model.project.contact = { name: 'Design owner', email: 'review@example.invalid' };
       model.project.explanations = Object.fromEntries(['colour', 'typefaces', 'type-scale', 'space-shape', 'shadow', 'components'].map((key) => [key, 'A choice made for clear information.\n\nA second reason.']));
@@ -340,6 +386,7 @@ test('offline ZIP reader works from file URLs for normal, primary-only and stres
         await checkScreens(page);
       }
       await checkPageSketch(page, model.inputs);
+      await checkImages(page, model.inputs, fixture);
       await navigate(page, 'forms');
       const consent = await readyFrame(page, 'consent-banner');
       await consent.getByRole('button', { name: 'Open privacy choices' }).click();
@@ -355,6 +402,10 @@ test('offline ZIP reader works from file URLs for normal, primary-only and stres
       await embed.locator('[data-kn-embed-load]').first().click();
       assert.equal(await embed.locator('iframe').count(), 0);
       await navigate(page, 'text');
+      // The Text page tells how the design draws formulas, in words alone: no live formula and no math font, which
+      // would add about 460 KB to every presentation (the owner, 2026-11-26).
+      assert.ok((await page.locator('#text .page-content').textContent()).includes(copy['text.formulas']), `${fixture}: text.formulas`);
+      assert.doesNotMatch(html, /<math[\s>]|@font-face\s*\{[^}]*STIX/);
       const accordion = await readyFrame(page, 'accordion');
       await accordion.locator('.kn-accordion summary').first().click();
       assert.equal(await accordion.locator('.kn-accordion details[open]').count(), 1);

@@ -113,6 +113,39 @@ The content security policy refuses network access, including third-party media;
 its local explanation remains interactive. See `presentation/README.md` for the
 copy override, offline asset and verification contracts.
 
+**Formulas, in words alone** (*decided* by the owner, 2026-11-26). The Text page says in two
+sentences how every design draws a formula in body text: in STIX Two Math, one math font for
+every design, at the size and in the colour of the text round it, the font fetched only for a
+page that holds a formula; a formula on a line of its own centred in the reading column, and
+one wider than the column scrolling sideways in its own box (konzilo.md, Formulas). It shows
+no live formula and inlines no math font, which would add about 460 KB to every presentation.
+`test/presentation.test.js` holds both.
+
+**Pictures at the right size** (the assistant's choice, 2026-11-26, under the owner's rule of that
+day that what the design system delivers for people, above all the presentation, shows what a
+design decides, and what machines read needs nothing more). The Media page, Pictures and video,
+ends with how the design serves its pictures (konzilo.md, Images): after the specimens, under a
+rule, as the Colour page's contrast explanation follows its examples, since the toolbar's
+switches do not change it; on the Media page, which holds Figure. A table has a row for each of
+the core's five contexts, a picture in body text, in a gallery, opened large in the lightbox, in
+an opening and on a card: how wide the design draws it on a phone and on a wide screen, at 390
+and 1440 px as the Page page's drawing, a gallery's and a card's "up to" the widest of a row of
+two; whether the design crops it, the gallery to its ratio around the point the editor marks,
+the others made whole and cropped, where they are, by their own CSS; and the widths a site
+makes of it, every row the whole ladder with its own steps filled and the others dashed, so
+the rows line up as one ladder. In a column under 52rem each row stands as a block, its figures
+labelled. Under the table, why the widths are what they are, in plain words and the design's
+numbers: steps √2 apart, each doubling the area and roughly the file size, so a reader loads at
+worst twice the data needed; two steps for a screen of double density; the ladder counted from
+a picture in body text on a wide screen, with the version a phone loads for one; the steps each
+context takes; and the cap. The page has no `sizes` and no code: the Details page, which holds
+the reference values for those who build the site, has a disclosure, Image widths and sizes,
+with each context's widths, `sizes` and ratio as `fromDesign` hands them to the core. The
+widths drawn come from `drawnWidths(resolved, px)` in `src/konzilo/images.js`, the drawings
+the `sizes` come from, so the two never disagree; `test/image-sizes.test.js` holds it to the
+specs' words, and `test/presentation.test.js` holds both pages to it for three designs, one
+with its opening's picture beside the text.
+
 ## History (2026-11-05)
 
 The owner asked for history with undo and redo. Every change autosaves straight into the design file and the run's backup holds only how it began, so without this a slip of a control overwrites the earlier value for good.

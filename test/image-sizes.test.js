@@ -14,7 +14,7 @@ import { pageContext } from '../src/directives/render/context.js';
 import { articleBody } from '../src/page-parts/parts.js';
 import { teaserCard } from '../src/presentations/teasers.js';
 import { imageContexts } from '../src/konzilo/index.js';
-import { CARD, GALLERY, HERO_STACKED, SWITCH, WIDEST } from '../src/konzilo/images.js';
+import { CARD, GALLERY, HERO_STACKED, SWITCH, WIDEST, drawnWidths } from '../src/konzilo/images.js';
 import { render } from './helpers/render.js';
 
 const read = (path) => readFileSync(new URL(path, import.meta.url), 'utf8');
@@ -108,6 +108,24 @@ test('each context\'s sizes is the width the design draws its image at, at every
         // may part by a hair, and there the wider of the two holds.
         const jumps = Math.abs(drawn(r, px - 0.1) - drawn(r, px + 0.1)) > 1;
         if (!jumps) assert.ok(said < drawn(r, px) + 0.05, why);
+      }
+    }
+  }
+});
+
+// The presentation tells a reader how wide each context's picture is drawn on a phone and on a wide screen, from the
+// same derivation as its sizes, so the two never disagree.
+test('the width each context draws its picture at in a window is the width the specs\' words make it', () => {
+  const whole = (widths) => Object.fromEntries(Object.entries(widths).map(([context, px]) => [context, Math.round(px)]));
+  assert.deepEqual(whole(drawnWidths(design({}), 390)), { body: 354, gallery: 354, lightbox: 390, hero: 390, card: 354 });
+  assert.deepEqual(whole(drawnWidths(design({}), 1440)), { body: 720, gallery: 350, lightbox: 1440, hero: 1440, card: 575 });
+  for (const [name, inputs] of Object.entries(DESIGNS)) {
+    const r = design(inputs);
+    for (let px = 320; px <= 3200; px += 3.25) {
+      const widths = drawnWidths(r, px);
+      for (const [context, drawn] of Object.entries(DRAWN)) {
+        const jumps = Math.abs(drawn(r, px - 0.1) - drawn(r, px + 0.1)) > 1;
+        if (!jumps) assert.ok(Math.abs(widths[context] - drawn(r, px)) < 0.05, `${name}, ${context} at ${px}px: ${widths[context]}, the design draws ${drawn(r, px)}`);
       }
     }
   }
