@@ -24,17 +24,12 @@
      owner, 2026-11-26). A browser prints an <img> whether or not it prints backgrounds, and the scrim only with them,
      so nothing that matters may be a background. The picture stands first in the band, before the trail, though a
      screen reader still meets it after the text: whole, at its own proportions, as wide as the content area and at
-     most half the page high, centred, a column gap above the text. The band, a card with its picture behind
-     (cards.css) and a header the page starts under, which takes its first band's colours, take every role, the scheme
-     and the shadows of what they stand on, the page for a band, light or dark as the page prints, and the scrim is
-     clear. A card in a band of another colour takes that band's, as an ordinary card there does (the assistant's
-     choice, the same day). */
+     most half the page high, centred, a column gap above the text. The band takes every role, the scheme and the
+     shadows of the page it stands on, light or dark as the page prints, and the scrim is clear: everything surface.js
+     declares for a Surface but what reads those, as test/picture-behind.test.js holds. A card with its picture behind
+     (cards.css) and a header the page starts under (header.css) do the same. */
   @media print {
-    :is(
-      .kn-band:has(> .kn-band-picture),
-      .kn-cards[data-kn-picture="behind"] .kn-card:has(> .kn-card-picture),
-      .kn-page:has(> .kn-page-main > .kn-band:first-child > .kn-band-picture) > .kn-header[data-kn-start="under"]
-    ) {
+    .kn-band:has(> .kn-band-picture) {
       color-scheme: inherit;
       --kn-surface-kind: inherit;
       --kn-polarity: inherit;

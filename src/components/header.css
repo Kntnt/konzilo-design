@@ -395,5 +395,37 @@
     .kn-header[data-kn-attachment] > .kn-header-bar { background: var(--kn-background); box-shadow: none; backdrop-filter: none; }
     .kn-header :is(.kn-header-panel, .kn-header-control, .kn-header-link-menu, .kn-header-cta, .kn-skip-link) { display: none; }
     .kn-page:has(> .kn-header[data-kn-attachment="sticky"][data-kn-start="under"]) > .kn-page-main > .kn-band:first-child { padding-block-start: var(--kn-space-band); }
+    /* A header the page starts under takes its first band's colours (surface.js), and where that band's picture prints
+       above its text in the page's colours (band.css), the header takes the page's too: everything surface.js declares
+       for a Surface but what reads those, as test/picture-behind.test.js holds. */
+    .kn-page:has(> .kn-page-main > .kn-band:first-child > .kn-band-picture) > .kn-header[data-kn-start="under"] {
+      color-scheme: inherit;
+      --kn-surface-kind: inherit;
+      --kn-polarity: inherit;
+      --kn-background: inherit;
+      --kn-background-alt: inherit;
+      --kn-background-hover: inherit;
+      --kn-text: inherit;
+      --kn-text-muted: inherit;
+      --kn-border: inherit;
+      --kn-border-strong: inherit;
+      --kn-link: inherit;
+      --kn-accent: inherit;
+      --kn-focus: inherit;
+      --kn-info: inherit;
+      --kn-success: inherit;
+      --kn-warning: inherit;
+      --kn-error: inherit;
+      --kn-button-background: inherit;
+      --kn-button-text: inherit;
+      --kn-button-background-hover: inherit;
+      --kn-frame-color: inherit;
+      --kn-shadow-header: inherit;
+      --kn-shadow-header-panel: inherit;
+      --kn-shadow-panel: inherit;
+      --kn-shadow-page: inherit;
+      --kn-shadow-box: inherit;
+      --kn-shadow-box-lifted: inherit;
+    }
   }
 }

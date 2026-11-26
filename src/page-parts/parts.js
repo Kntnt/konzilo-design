@@ -12,19 +12,17 @@
 //   openingPicture() makes its main image in the widths and sizes of where the design draws it.
 // - articleBody(): an article's body in a Reading Area, its following menu beside it and its interview's questions marked.
 // - readMore(): a section of teasers under a heading, and a lone main action to the rest.
-import { DECK_LINE, sectionLayout, sectionParts } from '../directives/section.js';
+import { DECK_LINE, headedLayout, sectionLayout, sectionParts } from '../directives/section.js';
 import { heroAttributes } from '../components/hero-attributes.js';
 import { contactOf } from '../directives/cards.js';
 import { serviceOf } from '../directives/actions.js';
 import { iconHtml } from '../directives/icons.js';
 import { escapeAttribute, escapeText, tag, voidTag } from '../directives/render/html.js';
 import { breadcrumbsHtml, groupEyebrows, sectionAttributes, sectionPhoto, withBodySizes, withSeriesSizes } from '../directives/render/render.js';
-import { allElements, innerHtml, retagged, textOfHtml, topElements } from '../directives/render/scan.js';
+import { allElements, classesOf, hasClass, innerHtml, retagged, textOfHtml, topElements } from '../directives/render/scan.js';
 import { postPicture, ratioOf, teaserCard } from '../presentations/teasers.js';
 import { cornerToCorner, heroPictureOf, imageSizes, seriesPicture } from '../konzilo/images.js';
 
-const classesOf = (element) => String(element?.attributes?.class ?? '').split(/\s+/).filter(Boolean);
-const hasClass = (element, name) => classesOf(element).includes(name);
 const innerOf = innerHtml;
 const long = (text) => [...String(text ?? '').replace(/\s+/g, ' ').trim()].length > DECK_LINE;
 
@@ -42,10 +40,7 @@ export function titleBand(ctx, { title = ctx.title, eyebrow, deck, surface, trai
   if (typeof title !== 'string' || title === '') throw new Error('A title band shows the page\'s title: give it to designPage(Astro, { title }), or as `title`.');
   const grouped = groupEyebrows(String(body ?? '')).trim();
   // Its head is the title and the deck, and everything given it its body.
-  const own = blocksOfHtml(grouped);
-  const head = deck ? [0, 1] : [0];
-  const blocks = [{ kind: 'heading' }, ...(deck ? [{ kind: 'paragraph' }] : []), ...own];
-  const layout = sectionLayout(blocks, { media: [], head, deck: deck ? 1 : null, body: own.map((_, at) => head.length + at) }, { corners: cornerToCorner(ctx.design.resolved) });
+  const layout = headedLayout(blocksOfHtml(grouped), { deck: Boolean(deck), corners: cornerToCorner(ctx.design.resolved) });
   const rest = grouped === '' ? '' : withBodySizes(grouped, ctx, layout);
   return tag('section', { class: 'kn-band kn-section', 'data-kn-surface': surface && surface !== 'page' ? surface : undefined },
     tag('div', { class: 'kn-band-content' },

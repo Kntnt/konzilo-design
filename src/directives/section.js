@@ -67,3 +67,17 @@ export function sectionLayout(blocks, parts, { align, body: columns, corners = f
   if (body.includes('form') || body.includes('choice') || (align === 'center' && columns !== 'columns')) return of('narrow');
   return of('across');
 }
+
+/**
+ * Where the stylesheet draws the body of a section whose head is given apart from it, as a title band's: a heading, and
+ * a deck where it has one, as its head, with no picture, and every block of `body` in its body, whatever sectionParts()
+ * would make of them; as sectionLayout() gives it.
+ * @param {{ kind: string }[]} body The body's blocks, as sectionParts() takes them.
+ * @param {{ deck?: boolean, corners?: boolean }} [options] Whether the head has a deck, and the design sets a cropped
+ *   photo corner to corner.
+ */
+export function headedLayout(body, { deck = false, corners = false } = {}) {
+  const head = deck ? [0, 1] : [0];
+  const blocks = [{ kind: 'heading' }, ...(deck ? [{ kind: 'paragraph' }] : []), ...body];
+  return sectionLayout(blocks, { media: [], head, deck: deck ? 1 : null, body: body.map((_, at) => head.length + at) }, { corners });
+}

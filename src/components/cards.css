@@ -134,10 +134,47 @@
   }
   .kn-cards[data-kn-picture="behind"] .kn-card > .kn-card-picture { aspect-ratio: auto; }
   /* In print the card is an ordinary card on what it stands on, its picture above its text, cropped to 16:9 of its
-     width as card.css crops it, without the scrim, and its text in the colours band.css gives it (the owner,
-     2026-11-26). It drops its plate, its frame, padding and shadow, since its colours are no longer its own (the
-     assistant's choice, the same day). */
+     width as card.css crops it, without the scrim (the owner, 2026-11-26), as a band's picture behind its text prints
+     (band.css). Its text takes every role, the scheme and the shadows of what it stands on, and the scrim is clear, the
+     Surface's own under the picture too, a background a browser prints with backgrounds, as a band's gives way to its
+     picture always: everything surface.js declares for a Surface but what reads those, as test/picture-behind.test.js
+     holds. On the
+     page it takes the page's colours; in a band of another colour that band's, as an ordinary card there does (the
+     assistant's reading of "in the page's colours", awaiting the owner: konzilo.md, A band's picture). It drops its
+     plate, its frame, padding and shadow, since its colours are no longer its own (the assistant's choice, the same
+     day). */
   @media print {
+    .kn-cards[data-kn-picture="behind"] .kn-card:has(> .kn-card-picture) {
+      color-scheme: inherit;
+      --kn-surface-kind: inherit;
+      --kn-polarity: inherit;
+      --kn-background: inherit;
+      --kn-background-alt: inherit;
+      --kn-background-hover: inherit;
+      --kn-text: inherit;
+      --kn-text-muted: inherit;
+      --kn-border: inherit;
+      --kn-border-strong: inherit;
+      --kn-link: inherit;
+      --kn-accent: inherit;
+      --kn-focus: inherit;
+      --kn-info: inherit;
+      --kn-success: inherit;
+      --kn-warning: inherit;
+      --kn-error: inherit;
+      --kn-button-background: inherit;
+      --kn-button-text: inherit;
+      --kn-button-background-hover: inherit;
+      --kn-frame-color: inherit;
+      --kn-shadow-header: inherit;
+      --kn-shadow-header-panel: inherit;
+      --kn-shadow-panel: inherit;
+      --kn-shadow-page: inherit;
+      --kn-shadow-box: inherit;
+      --kn-shadow-box-lifted: inherit;
+      --kn-scrim: transparent;
+      background-image: none;
+    }
     .kn-cards[data-kn-picture="behind"] .kn-card:has(> .kn-card-picture) {
       justify-content: flex-start;
       min-block-size: 0;

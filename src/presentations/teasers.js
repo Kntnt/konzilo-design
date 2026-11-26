@@ -5,15 +5,16 @@
 //
 // Plain JavaScript with no import of Astro's or the core's: the presentation's component hands it Astro's getEntry() and
 // getImage() (Cards.astro, Featured.astro, Filtered.astro), and the tests their own.
-import { masterWidths, teaserPictures } from '../konzilo/images.js';
+import { masterWidths, ratioFrom, teaserPictures } from '../konzilo/images.js';
+import { DESIGN_PRESENTATIONS } from '../konzilo/directives.js';
 import { iconHtml } from '../directives/icons.js';
 import { surfaceOf } from '../directives/surfaces.js';
 import { FILTER_GROUPS, FILTER_VALUES, filterKeys, itemMatches } from '../components/visitor-filters.js';
 import { escapeText, tag, voidTag } from '../directives/render/html.js';
 import { withMark } from '../directives/render/render.js';
 
-// The presentations this package draws.
-export const PRESENTATIONS = Object.freeze(['cards', 'featured', 'filtered']);
+// The presentations this package draws, by the names a site registers them under (DESIGN_PRESENTATIONS).
+export const PRESENTATIONS = Object.freeze(Object.keys(DESIGN_PRESENTATIONS));
 
 // A post's own words for a teaser, as the core's ownSummary() reads them: its excerpt, else its teaser's text, else its
 // standfirst, its white space collapsed.
@@ -60,7 +61,7 @@ export const teaserImageOf = (entry) => entry?.data?.teaser?.image ?? entry?.dat
  */
 export function ratioOf(image) {
   const { width, height } = typeof image?.src === 'object' && image.src ? image.src : {};
-  return width > 0 && height > 0 ? width / height : undefined;
+  return ratioFrom(width, height);
 }
 
 // A post's picture as the attributes of its <img>, for a teaser or an opening: made by Astro's getImage() from the
