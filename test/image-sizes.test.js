@@ -17,7 +17,7 @@ import { renderDirective } from '../src/directives/render/render.js';
 import { presentationHtml, teaserCard } from '../src/presentations/teasers.js';
 import { imageContexts } from '../src/konzilo/index.js';
 import {
-  ACCORDION, BADGE, CARD, GALLERY, HERO_STACKED, LOGO, LOGOS, OFFER, SECTION, SWITCH, SYMBOL, WIDEST, bandPictureSizes, drawnWidths, noWider,
+  ACCORDION, BADGE, CARD, FEATURED, GALLERY, HERO_STACKED, LOGO, LOGOS, OFFER, SECTION, SWITCH, SYMBOL, WIDEST, bandPictureSizes, drawnWidths, noWider,
   pictureSizes, seriesPicture, teaserPictures,
 } from '../src/konzilo/images.js';
 import { htmlToHast } from 'satteri';
@@ -626,6 +626,15 @@ test('a teaser\'s picture says the widest it is drawn in any place a post list s
   }
 });
 
+test('the lengths the CSS draws a post list\'s teasers by are the CSS\'s own', () => {
+  const postList = read('../src/components/post-list.css');
+  assert.ok(postList.includes(`@container (width >= ${FEATURED.two}rem) {\n    .kn-featured { grid-template-columns: repeat(2, minmax(0, 1fr)); }\n    .kn-featured > .kn-card:first-child { grid-column: 1 / -1; }`));
+  assert.ok(postList.includes(`@container (width >= ${FEATURED.three}rem) {\n    .kn-featured { grid-template-columns: repeat(3, minmax(0, 1fr)); }\n    .kn-featured > .kn-card:first-child { grid-column: span 2;`));
+  assert.ok(postList.includes('.kn-featured { display: grid; gap: var(--kn-space-column-gap);'));
+  // A lone teaser of `cards` fills its column beside a quotation.
+  assert.ok(read('../src/components/section.css').includes('.kn-section[data-kn-body="columns"] > .kn-band-content > .kn-section-body > .kn-post-list[data-kn-presentation="cards"] > .kn-cards:has(> :only-child) {\n    grid-template-columns: minmax(0, 1fr);'));
+});
+
 // Astro's getImage() as a presentation hands it, here a version of each width asked for, of a master 1600 × 1000.
 const getImage = async ({ src, widths }) => ({
   src: `/_astro/${src.name}.webp`,
@@ -911,6 +920,97 @@ for (const name of ['default', 'other', 'small', 'large']) {
           const first = Object.keys(SERIES_PLACES).map((place) => `s-${place}-${count}-0`);
           const widest = Math.max(...first.map((id) => drawn[id]));
           assert.ok(Math.abs(widest - told[first[0]]) <= near, `${engine}, ${name}, a series of ${count} at ${px}px: says ${told[first[0]]}, drawn ${first.map((id) => `${id.split('-')[1]} ${drawn[id]}`).join(', ')}`);
+        }
+      }
+      await context.close();
+    }
+  });
+}
+
+// ---------- In the browser: a post list's teasers and an article's opening (issue #39) ----------
+
+// A post list by its presentation and number of posts, as an editor places it, in each place a post list stands in: a
+// band's section; beside a section's photo, with badges and cropped; after a form beside the heading; centred, at
+// Narrow; and in two columns beside a quotation. `featured` and `filtered` stand there too, though the checks refuse
+// them beside a quotation, since a list's sizes counts that place whatever its presentation.
+const LISTS = [['cards', 1], ['cards', 2], ['cards', 3], ['cards', 4], ['cards', 7], ['filtered', 1], ['filtered', 4], ['featured', 3]];
+const listMd = ([presentation, count]) => `::post-list{type="article" number="${count}" presentation="${presentation}"}`;
+const LIST_PLACES = {
+  band: (list) => `::::section\n\n## Plans\n\n${listMd(list)}\n\n::::`,
+  beside: (list, id) => `::::section\n\n${pic(`p-${id}`)}\n\n${pic(`b-${id}`, 800, 400)}\n\n## Plans\n\n${listMd(list)}\n\n::::`,
+  cropped: (list, id) => `::::section\n\n${pic(`p-${id}`)}\n\n## Plans\n\n${listMd(list)}\n\n::::`,
+  form: (list) => `::::section\n\n## Order\n\n::form{name="contact"}\n\n${listMd(list)}\n\n::::`,
+  narrow: (list) => `::::section{align="center"}\n\n## Plans\n\n${listMd(list)}\n\n::::`,
+  columns: (list) => `::::section{body="columns"}\n\n## Plans\n\n${listMd(list)}\n\n> A quotation.\n\n::::`,
+};
+// Astro's getImage() for a teaser, here one version 720 px wide of a master 1600 × 900, which a card crops to 16:9.
+const teaserImage = async ({ widths }) => {
+  assert.ok(widths.length > 0);
+  return { src: png(720, 405), srcSet: { attribute: `${png(720, 405)} 720w` }, attributes: { width: 1600, height: 900 } };
+};
+const openingImage = async () => ({ src: png(720, 480), srcSet: { attribute: `${png(720, 480)} 720w` }, attributes: { width: 1620, height: 1080 } });
+const teaserPosts = (count) => Array.from({ length: count }, (_, i) => ({ entry: { id: `post-${i}`, collection: 'articles', data: { title: `Post ${i}`, excerpt: 'Its words.', image: { src: { name: `post-${i}` }, alt: '' } } }, url: `/post-${i}/` }));
+
+async function teasersPage(r) {
+  const ctx = pageContext({ design: { resolved: r, project: { name: 'Example' } }, title: 'A page', warn: () => {} });
+  // The lists in the order they stand, each its teasers' pictures `t-<presentation>-<count>-<place>-<n>`.
+  const placed = Object.entries(LIST_PLACES).flatMap(([place, markdown]) => LISTS.map((list) => ({ list, id: `${list.join('-')}-${place}`, markdown: markdown(list, `${list.join('-')}-${place}`) })));
+  let body = renderBody(withVersions(bodyHtml(placed.map(({ markdown }) => markdown).join('\n\n'))), ctx);
+  for (const { list: [presentation, count], id } of placed) {
+    let n = 0;
+    const html = (await presentationHtml(presentation, { posts: teaserPosts(count), options: {} }, ctx, { getImage: teaserImage }))
+      .replace(/<img class="kn-card-picture"/g, () => `<img id="t-${id}-${n++}" class="kn-card-picture"`);
+    body = body.replace(/<div class="test-post-list"[^>]*><\/div>/, () => html);
+  }
+  assert.doesNotMatch(body, /test-post-list/);
+  // An article's opening, its main image where the design puts a hero's picture.
+  const picture = await openingPicture({ src: { name: 'soil' }, alt: '' }, ctx, openingImage);
+  const html = articleOpening(ctx, { data: { headline: 'Know your soil', standfirst: 'All about soil.' }, picture: { ...picture, id: 'opening' } }) + body;
+  const sizes = {};
+  for (const image of imagesIn(html)) if (image.id && image.srcset && !(image.id in sizes)) sizes[image.id] = image.sizes;
+  const styles = [coreCss(r), flat('../src/konzilo/body-styles.css'), read('../src/konzilo/konzilo.css'), components].join('\n');
+  // Every sizes so wide that the CSS alone draws each picture.
+  const page = html.replace(/ sizes="[^"]*"/g, ' sizes="10000px"');
+  return { sizes, html: `<!doctype html><html lang="en"><head><meta charset="utf-8"><style>${styles}:root { scrollbar-width: none; }</style></head><body data-kn-surface="page"><main class="kn-page-main">${page}</main></body></html>` };
+}
+
+for (const name of ['default', 'other', 'small', 'large']) {
+  test(`in every engine a teaser's sizes in each presentation, and an article opening's, is the widest the CSS draws it, on each side of every breakpoint: ${name}`, { timeout: 600000 }, async () => {
+    const r = design(DESIGNS[name]);
+    const { sizes, html } = await teasersPage(r);
+    const ids = Object.keys(sizes);
+    // Each teaser's picture by its kind, the first of a series and the latest and the next of `featured`, in each place.
+    const kinds = {};
+    for (const [presentation, count] of LISTS) {
+      const of = (n) => Object.keys(LIST_PLACES).map((place) => `t-${presentation}-${count}-${place}-${n}`);
+      if (presentation === 'featured') Object.assign(kinds, { 'featured-first': of(0), 'featured-other': of(1) });
+      else kinds[`${presentation}-${count}`] = of(0);
+    }
+    for (const [kind, all] of Object.entries(kinds)) {
+      for (const id of all) assert.ok(ids.includes(id), `${name}: ${id} is drawn with versions`);
+      assert.equal(new Set(all.map((id) => sizes[id])).size, 1, `${name}: one sizes for ${kind}, wherever it stands`);
+    }
+    assert.ok(ids.includes('opening'), `${name}: the opening's picture`);
+    const distinct = Object.fromEntries([...new Set(Object.values(sizes))].map((text, i) => [i, text]));
+    const edges = Object.values(distinct).flatMap((text) => [...text.matchAll(/\(min-width: ([\d.]+)rem\)/g)].map((match) => Number(match[1]) * 16));
+    // A pixel either side of every edge (konzilo.md, The edges).
+    const windows = [...new Set([320, 390, 600, 1024, 1440, 1920, 2560, ...edges.flatMap((edge) => [Math.floor(edge) - 1, Math.ceil(edge) + 1])])].filter((px) => px >= 320 && px <= 3200).sort((a, b) => a - b);
+    for (const [engine, browser] of browsers) {
+      const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+      const tab = await context.newPage();
+      await tab.setContent(html);
+      for (const px of windows) {
+        await tab.setViewportSize({ width: px, height: 900 });
+        const read = await said(tab, distinct, engine);
+        const told = (id) => read[Object.keys(distinct).find((key) => distinct[key] === sizes[id])];
+        const drawn = await drawnPictures(tab, ids);
+        // Chromium's reading is a natural width, a whole pixel, and its layout a 64th of one.
+        const near = engine === 'chromium' ? 1 + 2 / 64 : 0.6;
+        assert.ok(Math.abs(drawn.opening - told('opening')) <= near, `${engine}, ${name}, the opening at ${px}px: drawn ${drawn.opening}, sizes ${sizes.opening} says ${told('opening')}`);
+        // A teaser says the widest it is drawn in any place, and is drawn no wider in each.
+        for (const [kind, all] of Object.entries(kinds)) {
+          const widest = Math.max(...all.map((id) => drawn[id]));
+          assert.ok(Math.abs(widest - told(all[0])) <= near, `${engine}, ${name}, ${kind} at ${px}px: says ${told(all[0])}, drawn ${all.map((id) => `${id.split('-').at(-2)} ${drawn[id]}`).join(', ')}`);
         }
       }
       await context.close();
