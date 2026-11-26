@@ -155,12 +155,8 @@ function heroPicture(place = 'behind', contentArea, columnGap) {
   return switched(WINDOW, fixed(HERO_STACKED), beside, whole, { strict: true });
 }
 
-/**
- * The widths, sizes and aspect ratio in which a resolved design draws an image, by the core's contexts.
- * @param {object} r A design file's `resolved`.
- * @returns {Record<'body' | 'gallery' | 'lightbox' | 'hero' | 'card', { widths: number[], sizes: string, ratio?: string }>}
- */
-export function imageContexts(r) {
+// How wide the design draws a picture in each context, as a function of the window.
+function drawings(r) {
   const inRem = (px) => px / 16;
   const componentGap = fluid(r.space.roles['component-gap'].css);
   const columnGap = fluid(r.space.roles['column-gap'].css);
@@ -168,17 +164,39 @@ export function imageContexts(r) {
   const area = contentAreaLine(r.layout);
   const contentArea = width(area.at, area.bends);
   const column = least(contentArea, fixed(inRem(r.layout.narrow)));
-  const steps = ladder(Math.min(r.layout.narrow, r.layout.wide));
-  const context = (drawn) => ({ widths: widthsOf(drawn, steps), sizes: sizesOf(drawn) });
   return {
     // A body's figure, in the reading column: Narrow, or the content area where that is narrower (page.md).
-    body: context(column),
-    // A gallery in that column, at its widest column, its pictures cropped to its ratio.
-    gallery: { ...context(widestOfSeries(column, GALLERY.minimum, componentGap)), ratio: GALLERY.ratio },
+    body: column,
+    // A gallery in that column, at its widest column.
+    gallery: widestOfSeries(column, GALLERY.minimum, componentGap),
     // The core's lightbox, which fits each picture whole in the window, so at most the window's width.
-    lightbox: context(WINDOW),
-    hero: context(heroPicture(r.hero?.picture, contentArea, columnGap)),
+    lightbox: WINDOW,
+    hero: heroPicture(r.hero?.picture, contentArea, columnGap),
     // A card in a series across the content area, at its widest column.
-    card: context(widestOfSeries(contentArea, CARD.minimum, columnGap)),
+    card: widestOfSeries(contentArea, CARD.minimum, columnGap),
   };
+}
+
+/**
+ * The widths, sizes and aspect ratio in which a resolved design draws an image, by the core's contexts.
+ * @param {object} r A design file's `resolved`.
+ * @returns {Record<'body' | 'gallery' | 'lightbox' | 'hero' | 'card', { widths: number[], sizes: string, ratio?: string }>}
+ */
+export function imageContexts(r) {
+  const steps = ladder(Math.min(r.layout.narrow, r.layout.wide));
+  const contexts = Object.fromEntries(Object.entries(drawings(r)).map(([name, drawn]) => [name, { widths: widthsOf(drawn, steps), sizes: sizesOf(drawn) }]));
+  // A gallery's pictures are cropped to its ratio.
+  contexts.gallery.ratio = GALLERY.ratio;
+  return contexts;
+}
+
+/**
+ * How wide a resolved design draws a picture in each of the core's contexts in a window `px` wide, in px at the default
+ * text size, a gallery's and a card's at the widest column of a series; what the presentation tells a reader.
+ * @param {object} r A design file's `resolved`.
+ * @param {number} px The window's width.
+ * @returns {Record<'body' | 'gallery' | 'lightbox' | 'hero' | 'card', number>}
+ */
+export function drawnWidths(r, px) {
+  return Object.fromEntries(Object.entries(drawings(r)).map(([name, drawn]) => [name, drawn.at(px / 16) * 16]));
 }
