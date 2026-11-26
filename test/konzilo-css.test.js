@@ -29,7 +29,7 @@ const onASite = [coreCss(resolved), flat('../src/konzilo/body-styles.css'), css,
 
 // Every class of the core's docs/site-design.md, with a name in angle brackets filled in.
 const CLASSES = `
-  konzilo-gallery
+  konzilo-gallery konzilo-math
   konzilo-lightbox-open konzilo-modal konzilo-modal-close konzilo-lightbox konzilo-lightbox-strip konzilo-lightbox-step konzilo-lightbox-previous konzilo-lightbox-next konzilo-lightbox-place
   konzilo-embed konzilo-embed-no-script konzilo-embed-question konzilo-embed-storage konzilo-embed-allow
   konzilo-form konzilo-form-preview konzilo-form-fields konzilo-form-field konzilo-form-required konzilo-form-choice konzilo-form-help konzilo-form-problem konzilo-form-outcome konzilo-form-send konzilo-form-trap
