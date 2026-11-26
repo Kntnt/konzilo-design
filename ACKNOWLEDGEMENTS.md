@@ -45,15 +45,16 @@ The library ships 47 variable typefaces in [`src/fonts/`](src/fonts/), and one m
 | Recursive | Arrow Type and Stephen Nixon | OFL-1.1 |
 | STIX Two Math | The STIX Fonts Project: Ross Mills, John Hudson and Paul Hanslow, of Tiro Typeworks, with MicroPress and Coen Hoffman | OFL-1.1 |
 
-## Icons and photos
+## Icons, photos and styles
 
 | Part | Where | Licence |
 |---|---|---|
 | [Lucide](https://lucide.dev) icons, by Lucide Icons and its contributors | The components' icons, in `src/components/icons.js` | ISC ([`src/components/LICENSE-lucide.txt`](src/components/LICENSE-lucide.txt)) |
 | [Tabler](https://tabler.io/icons) icons, by Paweł Kuna | The icons for social media and feeds | MIT ([`src/components/LICENSE-tabler.txt`](src/components/LICENSE-tabler.txt)) |
+| [Temml](https://temml.org)'s stylesheet, by Ron Kok | The rules Temml's MathML relies on, without its font rules, in `src/konzilo/konzilo.css`, which draws a formula on a Konzilo site | MIT ([`src/konzilo/LICENSE-temml.txt`](src/konzilo/LICENSE-temml.txt)) |
 | Six sample photos from [Unsplash](https://unsplash.com) | The sample pages, in `presentation/pictures/`; [`presentation/pictures/README.md`](presentation/pictures/README.md) names each source | The [Unsplash License](https://unsplash.com/license) |
 
-The export for AI and the presentation carry the icons' licences with them.
+The export for AI and the presentation carry the icons' licences with them, and the package carries Temml's beside `konzilo.css`.
 
 ## Formats and tools
 
@@ -70,4 +71,4 @@ Each of these stands on many more. `THIRD-PARTY.md` names them all.
 
 ## How the licences fit
 
-Konzilo Design's own files are under the GNU Affero General Public License, version 3 or later ([`LICENSE`](LICENSE)), with the site exception ([`SITE-EXCEPTION.md`](SITE-EXCEPTION.md)). The typefaces, icons and photos above are files of their own, keep the licences they came under, and bind no other file. The packages are used only to develop and test the design system, and none is published with it.
+Konzilo Design's own files are under the GNU Affero General Public License, version 3 or later ([`LICENSE`](LICENSE)), with the site exception ([`SITE-EXCEPTION.md`](SITE-EXCEPTION.md)). The typefaces, icons and photos above are files of their own, keep the licences they came under, and bind no other file. Temml's rules stand in `konzilo.css` among its own, under the MIT licence, which asks only that its notice go with them; `konzilo.css` as a whole is Konzilo Design's. The packages are used only to develop and test the design system, and none is published with it.

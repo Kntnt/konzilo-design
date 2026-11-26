@@ -77,7 +77,8 @@
 
   /* What Temml's MathML relies on, from its own stylesheet (Temml-STIX2.css) without its font rules, its line breaking,
      which a formula the core writes never asks for, or its equation numbers, which the design does not draw. Each class
-     stands inside a formula, so that a site's own class of the same name is left alone. */
+     stands inside a formula, so that a site's own class of the same name is left alone. Temml's, by Ron Kok, under the
+     MIT licence in LICENSE-temml.txt beside this file. */
   math * { border-color: currentColor; }
   :where(math) .mathscr { font-feature-settings: "ss01"; }
   /* The prime, aligned as STIX Two Math's ss04 draws it. */

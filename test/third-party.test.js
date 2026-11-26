@@ -73,3 +73,22 @@ test('ACKNOWLEDGEMENTS.md names every package the design system depends on direc
   const acknowledgements = text('ACKNOWLEDGEMENTS.md');
   assert.deepEqual(direct.filter((name) => !acknowledgements.includes(`\`${name}\``)), []);
 });
+
+// Someone else's work the package publishes inside a file of its own, under a permissive licence (CONTRIBUTING.md, What
+// is checked, point 2): its licence with its copyright notice, which the licence asks to go with every copy, in a folder
+// the package publishes beside it, named by the file that holds the work and by ACKNOWLEDGEMENTS.md.
+const PARTS = [
+  { part: 'src/components/icons.js', licence: 'src/components/LICENSE-lucide.txt', notice: /^ISC License\n\nCopyright \(c\) \d{4} Lucide Icons and Contributors$/m },
+  { part: 'src/components/icons.js', licence: 'src/components/LICENSE-tabler.txt', notice: /^MIT License\n\nCopyright \(c\) 2020-\d{4} Paweł Kuna$/m },
+  { part: 'src/konzilo/konzilo.css', licence: 'src/konzilo/LICENSE-temml.txt', notice: /^The MIT License \(MIT\)\n\nCopyright \(c\) 2020 Ron Kok$/m },
+];
+
+test('each part of another\'s work the package publishes keeps its licence beside it, named where it stands and in ACKNOWLEDGEMENTS.md', () => {
+  const acknowledgements = text('ACKNOWLEDGEMENTS.md');
+  for (const { part, licence, notice } of PARTS) {
+    assert.match(text(licence), notice, licence);
+    assert.ok(manifest.files.some((folder) => licence.startsWith(`${folder}/`)), `the package publishes ${licence}`);
+    assert.ok(text(part).includes(licence.split('/').at(-1)), `${part} names ${licence}`);
+    assert.ok(acknowledgements.includes(`(${licence})`), `ACKNOWLEDGEMENTS.md links ${licence}`);
+  }
+});
