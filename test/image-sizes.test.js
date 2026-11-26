@@ -18,11 +18,11 @@ import { presentationHtml, teaserCard } from '../src/presentations/teasers.js';
 import { imageContexts } from '../src/konzilo/index.js';
 import {
   ACCORDION, BADGE, CARD, FEATURED, GALLERY, HEADER, HERO_HEIGHTS, HERO_STACKED, LOGO, LOGOS, OFFER, SECTION, SWITCH, SYMBOL, WIDEST,
-  bandPictureSizes, drawnWidths, heroPictureOf, masterWidths, noWider, pictureSizes, seriesPicture, teaserPictures,
+  bandPictureSizes, cornerToCorner, drawnWidths, heroPictureOf, masterWidths, noWider, pictureSizes, seriesPicture, teaserPictures,
 } from '../src/konzilo/images.js';
 import { htmlToHast } from 'satteri';
 import { render } from './helpers/render.js';
-import { bodyHtml, renderBody } from './helpers/konzilo-body.js';
+import { bodyHtml, renderBody, treeOf } from './helpers/konzilo-body.js';
 
 const read = (path) => readFileSync(new URL(path, import.meta.url), 'utf8');
 
@@ -897,6 +897,64 @@ test('the page parts\' Section draws its photo, badges and the figures in its bo
   assert.equal(imagesIn(pageBody(body, ctx, { title: false }))[0].sizes, pictureSizes(r, 'section-photo', { layout: 'badges' }));
   // Without the page's design, as a template that never called designPage() has it, a picture keeps the core's sizes.
   assert.equal(imagesIn(section({ heading: 'Plans', body: drawn(figure(master('after'))) }))[0].sizes, BODY_SIZES);
+});
+
+// A body's Markdown as the core renders it with the package's components, its post lists drawn by `lists`, each its
+// presentation's HTML in the order they stand, and its pictures with versions.
+const rendered = (markdown, ctx, lists = []) => renderBody(withVersions(bodyHtml(markdown)), ctx, { dialogs: 0, postList: () => lists.shift() });
+const sizesOf = (html, prefix) => imagesIn(html).filter((image) => image.id?.startsWith(prefix)).map((image) => image.sizes);
+
+test('a section writes on each series in its body, and in an accordion there, the sizes of the place its layout gives it, from its tree or its slot', async () => {
+  for (const name of ['default', 'small', 'large']) {
+    const ctx = contextFor(DESIGNS[name]);
+    const r = ctx.design.resolved;
+    const corners = cornerToCorner(r);
+    const series = (place, count = 3, options = {}) => Array(count).fill(seriesPicture(r, count, { ratio: 16 / 9, place, ...options }).sizes);
+    // Each place by the section's rules; the cards' pictures are 16:9, which a card's crop draws as wide as its card.
+    for (const [markdown, place] of [
+      [`::::section\n\n## Plans\n\n${cardsMd('s', 3)}\n\n::::`, 'across'],
+      [`::::section\n\n${pic('photo')}\n\n## Plans\n\n${cardsMd('s', 3)}\n\n::::`, corners ? 'corners' : 'beside'],
+      [`::::section\n\n${pic('photo')}\n\n${pic('badge', 800, 400)}\n\n## Plans\n\n${cardsMd('s', 3)}\n\n::::`, 'beside'],
+      [`::::section{align="center"}\n\n## Plans\n\n${cardsMd('s', 3)}\n\n::::`, 'narrow'],
+      [`::::section\n\n## Plans\n\nWords.\n\n::form{name="contact"}\n\n${cardsMd('s', 3)}\n\n::::`, 'narrow'],
+      [`::::section\n\n## Order\n\n::form{name="contact"}\n\n${cardsMd('s', 3)}\n\n::::`, 'form'],
+      [`::::section{body="columns"}\n\n## Plans\n\n${cardsMd('s', 3)}\n\n> A quotation.\n\n::::`, 'columns'],
+      [`:::::section\n\n::::accordion{first="open"}\n\n### Plans\n\n${cardsMd('s', 3)}\n\n::::\n\n:::::`, { accordion: 'across' }],
+      [`:::::section\n\n::::accordion{first="open"}\n\n### Which plan?\n\n${cardsMd('s', 3)}\n\n::::\n\n:::::`, { accordion: 'across', questions: true }],
+      [`:::::section\n\n${pic('photo')}\n\n## Plans\n\n::::accordion{first="open"}\n\n### Plans\n\n${cardsMd('s', 3)}\n\n::::\n\n:::::`, { accordion: corners ? 'corners' : 'beside' }],
+      // A head and an accordion alone stand side by side from 60rem, centred or not (rule 4); with an intro before its
+      // items, the accordion is not alone, and stands across.
+      [`:::::section\n\n## Plans\n\n::::accordion{first="open"}\n\n### Plans\n\n${cardsMd('s', 3)}\n\n::::\n\n:::::`, { accordion: 'head' }],
+      [`:::::section{align="center"}\n\n## Plans\n\n::::accordion{first="open"}\n\n### Which plan?\n\n${cardsMd('s', 3)}\n\n::::\n\n:::::`, { accordion: 'head', questions: true }],
+      [`:::::section\n\n## Plans\n\n::::accordion{first="open"}\n\nOur plans.\n\n### Plans\n\n${cardsMd('s', 3)}\n\n::::\n\n:::::`, { accordion: 'across' }],
+    ]) {
+      const why = `${name}: ${markdown.replace(/\n+/g, ' ')}`;
+      // The section takes its body from its slot, as the core drew it, and draws it from its tree where it has none.
+      assert.deepEqual(sizesOf(rendered(markdown, ctx), 's-'), series(place), why);
+      const tree = treeOf(markdown);
+      assert.deepEqual(sizesOf(renderDirective('section', tree.attributes, htmlToHast(withVersions(tree.body), { fragment: true }), ctx), 's-'), series(place), `${why}, from its tree`);
+    }
+  }
+  const ctx = contextFor();
+  const r = ctx.design.resolved;
+  // Behind their text, and of navigation, the cards say their place's too.
+  assert.deepEqual(sizesOf(rendered(`::::section\n\n## Plans\n\n${cardsMd('s', 4, 3, { attributes: '{picture="behind"}' })}\n\n::::`, ctx), 's-'), Array(4).fill(seriesPicture(r, 4, { ratio: 16 / 9, behind: true, place: 'across' }).sizes));
+  assert.deepEqual(sizesOf(rendered(`::::section\n\n## Plans\n\n${cardsMd('s', 2, 3, { attributes: '{type="navigation"}' })}\n\n::::`, ctx), 's-'), Array(2).fill(seriesPicture(r, 2, { ratio: 16 / 9, place: 'across' }).sizes));
+  // A series in a tab, deeper than the places a section knows, keeps the room's upper bound.
+  assert.deepEqual(sizesOf(rendered(`:::::section\n\n::::tabs\n\n### Plans\n\n${cardsMd('s', 3)}\n\n### Prices\n\nWords.\n\n::::\n\n:::::`, ctx), 's-'), Array(3).fill(seriesPicture(r, 3, { ratio: 16 / 9, within: ['tabs'] }).sizes));
+  // A post list in a section's body, which only its slot holds, says its place's, each teaser by its own proportions; an
+  // SVG, which has no versions, and a teaser of no master keep what they had.
+  const lists = await Promise.all([['cards', 3], ['featured', 3], ['filtered', 4], ['cards', 1]].map(([presentation, count]) => presentationHtml(presentation, { posts: postsOf(count), options: {} }, ctx, { getImage })));
+  const teasers = (html) => imagesIn(html).filter((image) => image.class === 'kn-card-picture').map((image) => image.sizes);
+  const across = rendered(`::::section\n\n## Journal\n\n::post-list{type="article" number="3" presentation="cards"}\n\n::::`, ctx, [lists[0]]);
+  assert.deepEqual(teasers(across), teaserPictures(r, 'cards', 3, Array(3).fill(1.6), { place: 'across' }).map(({ sizes }) => sizes));
+  const narrow = rendered(`:::::section\n\n## Journal\n\n::post-list{type="article" number="3" presentation="featured"}\n\n::post-list{type="article" number="4" presentation="filtered"}\n\n::form{name="contact"}\n\n:::::`, ctx, [lists[1], lists[2]]);
+  assert.deepEqual(teasers(narrow), [...teaserPictures(r, 'featured', 3, Array(3).fill(1.6), { place: 'narrow' }), ...teaserPictures(r, 'filtered', 4, Array(4).fill(1.6), { place: 'narrow' })].map(({ sizes }) => sizes));
+  const columns = rendered(`::::section{body="columns"}\n\n## Journal\n\n::post-list{type="article" number="1" presentation="cards"}\n\n> A quotation.\n\n::::`, ctx, [lists[3]]);
+  assert.deepEqual(teasers(columns), [teaserPictures(r, 'cards', 1, [1.6], { place: 'columns' })[0].sizes]);
+  assert.notEqual(teasers(columns)[0], teaserPictures(r, 'cards', 1, [1.6])[0].sizes);
+  const loose = await presentationHtml('cards', { posts: [{ entry: { id: 'loose', data: { title: 'Loose', image: { src: '/public/soil.webp', alt: '' } } }, url: '/loose/' }, ...postsOf(1)], options: {} }, ctx, { getImage });
+  assert.deepEqual(teasers(rendered(`::::section\n\n## Journal\n\n::post-list{type="article" number="2" presentation="cards"}\n\n::::`, ctx, [loose])), [undefined, teaserPictures(r, 'cards', 2, [undefined, 1.6], { place: 'across' })[1].sizes]);
 });
 
 test('a hero\'s picture beside its text and its logo, and a logo in a list of logos, say the widths they are drawn at', () => {

@@ -125,6 +125,23 @@ export function allElements(html, offset = 0) {
   });
 }
 
+/**
+ * The elements at the top of an element's content, each with its place in `html` itself, as topElements() gives them.
+ * @param {string} html
+ * @param {object} element As topElements() or allElements() gives it.
+ */
+export function childElements(html, element) {
+  if (element.open.void || element.open.textEnd !== undefined) return [];
+  const from = element.open.end;
+  const shift = (at) => at + from;
+  return topElements(html.slice(from, endOf(html, element.open).start)).map((child) => ({
+    ...child,
+    start: shift(child.start),
+    end: shift(child.end),
+    open: { ...child.open, start: shift(child.open.start), end: shift(child.open.end), ...(child.open.textEnd === undefined ? {} : { textEnd: shift(child.open.textEnd) }) },
+  }));
+}
+
 // An element's content, between its start tag and its end tag.
 export const innerHtml = (html, element) => html.slice(element.open.textEnd ?? element.open.end, endOf(html, element.open).start);
 

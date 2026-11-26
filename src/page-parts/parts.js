@@ -129,7 +129,7 @@ function sectionFrom(blocks, { surface, anchor, align, ctx } = {}) {
   }
   const grouped = parts.media.length + parts.head.length;
   const rest = groupEyebrows(blocks.slice(grouped).map((block) => block.plain).join('')).trim();
-  if (rest !== '') out.push(tag('div', { class: 'kn-section-body kn-body-text' }, ctx ? withBodySizes(rest, ctx, layout.body) : rest));
+  if (rest !== '') out.push(tag('div', { class: 'kn-section-body kn-body-text' }, ctx ? withBodySizes(rest, ctx, layout) : rest));
   return tag('section', sectionAttributes({ anchor, surface: surface && surface !== 'page' ? surface : undefined, align }), tag('div', { class: 'kn-band-content' }, out));
 }
 
