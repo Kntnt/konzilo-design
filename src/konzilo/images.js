@@ -9,7 +9,7 @@
 // crops to cover a box as tall as a share of the window is drawn wider where the box is taller than the picture's
 // proportions, which a `sizes` says in vh (A picture cropped to cover its box, below).
 import { contentAreaLine, fluidLine } from '../generator/layout.js';
-import { number, typeScale } from '../generator/fluid.js';
+import { number, typeScaleCurve } from '../generator/fluid.js';
 import { SECTION_LAYOUTS } from '../directives/section.js';
 
 // The narrowest window the design is made for, where its fluid scales start, in rem. Below it the narrowest stretch of
@@ -415,12 +415,12 @@ export const SYMBOL = Object.freeze({ size: 1.25, itemBox: 2 });
 export const OFFER = Object.freeze({ narrow: 16, wide: 26 });
 const whole = (height, ratio, widest) => times(height, Math.min(widest, ratio > 0 && Number.isFinite(ratio) ? ratio : Infinity));
 
-// A type size by the owner's scale (typeScale()), in rem: in straight pieces between nine windows on it, whose chords lie
-// on it or above, since it bends upwards, so a sizes never says less than it is. A design file without its scale has the
-// clamp a browser without pow() keeps.
+// A type size by the owner's scale (typeScaleCurve()), in rem: in straight pieces between nine windows on it, whose chords
+// lie on it or above, since it bends upwards, so a sizes never says less than it is. A design file without its scale has
+// the clamp a browser without pow() keeps.
 function typeSize(r, name) {
   if (!r['type-scale']) return fluid(r.type[name].size.css);
-  const { from, to, size } = typeScale(r['type-scale']);
+  const { from, to, size } = typeScaleCurve(r['type-scale']);
   const exact = (v) => size(r.type[name].step, v);
   const knots = Array.from({ length: 9 }, (_, i) => from + (to - from) * i / 8);
   return width((v) => {

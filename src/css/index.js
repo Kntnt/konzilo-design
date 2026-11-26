@@ -1,6 +1,6 @@
 import { checkFingerprint } from '../generator/fingerprint.js';
 import { checkFormat, validateDesignFile } from '../generator/validate.js';
-import { number, rem, typeScale } from '../generator/fluid.js';
+import { number, rem, typeScaleCurve } from '../generator/fluid.js';
 import { checkContrast } from '../generator/surface.js';
 import { readingColumnQueries, readingColumnWindows } from '../generator/layout.js';
 import { surfaceCss } from './surface.js';
@@ -19,8 +19,9 @@ export async function emitCss(file) {
 function scaleCurve(r) {
   if (!r['type-scale']) return '';
   const { ratio, 'body-size': body } = r['type-scale'];
-  // The windows the scale runs between, which src/konzilo/images.js reads by the same typeScale() for a picture's sizes.
-  const { from, to } = typeScale(r['type-scale']);
+  // The windows the scale runs between, which src/konzilo/images.js reads by the same typeScaleCurve() for a picture's
+  // sizes.
+  const { from, to } = typeScaleCurve(r['type-scale']);
   const sizes = Object.entries(r.type).filter(([name]) => name !== 'body').map(([name, { step }]) => {
     const size = step ? `calc(var(--kn-type-body-size) * pow(var(--kn-type-base), ${step}))` : 'var(--kn-type-body-size)';
     return `  --kn-type-${name}-size: ${step < 0 ? `max(0.75rem, ${size})` : size};`;

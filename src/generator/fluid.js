@@ -24,7 +24,7 @@ export const endpoints = (min, max, from, to) => ({ min, max, css: fluid(min, ma
  * @returns {{ from: number, to: number, size: (step: number, v: number) => number }} `size` in rem at a window `v` rem
  *   wide.
  */
-export function typeScale({ breakpoints: { min, max }, ratio, 'body-size': body }) {
+export function typeScaleCurve({ breakpoints: { min, max }, ratio, 'body-size': body }) {
   const [from, to] = [stepStart(min, max) / 16, max / 16];
   const share = (v) => Math.min(1, Math.max(0, (v - from) / (to - from)));
   const size = (step, v) => {
