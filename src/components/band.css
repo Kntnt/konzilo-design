@@ -20,11 +20,63 @@
   /* A band after its content, which a screen reader meets first. The Surface's own scrim, a background under the
      picture, gives way to the one above, so a picture that does not show leaves one scrim, not two. */
   .kn-band:has(> .kn-band-picture) { position: relative; background-image: none; }
-  /* A browser prints an <img> whether or not it prints backgrounds, and by default it does not: the scrim and the
-     Surface's colours would go, and its text be darkened for paper, over the picture. So the band prints them as they
-     are, as the picture showed in print before, when backgrounds were printed. */
+  /* In print a picture behind the text is an ordinary picture above it, and the text takes the page's colours (the
+     owner, 2026-11-26). A browser prints an <img> whether or not it prints backgrounds, and the scrim only with them,
+     so nothing that matters may be a background. The picture stands first in the band, before the trail, though a
+     screen reader still meets it after the text: whole, at its own proportions, as wide as the content area and at
+     most half the page high, centred, a column gap above the text. The band, a card with its picture behind
+     (cards.css) and a header the page starts under, which takes its first band's colours, take every role, the scheme
+     and the shadows of what they stand on, the page for a band, light or dark as the page prints, and the scrim is
+     clear. A card in a band of another colour takes that band's, as an ordinary card there does (the assistant's
+     choice, the same day). */
   @media print {
-    .kn-band:has(> .kn-band-picture) { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    :is(
+      .kn-band:has(> .kn-band-picture),
+      .kn-cards[data-kn-picture="behind"] .kn-card:has(> .kn-card-picture),
+      .kn-page:has(> .kn-page-main > .kn-band:first-child > .kn-band-picture) > .kn-header[data-kn-start="under"]
+    ) {
+      color-scheme: inherit;
+      --kn-surface-kind: inherit;
+      --kn-polarity: inherit;
+      --kn-background: inherit;
+      --kn-background-alt: inherit;
+      --kn-background-hover: inherit;
+      --kn-text: inherit;
+      --kn-text-muted: inherit;
+      --kn-border: inherit;
+      --kn-border-strong: inherit;
+      --kn-link: inherit;
+      --kn-accent: inherit;
+      --kn-focus: inherit;
+      --kn-info: inherit;
+      --kn-success: inherit;
+      --kn-warning: inherit;
+      --kn-error: inherit;
+      --kn-button-background: inherit;
+      --kn-button-text: inherit;
+      --kn-button-background-hover: inherit;
+      --kn-frame-color: inherit;
+      --kn-shadow-header: inherit;
+      --kn-shadow-header-panel: inherit;
+      --kn-shadow-panel: inherit;
+      --kn-shadow-page: inherit;
+      --kn-shadow-box: inherit;
+      --kn-shadow-box-lifted: inherit;
+      --kn-scrim: transparent;
+    }
+    .kn-band:has(> .kn-band-picture) { display: flex; flex-direction: column; }
+    .kn-band > .kn-band-picture {
+      order: -1;
+      position: static;
+      z-index: auto;
+      inline-size: auto;
+      block-size: auto;
+      max-inline-size: var(--kn-layout-content-area);
+      max-block-size: 50vh;
+      margin: 0 auto var(--kn-space-column-gap);
+    }
+    /* On the page's colours, a band on the page after it shares its space, as after a band of its own kind. */
+    .kn-band:has(> .kn-band-picture) + .kn-band:is(:not([data-kn-surface]), [data-kn-surface="page"]) { padding-block-start: 0; }
   }
   /* Two adjacent Bands on one background share one Band's space (the owner, 2026-11-25; page.md, point 3): the first
      keeps no end space, and the second starts with its own, the band space. A Hero keeps the band space under its text
