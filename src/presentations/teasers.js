@@ -5,7 +5,7 @@
 //
 // Plain JavaScript with no import of Astro's or the core's: the presentation's component hands it Astro's getEntry() and
 // getImage() (Cards.astro, Featured.astro, Filtered.astro), and the tests their own.
-import { teaserPictures } from '../konzilo/images.js';
+import { masterWidths, teaserPictures } from '../konzilo/images.js';
 import { iconHtml } from '../directives/icons.js';
 import { surfaceOf } from '../directives/surfaces.js';
 import { FILTER_GROUPS, FILTER_VALUES, filterKeys, itemMatches } from '../components/visitor-filters.js';
@@ -65,12 +65,12 @@ export function ratioOf(image) {
 
 // A post's picture as the attributes of its <img>, for a teaser or an opening: made by Astro's getImage() from the
 // post's image in the widths and with the sizes of where the design draws it (`drawn`, as src/konzilo/images.js gives
-// them), or as given; null for none.
+// them), each width by the core's rule against its master's width (masterWidths()), or as given; null for none.
 export async function postPicture(image, drawn, getImage) {
   if (!image?.src) return null;
   const alt = image.alt ?? '';
   if (typeof image.src === 'string' || !getImage || !drawn) return { src: String(image.src?.src ?? image.src), alt };
-  const made = await getImage({ src: image.src, widths: drawn.widths, sizes: drawn.sizes });
+  const made = await getImage({ src: image.src, widths: masterWidths(drawn.widths, image.src.width), sizes: drawn.sizes });
   return {
     src: made.src,
     srcset: made.srcSet?.attribute || undefined,
