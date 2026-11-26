@@ -20,7 +20,7 @@ import { startTool, loadCopy } from '../tool/server.js';
 import { copyFor } from '../presentation/copy-override.mjs';
 import { validateDesignFile, resolve } from '../src/generator/index.js';
 import { pageWidths, readingBoxes, SKETCH_WINDOWS } from '../presentation/src/page-sketch.js';
-import { imageContexts, drawnWidths } from '../src/konzilo/images.js';
+import { bodyPictures, imageContexts, drawnWidths } from '../src/konzilo/images.js';
 const exec = promisify(execFile);
 const root = pathResolve('node_modules/.cache/presentation-tests');
 const copy = JSON.parse(await readFile('presentation/copy.json', 'utf8'));
@@ -148,6 +148,15 @@ async function checkImages(page, inputs, fixture) {
     assert.equal(await row.locator('[data-sizes]').textContent(), sizes, `${fixture}: ${name}'s sizes`);
     assert.equal(await row.locator('[data-widths]').textContent(), widths.join(', '), `${fixture}: ${name}'s widths`);
   }
+  // Beside them, the sizes of each picture the design's own parts draw from a body (issue #38), a series' by its number
+  // of cards, from one to eight.
+  const drawn = page.locator('#details [data-body-pictures]');
+  const pictures = bodyPictures(resolved);
+  assert.deepEqual(await drawn.locator('[data-picture]').evaluateAll((rows) => rows.map((row) => row.dataset.picture)), pictures.map(({ key }) => key), `${fixture}: the pictures from a body`);
+  for (const { key, sizes } of pictures) assert.equal(await drawn.locator(`[data-picture="${key}"] [data-sizes]`).textContent(), sizes, `${fixture}: ${key}'s sizes`);
+  assert.deepEqual(pictures.filter(({ picture }) => picture === 'series').flatMap(({ counts }) => counts).sort((a, b) => a - b), [1, 2, 3, 4, 5, 6, 7, 8], `${fixture}: each number of cards once`);
+  // The row of three cards names them in words.
+  assert.match(await drawn.locator('[data-picture^="series-"]').nth(0).locator('th').textContent(), /cards/);
 }
 
 test('catalogue covers the specification and has the requested order', async () => {
@@ -189,7 +198,8 @@ test('copy has no unused keys and all values are strings', async () => {
     ...['start', 'alternate', 'corners', 'corners-bleed'].map((name) => `sections.picture-side.${name}`),
     ...['body', 'gallery', 'lightbox', 'hero', 'card'].map((name) => `images.${name}`),
     ...['behind', 'beside', 'none'].map((name) => `images.hero.${name}`),
-    ...['context', 'widths', 'sizes', 'ratio'].map((name) => `details.images.${name}`),
+    ...['context', 'widths', 'sizes', 'ratio', 'picture'].map((name) => `details.images.${name}`),
+    ...['series', 'section-photo.cropped', 'section-photo.badges', 'section-photo.offered', 'section-body.across', 'section-body.beside', 'section-body.corners', 'section-body.narrow', 'section-body.form', 'hero', 'hero-logo', 'badge', 'logo', 'symbol.item', 'symbol.heading'].map((name) => `details.picture.${name}`),
     ...['display', 'heading-1', 'heading-2', 'heading-3', 'heading-4', 'heading-5', 'heading-6', 'lead', 'body', 'small', 'label', 'before', 'after'].map((name) => `type.${name}`),
     ...['main', 'heading', 'heading-1', 'display', 'label', 'monospace'].map((name) => `role.${name}`),
     ...[100, 200, 300, 400, 500, 600, 700, 800, 900].map((name) => `weight.${name}`),

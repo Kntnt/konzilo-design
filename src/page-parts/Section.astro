@@ -9,6 +9,8 @@
 //
 // `level` is the heading's element, 2 by default; `headingId` its id, made from its words by default. The deck is the
 // prop `deck`, its words, or the slot `deck`, their HTML. `align="center"` centres the section, as on a :::section.
+// On a page whose template called designPage(), its pictures take the sizes of where the section draws them.
+import { contextIfAny } from '../directives/render/context.js';
 import { escapeText } from '../directives/render/html.js';
 import { section } from './parts.js';
 
@@ -16,4 +18,4 @@ const { surface, anchor, align, eyebrow, heading, level, headingId, deck, action
 const words = Astro.slots.has('deck') ? (await Astro.slots.render('deck')).trim() : deck ? escapeText(deck) : undefined;
 const body = (await Astro.slots.render('default')) ?? '';
 ---
-<Fragment set:html={section({ surface, anchor, align, eyebrow, heading, level, headingId, deck: words, actions, body })} />
+<Fragment set:html={section({ surface, anchor, align, eyebrow, heading, level, headingId, deck: words, actions, body }, contextIfAny(Astro))} />

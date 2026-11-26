@@ -19,6 +19,7 @@ import { defaultInputs, resolve as resolveDesign, DESIGN_FORMAT } from '../src/g
 import { MATH } from '../src/fonts/catalog.js';
 import { copyFonts } from '../src/konzilo/fonts.js';
 import { imageContexts } from '../src/konzilo/index.js';
+import { seriesPicture } from '../src/konzilo/images.js';
 import { serve } from './helpers/serve.js';
 
 const repo = fileURLToPath(new URL('..', import.meta.url));
@@ -114,6 +115,35 @@ The month's guides, and nothing else.
   - [jobs@gardens.example](mailto:jobs@gardens.example)
 
 :::`;
+
+// A series of three cards with pictures in a band across the content area (issue #38).
+const BEDS = md`::::section
+
+## Kinds of bed
+
+:::cards
+
+### Raised
+
+![A raised bed](../media/${PICTURE})
+
+Easy on the back.
+
+### Sunken
+
+![A sunken bed](../media/${PICTURE})
+
+Holds water.
+
+### Keyhole
+
+![A keyhole bed](../media/${PICTURE})
+
+Compost in the middle.
+
+:::
+
+::::`;
 
 // A page with no hero, as a legal page is written: its blocks loose at the top.
 // Formulas in a page's body, in the text and as a block, which the core writes as Temml's MathML (issue #33).
@@ -470,6 +500,7 @@ before(() => {
   write('content/pages/legal.md', page('What we keep about you', LEGAL));
   write('content/pages/formulas.md', page('Formulas', FORMULAS));
   write('content/pages/bands.md', page('Bands', BANDS));
+  write('content/pages/beds.md', page('Kinds of bed', BEDS));
   write('content/not-found.md', '---\ntitle: "This page is not here"\n---\n\nTry the [start page](/pages/garden/).\n');
   // The core's own demo settings, which hold every group the core asks for, with the articles' meta line in a format of the
   // owner's sentence and the pictures they name.
@@ -818,6 +849,63 @@ test('in a designed site built by the core, a hero\'s picture behind its text at
           await context.close();
         }
         assert.ok(loaded[2] / loaded[1] >= 1.4 && loaded[2] / loaded[1] <= 2.9, `${engine}: ${loaded[1]} px at density 1 and ${loaded[2]} px at density 2`);
+      } finally {
+        await browser.close();
+      }
+    }
+  } finally {
+    await server.close();
+  }
+});
+
+// A card's picture in a series of three across a band, in a site the core builds, at a phone's width and a wide window:
+// a browser loads the narrowest version that covers the width the design draws it at, by the number of cards, where it
+// loaded the body's, Narrow's on a wide window (issue #38).
+test('in a designed site built by the core, a card\'s picture in :::cards loads the version that covers how wide its series draws it, on a phone and a wide screen, at density 1 and 2', { skip: why ?? false, timeout: 600000 }, async (t) => {
+  if (!existsSync(join(site, 'dist/pages/beds/index.html'))) {
+    const built = await build('dist');
+    assert.equal(built.status, 0, built.output);
+  }
+  const resolved = JSON.parse(readFileSync(join(site, 'design/site.design.json'), 'utf8')).resolved;
+  const html = readFileSync(join(site, 'dist/pages/beds/index.html'), 'utf8');
+  const pictures = [...html.matchAll(/<img class="kn-card-picture" ([^>]*)>/g)].map(([, attributes]) => attributes);
+  assert.equal(pictures.length, 3, 'the series draws its three pictures');
+  const entities = { amp: '&', lt: '<', gt: '>', quot: '"', '#38': '&', '#39': "'" };
+  const attribute = (img, name) => new RegExp(`\\b${name}="([^"]*)"`).exec(img)?.[1].replace(/&(amp|lt|gt|quot|#38|#39);/g, (_, entity) => entities[entity]);
+  for (const img of pictures) assert.equal(attribute(img, 'sizes'), seriesPicture(resolved, 3).sizes, 'a series of three\'s sizes, in place of the body\'s');
+  const candidates = attribute(pictures[0], 'srcset').split(', ').map((candidate) => {
+    const [url, w] = candidate.trim().split(/\s+/);
+    return { url, width: Number(w.slice(0, -1)) };
+  });
+  // The core's body's and lightbox's widths, up to the master's 1600 px.
+  assert.deepEqual(candidates.map(({ width }) => width), [360, 509, 720, 1018, 1600]);
+  const server = await serve(join(site, 'dist'));
+  try {
+    for (const [engine, type] of ENGINES) {
+      const browser = await type.launch();
+      try {
+        for (const [width, height] of [[390, 844], [1440, 900]]) {
+          for (const density of [1, 2]) {
+            const context = await browser.newContext({ viewport: { width, height }, deviceScaleFactor: density });
+            const tab = await context.newPage();
+            const requested = new Set();
+            tab.on('request', (request) => requested.add(new URL(request.url()).pathname));
+            await tab.goto(`${server.origin}/pages/beds/`);
+            const card = tab.locator('.kn-card-picture').first();
+            await card.scrollIntoViewIfNeeded();
+            await tab.waitForFunction(() => [...document.querySelectorAll('.kn-card-picture')].every((image) => image.complete && image.naturalWidth > 0));
+            const { drawn, current } = await card.evaluate((image) => ({ drawn: image.getBoundingClientRect().width, current: new URL(image.currentSrc).pathname }));
+            const chosen = candidates.find(({ url }) => url === current);
+            const where = `${engine} at ${width} px, density ${density}: drawn ${drawn} px, ${current} loaded of ${candidates.map(({ width: w }) => w)}`;
+            assert.ok(chosen, where);
+            // The narrowest version at least as wide as the picture is drawn at this density, which all three engines
+            // take here; with the body's sizes a wide window loaded the 720 px version, and 1600 px at density 2.
+            assert.equal(chosen, candidates.find(({ width: w }) => w >= drawn * density), where);
+            assert.deepEqual([...requested].filter((path) => candidates.some(({ url }) => url === path)), [current], `${where}: the three cards load that version alone`);
+            t.diagnostic(`${engine}, ${width} px, density ${density}: drawn ${drawn} px, loaded the ${chosen.width} px version`);
+            await context.close();
+          }
+        }
       } finally {
         await browser.close();
       }

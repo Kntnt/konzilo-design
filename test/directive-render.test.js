@@ -12,6 +12,7 @@ import { DIRECTIVES, bodyFromSlot, groupEyebrows, renderDirective, withMark } fr
 import { toHtml } from '../src/directives/render/html.js';
 import { topElements } from '../src/directives/render/scan.js';
 import { iconHtml } from '../src/directives/icons.js';
+import { seriesPicture } from '../src/konzilo/images.js';
 import components from '../src/directives/components.json' with { type: 'json' };
 
 const md = String.raw;
@@ -728,11 +729,12 @@ Words.
   assert.equal(withMark('<p>A</p>', undefined), '<p>A</p>');
 });
 
-test('a part keeps what the core wrote of an image and an embed\'s player in its template', () => {
+test('a part keeps what the core wrote of an image and an embed\'s player in its template, the sizes of where it draws the picture in place of the body\'s', () => {
   const ctx = pageContext({ design: testDesign(), title: 'T' });
   const content = htmlToHast('<h3 id="one">One</h3><figure data-konzilo-block="2.1"><img src="/_astro/a.hash.webp" srcset="/_astro/a.400.webp 400w, /_astro/a.800.webp 800w" sizes="100vw" width="800" height="600" loading="lazy" decoding="async" alt="A bed"></figure><figure class="konzilo-embed" data-embed="youtube"><a href="https://www.youtube.com/watch?v=x">Watch</a><template><iframe src="https://www.youtube-nocookie.com/embed/x" title="A film" allowfullscreen></iframe></template></figure>', { fragment: true });
   const html = renderDirective('cards', {}, content, ctx);
-  assert.match(html, /<img class="kn-card-picture" src="\/_astro\/a\.hash\.webp" srcset="\/_astro\/a\.400\.webp 400w, \/_astro\/a\.800\.webp 800w" sizes="100vw" width="800" height="600" loading="lazy" decoding="async" alt="A bed" data-konzilo-block="2\.1">/);
+  const sizes = seriesPicture(ctx.design.resolved, 1).sizes.replace(/[().]/g, '\\$&');
+  assert.match(html, new RegExp(`<img class="kn-card-picture" src="/_astro/a\\.hash\\.webp" srcset="/_astro/a\\.400\\.webp 400w, /_astro/a\\.800\\.webp 800w" sizes="${sizes}" width="800" height="600" loading="lazy" decoding="async" alt="A bed" data-konzilo-block="2\\.1">`));
   assert.match(html, /<figure class="konzilo-embed" data-embed="youtube"><a href="https:\/\/www\.youtube\.com\/watch\?v=x">Watch<\/a><template><iframe src="https:\/\/www\.youtube-nocookie\.com\/embed\/x" title="A film" allowfullscreen><\/iframe><\/template><\/figure>/);
 });
 
