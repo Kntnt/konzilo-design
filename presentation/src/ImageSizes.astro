@@ -1,0 +1,61 @@
+---
+// How this design serves its pictures, in its own numbers (docs/spec/konzilo.md, Images): in each place the Konzilo
+// core shows one, how wide the design draws it on a phone and on a wide screen, as the Page page's drawing says them,
+// the steps of the one ladder a site makes of it, and whether it is cropped; then why the widths are what they are.
+// Plain words for a client: the sizes a site writes are the Details page's.
+import { imageContexts, drawnWidths, WIDEST } from '../../src/konzilo/images.js';
+import { SKETCH_WINDOWS } from './page-sketch.js';
+import { resolved, t, num } from './data.js';
+import './image-sizes.css';
+const contexts = imageContexts(resolved);
+const windows = Object.fromEntries(SKETCH_WINDOWS);
+const drawn = { phone: drawnWidths(resolved, windows.phone), wide: drawnWidths(resolved, windows.wide) };
+const whole = (value) => num(value, 0);
+// A figure and its unit never part at the end of a line.
+const px = (value) => t('value.px', { value: whole(value) }).replaceAll(' ', '\u00a0');
+// Every context's widths are steps of one ladder, which each row shows whole, its own steps marked.
+const ladder = [...new Set(Object.values(contexts).flatMap(({ widths }) => widths))].sort((a, b) => a - b);
+// A gallery's and a card's are the widest of a row of them, two side by side where two fit.
+const series = ['gallery', 'card'];
+const shown = (name, kind) => (series.includes(name) ? t('images.up-to', { width: px(drawn[kind][name]) }) : px(drawn[kind][name]));
+const hero = resolved.hero.picture === 'behind' ? 'images.hero.behind' : resolved.hero.picture === 'none' ? 'images.hero.none' : 'images.hero.beside';
+const shapes = {
+  body: t('images.body.shape'),
+  gallery: t('images.gallery.shape', { ratio: contexts.gallery.ratio }),
+  lightbox: t('images.lightbox.shape'),
+  hero: t(hero),
+  card: t('images.card.shape'),
+};
+const heads = { phone: t('images.phone', { width: px(windows.phone) }), wide: t('images.wide', { width: px(windows.wide) }), widths: t('images.widths') };
+// The worked example: a picture in body text, and the version a browser loads for it, the narrowest at least as wide.
+const loads = (width) => contexts.body.widths.find((step) => step >= width) ?? contexts.body.widths.at(-1);
+const anchor = t('images.anchor', {
+  wide: px(drawn.wide.body),
+  double: px(2 * drawn.wide.body),
+  phone: px(drawn.phone.body),
+  single: px(loads(drawn.phone.body)),
+  sharp: px(loads(2 * drawn.phone.body)),
+});
+---
+<section class="image-sizes reference" data-images>
+  <h2 data-kn-type="heading-3">{t('images.title')}</h2>
+  <p class="prose">{t('images.intro')}</p>
+  <table>
+    <thead><tr><th scope="col">{t('images.picture')}</th><th scope="col">{heads.phone}</th><th scope="col">{heads.wide}</th><th scope="col">{heads.widths}</th></tr></thead>
+    <tbody>
+      {Object.keys(contexts).map((name) => <tr data-context={name}>
+        <th scope="row">{t(`images.${name}`)}<span class="image-sizes-shape" data-shape>{shapes[name]}</span></th>
+        <td data-label={heads.phone}><span data-drawn="phone">{shown(name, 'phone')}</span></td>
+        <td data-label={heads.wide}><span data-drawn="wide">{shown(name, 'wide')}</span></td>
+        <td data-label={heads.widths}><ol class="image-sizes-ladder">{ladder.map((step) => contexts[name].widths.includes(step)
+          ? <li data-step data-made>{whole(step)}</li>
+          : <li data-step aria-hidden="true">{whole(step)}</li>)}</ol></td>
+      </tr>)}
+    </tbody>
+  </table>
+  <p class="prose image-sizes-note">{t('images.series')}</p>
+  <h3 data-kn-type="heading-4">{t('images.why')}</h3>
+  <p class="prose">{t('images.ladder')}</p>
+  <p class="prose">{anchor}</p>
+  <p class="prose">{t('images.range', { cap: px(WIDEST) })}</p>
+</section>

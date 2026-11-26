@@ -2,6 +2,7 @@
 import { componentPages } from '../catalog.js';
 import { t, resolved } from '../data.js';
 import Specimen from '../Specimen.astro';
+import ImageSizes from '../ImageSizes.astro';
 const { page, specimens } = Astro.props;
 const entry = componentPages.find(([id]) => id === page?.id);
 const crumbs = resolved.breadcrumbs;
@@ -24,3 +25,5 @@ const variants = entry?.[3] || [];
 {defaults.map((id) => <Specimen id={id} />)}
 {/* The variants follow the main specimen, each shown at once: a variant behind a disclosure is easily missed (owner, 2026-11-11). */}
 {variants.map((id) => <Specimen id={id} />)}
+{/* How the design serves its pictures, after the pictures, which the toolbar's switches do not change (konzilo.md, Images). */}
+{page?.id === 'media' && <ImageSizes />}

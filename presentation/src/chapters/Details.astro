@@ -4,7 +4,11 @@ import { readFile } from 'node:fs/promises';
 import { resolved as r, t, num, date } from '../data.js';
 import { typeOrder, faceName, families, range, px } from '../words.js';
 import { shownRole } from '../../../src/design-md/surfaces.js';
+import { imageContexts } from '../../../src/konzilo/images.js';
 const shipped = shippedIn(r.typefaces);
+// What fromDesign hands the core for each picture, as the site writes it (konzilo.md, Images); the Media page says it in
+// words for a client.
+const images = imageContexts(r);
 const licences = await Promise.all(shipped.map(({ licence }) => readFile(`src/fonts/${licence}`, 'utf8')));
 ---
 <details><summary>{t('details.contrast')}</summary>
@@ -21,6 +25,12 @@ const licences = await Promise.all(shipped.map(({ licence }) => readFile(`src/fo
 <details><summary>{t('details.type')}</summary><div class="table-scroll"><table><tbody>{typeOrder.map((style) => <tr><th>{t(`type.${style}`)}</th><td>{range(r.type[style].size)}</td></tr>)}</tbody></table></div></details>
 <details><summary>{t('details.space')}</summary><table><tbody>{Object.entries(r.space.steps).map(([step, value]) => <tr><th>{step}</th><td>{range(value)}</td></tr>)}</tbody></table></details>
 {['radius', 'shadow', 'layout'].map((kind) => <details><summary>{t(`details.${kind}`)}</summary><dl>{Object.entries(r[kind]).map(([name, value]) => <div><dt>{name}</dt><dd>{typeof value === 'object' ? range(value) : typeof value === 'number' ? px(value) : value}</dd></div>)}</dl></details>)}
+<details><summary>{t('details.images')}</summary>
+  <p class="prose">{t('details.images.note')}</p>
+  <div class="table-scroll"><table data-image-sizes><thead><tr>{['context', 'widths', 'sizes', 'ratio'].map((key) => <th>{t(`details.images.${key}`)}</th>)}</tr></thead><tbody>
+    {Object.entries(images).map(([name, { widths, sizes, ratio }]) => <tr data-context={name}><th><code>{name}</code></th><td data-widths>{widths.join(', ')}</td><td><code data-sizes>{sizes.split(', ').map((stretch, i, all) => <span>{stretch}{i < all.length - 1 && ', '}</span>)}</code></td><td>{ratio ?? t('details.images.whole')}</td></tr>)}
+  </tbody></table></div>
+</details>
 <details><summary>{t('details.fonts')}</summary>
   {families.map((family) => <p>{faceName(family)}</p>)}
   <p>{t('details.system-font')}</p>
