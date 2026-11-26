@@ -7,7 +7,7 @@ import { COMPONENT_GROUPS, ICONS, NOT_COMPONENTS } from './components.js';
 import { figureSection } from './figures.js';
 import { frameSections } from './frame.js';
 import { shownRole } from './surfaces.js';
-import { faceOf } from '../fonts/catalog.js';
+import { MATH, faceOf } from '../fonts/catalog.js';
 import { rem } from '../generator/fluid.js';
 import { frameFollows } from '../generator/surface.js';
 
@@ -303,6 +303,16 @@ function faceWords(family, assets) {
   return `- **${face.family}**, version ${face.version}, under ${licence}: ${where}. Use the variable font, declared with ${range}. ${italic}${axes}`;
 }
 
+// Formulas, in the one math font every design has (konzilo.md, Formulas), whatever its typefaces.
+function formulaWords(assets) {
+  const licence = licenceOf(MATH);
+  const own = assets?.fonts?.[MATH.family];
+  const where = own
+    ? `free to serve, in ${list(own.files.map((name) => `\`${name}\``))}, with its licence in \`${own.licence}\``
+    : `free to download and to serve, from ${downloadOf(MATH, licence)}, as \`fonts/static_otf_woff2/${MATH.upright}\` with its licence, \`OFL.txt\``;
+  return `**Formulas** are MathML, which the browser draws, in **${MATH.family}**, version ${MATH.version}, under ${licence}: ${where}. Use it as it is published, one upright file, declared with \`font-weight: ${MATH.weight}\` and \`font-display: swap\`, whatever the typefaces above; a browser fetches it only for a page that holds a formula, as it fetches any font only where text uses it. A formula takes the size and the colour of the text round it, \`text\` in body text on every Surface, and none of the text's weight, letter spacing, features or axes, but \`font-feature-settings: "dtls" off\`, so that an i keeps its dot. A block formula (\`display="block"\`) is as wide as itself (\`inline-size: fit-content\`), centred in the reading column, with 1em after it, as a paragraph has; where it is wider than the column, it scrolls sideways in a box of its own, from the left whatever the page's direction, and never widens the page. Equations are not numbered.`;
+}
+
 function typeSection({ resolved: r, project, assets }) {
   const { breakpoints } = r['type-scale'];
   const rows = STYLES.map(([name, style]) => {
@@ -341,7 +351,9 @@ Weight, line height, letter spacing, features and axes are in the \`typography\`
 
 The typefaces are free variable fonts. Serve them from the site itself, never from a font service, with \`font-display: swap\`:
 
-${faces.map((family) => faceWords(family, assets)).join('\n')}${assets?.fonts && Object.keys(assets.fonts).length ? `\n\n\`${assets.css}\` holds their \`@font-face\` rules, with addresses relative to that folder.` : ''}`;
+${faces.map((family) => faceWords(family, assets)).join('\n')}
+
+${formulaWords(assets)}${assets?.fonts && Object.keys(assets.fonts).length ? `\n\n\`${assets.css}\` holds the \`@font-face\` rules of every font file above, with addresses relative to that folder.` : ''}`;
 }
 
 function layoutSection({ resolved: r, project }) {
@@ -427,7 +439,7 @@ function sharedRules(r, assets) {
 - **Motion:** colour and hover changes and small turns take ${r.duration.feedback}ms; slides, panels opening and folding take ${r.duration.movement}ms; both ease with \`${r.easing.standard}\`. Under \`prefers-reduced-motion: reduce\` everything changes at once.
 - **Targets:** controls are at least 2.75rem tall; the header's icon controls are 2.5rem square.
 - **Right to left:** every recipe is in logical terms, start and end, so it mirrors, and arrows turn round.
-- **Print:** the header and footer stay in the flow, without their interactive parts or shadows.
+- **Print:** the header and footer stay in the flow, without their interactive parts or shadows, and a block formula shows whole and is kept on one page, its box not scrolling.
 
 ### Icons
 

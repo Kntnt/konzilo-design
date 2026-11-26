@@ -169,6 +169,22 @@ test('DESIGN.md gives type steps, sizes as CSS, the windows features switch on i
   assert.match(exported(DESIGNS[2]).body, /the system's own typeface, so there is nothing to serve/);
 });
 
+// Formulas in body text (issue #33): one math font for every design, whatever its typefaces.
+test('DESIGN.md says how a formula is drawn: in STIX Two Math, at the size and in the colour of its text, a block formula centred and scrolling in its own box, and in print', () => {
+  for (const inputs of DESIGNS) {
+    const { body } = exported(inputs);
+    const [formulas] = body.match(/^\*\*Formulas\*\*[^\n]*$/m) ?? [];
+    assert.ok(formulas, 'a paragraph on formulas');
+    assert.match(formulas, /MathML/);
+    assert.match(formulas, /\*\*STIX Two Math\*\*, version 2\.13 b171, under the SIL Open Font License 1\.1: free to download and to serve, from [^\n]*https:\/\/github\.com\/stipub\/stixfonts\/tree\/v2\.13b171[^\n]*`fonts\/static_otf_woff2\/STIXTwoMath-Regular\.woff2`/);
+    assert.match(formulas, /only for a page that holds a formula/);
+    assert.match(formulas, /the size and the colour of the text round it/);
+    assert.match(formulas, /centred in the reading column, with 1em after it/);
+    assert.match(formulas, /scrolls sideways in a box of its own[^.]*never widens the page/);
+    assert.match(body, /- \*\*Print:\*\*[^\n]*a block formula shows whole and is kept on one page/);
+  }
+});
+
 test('DESIGN.md gives space, the side margin and where running text stands, as values an agent can use', () => {
   for (const inputs of DESIGNS) {
     const { resolved: r, body } = exported(inputs);
@@ -345,7 +361,8 @@ test('the archive holds DESIGN.md and every file it names, logos, fonts with lic
       assert.ok(files.has(`icons/${set}/LICENSE`));
       for (const [name] of ICONS[set]) assert.match(files.get(`icons/${set}/${name}.svg`).toString('utf8'), /^<svg xmlns="http:\/\/www\.w3\.org\/2000\/svg" viewBox="0 0 24 24"[^>]*stroke="currentColor"/);
     }
-    for (const face of ['Source Serif 4', 'Inter']) assert.match(text, new RegExp(`\\*\\*${face}\\*\\*[^\\n]*free to serve, in \`fonts/[^\`]+\\.woff2\``));
+    for (const face of ['Source Serif 4', 'Inter', 'STIX Two Math']) assert.match(text, new RegExp(`\\*\\*${face}\\*\\*[^\\n]*free to serve, in \`fonts/[^\`]+\\.woff2\``));
+    assert.match(files.get('fonts/fonts.css').toString('utf8'), /@font-face \{ font-family: "STIX Two Math"; src: url\("\.\/STIXTwoMath-Regular\.woff2"\)/);
     assert.match(files.get('fonts/fonts.css').toString('utf8'), /@font-face \{ font-family: "Source Serif 4"; src: url\("\.\/[^"]+\.woff2"\)/);
     assert.doesNotMatch(text, /raw\.githubusercontent|ask for it|github\.com\/google\/fonts/, 'nothing is fetched where the archive holds it');
     assert.match(designMd(design, 'example.design.json'), /raw\.githubusercontent\.com\/lucide-icons/, 'DESIGN.md alone still links to the downloads');

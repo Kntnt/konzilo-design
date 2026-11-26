@@ -1,11 +1,11 @@
-// DESIGN.md with the files it names, for an archive: the logos, the font files of the typefaces the design uses with
-// their licences and @font-face rules, and the icons the components use with theirs. Everything comes from the design
-// file and this repository, so it works offline.
+// DESIGN.md with the files it names, for an archive: the logos, the font files of the typefaces the design uses and of the
+// formulas' font, with their licences and @font-face rules, and the icons the components use with theirs. Everything
+// comes from the design file and this repository, so it works offline.
 import { readFile } from 'node:fs/promises';
 import { dirname, isAbsolute, resolve } from 'node:path';
 import { logoExtension } from '../components/design-props.js';
 import { icons } from '../components/icons.js';
-import { shippedIn } from '../fonts/catalog.js';
+import { MATH, shippedIn } from '../fonts/catalog.js';
 import { filesOf, fontFaceRules } from '../konzilo/fonts.js';
 import { ICONS } from './components.js';
 import { designMd } from './index.js';
@@ -39,19 +39,17 @@ export async function designBundle(file, designFile, sourceName) {
     entries.push({ name, content: await logoBytes(logo, key, designFile) });
     assets.logos[key] = name;
   }
-  const faces = shippedIn(file.resolved.typefaces);
-  if (faces.length) {
-    const fonts = new URL('fonts/', repo);
-    const css = await readFile(new URL('fonts.css', fonts), 'utf8').catch((error) => {
-      if (error.code !== 'ENOENT') throw error;
-      throw new Error('This copy holds no fonts. Export from the design system\'s repository, or write DESIGN.md alone with -o DESIGN.md.');
-    });
-    for (const face of faces) {
-      for (const name of [...filesOf(face), face.licence]) entries.push({ name: `fonts/${name}`, content: await readFile(new URL(name, fonts)) });
-      assets.fonts[face.family] = { files: filesOf(face).map((name) => `fonts/${name}`), licence: `fonts/${face.licence}` };
-    }
-    entries.push({ name: assets.css, content: `/* The typefaces this design uses, beside their files. */\n${fontFaceRules(css, faces)}\n` });
+  const faces = [...shippedIn(file.resolved.typefaces), MATH];
+  const fonts = new URL('fonts/', repo);
+  const css = await readFile(new URL('fonts.css', fonts), 'utf8').catch((error) => {
+    if (error.code !== 'ENOENT') throw error;
+    throw new Error('This copy holds no fonts. Export from the design system\'s repository, or write DESIGN.md alone with -o DESIGN.md.');
+  });
+  for (const face of faces) {
+    for (const name of [...filesOf(face), face.licence]) entries.push({ name: `fonts/${name}`, content: await readFile(new URL(name, fonts)) });
+    assets.fonts[face.family] = { files: filesOf(face).map((name) => `fonts/${name}`), licence: `fonts/${face.licence}` };
   }
+  entries.push({ name: assets.css, content: `/* The typefaces this design uses, and the formulas' font, beside their files. */\n${fontFaceRules(css, faces)}\n` });
   for (const [set, licence] of [['lucide', 'LICENSE-lucide.txt'], ['tabler', 'LICENSE-tabler.txt']]) {
     for (const [name, , own = name] of ICONS[set]) {
       if (!icons[own]) throw new Error(`The icon ${own} is not in src/components/icons.js.`);
