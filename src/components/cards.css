@@ -133,4 +133,27 @@
     border-radius: max(0rem, calc(var(--kn-radius-card) - var(--kn-frame-width)));
   }
   .kn-cards[data-kn-picture="behind"] .kn-card > .kn-card-picture { aspect-ratio: auto; }
+  /* In print the card is an ordinary card on what it stands on, its picture above its text, cropped to 16:9 of its
+     width as card.css crops it, without the scrim, and its text in the colours band.css gives it (the owner,
+     2026-11-26). It drops its plate, its frame, padding and shadow, since its colours are no longer its own (the
+     assistant's choice, the same day). */
+  @media print {
+    .kn-cards[data-kn-picture="behind"] .kn-card:has(> .kn-card-picture) {
+      justify-content: flex-start;
+      min-block-size: 0;
+      padding: 0;
+      border: 0;
+      box-shadow: none;
+      overflow: visible;
+    }
+    .kn-cards[data-kn-picture="behind"] .kn-card > .kn-card-picture {
+      position: static;
+      z-index: auto;
+      inline-size: 100%;
+      block-size: auto;
+      aspect-ratio: 16 / 9;
+      margin: 0;
+      border-radius: var(--kn-radius-card);
+    }
+  }
 }
