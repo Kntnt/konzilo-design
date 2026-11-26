@@ -211,9 +211,35 @@ test('the header\'s call to action is the design\'s own where it has one, its wo
   assert.equal(headerProps({ ...settings.header, cta: false }, { name: 'A', cta: OWN_CTA }).cta, undefined);
 });
 
-// The preview's frames: the page at each end, and the large menu held open under it.
-const ends = async (page, selector) => Promise.all(['#view-wide', '#view-narrow'].map(async (view) => (await page.locator(`${view} ${selector}`).elementHandle()).contentFrame()));
-const inAll = (frames, check, arg) => Promise.all(frames.map((frame) => frame.waitForFunction(check, arg, { timeout: 15000 })));
+// The preview's frames, the wide end's first: the page at each end, and the large menu held open under it.
+const END_NAMES = ['wide', 'narrow'];
+const ends = async (page, selector) => Promise.all(END_NAMES.map(async (end) => (await page.locator(`#view-${end} ${selector}`).elementHandle()).contentFrame()));
+// What a frame shows, for a wait that failed: its address, whether it has a header and the large menu's entries in it,
+// which say whether it has taken the design typed yet, and whether the large menu's dialog is there, open and modal.
+const frameState = (frame) => Promise.race([
+  frame.evaluate(() => {
+    const header = document.querySelector('.kn-page > .kn-header');
+    const dialog = header?.querySelector('dialog[data-kn-panel="menu"]');
+    const words = (selector) => [...(header?.querySelectorAll(selector) ?? [])].map((node) => node.textContent.replace(/^\d+ \//, '').trim());
+    return {
+      address: location.href,
+      ready: document.readyState,
+      header: Boolean(header),
+      menu: [...words('.kn-megamenu-heading'), ...words('.kn-megamenu-links a')].join(', '),
+      dialog: dialog ? { open: dialog.open, modal: dialog.matches(':modal') } : 'none',
+    };
+  }),
+  new Promise((_, reject) => { setTimeout(() => reject(new Error('no answer in 10 s')), 10000).unref(); }),
+]).catch((error) => ({ address: frame.url(), error: error.message.split('\n')[0] }));
+const framesSaid = async (frames) => (await Promise.all(frames.map(frameState))).map((state, index) => `${END_NAMES[index]}: ${JSON.stringify(state)}`).join('\n');
+// Waits for `check` in each frame, and when one does not come, says which end, after `what`, and what every frame shows.
+const inAll = (frames, check, arg, { what, timeout = 15000 } = {}) => Promise.all(frames.map(async (frame, index) => {
+  try {
+    await frame.waitForFunction(check, arg, { timeout });
+  } catch (error) {
+    throw new Error(`${[what, `${END_NAMES[index]} end`].filter(Boolean).join(', ')}: ${error.message.split('\n')[0]}\n${await framesSaid(frames)}`, { cause: error });
+  }
+}));
 
 test('the Start page takes the client\'s own menu and footer, saves them with undo, and the preview follows as they are typed', { timeout: 240000 }, async () => {
   const directory = await mkdtemp(join(tmpdir(), 'kn-own-tool-'));
@@ -439,7 +465,7 @@ test('the Start page takes the client\'s call to action, its words and where it 
 
 // Opening the large menu in its frame took the focus from the tool in Firefox, a moment later, and what was typed
 // meanwhile was lost; the Start page opens it as it arrives, where a field may already be in use.
-test('keys typed on the Start page as the large menu opens under it all arrive, in Firefox too', { timeout: 240000 }, async () => {
+test('keys typed on the Start page as the large menu opens under it all arrive, in Firefox too', { timeout: 300000 }, async () => {
   const directory = await mkdtemp(join(tmpdir(), 'kn-own-focus-'));
   const path = join(directory, 'lantern.design.json');
   await copyFile(EXAMPLE, path);
@@ -462,7 +488,18 @@ test('keys typed on the Start page as the large menu opens under it all arrive, 
           await page.waitForTimeout(600);
           assert.equal(await menu.inputValue(), typed, `${engine.name()}, round ${round}`);
         }
-        await inAll(await ends(page, '[data-panel-frame="menu"]'), () => document.querySelector('.kn-page > .kn-header dialog[data-kn-panel="menu"]')?.matches(':modal'));
+        // A frame takes each design the tool sent as the keys came, in turn, and on a busy machine it falls behind by many
+        // seconds. It opens the large menu with the first design it takes, so once it shows the menu typed last, the large
+        // menu must be open.
+        const menus = await ends(page, '[data-panel-frame="menu"]');
+        await inAll(menus, () => {
+          const words = (selector) => [...document.querySelectorAll(`.kn-page > .kn-header ${selector}`)].map((node) => node.textContent.replace(/^\d+ \//, '').trim()).join();
+          return words('.kn-megamenu-heading') === 'Round 3' && words('.kn-megamenu-links a') === 'Another';
+        }, undefined, { what: `${engine.name()}, the menu typed last`, timeout: 90000 });
+        for (const [index, frame] of menus.entries()) {
+          if (await frame.evaluate(() => document.querySelector('.kn-page > .kn-header dialog[data-kn-panel="menu"]')?.matches(':modal'))) continue;
+          assert.fail(`${engine.name()}, ${END_NAMES[index]} end: the frame shows the menu typed last, but the large menu is not open\n${await framesSaid(menus)}`);
+        }
       } finally {
         await browser.close();
       }
