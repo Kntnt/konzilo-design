@@ -16,7 +16,7 @@ const getEntry = async ({ collection, id }) => ({ id, collection, data: { name: 
 const getImage = async ({ src, widths }) => ({ src: `/_astro/${src.name}.webp`, srcSet: { attribute: widths.map((width) => `/_astro/${src.name}-${width}.webp ${width}w`).join(', ') }, attributes: { width: 1200, height: 800 } });
 const article = (id, data) => ({ entry: { id, collection: 'articles', data: { title: id, ...data } }, url: `/${id}/` });
 const POSTS = [
-  article('soil', { headline: 'Know your soil', excerpt: 'What  lies\nbelow.', category: [ref('categories', 'guides')], topics: [ref('topics', 'soil')], image: { src: { name: 'soil' }, alt: 'A spade in soil' } }),
+  article('soil', { headline: 'Know your soil', excerpt: 'What  lies\nbelow.', category: [ref('categories', 'guides')], topics: [ref('topics', 'soil')], image: { src: { name: 'soil', width: 1200, height: 800 }, alt: 'A spade in soil' } }),
   article('tools', { headline: 'The right tools', teaser: { text: 'Fewer, better.' }, category: [ref('categories', 'guides')], topics: [ref('topics', 'tools'), ref('topics', 'soil')] }),
   article('water', { headline: 'Water early', standfirst: 'Before the heat.', eyebrow: 'A note', topics: [ref('topics', 'water')] }),
 ];
@@ -71,9 +71,11 @@ test('cards and featured write one root, the mark on it, the pager after the car
   assert.match(cards, /^<div data-konzilo-block="2\.1" class="kn-post-list" data-kn-presentation="cards"><div class="kn-card-grid kn-cards">(<article class="kn-card" data-kn-surface="raised">.*?<\/article>){3}<\/div><nav class="konzilo-pager" aria-label="Pages">.*<\/nav><\/div>$/);
   const featured = await presentationHtml('featured', { posts: POSTS, options: {} }, ctx, { getEntry, getImage });
   assert.match(featured, /^<div class="kn-post-list" data-kn-presentation="featured"><div class="kn-featured"><article class="kn-card" data-kn-surface="raised"><img class="kn-card-picture" src="\/_astro\/soil\.webp" srcset="[^"]+" sizes="[^"]+"[^>]*><p class="kn-card-eyebrow" data-kn-type="label">Guides<\/p><h3 class="kn-card-heading" data-kn-type="heading-3">/);
-  // The latest post's picture in the widths and sizes of its place in the list.
-  const [latest] = teaserPictures(ctx.design.resolved, 'featured', POSTS.length);
-  assert.ok(featured.includes(`srcset="${latest.widths.map((width) => `/_astro/soil-${width}.webp ${width}w`).join(', ')}" sizes="${latest.sizes}"`));
+  // The latest post's picture in the widths and sizes of its place in the list, of 3:2, up to 2036 px, its master's
+  // 1200 px in place of those wider.
+  const [latest] = teaserPictures(ctx.design.resolved, 'featured', POSTS.length, [1.5]);
+  assert.deepEqual(latest.widths, [360, 509, 720, 1018, 1440, 2036]);
+  assert.ok(featured.includes(`srcset="${[360, 509, 720, 1018, 1200].map((width) => `/_astro/soil-${width}.webp ${width}w`).join(', ')}" sizes="${latest.sizes}"`));
   assert.equal((featured.match(/data-kn-type="heading-5"/g) ?? []).length, 2);
   assert.equal(await presentationHtml('filtered', { posts: [], options: {}, empty: 'Nothing yet.', 'data-konzilo-block': '4' }, ctx), '<div data-konzilo-block="4" class="kn-post-list" data-kn-presentation="filtered"><p>Nothing yet.</p></div>');
   await assert.rejects(presentationHtml('rows', { posts: [] }, ctx), /no presentation rows/);

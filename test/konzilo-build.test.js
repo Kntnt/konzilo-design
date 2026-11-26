@@ -961,7 +961,8 @@ test('in a designed site built by the core, each teaser\'s picture and an articl
   const term = listsOf(readFileSync(join(site, 'dist/category/guides/index.html'), 'utf8'));
   const soil = readFileSync(join(site, 'dist/articles/soil/index.html'), 'utf8');
   for (const { presentation, pictures } of [...garden, ...term, ...listsOf(soil)]) {
-    const expected = teaserPictures(resolved, presentation, pictures.length);
+    // Each of the master, 1600 × 1000.
+    const expected = teaserPictures(resolved, presentation, pictures.length, Array(pictures.length).fill(1.6));
     assert.ok(pictures.length > 0, presentation);
     pictures.forEach((img, at) => {
       assert.equal(attributeOf(img, 'sizes'), expected[at].sizes, `${presentation} of ${pictures.length}, teaser ${at}`);
@@ -974,7 +975,7 @@ test('in a designed site built by the core, each teaser\'s picture and an articl
   const more = /<h2 class="kn-heading-group-heading" data-kn-type="heading-2">Read more<\/h2>[\s\S]*?<\/section>/.exec(soil)[0];
   const related = [...more.matchAll(/<img class="kn-card-picture" ([^>]*)>/g)].map(([, attributes]) => attributes);
   assert.ok(related.length > 0);
-  for (const img of related) assert.equal(attributeOf(img, 'sizes'), seriesPicture(resolved, related.length, { list: true }).sizes);
+  for (const img of related) assert.equal(attributeOf(img, 'sizes'), seriesPicture(resolved, related.length, { list: true, ratio: 1.6 }).sizes);
   // The opening's main image behind its text, as the default design puts it, across the band and as tall as the hero, by
   // the picture's proportions, 1600 × 1000.
   const opening = /<section class="kn-band kn-hero kn-article-opening"[\s\S]*?<img class="kn-band-picture" ([^>]*)><\/section>/.exec(soil)?.[1];
@@ -996,7 +997,7 @@ test('in a designed site built by the core, a teaser card\'s picture loads the v
   const resolved = JSON.parse(readFileSync(join(site, 'design/site.design.json'), 'utf8')).resolved;
   const [list] = listsOf(readFileSync(join(site, 'dist/pages/journal/index.html'), 'utf8'));
   assert.equal(list.pictures.length, 3, 'the list draws three teasers');
-  for (const img of list.pictures) assert.equal(attributeOf(img, 'sizes'), teaserPictures(resolved, 'cards', 3)[0].sizes);
+  for (const img of list.pictures) assert.equal(attributeOf(img, 'sizes'), teaserPictures(resolved, 'cards', 3, [1.6, 1.6, 1.6])[0].sizes);
   const candidates = candidatesOf(list.pictures[0]);
   // The ladder's steps from the one that covers it on the narrowest window to the one that covers it at its widest on a
   // dense screen, 1440 px, which is within a tenth below the 1600 px master, so made at the master's width instead.
