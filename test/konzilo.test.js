@@ -139,11 +139,11 @@ test('fromDesign refuses, in words naming the file and what to do: no file, not 
   });
 });
 
-test('fromDesign returns only the body styles and the tokens, each style relative or a package\'s, and each one there', async () => {
+test('fromDesign returns only the body styles, the tokens and the images, each style relative or a package\'s, and each one there', async () => {
   const root = await site(typefaces({ main: 'Mona Sans' }));
   await copyFonts(join(root, 'design/site.design.json'), join(root, 'design/fonts'));
   const given = await fromDesign('./design/site.design.json', { root });
-  assert.deepEqual(Object.keys(given), ['bodyStyles', 'tokens']);
+  assert.deepEqual(Object.keys(given), ['bodyStyles', 'tokens', 'images']);
   assert.deepEqual(given.tokens, { colors: { primary: '--kn-theme-primary', base: '--kn-theme-base' } });
   assert.deepEqual(given.bodyStyles, [
     './node_modules/.cache/konzilo-design/site.core.css',
@@ -158,6 +158,31 @@ test('fromDesign returns only the body styles and the tokens, each style relativ
   }
   const file = JSON.parse(await readFile(join(root, 'design/site.design.json'), 'utf8'));
   assert.equal(await readFile(join(root, given.bodyStyles[0]), 'utf8'), coreCss(file.resolved));
+});
+
+// The core's contexts and what its konzilo({ images }) takes of each: widths, whole pixels up to its widest version,
+// 2520; the text of a sizes attribute; and an aspect ratio, a width and a height with a colon between, which the
+// lightbox takes none of (the core's docs/site-design.md).
+test('fromDesign gives the core the widths and sizes of every context it names, worked out from the design\'s own measures', async () => {
+  const other = { ...defaultInputs(), layout: { narrow: 560, wide: 1440 }, 'density-profile': 100, hero: { ...defaultInputs().hero, picture: 'end' } };
+  for (const inputs of [defaultInputs(), other]) {
+    const root = await site(inputs, (file) => file);
+    // Every design takes its fonts folder, for the formulas' font.
+    await copyFonts(join(root, 'design/site.design.json'), join(root, 'design/fonts'));
+    const { images } = await fromDesign('./design/site.design.json', { root });
+    assert.deepEqual(Object.keys(images), ['body', 'gallery', 'lightbox', 'hero', 'card']);
+    for (const [name, context] of Object.entries(images)) {
+      assert.deepEqual(Object.keys(context).filter((key) => !['widths', 'sizes', 'ratio'].includes(key)), [], name);
+      assert.ok(context.widths.length >= 2 && context.widths.every((width, i) => Number.isInteger(width) && width <= 2520 && (i === 0 || width > context.widths[i - 1])), name);
+      assert.equal(typeof context.sizes, 'string', name);
+      if ('ratio' in context) assert.match(context.ratio, /^\d+:\d+$/, name);
+    }
+    assert.ok(!('ratio' in images.lightbox));
+    const narrow = inputs.layout.narrow / 16;
+    // Narrow on a wide window, and on a phone the window less its side margins, as the CSS draws a body's figure.
+    assert.match(images.body.sizes, new RegExp(`^\\(min-width: [\\d.]+rem\\) ${narrow}rem, calc\\(94\\.2858vw - 0\\.8572rem\\)$`));
+    assert.ok(images.body.widths.includes(inputs.layout.narrow) && images.body.widths.includes(2 * inputs.layout.narrow), 'a wide screen gets a body\'s image at its width, at density 1 and 2');
+  }
 });
 
 test('fromDesign takes the root as a URL and a font folder elsewhere, and leaves a core file that has not changed alone', async () => {
@@ -335,7 +360,7 @@ test('the logos command refuses what it cannot write, in plain words', async () 
   await assert.rejects(writeLogos(join(bare, 'design/site.design.json'), join(bare, 'public/logos')), /no format number/);
 });
 
-test('fromDesign refuses a design whose logo has no file, naming the command, and still returns only the styles and tokens', async () => {
+test('fromDesign refuses a design whose logo has no file, naming the command, and still returns only the styles, tokens and images', async () => {
   // Every design takes its fonts folder, for the formulas' font, so each site here has it.
   const fonted = async (root) => {
     await copyFonts(join(root, 'design/site.design.json'), join(root, 'design/fonts'));
@@ -346,7 +371,7 @@ test('fromDesign refuses a design whose logo has no file, naming the command, an
   await assert.rejects(fromDesign('./design/site.design.json', { root }), /site\.design\.json has a logo, but \.\/public\/logos does not hold logo\.svg\. Run "konzilo-design logos \.\/design\/site\.design\.json -o \.\/public\/logos"/);
   assert.equal(existsSync(join(root, 'node_modules')), false, 'a refused design writes nothing');
   await writeLogos(path, join(root, 'public/logos'));
-  assert.deepEqual(Object.keys(await fromDesign('./design/site.design.json', { root })), ['bodyStyles', 'tokens']);
+  assert.deepEqual(Object.keys(await fromDesign('./design/site.design.json', { root })), ['bodyStyles', 'tokens', 'images']);
   await rm(join(root, 'public/logos/logo-dark.png'));
   await assert.rejects(fromDesign('./design/site.design.json', { root }), /does not hold logo-dark\.png/);
 
