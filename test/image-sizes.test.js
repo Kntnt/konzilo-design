@@ -364,25 +364,23 @@ function seriesItem(row, gap, count) {
 
 // The places a series of the directives stands in, each its row and its gap in a window `px` wide: across a band's
 // content area; in a section's body beside its picture, beside a heading with a form, at Narrow, or in two columns of at
-// least 18rem; and in an accordion across a band or beside its head, whose answer stands 0.75em in from each edge, or
-// 1.75em from its start where it is of questions, and whose series takes the component gap (konzilo.md, Images).
+// least 18rem; and in an accordion in each of them but two columns, which holds none, or beside a section's head, whose
+// answer stands 0.75em in from each edge, or 1.75em from its start where it is of questions, and whose series takes the
+// component gap (konzilo.md, Images, The widest place it stands in).
 function seriesPlaces(r, px) {
   const { column, component } = gaps(r, px);
   const area = contentArea(r, px);
   const body = typeSize(r.type.body.size, px);
   const share = sideBySide(px) ? (area - column) * 3 / 5 : area;
-  const places = [
-    [area, column],
-    [sideBySide(px) ? halfOf(r, px) : area, column],
-    [share, column],
-    [Math.min(area, r.layout.narrow), column],
-    [area >= 2 * 18 * 16 + column ? halfOf(r, px) : area, column],
-    ...[area, px >= 60 * 16 ? (area - column) * 3 / 5 : area].flatMap((row) => [[row - 1.5 * body, component], [row - 2.5 * body, component]]),
-  ];
+  const rows = [area, sideBySide(px) ? halfOf(r, px) : area, share, Math.min(area, r.layout.narrow)];
   // Where the design sets its pictures corner to corner, the text beside a cropped picture stands in half the content
   // area less the column gap (section.css).
-  if (r.section['picture-side'].startsWith('corners')) places.push([sideBySide(px) ? area / 2 - column : area, column]);
-  return places;
+  if (r.section['picture-side'].startsWith('corners')) rows.push(sideBySide(px) ? area / 2 - column : area);
+  return [
+    ...rows.map((row) => [row, column]),
+    [area >= 2 * 18 * 16 + column ? halfOf(r, px) : area, column],
+    ...[...rows, px >= 60 * 16 ? (area - column) * 3 / 5 : area].flatMap((row) => [[row - 1.5 * body, component], [row - 2.5 * body, component]]),
+  ];
 }
 const widestItem = (r, px, count) => Math.max(...seriesPlaces(r, px).map(([row, gap]) => seriesItem(row, gap, count)));
 
@@ -495,6 +493,33 @@ test('a series whose place the package knows says exactly the width an item of s
     }
   }
   assert.throws(() => seriesPicture(r, 3, { ratio: PHOTO, place: 'aside' }), /a series stands in no place aside/);
+});
+
+// Every place the package knows a series stands in, in a design: each row a series stands in, beside a photo corner to
+// corner only where the design sets its pictures so, and an accordion in each but a body in columns, which holds none,
+// and alone beside a section's head, of plain answers and of questions (konzilo.md, Images, The widest place it stands
+// in).
+function knownPlaces(r) {
+  const rows = ['across', 'beside', ...(r.section['picture-side'].startsWith('corners') ? ['corners'] : []), 'form', 'narrow', 'columns'];
+  return [...rows, ...[...rows.filter((row) => row !== 'columns'), 'head'].flatMap((accordion) => [{ accordion }, { accordion, questions: true }])];
+}
+
+test('a series whose place no part says says at least the width an item of so many is drawn at in every place the package knows, at every window', () => {
+  for (const [name, inputs] of Object.entries(DESIGNS)) {
+    const r = design(inputs);
+    const places = knownPlaces(r);
+    for (let count = 1; count <= 12; count++) {
+      const { sizes } = seriesPicture(r, count, { ratio: PHOTO });
+      for (let px = 320; px <= 3200; px += 1) {
+        const said = sizesAt(sizes, px);
+        for (const place of places) {
+          const drawn = seriesItem(...knownRow(r, px, place), count);
+          // An answer's 2.5em takes the body size's clamp, whose vw the CSS rounds to four places, two and a half times.
+          assert.ok(said > drawn - 0.1, `${name}, a series of ${count} at ${px}px: sizes says ${said}, an item is drawn ${drawn} ${JSON.stringify(place)}`);
+        }
+      }
+    }
+  }
 });
 
 test('a teaser whose list\'s place the package knows says exactly the width it is drawn at there, by its presentation', () => {
@@ -1420,7 +1445,8 @@ const PART_PLACES = {
 // with badges and offered; a figure in a section's body in each layout; a hero's logo and its picture beside or behind
 // its text, where the design puts it; badges, logos and symbols of several proportions; a series of cards with its
 // pictures behind their text, one of navigation and one of panoramas, each across a band; and the pictures a part passes
-// through and a series in a tab, deeper than the places a series is counted in.
+// through and a series in a tab, deeper than the places a series is counted in, a figure in a card's words in an
+// accordion of questions beside a section's photo among them, whose card is as wide as a series' item in any place.
 const TALL = Array.from({ length: 40 }, (_, i) => `Words, line ${i}.`).join('\n\n');
 const OTHERS_MD = [
   `::::hero\n\n${pic('hero-logo', 1000, 250)}\n\nStart small.\n\n${pic('hero-picture')}\n\n::::`,
@@ -1436,6 +1462,7 @@ const OTHERS_MD = [
   `:::::section\n\n::::tabs\n\n### Plans\n\n${pic('f-tab')}\n\n### Prices\n\nWords.\n\n::::\n\n:::::`,
   `::::::section\n\n:::::tabs\n\n### Plans\n\n::::accordion{first="open"}\n\n#### Plans\n\n${pic('f-deep')}\n\n::::\n\n### Prices\n\n${cardsMd('d-tab-3', 3, 4)}\n\n:::::\n\n::::::`,
   `::::section\n\n:::cards\n\n### One\n\n${pic('f-lead', 1600, 900)}\n\nWords.\n\n${pic('f-card')}\n\n### Two\n\nWords.\n\n:::\n\n::::`,
+  `:::::section\n\n${pic('p-cropped-accordion')}\n\n## Plans\n\n::::accordion{first="open"}\n\n### Which plan?\n\n:::cards\n\n### One\n\n${pic('f-accordion-lead', 1600, 900)}\n\nWords.\n\n${pic('f-accordion-card')}\n\n:::\n\n::::\n\n:::::`,
   `::::section\n\n## Plans\n\nWords.\n\nMore words.\n\n${pic('figure-across')}\n\n::::`,
   `::::section{align="center"}\n\n## Plans\n\nWords.\n\nMore words.\n\n${pic('figure-narrow')}\n\n::::`,
   `::::section\n\n## Order\n\n::form{name="contact"}\n\n${pic('figure-form')}\n\n::::`,
@@ -1487,7 +1514,7 @@ const drawnPictures = (tab, ids, boxes = []) => tab.evaluate(([ids, boxes]) => O
 // series in a tab, as wide as its widest item in any row the tab leaves room for.
 function atLeast(r, id, px) {
   if (id === 'hero-picture') return r.hero.picture !== 'behind' && (r.hero.picture.endsWith('-bleed') || px <= 40 * 16);
-  if (['photo-cropped', 'photo-short', 'f-card'].includes(id)) return true;
+  if (['photo-cropped', 'photo-short', 'f-card', 'f-accordion-card'].includes(id)) return true;
   return ['p-cropped-', 'd-tab-'].some((prefix) => id.startsWith(prefix));
 }
 
@@ -1496,7 +1523,7 @@ for (const name of ['default', 'other', 'small', 'large', 'inverted']) {
     const r = design(DESIGNS[name]);
     const { sizes, html } = await picturesPage(r);
     const ids = Object.keys(sizes);
-    for (const required of ['hero-logo', 'hero-picture', 'photo-offered', 'photo-badged', 'photo-cropped', 'photo-tall', 'photo-short', 'badge-wide', 'figure-across', 'figure-narrow', 'figure-form', 'figure-beside', 'logo-wide', 'symbol-item', 'symbol-heading', 's-band-3-0', 's-head-7-0', 'behind-3-0', 'nav-3-0', 'wide-3-0', 'f-answer', 'f-tab', 'f-deep', 'f-card', 'd-tab-3-0', ...Object.keys(TITLE_BANDS)]) assert.ok(ids.includes(required), `${name}: ${required} is drawn with versions`);
+    for (const required of ['hero-logo', 'hero-picture', 'photo-offered', 'photo-badged', 'photo-cropped', 'photo-tall', 'photo-short', 'badge-wide', 'figure-across', 'figure-narrow', 'figure-form', 'figure-beside', 'logo-wide', 'symbol-item', 'symbol-heading', 's-band-3-0', 's-head-7-0', 'behind-3-0', 'nav-3-0', 'wide-3-0', 'f-answer', 'f-tab', 'f-deep', 'f-card', 'f-accordion-lead', 'f-accordion-card', 'd-tab-3-0', ...Object.keys(TITLE_BANDS)]) assert.ok(ids.includes(required), `${name}: ${required} is drawn with versions`);
     // Corner to corner, a photo beside words taller than 85% of the window, as beside the tall words, a figure or a
     // series, is drawn wider than its sizes says, which the sizes leaves out, since it cannot know the words' height
     // (konzilo.md, Images); beside short words it is drawn no wider.

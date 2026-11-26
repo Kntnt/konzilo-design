@@ -445,15 +445,19 @@ function rowAndGap(r, place) {
 // half the content area less the column gap.
 const rowsIn = (r) => SERIES_ROWS.filter((row) => row !== 'head' && (row !== 'corners' || cornerToCorner(r)));
 
-// The places a series of the directives may stand in, each its row and its gap: across a band's content area; in a
-// section's body beside its picture, corner to corner, beside a heading with a form right after it, at Narrow, as a
-// centred section's or one with a form or a choice, and as an article's reading column is, and in two columns; and in an
-// accordion across a band or beside its head. Where nothing says which it stands in, a series' picture says the widest
-// it is drawn in any of them. A post list stands only directly in a section, which the checks hold it to, since a part
-// drawn from its tree cannot draw one (directives.md, What only the core can draw), so never in an accordion (`list`).
+// The places a series of the directives may stand in: each row a series stands in (rowsIn()), across a band's content
+// area, in a section's body beside its picture, corner to corner, beside a heading with a form right after it, at
+// Narrow, as a centred section's or one with a form or a choice, and as an article's reading column is, and in two
+// columns; and an accordion in each but a body in columns, which holds none, and alone beside a section's head, of plain
+// answers and of questions. Where nothing says which it stands in, a series' picture says the widest it is drawn in any
+// of them, so it never says less than is drawn (the owner, 2026-11-26, issue #44). A post list stands only directly in
+// a section, which the checks hold it to, since a part drawn from its tree cannot draw one (directives.md, What only the
+// core can draw), so never in an accordion (`list`).
 function seriesPlaces(r, { list = false } = {}) {
-  const accordion = (row) => [false, true].map((questions) => rowAndGap(r, { accordion: row, questions }));
-  return [...rowsIn(r).map((row) => rowAndGap(r, row)), ...(list ? [] : [...accordion('across'), ...accordion('head')])];
+  const rows = rowsIn(r);
+  if (list) return rows;
+  const accordions = [...rows.filter((row) => row !== 'columns'), 'head'].flatMap((accordion) => [{ accordion }, { accordion, questions: true }]);
+  return [...rows, ...accordions];
 }
 
 // Whether a part stands where the places above are counted, `within` the parts it stands in from the outermost in: at
@@ -466,7 +470,7 @@ const counted = (within) => within.length === 0 || (within.length === 1 && withi
 // row the part leaves room for, at either gap, as an upper bound (the assistant's choice, 2026-11-26).
 function seriesDrawn(r, count, { list = false, within = [], place } = {}) {
   if (place !== undefined) return seriesItem(...rowAndGap(r, place), count);
-  if (counted(within)) return greatest(...seriesPlaces(r, { list }).map(([row, gap]) => seriesItem(row, gap, count)));
+  if (counted(within)) return greatest(...seriesPlaces(r, { list }).map((one) => seriesItem(...rowAndGap(r, one), count)));
   const room = roomOf(r, within);
   const { columnGap, componentGap } = measures(r);
   return greatest(seriesItemWithin(room, columnGap, count), seriesItemWithin(room, componentGap, count));
@@ -778,7 +782,7 @@ export function teaserPictures(r, presentation, count, ratios = [], { place } = 
   const { columnGap } = measures(r);
   const crop = (drawn, at) => (isRatio(ratios[at]) ? drawnPicture(r, times(drawn, Math.max(1, ratios[at] * CARD.box))) : null);
   if (presentation === 'featured') {
-    const rows = place === undefined ? seriesPlaces(r, { list: true }).map(([row]) => row) : [rowAndGap(r, place)[0]];
+    const rows = (place === undefined ? seriesPlaces(r, { list: true }) : [place]).map((one) => rowAndGap(r, one)[0]);
     const [first, other] = [true, false].map((latest) => greatest(...rows.map((row) => featuredItem(row, columnGap, latest))));
     return Array.from({ length: count }, (_, at) => crop(at === 0 ? first : other, at));
   }
@@ -840,14 +844,9 @@ export function bodyPictures(r) {
   ];
 }
 
-// The places besides across a band a series may stand in, as the Details page lists them: each row a series stands in
-// (rowsIn()); an accordion in each but a body in columns, which holds none, and alone beside a section's head, of plain
-// answers and of questions; and none, where no part says.
-function otherPlaces(r) {
-  const rows = rowsIn(r).filter((row) => row !== 'across');
-  const accordions = ['across', ...rows.filter((row) => row !== 'columns'), 'head'].flatMap((accordion) => [{ accordion }, { accordion, questions: true }]);
-  return [...rows, ...accordions, undefined];
-}
+// The places besides across a band a series may stand in, as the Details page lists them (seriesPlaces()), and none,
+// where no part says.
+const otherPlaces = (r) => [...seriesPlaces(r).filter((place) => place !== 'across'), undefined];
 // A place's name for the Details page's HTML: its row, `accordion-<row>`, with `-questions` for one of questions, for an
 // accordion standing there, and `unknown` where no part says.
 function placeKey(place) {
