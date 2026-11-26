@@ -11,15 +11,14 @@
 import { getEntry } from 'astro:content';
 import { getImage } from 'astro:assets';
 import { contextOf } from '../directives/render/context.js';
-import { pictureOf } from '../presentations/teasers.js';
-import { articleOpening } from './parts.js';
+import { articleOpening, openingPicture } from './parts.js';
 
 const { entry, metaLine = [], topics = [], eyebrow, surface } = Astro.props;
 const ctx = contextOf(Astro);
 const data = entry?.data ?? {};
 const [category] = Array.isArray(data.category) ? data.category : [];
 const label = eyebrow ?? (category ? (await getEntry(category))?.data?.name : undefined);
-const picture = await pictureOf(data.image, ctx.design.resolved.hero?.picture === 'behind' ? 'behind' : 'hero', getImage);
+const picture = await openingPicture(data.image, ctx, getImage);
 const after = Astro.slots.has('after') ? await Astro.slots.render('after') : '';
 ---
 <Fragment set:html={articleOpening(ctx, { data, eyebrow: label, picture, metaLine, topics, after, surface })} />

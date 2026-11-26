@@ -8,7 +8,8 @@
 //   otherwise only a directive draws, with the markup a :::section in a body gets.
 // - pageBody(): a body as bands: a run of loose blocks at its top in a section of its own, the title band first where
 //   the body opens with no hero, and the H1 under the hero where the design puts it there.
-// - articleOpening(): an article's opening, a Hero of its main image, headline in three parts, standfirst and meta line.
+// - articleOpening(): an article's opening, a Hero of its main image, headline in three parts, standfirst and meta line;
+//   openingPicture() makes its main image in the widths and sizes of where the design draws it.
 // - articleBody(): an article's body in a Reading Area, its following menu beside it and its interview's questions marked.
 // - readMore(): a section of teasers under a heading, and a lone main action to the rest.
 import { DECK_LINE, sectionLayout, sectionParts } from '../directives/section.js';
@@ -19,7 +20,8 @@ import { iconHtml } from '../directives/icons.js';
 import { escapeAttribute, escapeText, tag, voidTag } from '../directives/render/html.js';
 import { breadcrumbsHtml, cornerToCorner, drawnSizes, groupEyebrows, sectionAttributes, sectionPhoto, withBodySizes } from '../directives/render/render.js';
 import { allElements, innerHtml, retagged, textOfHtml, topElements } from '../directives/render/scan.js';
-import { teaserCard } from '../presentations/teasers.js';
+import { pictureOf, teaserCard } from '../presentations/teasers.js';
+import { imageContexts } from '../konzilo/images.js';
 
 const classesOf = (element) => String(element?.attributes?.class ?? '').split(/\s+/).filter(Boolean);
 const hasClass = (element, name) => classesOf(element).includes(name);
@@ -350,6 +352,16 @@ export function metaLineHtml(pieces = [], topics = []) {
     written.trim() !== '' ? tag('span', { class: 'kn-article-line' }, written) : '',
     topics.length ? tag('span', { class: 'kn-article-topics' }, topics.map((topic) => tag(topic.url ? 'a' : 'span', { class: 'kn-pill', href: topic.url ?? undefined }, escapeText(topic.name)))) : '');
 }
+
+/**
+ * An article's main image as its opening draws it, made by Astro's getImage() in the widths and with the sizes of the
+ * design's hero context, which follows where the design puts a hero's picture, behind its text across the window or
+ * beside it (konzilo.md, Images); as given where it is no master.
+ * @param {{ src: object | string, alt?: string } | undefined} image The article's `image`.
+ * @param {object} ctx The page's context.
+ * @param {Function} [getImage] Astro's getImage().
+ */
+export const openingPicture = (image, ctx, getImage) => pictureOf(image, imageContexts(ctx.design.resolved).hero, getImage);
 
 /**
  * An article's opening (directives.md, An article, The opening): a Hero, its picture the article's main image, behind

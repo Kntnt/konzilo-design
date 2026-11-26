@@ -12,13 +12,13 @@ import { coreCss } from '../src/css/index.js';
 import { componentsCss } from '../src/css/components.js';
 import { heroProps } from '../src/components/design-props.js';
 import { pageContext } from '../src/directives/render/context.js';
-import { articleBody, looseSection, pageBody, section } from '../src/page-parts/parts.js';
+import { articleBody, articleOpening, looseSection, openingPicture, pageBody, section } from '../src/page-parts/parts.js';
 import { renderDirective } from '../src/directives/render/render.js';
-import { teaserCard } from '../src/presentations/teasers.js';
+import { presentationHtml, teaserCard } from '../src/presentations/teasers.js';
 import { imageContexts } from '../src/konzilo/index.js';
 import {
   ACCORDION, BADGE, CARD, GALLERY, HERO_STACKED, LOGO, LOGOS, OFFER, SECTION, SWITCH, SYMBOL, WIDEST, bandPictureSizes, drawnWidths, noWider,
-  pictureSizes, seriesPicture,
+  pictureSizes, seriesPicture, teaserPictures,
 } from '../src/konzilo/images.js';
 import { htmlToHast } from 'satteri';
 import { render } from './helpers/render.js';
@@ -562,6 +562,117 @@ test('a hero\'s picture beside its text and its logo, and a logo in a list of lo
   const [grower, mark] = imagesIn(html);
   assert.equal(grower.sizes, pictureSizes(ctx.design.resolved, 'logo', { ratio: 3 }));
   assert.equal(mark.sizes, undefined);
+});
+
+// ---------- A post list's teasers and an article's opening (issue #39) ----------
+
+// `featured` lays out by its list's own width, wherever the list stands (post-list.css): one column under 32rem; from
+// 32rem two, the latest across both; from 50rem three, the latest over two; the column gap apart.
+function featuredItem(row, gap, first) {
+  if (row >= 50 * 16) return first ? 2 * (row - 2 * gap) / 3 + gap : (row - 2 * gap) / 3;
+  if (row >= 32 * 16) return first ? row : (row - gap) / 2;
+  return row;
+}
+// The widest a teaser of each kind is drawn in any place a series stands in, in a window `px` wide: the latest post of
+// `featured` and another; and a lone teaser of `cards`, which fills its column beside a quotation (section.css,
+// body="columns"), where an item of a series of one takes a third of its row.
+const TEASERS = {
+  'featured-first': (r, px) => Math.max(...seriesPlaces(r, px).map(([row]) => featuredItem(row, gaps(r, px).column, true))),
+  'featured-other': (r, px) => Math.max(...seriesPlaces(r, px).map(([row]) => featuredItem(row, gaps(r, px).column, false))),
+  'cards-lone': (r, px) => Math.max(widestItem(r, px, 1), contentArea(r, px) >= 2 * 18 * 16 + gaps(r, px).column ? halfOf(r, px) : contentArea(r, px)),
+};
+const teaserOfKind = (r, kind) => {
+  const [presentation, which] = kind.split('-');
+  const pictures = teaserPictures(r, presentation, presentation === 'cards' ? 1 : 3);
+  return which === 'other' ? pictures[1] : pictures[0];
+};
+
+test('a teaser\'s picture in featured, and a lone teaser\'s in cards, says the widest it is drawn in any place a list stands in, at every window', () => {
+  for (const [name, inputs] of Object.entries(DESIGNS)) {
+    const r = design(inputs);
+    const steps = imageContexts(r).lightbox.widths;
+    for (const [kind, widest] of Object.entries(TEASERS)) {
+      const { sizes, widths } = teaserOfKind(r, kind);
+      let most = 0;
+      for (let px = 320; px <= 3200; px += 0.5) {
+        const [said, drawn] = [sizesAt(sizes, px), widest(r, px)];
+        most = Math.max(most, drawn);
+        const why = `${name}, ${kind} at ${px}px: sizes says ${said}, the widest teaser is ${drawn}`;
+        assert.ok(said > drawn - 0.1, why);
+        const jumps = Math.abs(widest(r, px - 0.1) - widest(r, px + 0.1)) > 0.3;
+        if (!jumps) assert.ok(said < drawn + 0.1, why);
+      }
+      // The ladder's steps that cover it from the narrowest window at density 1 to its widest at density 2.
+      const why = `${name}, ${kind}: ${widths}, for ${widest(r, 320)} at the narrowest and ${most} at the widest`;
+      assert.equal(widths[0], steps.find((step) => step >= widest(r, 320)), why);
+      assert.equal(widths.at(-1), steps.find((step) => step >= Math.min(2 * most, WIDEST)), why);
+      assert.deepEqual(widths, steps.filter((step) => step >= widths[0] && step <= widths.at(-1)), why);
+    }
+  }
+});
+
+// Astro's getImage() as a presentation hands it, here a version of each width asked for, of a master 1600 × 1000.
+const getImage = async ({ src, widths }) => ({
+  src: `/_astro/${src.name}.webp`,
+  srcSet: { attribute: widths.map((width) => `/_astro/${src.name}_${width}.webp ${width}w`).join(', ') },
+  attributes: { width: 1600, height: 1000 },
+});
+const postsOf = (count) => Array.from({ length: count }, (_, i) => ({ entry: { id: `post-${i}`, collection: 'articles', data: { title: `Post ${i}`, image: { src: { name: `post-${i}` }, alt: '' } } }, url: `/post-${i}/` }));
+const widthsIn = (srcset) => srcset.split(', ').map((candidate) => Number(candidate.split(' ')[1].slice(0, -1)));
+
+test('each teaser\'s picture in a presentation is made in the ladder\'s widths with the sizes of where the design draws it, by the number of posts', async () => {
+  for (const name of ['default', 'other', 'small']) {
+    const ctx = contextFor(DESIGNS[name]);
+    const r = ctx.design.resolved;
+    const ladder = imageContexts(r).lightbox.widths;
+    for (const presentation of ['cards', 'featured', 'filtered']) {
+      for (const count of [1, 2, 3, 4, 7]) {
+        const html = await presentationHtml(presentation, { posts: postsOf(count), options: {} }, ctx, { getImage });
+        const pictures = imagesIn(html).filter((image) => image.class === 'kn-card-picture');
+        const expected = teaserPictures(r, presentation, count);
+        const where = `${name}, ${presentation} of ${count}`;
+        assert.equal(pictures.length, count, where);
+        pictures.forEach((picture, at) => {
+          assert.equal(picture.sizes, expected[at].sizes, `${where}, teaser ${at}`);
+          assert.deepEqual(widthsIn(picture.srcset), expected[at].widths, `${where}, teaser ${at}`);
+          assert.ok(expected[at].widths.every((width) => ladder.includes(width)), `${where}: ${expected[at].widths} on the ladder ${ladder}`);
+        });
+        // A series' own, by its number of items, but for a lone teaser of `cards`, which may fill its column.
+        if (presentation !== 'featured' && !(presentation === 'cards' && count === 1)) assert.deepEqual(expected[0], seriesPicture(r, count), where);
+      }
+    }
+  }
+  // On a wide window the default design draws the latest post of `featured` wider than the others, and a lone teaser of
+  // `cards` beside a quotation wider than an item of a series of one.
+  const r = design({});
+  const [first, other] = teaserPictures(r, 'featured', 3);
+  assert.ok(sizesAt(first.sizes, 1440) > 1.5 * sizesAt(other.sizes, 1440));
+  assert.ok(sizesAt(teaserPictures(r, 'cards', 1)[0].sizes, 1440) > 1.5 * sizesAt(seriesPicture(r, 1).sizes, 1440));
+  assert.deepEqual(teaserPictures(r, 'filtered', 0), []);
+  assert.throws(() => teaserPictures(r, 'rows', 2), /no presentation rows/);
+});
+
+test('an article\'s opening makes its main image in the hero context\'s widths and sizes, beside its text or behind it', async () => {
+  const image = { src: { name: 'soil' }, alt: 'A spade in soil' };
+  for (const place of ['behind', 'start', 'end', 'start-bleed', 'end-bleed', 'none']) {
+    const ctx = contextFor(hero(place));
+    const { hero: context } = imageContexts(ctx.design.resolved);
+    const picture = await openingPicture(image, ctx, getImage);
+    assert.equal(picture.sizes, context.sizes, place);
+    assert.deepEqual(widthsIn(picture.srcset), context.widths, place);
+    const html = articleOpening(ctx, { data: { headline: 'Know your soil' }, picture });
+    const drawn = imagesIn(html).at(-1);
+    assert.equal(drawn.class, place === 'behind' ? 'kn-band-picture' : undefined, place);
+    assert.deepEqual([drawn.sizes, drawn.srcset], [context.sizes, picture.srcset], place);
+  }
+  // Behind the text it covers the band, the window's width, up to the cap; beside it, half the content area at most.
+  const behind = await openingPicture(image, contextFor(hero('behind')), getImage);
+  assert.equal(behind.sizes, bandPictureSizes());
+  assert.deepEqual(widthsIn(behind.srcset), [360, 509, 720, 1018, 1440, 2036, 2520]);
+  const beside = await openingPicture(image, contextFor(hero('end')), getImage);
+  assert.equal(beside.sizes, pictureSizes(design(hero('end')), 'hero', { side: 'end' }));
+  // A picture of its own address, as a site's public folder holds it, is written as given.
+  assert.deepEqual(await openingPicture({ src: '/public/soil.webp', alt: '' }, contextFor(), getImage), { src: '/public/soil.webp', alt: '' });
 });
 
 // In the browser: a page of each context as the package draws it, an article's body with a figure and galleries of

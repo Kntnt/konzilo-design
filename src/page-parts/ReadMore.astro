@@ -9,9 +9,13 @@ import { getEntry } from 'astro:content';
 import { getImage } from 'astro:assets';
 import { contextOf } from '../directives/render/context.js';
 import { teaserOf } from '../presentations/teasers.js';
+import { seriesPicture } from '../konzilo/images.js';
 import { readMore } from './parts.js';
 
 const { posts = [], heading, more, surface } = Astro.props;
-const teasers = await Promise.all(posts.map((post) => teaserOf(post, { getEntry, getImage })));
+const ctx = contextOf(Astro);
+// A series of so many teasers, each picture as wide as the design draws an item of it.
+const picture = posts.length > 0 ? seriesPicture(ctx.design.resolved, posts.length) : undefined;
+const teasers = await Promise.all(posts.map((post) => teaserOf(post, { getEntry, getImage, picture })));
 ---
-<Fragment set:html={readMore(contextOf(Astro), { teasers, heading, more, surface })} />
+<Fragment set:html={readMore(ctx, { teasers, heading, more, surface })} />
