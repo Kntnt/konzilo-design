@@ -133,4 +133,9 @@
     mask-repeat: no-repeat;
     mask-size: 100% calc(var(--kn-scrim-below) + var(--kn-scrim-fade-length)), 100% 100%;
   }
+  /* In print a picture behind the text stands above it (band.css), and the hero is as tall as its picture and its
+     text: a share of the screen means nothing on paper. */
+  @media print {
+    .kn-hero[data-kn-height]:has(> .kn-band-picture) { min-block-size: 0; }
+  }
 }
