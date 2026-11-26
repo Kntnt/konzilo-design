@@ -355,6 +355,10 @@ test('offline ZIP reader works from file URLs for normal, primary-only and stres
       await embed.locator('[data-kn-embed-load]').first().click();
       assert.equal(await embed.locator('iframe').count(), 0);
       await navigate(page, 'text');
+      // The Text page tells how the design draws formulas, in words alone: no live formula and no math font, which
+      // would add about 460 KB to every presentation (the owner, 2026-11-26).
+      assert.ok((await page.locator('#text .page-content').textContent()).includes(copy['text.formulas']), `${fixture}: text.formulas`);
+      assert.doesNotMatch(html, /<math[\s>]|@font-face\s*\{[^}]*STIX/);
       const accordion = await readyFrame(page, 'accordion');
       await accordion.locator('.kn-accordion summary').first().click();
       assert.equal(await accordion.locator('.kn-accordion details[open]').count(), 1);

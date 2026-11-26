@@ -113,6 +113,14 @@ The content security policy refuses network access, including third-party media;
 its local explanation remains interactive. See `presentation/README.md` for the
 copy override, offline asset and verification contracts.
 
+**Formulas, in words alone** (*decided* by the owner, 2026-11-26). The Text page says in two
+sentences how every design draws a formula in body text: in STIX Two Math, one math font for
+every design, at the size and in the colour of the text round it, the font fetched only for a
+page that holds a formula; a formula on a line of its own centred in the reading column, and
+one wider than the column scrolling sideways in its own box (konzilo.md, Formulas). It shows
+no live formula and inlines no math font, which would add about 460 KB to every presentation.
+`test/presentation.test.js` holds both.
+
 ## History (2026-11-05)
 
 The owner asked for history with undo and redo. Every change autosaves straight into the design file and the run's backup holds only how it began, so without this a slip of a control overwrites the earlier value for good.
