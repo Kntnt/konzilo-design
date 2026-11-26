@@ -573,21 +573,36 @@ function featuredItem(row, gap, first) {
   if (row >= 32 * 16) return first ? row : (row - gap) / 2;
   return row;
 }
-// The widest a teaser of each kind is drawn in any place a series stands in, in a window `px` wide: the latest post of
-// `featured` and another; and a lone teaser of `cards`, which fills its column beside a quotation (section.css,
-// body="columns"), where an item of a series of one takes a third of its row.
+// The places a post list stands in, each its row in a window `px` wide: only directly in a section, which the checks
+// hold it to, since a part drawn from its tree cannot draw one (directives.md, What only the core can draw), so a
+// series' places but an accordion's: across a band's content area, as a page's loose blocks and a term's page put it
+// too; in a section's body beside its picture, corner to corner where the design sets pictures so, after a form beside
+// the heading, at Narrow, as an article's reading column is, and in two columns of at least 18rem.
+function listPlaces(r, px) {
+  const area = contentArea(r, px);
+  const { column } = gaps(r, px);
+  const rows = [area, sideBySide(px) ? halfOf(r, px) : area, sideBySide(px) ? (area - column) * 3 / 5 : area, Math.min(area, r.layout.narrow), area >= 2 * 18 * 16 + column ? halfOf(r, px) : area];
+  if (r.section['picture-side'].startsWith('corners')) rows.push(sideBySide(px) ? area / 2 - column : area);
+  return rows;
+}
+// The widest a teaser of each kind is drawn in any place a post list stands in, in a window `px` wide: one of a series
+// of `count`, as cards and filtered draw them; the latest post of `featured` and another; and a lone teaser of `cards`,
+// which fills its column beside a quotation (section.css, body="columns"), where an item of a series of one takes a
+// third of its row.
+const widestTeaser = (r, px, count) => Math.max(...listPlaces(r, px).map((row) => seriesItem(row, gaps(r, px).column, count)));
 const TEASERS = {
-  'featured-first': (r, px) => Math.max(...seriesPlaces(r, px).map(([row]) => featuredItem(row, gaps(r, px).column, true))),
-  'featured-other': (r, px) => Math.max(...seriesPlaces(r, px).map(([row]) => featuredItem(row, gaps(r, px).column, false))),
-  'cards-lone': (r, px) => Math.max(widestItem(r, px, 1), contentArea(r, px) >= 2 * 18 * 16 + gaps(r, px).column ? halfOf(r, px) : contentArea(r, px)),
+  ...Object.fromEntries([1, 2, 3, 4, 5, 7].map((count) => [`filtered-${count}`, (r, px) => widestTeaser(r, px, count)])),
+  'featured-first': (r, px) => Math.max(...listPlaces(r, px).map((row) => featuredItem(row, gaps(r, px).column, true))),
+  'featured-other': (r, px) => Math.max(...listPlaces(r, px).map((row) => featuredItem(row, gaps(r, px).column, false))),
+  'cards-1': (r, px) => Math.max(widestTeaser(r, px, 1), contentArea(r, px) >= 2 * 18 * 16 + gaps(r, px).column ? halfOf(r, px) : contentArea(r, px)),
 };
 const teaserOfKind = (r, kind) => {
   const [presentation, which] = kind.split('-');
-  const pictures = teaserPictures(r, presentation, presentation === 'cards' ? 1 : 3);
-  return which === 'other' ? pictures[1] : pictures[0];
+  if (presentation === 'featured') return teaserPictures(r, presentation, 3)[which === 'first' ? 0 : 1];
+  return teaserPictures(r, presentation, Number(which))[0];
 };
 
-test('a teaser\'s picture in featured, and a lone teaser\'s in cards, says the widest it is drawn in any place a list stands in, at every window', () => {
+test('a teaser\'s picture says the widest it is drawn in any place a post list stands in, at every window, by its presentation and number of posts', () => {
   for (const [name, inputs] of Object.entries(DESIGNS)) {
     const r = design(inputs);
     const steps = imageContexts(r).lightbox.widths;
@@ -637,8 +652,9 @@ test('each teaser\'s picture in a presentation is made in the ladder\'s widths w
           assert.deepEqual(widthsIn(picture.srcset), expected[at].widths, `${where}, teaser ${at}`);
           assert.ok(expected[at].widths.every((width) => ladder.includes(width)), `${where}: ${expected[at].widths} on the ladder ${ladder}`);
         });
-        // A series' own, by its number of items, but for a lone teaser of `cards`, which may fill its column.
-        if (presentation !== 'featured' && !(presentation === 'cards' && count === 1)) assert.deepEqual(expected[0], seriesPicture(r, count), where);
+        // A series' own, by its number of items, in the places a post list stands in, but for a lone teaser of `cards`,
+        // which may fill its column.
+        if (presentation !== 'featured' && !(presentation === 'cards' && count === 1)) assert.deepEqual(expected[0], seriesPicture(r, count, { list: true }), where);
       }
     }
   }
@@ -648,6 +664,10 @@ test('each teaser\'s picture in a presentation is made in the ladder\'s widths w
   const [first, other] = teaserPictures(r, 'featured', 3);
   assert.ok(sizesAt(first.sizes, 1440) > 1.5 * sizesAt(other.sizes, 1440));
   assert.ok(sizesAt(teaserPictures(r, 'cards', 1)[0].sizes, 1440) > 1.5 * sizesAt(seriesPicture(r, 1).sizes, 1440));
+  // With no accordion to stand in, a list of three across a band on a 90rem window says what it draws, 22.92rem, where
+  // a series of three cards says 23.57rem.
+  assert.equal(sizesAt(teaserPictures(r, 'cards', 3)[0].sizes, 1440), 22.9167 * 16);
+  assert.ok(sizesAt(seriesPicture(r, 3).sizes, 1440) > 23.5 * 16);
   assert.deepEqual(teaserPictures(r, 'filtered', 0), []);
   assert.throws(() => teaserPictures(r, 'rows', 2), /no presentation rows/);
 });
