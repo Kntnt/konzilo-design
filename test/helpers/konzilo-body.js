@@ -238,14 +238,17 @@ function withLightboxes(html, page) {
 
 /**
  * What the core's Body renders of a body's HTML, with this package's components for its directives: a section given its
- * slot, a post list and a form as stand-ins, `<div class="test-post-list" …>` and `<form class="konzilo-form" …>`.
+ * slot, a post list and a form as stand-ins, `<div class="test-post-list" …>` and `<form class="konzilo-form" …>`, or a
+ * post list as `page.postList(attributes)` draws it, as its presentation would.
  * @param {string} html A body's HTML, as bodyHtml() gives it.
  * @param {object} ctx The page's context.
+ * @param {{ dialogs: number, postList?: (attributes: object) => string }} [page]
  */
 export function renderBody(html, ctx, page = { dialogs: 0 }) {
   return parts(html).map((part) => {
     if (typeof part === 'string') return withLightboxes(part, page);
     const mark = part.block === undefined ? '' : ` data-konzilo-block="${part.block}"`;
+    if (part.name === 'post-list' && page.postList) return page.postList(part.attributes);
     if (part.name === 'post-list') return `<div class="test-post-list"${mark} data-presentation="${part.attributes.presentation}"></div>`;
     if (part.name === 'form') return `<form class="konzilo-form"${mark} data-name="${part.attributes.name}"></form>`;
     if (!components[part.name]) return `<div data-directive="${part.name}"${mark}>${part.body ?? ''}</div>`;

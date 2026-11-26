@@ -395,27 +395,52 @@ const besideCorners = (area, gap) => sum(times(area, 1 / 2), times(gap, -1));
 // body="columns").
 const inColumns = (area, gap) => switched(area, sum(fixed(2 * SECTION.columns), gap), halfOf(area, gap), area);
 
-// The places a series of the directives stands in, each its row and its gap: across a band's content area, the place
-// the criteria hold exactly; in a section's body beside its picture, beside a heading with a form right after it, at
-// Narrow, as a centred section's or one with a form or a choice, and as an article's reading column is, and in two
-// columns; and in an accordion across a band or beside its head, whose series takes the component gap. A renderer does
-// not know which it stands in, so a series' picture says the widest it is drawn in any of them. A post list stands only
-// directly in a section, which the checks hold it to, since a part drawn from its tree cannot draw one (directives.md,
-// What only the core can draw), so never in an accordion (`list`).
-function seriesPlaces(r, { list = false } = {}) {
-  const { contentArea: area, narrow, columnGap: gap, componentGap, body } = measures(r);
+// The rows a series stands in at the top of a section's body, by the body's layout (sectionLayout()): `across` the
+// content area, as "Read more" and a page's loose blocks stand too; `beside` the photo, half the content area less half
+// the column gap from 48rem; `corners`, beside a photo corner to corner, half the content area less the column gap;
+// `form`, after a form beside the heading, three fifths of the content area less the column gap from 48rem; `narrow`, at
+// Narrow, as a centred section's or one with a form or a choice and an article's reading column; `columns`, a column of
+// a body in two, body="columns"; and `head`, where an accordion stands alone beside the section's head, three fifths from
+// 60rem (section.css, rules 1 to 4).
+export const SERIES_ROWS = Object.freeze(['across', 'beside', 'corners', 'form', 'narrow', 'columns', 'head']);
+function bodyRow(r, layout) {
+  const { contentArea: area, narrow, columnGap: gap } = measures(r);
   const share = times(sum(area, times(gap, -1)), SECTION.share);
-  const accordion = (row) => [ACCORDION.padding, ACCORDION.questions].map((padding) => [sum(row, times(body, -padding)), componentGap]);
+  switch (layout) {
+    case 'across': return area;
+    case 'beside': return fromWindow(SECTION.beside, halfOf(area, gap), area);
+    case 'corners': return fromWindow(SECTION.beside, besideCorners(area, gap), area);
+    case 'form': return fromWindow(SECTION.beside, share, area);
+    case 'narrow': return least(area, narrow);
+    case 'columns': return inColumns(area, gap);
+    case 'head': return fromWindow(SECTION.wide, share, area);
+    default: throw new Error(`a series stands in no place ${layout}: it stands ${SERIES_ROWS.join(', ')}, or in an accordion in one of them`);
+  }
+}
+// A place a series stands in, as its row and its gap: one of SERIES_ROWS, or `{ accordion, questions }` in an accordion
+// standing in one, whose answer stands 1.5em in from its edges, or 2.5em where it is of questions, and whose series takes
+// the component gap (accordion.css, cards.css).
+function placeRow(r, place) {
+  const { columnGap, componentGap, body } = measures(r);
+  if (typeof place === 'string') return [bodyRow(r, place), columnGap];
+  const padding = place?.questions ? ACCORDION.questions : ACCORDION.padding;
+  return [sum(bodyRow(r, place?.accordion), times(body, -padding)), componentGap];
+}
+
+// The places a series of the directives may stand in, each its row and its gap: across a band's content area; in a
+// section's body beside its picture, beside a heading with a form right after it, at Narrow, as a centred section's or
+// one with a form or a choice, and as an article's reading column is, and in two columns; and in an accordion across a
+// band or beside its head. Where nothing says which it stands in, a series' picture says the widest it is drawn in any
+// of them. A post list stands only directly in a section, which the checks hold it to, since a part drawn from its tree
+// cannot draw one (directives.md, What only the core can draw), so never in an accordion (`list`).
+function seriesPlaces(r, { list = false } = {}) {
+  const accordion = (row) => [false, true].map((questions) => placeRow(r, { accordion: row, questions }));
   const places = [
-    [area, gap],
-    [fromWindow(SECTION.beside, halfOf(area, gap), area), gap],
-    [fromWindow(SECTION.beside, share, area), gap],
-    [least(area, narrow), gap],
-    [inColumns(area, gap), gap],
-    ...(list ? [] : [...accordion(area), ...accordion(fromWindow(SECTION.wide, share, area))]),
+    ...['across', 'beside', 'form', 'narrow', 'columns'].map((row) => placeRow(r, row)),
+    ...(list ? [] : [...accordion('across'), ...accordion('head')]),
   ];
   // Corner to corner, the text beside a picture the section crops stands in half the content area less the column gap.
-  if (cornerToCorner(r)) places.push([fromWindow(SECTION.beside, besideCorners(area, gap), area), gap]);
+  if (cornerToCorner(r)) places.push(placeRow(r, 'corners'));
   return places;
 }
 
@@ -423,10 +448,12 @@ function seriesPlaces(r, { list = false } = {}) {
 // the top of a section's body or a page's, or in an accordion that stands there.
 const counted = (within) => within.length === 0 || (within.length === 1 && within[0] === 'accordion');
 
-// The widest an item of a series of `count` items is drawn: in any place a series, or a post list, stands in; and
-// within a part deeper than those, whose place a renderer does not know, in any row the part leaves room for, at either
-// gap, as an upper bound (the assistant's choice, 2026-11-26).
-function seriesDrawn(r, count, { list = false, within = [] } = {}) {
+// How wide an item of a series of `count` items is drawn: in its `place`, where the part around it knows it (issue #44,
+// the owner's decision of 2026-11-26: exact where the package can know the place); else the widest in any place a
+// series, or a post list, stands in; and within a part deeper than those, whose place a renderer does not know, in any
+// row the part leaves room for, at either gap, as an upper bound (the assistant's choice, 2026-11-26).
+function seriesDrawn(r, count, { list = false, within = [], place } = {}) {
+  if (place !== undefined) return seriesItem(...placeRow(r, place), count);
   if (counted(within)) return greatest(...seriesPlaces(r, { list }).map(([row, gap]) => seriesItem(row, gap, count)));
   const room = roomOf(r, within);
   const { columnGap, componentGap } = measures(r);
@@ -521,7 +548,7 @@ function heroBeside(r, side, { height, ratio } = {}) {
 // How wide the package's CSS draws each picture it draws from a body or a teaser, and whether that is at most the
 // picture's own width, its display width where the editor gave it one (`capped`), or stretched to its box whatever that
 // is.
-function pictureDrawing(r, picture, { layout, side, ratio, height, count, behind = false, list = false, within = [] } = {}) {
+function pictureDrawing(r, picture, { layout, side, ratio, height, count, behind = false, list = false, within = [], place } = {}) {
   const { contentArea: area, narrow, columnGap: gap } = measures(r);
   const beside = (then, otherwise = area) => fromWindow(SECTION.beside, then, otherwise);
   const half = halfOf(area, gap);
@@ -563,7 +590,7 @@ function pictureDrawing(r, picture, { layout, side, ratio, height, count, behind
     // A card's picture fills its item of a series of `count`: cropped to 16:9 of its width, or behind its text, to the
     // card, at least 20rem high (card.css, cards.css).
     case 'series': {
-      const item = seriesDrawn(r, count, { list, within });
+      const item = seriesDrawn(r, count, { list, within, place });
       const a = proportions(ratio);
       return { drawn: behind ? greatest(item, fixed(CARD.behind * a)) : times(item, Math.max(1, a * CARD.box)) };
     }
@@ -725,25 +752,28 @@ function featuredItem(row, gap, first) {
  * as the series' rule counts them; but a lone teaser of `cards` fills its column beside a quotation (section.css,
  * body="columns"); and in `featured` the latest post and the others by the list's own columns. Each is cropped to 16:9
  * of its width, so as wide as its picture's proportions, `ratios`, make that; none for a teaser whose picture's are not
- * given, as seriesPicture().
+ * given, as seriesPicture(). Where the list's `place` is known, as a section knows its body's (issue #44), each says
+ * the width it is drawn at there: a lone teaser of `cards` fills its column only in `columns`.
  * @param {object} r A design file's `resolved`.
  * @param {'cards' | 'featured' | 'filtered'} presentation
  * @param {number} count The number of posts the list draws.
  * @param {(number | undefined)[]} [ratios] Each teaser's picture's width over its height.
+ * @param {{ place?: string }} [options] Where the list stands, one of SERIES_ROWS but `head`, as seriesPicture() takes it.
  * @returns {({ widths: number[], sizes: string } | null)[]} One for each teaser, in order.
  */
-export function teaserPictures(r, presentation, count, ratios = []) {
+export function teaserPictures(r, presentation, count, ratios = [], { place } = {}) {
   if (count < 1) return [];
   const { contentArea, columnGap } = measures(r);
   const crop = (drawn, at) => (isRatio(ratios[at]) ? drawnPicture(r, times(drawn, Math.max(1, ratios[at] * CARD.box))) : null);
   if (presentation === 'featured') {
-    const rows = seriesPlaces(r, { list: true }).map(([row]) => row);
+    const rows = place === undefined ? seriesPlaces(r, { list: true }).map(([row]) => row) : [placeRow(r, place)[0]];
     const [first, other] = [true, false].map((latest) => greatest(...rows.map((row) => featuredItem(row, columnGap, latest))));
     return Array.from({ length: count }, (_, at) => crop(at === 0 ? first : other, at));
   }
   if (!['cards', 'filtered'].includes(presentation)) throw new Error(`the package has no post-list presentation ${presentation}`);
-  const series = seriesDrawn(r, count, { list: true });
-  const drawn = presentation === 'cards' && count === 1 ? greatest(series, inColumns(contentArea, columnGap)) : series;
+  const series = seriesDrawn(r, count, { list: true, place });
+  const lone = presentation === 'cards' && count === 1;
+  const drawn = !lone ? series : place === undefined ? greatest(series, inColumns(contentArea, columnGap)) : place === 'columns' ? placeRow(r, place)[0] : series;
   return Array.from({ length: count }, (_, at) => crop(drawn, at));
 }
 
@@ -752,31 +782,32 @@ export function teaserPictures(r, presentation, count, ratios = []) {
 // A ratio a picture the Details page lists has where its sizes follows its proportions: a camera's 3:2.
 const SHOWN_RATIO = 3 / 2;
 
-// The numbers of cards or posts from one to eight, those whose pictures have the same sizes together, each
-// { counts, ...picture(count) } in order of their first number.
-function byCounts(picture) {
+// The numbers of cards or posts from one to eight, those whose pictures have the same sizes and widths together, each
+// { counts, ...picture(count) } in order of their first number; those `leave(count, picture)` names left out.
+function byCounts(picture, leave = () => false) {
   const found = new Map();
   for (let count = 1; count <= 8; count++) {
     const made = picture(count);
-    const same = found.get(made.sizes);
-    found.set(made.sizes, { ...made, counts: [...(same?.counts ?? []), count] });
+    if (leave(count, made)) continue;
+    const key = `${made.sizes} ${made.widths ?? ''}`;
+    found.set(key, { ...made, counts: [...(found.get(key)?.counts ?? []), count] });
   }
   return [...found.values()];
 }
 
 /**
  * Every sizes a resolved design writes on a picture its parts draw from a body, for the presentation's Details page
- * (tool.md, Pictures at the right size): a card's picture by the number of cards, from one to eight, those of the same
- * sizes together, and so behind its text; a section's photo and a figure in its body by the section's layout, corner to
- * corner where the design sets its pictures so; a hero's picture behind its text or beside it, where the design puts it;
- * and a logo, a badge and a symbol at their widest, a narrower one by its proportions. A picture the CSS crops to cover
- * its box says how wide a picture of 3:2 is drawn there.
+ * (tool.md, Pictures at the right size): a card's picture across a band by the number of cards, from one to eight, those
+ * of the same sizes together, and so behind its text (its other places are placeRows()'); a section's photo and a figure
+ * in its body by the section's layout, corner to corner where the design sets its pictures so; a hero's picture behind
+ * its text or beside it, where the design puts it; and a logo, a badge and a symbol at their widest, a narrower one by
+ * its proportions. A picture the CSS crops to cover its box says how wide a picture of 3:2 is drawn there.
  * @param {object} r A design file's `resolved`.
  * @returns {{ key: string, picture: string, layout?: string, counts?: number[], sizes: string }[]}
  */
 export function bodyPictures(r) {
   const row = (picture, layout, options = {}) => ({ key: layout ? `${picture}-${layout}` : picture, picture, layout, sizes: pictureSizes(r, picture, { layout, ratio: SHOWN_RATIO, ...options }) });
-  const series = (behind) => byCounts((count) => ({ sizes: pictureSizes(r, 'series', { count, behind, ratio: SHOWN_RATIO }) }))
+  const series = (behind) => byCounts((count) => ({ sizes: pictureSizes(r, 'series', { count, behind, ratio: SHOWN_RATIO, place: 'across' }) }))
     .map(({ counts, sizes }) => ({ key: `series${behind ? '-behind' : ''}-${counts.join('-')}`, picture: behind ? 'series-behind' : 'series', counts, sizes }));
   const { picture: place = 'behind', height } = r.hero ?? {};
   return [
@@ -790,18 +821,62 @@ export function bodyPictures(r) {
   ];
 }
 
+// The places besides across a band a series may stand in, as the Details page lists them: each of SERIES_ROWS but
+// `head`, corner to corner where the design sets its pictures so; an accordion in each but a body in columns, which
+// holds none, and alone beside a section's head, of plain answers and of questions; and none, where no part says.
+function otherPlaces(r) {
+  const rows = SERIES_ROWS.filter((row) => !['across', 'head'].includes(row) && (row !== 'corners' || cornerToCorner(r)));
+  const accordions = ['across', ...rows.filter((row) => row !== 'columns'), 'head'].flatMap((accordion) => [{ accordion }, { accordion, questions: true }]);
+  return [...rows, ...accordions, undefined];
+}
+const placeKey = (place) => (place === undefined ? 'unknown' : typeof place === 'string' ? place : `accordion-${place.accordion}${place.questions ? '-questions' : ''}`);
+
+/**
+ * What a resolved design writes on a card's or a teaser's picture in each place besides across a band, where it differs
+ * from across a band, for the presentation's Details page (tool.md, Pictures at the right size; the assistant's choice,
+ * 2026-11-26, issue #44): a row for each place where anything differs, `key` its name, `accordion-<row>`, with
+ * `-questions` for one of questions, for an accordion standing there, and `unknown` where no part says where a series
+ * stands; its `entries` a card's picture by its number of cards, from one to eight, those of one sizes together, which a
+ * teaser in `cards` and `filtered` takes too, and where a list may stand, `featured`'s latest post and the others; and
+ * where no part says, a list's teasers by their number, which differ there from a card's. Each for a photo of 3:2.
+ * @param {object} r A design file's `resolved`.
+ * @returns {{ key: string, place?: string | object, entries: { key: string, picture: string, counts?: number[], sizes: string }[] }[]}
+ */
+export function placeRows(r) {
+  const card = (count, place) => pictureSizes(r, 'series', { count, ratio: SHOWN_RATIO, place });
+  const teasers = (presentation, count, place) => teaserPictures(r, presentation, count, Array(count).fill(SHOWN_RATIO), { place });
+  return otherPlaces(r).map((place) => {
+    const entries = byCounts((count) => ({ sizes: card(count, place) }), (count, made) => made.sizes === card(count, 'across'))
+      .map(({ counts, sizes }) => ({ key: `series-${counts.join('-')}`, picture: 'series', counts, sizes }));
+    if (place === undefined) {
+      entries.push(...byCounts((count) => ({ sizes: teasers('filtered', count)[0].sizes }), (count, made) => made.sizes === card(count, place))
+        .map(({ counts, sizes }) => ({ key: `teaser-${counts.join('-')}`, picture: 'teaser', counts, sizes })));
+    }
+    if (place === undefined || typeof place === 'string') {
+      const [across, here] = [teasers('featured', 2, 'across'), teasers('featured', 2, place)];
+      ['featured-first', 'featured-other'].forEach((picture, at) => {
+        if (here[at].sizes !== across[at].sizes) entries.push({ key: picture, picture, sizes: here[at].sizes });
+      });
+    }
+    return { key: placeKey(place), place, entries };
+  }).filter(({ entries }) => entries.length > 0);
+}
+
 /**
  * Every teaser's picture a resolved design makes in its post-list presentations, its widths and its sizes, for the
  * presentation's Details page (tool.md, Pictures at the right size): in `cards` and `filtered` by the number of posts,
- * from one to eight, those of the same sizes together; a lone teaser of `cards`; and the latest post of `featured` and
- * another; each for a photo of 3:2, which its 16:9 crop draws as wide as its card.
+ * from one to eight, those of the same sizes together, and the latest post of `featured` and another, across a band; and
+ * a lone teaser of `cards` beside a quotation, where it fills its column. Each is made in the widths of the widest place
+ * a list may stand in, which a presentation cannot know, and the section around it writes its sizes there (issue #44);
+ * the other places are placeRows()'. Each for a photo of 3:2, which its 16:9 crop draws as wide as its card.
  * @param {object} r A design file's `resolved`.
  * @returns {{ key: string, picture: string, counts?: number[], widths: number[], sizes: string }[]}
  */
 export function teaserRows(r) {
-  const shown = (presentation, count) => teaserPictures(r, presentation, count, Array(count).fill(SHOWN_RATIO));
-  const rows = byCounts((count) => shown('filtered', count)[0]).map(({ counts, widths, sizes }) => ({ key: `teaser-${counts.join('-')}`, picture: 'teaser', counts, widths, sizes }));
-  const [first, other] = shown('featured', 2);
-  rows.push({ key: 'teaser-lone', picture: 'teaser-lone', ...shown('cards', 1)[0] }, { key: 'featured-first', picture: 'featured-first', ...first }, { key: 'featured-other', picture: 'featured-other', ...other });
+  const shown = (presentation, count, place) => teaserPictures(r, presentation, count, Array(count).fill(SHOWN_RATIO), { place });
+  const made = (presentation, count, place) => shown(presentation, count, place).map((picture, at) => ({ ...picture, widths: shown(presentation, count)[at].widths }));
+  const rows = byCounts((count) => made('filtered', count, 'across')[0]).map(({ counts, widths, sizes }) => ({ key: `teaser-${counts.join('-')}`, picture: 'teaser', counts, widths, sizes }));
+  const [first, other] = made('featured', 2, 'across');
+  rows.push({ key: 'teaser-lone', picture: 'teaser-lone', ...made('cards', 1, 'columns')[0] }, { key: 'featured-first', picture: 'featured-first', ...first }, { key: 'featured-other', picture: 'featured-other', ...other });
   return rows;
 }

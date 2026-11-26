@@ -4,18 +4,27 @@ import { readFile } from 'node:fs/promises';
 import { resolved as r, t, num, date, copy } from '../data.js';
 import { typeOrder, faceName, families, range, px } from '../words.js';
 import { shownRole } from '../../../src/design-md/surfaces.js';
-import { bodyPictures, imageContexts, teaserRows } from '../../../src/konzilo/images.js';
+import { bodyPictures, imageContexts, placeRows, teaserRows } from '../../../src/konzilo/images.js';
 import SizesCode from '../SizesCode.astro';
 const shipped = shippedIn(r.typefaces);
 // What fromDesign hands the core for each picture, as the site writes it (konzilo.md, Images); the Media page says it in
-// words for a client. Beside them, the sizes the design's own parts write on the pictures they draw from a body, and
-// the widths and sizes its presentations of a post list make their teasers' pictures in.
+// words for a client. Beside them, the sizes the design's own parts write on the pictures they draw from a body, a
+// card's across a band and in each other place where it differs (the assistant's form, 2026-11-26, issue #44), and the
+// widths and sizes its presentations of a post list make their teasers' pictures in.
 const images = imageContexts(r);
 const fromBody = bodyPictures(r);
+const places = placeRows(r);
 const teasers = teaserRows(r);
 // A row's name, with the numbers of cards or posts it stands for in words.
 const cardCounts = new Intl.ListFormat(copy.lang, { type: 'disjunction' });
-const pictureName = (key, counts) => t(`details.picture.${key}`, { counts: counts ? cardCounts.format(counts.map(String)) : '' });
+const counted = (counts) => (counts ? cardCounts.format(counts.map(String)) : '');
+const pictureName = (key, counts) => t(`details.picture.${key}`, { counts: counted(counts) });
+// A place's name: an accordion's by the place it stands in.
+const placeName = (key) => {
+  const [, row, questions] = /^accordion-(.+?)(-questions)?$/.exec(key) ?? [];
+  return row ? t(questions ? 'details.place.accordion-questions' : 'details.place.accordion', { where: t(`details.place.${row}`) }) : t(`details.place.${key}`);
+};
+const entryName = ({ picture, counts }) => (['series', 'teaser'].includes(picture) ? t(`details.place.${picture}`, { counts: counted(counts) }) : pictureName(picture));
 const licences = await Promise.all(shipped.map(({ licence }) => readFile(`src/fonts/${licence}`, 'utf8')));
 ---
 <details><summary>{t('details.contrast')}</summary>
@@ -41,6 +50,11 @@ const licences = await Promise.all(shipped.map(({ licence }) => readFile(`src/fo
   <p class="prose">{t('details.images.drawn.note')}</p>
   <div class="table-scroll"><table data-body-pictures><thead><tr>{['picture', 'sizes'].map((key) => <th>{t(`details.images.${key}`)}</th>)}</tr></thead><tbody>
     {fromBody.map(({ key, picture, layout, counts, sizes }) => <tr data-picture={key}><th>{pictureName(layout ? `${picture}.${layout}` : picture, counts)}</th><td><SizesCode sizes={sizes} /></td></tr>)}
+  </tbody></table></div>
+  <h2 data-kn-type="heading-4">{t('details.images.places')}</h2>
+  <p class="prose">{t('details.images.places.note')}</p>
+  <div class="table-scroll"><table data-series-places><thead><tr>{['place', 'sizes'].map((key) => <th>{t(`details.images.${key}`)}</th>)}</tr></thead><tbody>
+    {places.map(({ key, entries }) => <tr data-place={key}><th>{placeName(key)}</th><td><dl>{entries.map((entry) => <div data-entry={entry.key}><dt>{entryName(entry)}</dt><dd><SizesCode sizes={entry.sizes} /></dd></div>)}</dl></td></tr>)}
   </tbody></table></div>
   <h2 data-kn-type="heading-4">{t('details.images.teasers')}</h2>
   <p class="prose">{t('details.images.teasers.note')}</p>
