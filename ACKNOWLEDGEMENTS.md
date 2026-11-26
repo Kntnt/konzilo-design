@@ -4,7 +4,7 @@ Konzilo Design stands on the work of others. This file names what it is built on
 
 ## Typefaces
 
-The library ships 47 variable typefaces in [`src/fonts/`](src/fonts/), each with its licence beside it as `LICENSE-<name>.txt`, which travels with the font into every export. `bin/design-fonts` fetches each from its source: the designers' own repository where that is better, and otherwise the family download from Google Fonts. The files are used as published. Two kinds of change are made: a TTF is recompressed to WOFF2, and Google Sans Flex, Noto Sans and Roboto Serif are cut to the Latin characters. Their licences reserve no font name, so a cut version may keep it.
+The library ships 47 variable typefaces in [`src/fonts/`](src/fonts/), and one math font, STIX Two Math, in which every design draws its formulas, each with its licence beside it as `LICENSE-<name>.txt`, which travels with the font into every export. `bin/design-fonts` fetches each from its source: the designers' own repository where that is better, and otherwise the family download from Google Fonts. The files are used as published. Two kinds of change are made: a TTF is recompressed to WOFF2, and Google Sans Flex, Noto Sans and Roboto Serif are cut to the Latin characters. Their licences reserve no font name, so a cut version may keep it. STIX Two Math is used whole: its licence reserves the name "TM Math", and STIX Two is a trademark of the IEEE.
 
 | Typeface | By | Licence |
 |---|---|---|
@@ -43,6 +43,7 @@ The library ships 47 variable typefaces in [`src/fonts/`](src/fonts/), each with
 | Red Hat Display, Red Hat Text and Red Hat Mono | MCKL, for Red Hat | OFL-1.1 |
 | JetBrains Mono | JetBrains: Philipp Nurullin and Konstantin Bulenkov | OFL-1.1 |
 | Recursive | Arrow Type and Stephen Nixon | OFL-1.1 |
+| STIX Two Math | The STIX Fonts Project: Ross Mills, John Hudson and Paul Hanslow, of Tiro Typeworks, with MicroPress and Coen Hoffman | OFL-1.1 |
 
 ## Icons and photos
 

@@ -211,6 +211,7 @@ The gallery uses Page and Band throughout, keeps its client entries bundled and 
   | The first heading in another typeface (rare) | Optional `typefaces.heading-1` input or CSS on `:root` | `--kn-typeface-heading-1`, follows heading |
   | The first heading in another colour (rare) | `type.heading-1-color`: `text` or `accent`, or a Surface-scoped CSS override | `--kn-text-heading-1`, follows `--kn-text` by default |
 
+- Formulas are drawn in one math font for every design, STIX Two Math, which is no role and no input (the owner, triage of issue #33, 2026-11-25; konzilo.md, Formulas).
 - The first-heading roles belong to the `heading-1` style. A Hero's heading often has the `display` style, and then the display role decides.
 - A first-heading colour set to a role stays checked for contrast. A literal colour is not checked, and on `:root` it would apply on dark Surfaces too.
 - A label is the small text around a heading: eyebrows, metadata, category pills and the megamenu's numbers. They share `data-kn-type="label"` and change together. Captions, key-figure texts and form help stay small text, and breadcrumbs follow small text in em, a little under it.
