@@ -18,10 +18,10 @@ import { contactOf } from '../directives/cards.js';
 import { serviceOf } from '../directives/actions.js';
 import { iconHtml } from '../directives/icons.js';
 import { escapeAttribute, escapeText, tag, voidTag } from '../directives/render/html.js';
-import { breadcrumbsHtml, groupEyebrows, sectionAttributes, sectionPhoto, withBodySizes } from '../directives/render/render.js';
+import { breadcrumbsHtml, groupEyebrows, sectionAttributes, sectionPhoto, withBodySizes, withSeriesSizes } from '../directives/render/render.js';
 import { allElements, innerHtml, retagged, textOfHtml, topElements } from '../directives/render/scan.js';
 import { postPicture, ratioOf, teaserCard } from '../presentations/teasers.js';
-import { cornerToCorner, heroPictureOf, imageSizes } from '../konzilo/images.js';
+import { cornerToCorner, heroPictureOf, imageSizes, seriesPicture } from '../konzilo/images.js';
 
 const classesOf = (element) => String(element?.attributes?.class ?? '').split(/\s+/).filter(Boolean);
 const hasClass = (element, name) => classesOf(element).includes(name);
@@ -31,14 +31,22 @@ const long = (text) => [...String(text ?? '').replace(/\s+/g, ' ').trim()].lengt
 // ---------- The title band ----------
 
 /**
- * A section's head of its own, for the page's H1: the trail, an eyebrow, the title and a deck.
+ * A section's head of its own, for the page's H1: the trail, an eyebrow, the title and a deck; and a body under it, read
+ * by the section's rules, whose figures and series take the sizes of where the section draws them (withBodySizes()).
  * @param {object} ctx The page's context.
- * @param {{ title?: string, eyebrow?: string, deck?: string, surface?: string, trail?: boolean }} [options] `title` the
- *   context's by default; `trail` false leaves the trail out; `surface` the band's, the page's by default.
+ * @param {{ title?: string, eyebrow?: string, deck?: string, surface?: string, trail?: boolean, body?: string }} [options]
+ *   `title` the context's by default; `trail` false leaves the trail out; `surface` the band's, the page's by default;
+ *   `body` the HTML under the head, as the search page holds the core's search.
  */
 export function titleBand(ctx, { title = ctx.title, eyebrow, deck, surface, trail = true, body = '' } = {}) {
   if (typeof title !== 'string' || title === '') throw new Error('A title band shows the page\'s title: give it to designPage(Astro, { title }), or as `title`.');
-  const rest = groupEyebrows(String(body ?? '')).trim();
+  const grouped = groupEyebrows(String(body ?? '')).trim();
+  // Its head is the title and the deck, and everything given it its body.
+  const own = blocksOfHtml(grouped);
+  const head = deck ? [0, 1] : [0];
+  const blocks = [{ kind: 'heading' }, ...(deck ? [{ kind: 'paragraph' }] : []), ...own];
+  const layout = sectionLayout(blocks, { media: [], head, deck: deck ? 1 : null, body: own.map((_, at) => head.length + at) }, { corners: cornerToCorner(ctx.design.resolved) });
+  const rest = grouped === '' ? '' : withBodySizes(grouped, ctx, layout);
   return tag('section', { class: 'kn-band kn-section', 'data-kn-surface': surface && surface !== 'page' ? surface : undefined },
     tag('div', { class: 'kn-band-content' },
       tag('header', { class: 'kn-section-head' },
@@ -437,6 +445,8 @@ export function articleBody(html, ctx, { label = ctx.words.articleMenu, menu = t
     }
   }
   flow += source.slice(from);
+  // A series at the top of the flow, and in an accordion there, stands in the reading column, at Narrow.
+  flow = withSeriesSizes(flow, ctx, { series: 'narrow', accordion: 'narrow' });
   const id = ctx.id('article-menu');
   const following = menu && stops.length >= 2
     ? tag('aside', { class: 'kn-aside-block', 'data-kn-sticky': 'true' },
@@ -451,6 +461,15 @@ export function articleBody(html, ctx, { label = ctx.words.articleMenu, menu = t
       side ? tag('div', { class: 'kn-reading-area-aside' }, side) : '',
       tag('div', { class: 'kn-reading-area-flow kn-body-text' }, flow.trim()))));
 }
+
+/**
+ * The widths and sizes of a teaser's picture in "Read more", which always stands across a band: an item of a series of
+ * so many posts there, by the picture's proportions; none where its master's are not known (seriesPicture()).
+ * @param {object} ctx The page's context.
+ * @param {number} count The number of posts "Read more" shows.
+ * @param {{ src?: object | string } | undefined} image The post's teaser image.
+ */
+export const readMorePicture = (ctx, count, image) => seriesPicture(ctx.design.resolved, count, { list: true, place: 'across', ratio: ratioOf(image) });
 
 /**
  * "Read more" (directives.md, An article, "Read more"): a section of teaser cards under a heading, and a lone main

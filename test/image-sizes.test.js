@@ -12,7 +12,7 @@ import { coreCss } from '../src/css/index.js';
 import { componentsCss } from '../src/css/components.js';
 import { heroProps } from '../src/components/design-props.js';
 import { pageContext } from '../src/directives/render/context.js';
-import { articleBody, articleOpening, looseSection, openingPicture, pageBody, section } from '../src/page-parts/parts.js';
+import { articleBody, articleOpening, looseSection, openingPicture, pageBody, readMorePicture, section, titleBand } from '../src/page-parts/parts.js';
 import { renderDirective } from '../src/directives/render/render.js';
 import { presentationHtml, teaserCard } from '../src/presentations/teasers.js';
 import { imageContexts } from '../src/konzilo/index.js';
@@ -955,6 +955,36 @@ test('a section writes on each series in its body, and in an accordion there, th
   assert.notEqual(teasers(columns)[0], teaserPictures(r, 'cards', 1, [1.6])[0].sizes);
   const loose = await presentationHtml('cards', { posts: [{ entry: { id: 'loose', data: { title: 'Loose', image: { src: '/public/soil.webp', alt: '' } } }, url: '/loose/' }, ...postsOf(1)], options: {} }, ctx, { getImage });
   assert.deepEqual(teasers(rendered(`::::section\n\n## Journal\n\n::post-list{type="article" number="2" presentation="cards"}\n\n::::`, ctx, [loose])), [undefined, teaserPictures(r, 'cards', 2, [undefined, 1.6], { place: 'across' })[1].sizes]);
+});
+
+test('the page parts write on each series the sizes of where they put it, and a body no part wraps keeps the widest of every place', () => {
+  const ctx = contextFor();
+  const r = ctx.design.resolved;
+  const series = (place, count = 3) => Array(count).fill(seriesPicture(r, count, { ratio: 16 / 9, place }).sizes);
+  const cards = rendered(cardsMd('s', 3), ctx);
+  const accordion = (heading) => rendered(`::::accordion{first="open"}\n\n### ${heading}\n\n${cardsMd('s', 3)}\n\n::::`, ctx);
+  // Where nothing says where a body stands, as a template that draws <Body> alone, the widest of every place.
+  assert.deepEqual(sizesOf(cards, 's-'), series(undefined));
+  // A page's loose blocks stand in a section of their own, read by its rules: across a band, and a head and an accordion
+  // alone side by side; a band of the body keeps its own.
+  assert.deepEqual(sizesOf(pageBody(cards, ctx, { title: false }), 's-'), series('across'));
+  assert.deepEqual(sizesOf(pageBody(`<h2 id="plans">Plans</h2>${accordion('Plans')}`, ctx, { title: false }), 's-'), series({ accordion: 'head' }));
+  assert.deepEqual(sizesOf(pageBody(rendered(`::::section{align="center"}\n\n## Plans\n\n${cardsMd('s', 3)}\n\n::::`, ctx), ctx), 's-'), series('narrow'));
+  // A template's Section by its own rules, and its title band's body as a section's; without the page's design the
+  // series keeps what it has.
+  assert.deepEqual(sizesOf(section({ heading: 'Plans', body: cards }, ctx), 's-'), series('across'));
+  assert.deepEqual(sizesOf(section({ heading: 'Plans', body: cards, align: 'center' }, ctx), 's-'), series('narrow'));
+  assert.deepEqual(sizesOf(section({ heading: 'Plans', body: cards }), 's-'), series(undefined));
+  assert.deepEqual(sizesOf(titleBand(ctx, { body: cards }), 's-'), series('across'));
+  assert.deepEqual(sizesOf(titleBand(ctx, { body: accordion('Which plan?') }), 's-'), series({ accordion: 'head', questions: true }));
+  // An article's body, its reading column at Narrow, an accordion in it too.
+  assert.deepEqual(sizesOf(articleBody(cards, ctx), 's-'), series('narrow'));
+  assert.deepEqual(sizesOf(articleBody(accordion('Plans'), ctx), 's-'), series({ accordion: 'narrow' }));
+  // "Read more" stands across a band: its teasers' widths and sizes are a list's of so many there, by each picture's
+  // proportions.
+  const image = { src: { name: 'soil', width: 1600, height: 1000 }, alt: '' };
+  assert.deepEqual(readMorePicture(ctx, 3, image), seriesPicture(r, 3, { list: true, ratio: 1.6, place: 'across' }));
+  assert.equal(readMorePicture(ctx, 3, { src: '/public/soil.webp', alt: '' }), null);
 });
 
 test('a hero\'s picture beside its text and its logo, and a logo in a list of logos, say the widths they are drawn at', () => {
