@@ -19,7 +19,7 @@ import { pageList, componentPages, ids } from '../presentation/src/catalog.js';
 import { startTool, loadCopy } from '../tool/server.js';
 import { copyFor } from '../presentation/copy-override.mjs';
 import { validateDesignFile, resolve } from '../src/generator/index.js';
-import { pageWidths, readingBoxes, SKETCH_WINDOWS } from '../presentation/src/page-sketch.js';
+import { pageWidths, readingBoxes, SKETCH_HEIGHTS, SKETCH_WINDOWS } from '../presentation/src/page-sketch.js';
 import { bodyPictures, imageContexts, drawnWidths, teaserRows } from '../src/konzilo/images.js';
 import { SECTION_LAYOUTS } from '../src/directives/section.js';
 const exec = promisify(execFile);
@@ -125,7 +125,8 @@ async function checkImages(page, inputs, fixture) {
   for (const [name, { widths, ratio }] of Object.entries(contexts)) {
     const row = section.locator(`[data-context="${name}"]`);
     for (const [kind, width] of SKETCH_WINDOWS) {
-      const drawn = px(drawnWidths(resolved, width)[name]);
+      // A hero's of 16:9, which the screen's height may draw wider than its place (the owner, 2026-11-26).
+      const drawn = px(drawnWidths(resolved, width, SKETCH_HEIGHTS[kind])[name]);
       // A gallery's and a card's are the widest of a row of them, two side by side where two fit.
       assert.equal(await words(row.locator(`[data-drawn="${kind}"]`)), ['gallery', 'card'].includes(name) ? `up to ${drawn}` : drawn, `${fixture}: ${name} on ${kind}`);
     }
@@ -137,6 +138,9 @@ async function checkImages(page, inputs, fixture) {
   }
   const hero = resolved.hero.picture === 'behind' ? 'behind' : resolved.hero.picture === 'none' ? 'none' : 'beside';
   assert.equal(await section.locator('[data-context="hero"] [data-shape]').textContent(), copy[`images.hero.${hero}`], `${fixture}: the hero's picture ${hero}`);
+  // The opening's numbers are for a photo of 16:9 on screens of these heights.
+  assert.equal(await words(section.locator('[data-hero-numbers]')), copy['images.hero.numbers'].replace('{phone}', px(SKETCH_HEIGHTS.phone)).replace('{wide}', px(SKETCH_HEIGHTS.wide)), `${fixture}: the opening's numbers`);
+  if (fixture === 'example' && resolved.hero.picture === 'behind') assert.equal(await words(section.locator('[data-context="hero"] [data-drawn="phone"]')), px(750), `${fixture}: a photo of 16:9 behind the text half a phone 844 px tall`);
   const text = await words(section);
   assert.doesNotMatch(text, /min-width|vw|sizes/, 'no code for the reader');
   // The worked example, in the example's own numbers: a body's picture on a phone and on a wide screen.

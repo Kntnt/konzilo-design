@@ -2,14 +2,15 @@
 // How this design serves its pictures, in its own numbers (docs/spec/konzilo.md, Images): in each place the Konzilo
 // core shows one, how wide the design draws it on a phone and on a wide screen, as the Page page's drawing says them,
 // the steps of the one ladder a site makes of it, and whether it is cropped; then why the widths are what they are.
-// Plain words for a client: the sizes a site writes are the Details page's.
+// An opening's for a picture of 16:9, which the core's hero context counts, at the screens' heights. Plain words for a
+// client: the sizes a site writes are the Details page's.
 import { imageContexts, drawnWidths, WIDEST } from '../../src/konzilo/images.js';
-import { SKETCH_WINDOWS } from './page-sketch.js';
+import { SKETCH_HEIGHTS, SKETCH_WINDOWS } from './page-sketch.js';
 import { resolved, t, num } from './data.js';
 import './image-sizes.css';
 const contexts = imageContexts(resolved);
 const windows = Object.fromEntries(SKETCH_WINDOWS);
-const drawn = { phone: drawnWidths(resolved, windows.phone), wide: drawnWidths(resolved, windows.wide) };
+const drawn = { phone: drawnWidths(resolved, windows.phone, SKETCH_HEIGHTS.phone), wide: drawnWidths(resolved, windows.wide, SKETCH_HEIGHTS.wide) };
 const whole = (value) => num(value, 0);
 // A figure and its unit never part at the end of a line.
 const px = (value) => t('value.px', { value: whole(value) }).replaceAll(' ', '\u00a0');
@@ -54,6 +55,7 @@ const anchor = t('images.anchor', {
     </tbody>
   </table>
   <p class="prose image-sizes-note">{t('images.series')}</p>
+  <p class="prose image-sizes-note" data-hero-numbers>{t('images.hero.numbers', { phone: px(SKETCH_HEIGHTS.phone), wide: px(SKETCH_HEIGHTS.wide) })}</p>
   <h3 data-kn-type="heading-4">{t('images.why')}</h3>
   <p class="prose">{t('images.ladder')}</p>
   <p class="prose">{anchor}</p>

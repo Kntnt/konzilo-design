@@ -299,14 +299,26 @@ function measures(r) {
 // Half a row less half the gap, as two columns of it are, and as a hero's or a section's picture beside its text is.
 const halfOf = (row, gap) => shareOf(row, gap, 2);
 
-// A hero's picture where the design puts it (hero.css): behind the text it covers the band, the window's width; beside
-// it, half the content area less half the column gap, or from the middle to the window's edge where it bleeds; and on a
-// window up to 40rem above the text, the content area's width or, bleeding, the window's. A design with no picture in
-// its hero puts one a page gives at the end (directives.md, hero). The box's width, which the context says.
+// The box of a hero's picture where the design puts it (hero.css): behind the text it covers the band, the window's
+// width; beside it, half the content area less half the column gap, or from the middle to the window's edge where it
+// bleeds; and on a window up to 40rem above the text, the content area's width or, bleeding, the window's. A design with
+// no picture in its hero puts one a page gives at the end (directives.md, hero).
 function heroPicture(place = 'behind', contentArea, columnGap) {
   if (place === 'behind') return WINDOW;
   const whole = place.endsWith('-bleed') ? WINDOW : contentArea;
   return fromWindow(HERO_STACKED, halfOf(whole, columnGap), whole, { strict: true });
+}
+
+// The proportions the `hero` context counts its picture at: 16:9, cropped to cover the hero's box at the design's
+// height, as an article's opening draws one, so a hero the core draws loads a version that covers any picture no wider
+// than 16:9, and at worst, for a photo of 3:2, one a step of the ladder wider than it needs (the owner, 2026-11-26).
+export const HERO_CONTEXT_RATIO = 16 / 9;
+
+// A hero's picture where the design puts it, of proportions `ratio`, cropped to cover its box at the design's height:
+// behind its text as the band's, beside it as the hero's, at the end where the design's hero has no picture.
+function heroDrawing(r, ratio) {
+  const { picture = 'behind', height } = r.hero ?? {};
+  return picture === 'behind' ? bandDrawing({ height, ratio }) : heroBeside(r, picture === 'none' ? 'end' : picture, { height, ratio });
 }
 
 // How wide the design draws a picture in each context, as a function of the window.
@@ -320,7 +332,8 @@ function drawings(r) {
     gallery: seriesItem(column, componentGap, 2, GALLERY.minimum),
     // The core's lightbox, which fits each picture whole in the window, so at most the window's width.
     lightbox: WINDOW,
-    hero: heroPicture(r.hero?.picture, contentArea, columnGap),
+    // A hero's picture where the design puts it, of 16:9.
+    hero: heroDrawing(r, HERO_CONTEXT_RATIO),
     // A card in a series across the content area, at its widest column.
     card: seriesItem(contentArea, columnGap, 2),
   };
@@ -338,15 +351,24 @@ export function imageContexts(r) {
   return contexts;
 }
 
+// How wide a drawing is drawn in a window `v` rem wide and `h` rem high, as its sizes says it (sizeOf()): its box's
+// width, or where it covers its box, as wide as its height makes the picture where that is wider.
+function drawnAt(drawing, v, h) {
+  const { box, tall } = drawingOf(drawing);
+  return tall ? Math.max(box.at(v), Math.min(tall.cap.at(v), tall.vh / 100 * h + tall.base.at(v))) : box.at(v);
+}
+
 /**
- * How wide a resolved design draws a picture in each of the core's contexts in a window `px` wide, in px at the default
- * text size, a gallery's and a card's at the widest column of a series; what the presentation tells a reader.
+ * How wide a resolved design draws a picture in each of the core's contexts in a window `px` wide and `high` tall, in
+ * px at the default text size, a gallery's and a card's at the widest column of a series, and a hero's of 16:9, which
+ * the window's height may draw wider than its box; what the presentation tells a reader.
  * @param {object} r A design file's `resolved`.
- * @param {number} px The window's width.
+ * @param {number} px The window's width. @param {number} high The window's height.
  * @returns {Record<'body' | 'gallery' | 'lightbox' | 'hero' | 'card', number>}
  */
-export function drawnWidths(r, px) {
-  return Object.fromEntries(Object.entries(drawings(r)).map(([name, drawn]) => [name, drawn.at(px / 16) * 16]));
+export function drawnWidths(r, px, high) {
+  if (!(high >= 0)) throw new TypeError(`drawnWidths() needs the window's height, by which a hero's picture is drawn, not ${high}`);
+  return Object.fromEntries(Object.entries(drawings(r)).map(([name, drawn]) => [name, drawnAt(drawn, px / 16, high / 16) * 16]));
 }
 
 // ---------- The pictures the package draws itself (issues #38, #39, #40; konzilo.md, Images) ----------
@@ -682,10 +704,7 @@ export function seriesPicture(r, count, options = {}) {
  * @returns {{ widths: number[], sizes: string } | null}
  */
 export function heroPictureOf(r, { ratio } = {}) {
-  if (!isRatio(ratio)) return null;
-  const { picture = 'behind', height } = r.hero ?? {};
-  const drawn = picture === 'behind' ? bandDrawing({ height, ratio }) : heroBeside(r, picture === 'none' ? 'end' : picture, { height, ratio });
-  return drawnPicture(r, drawn);
+  return isRatio(ratio) ? drawnPicture(r, heroDrawing(r, ratio)) : null;
 }
 
 // ---------- A post list's teasers (issue #39; konzilo.md, Images) ----------

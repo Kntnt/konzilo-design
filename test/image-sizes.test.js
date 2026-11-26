@@ -66,16 +66,13 @@ const DRAWN = {
   gallery: (r, px) => widestOfSeries(readingColumn(r, px), 12 * 16, fluid(r.space.roles['component-gap'], px)),
   // The core's lightbox fits the whole picture in the window, at most its width (its modal.css).
   lightbox: (r, px) => px,
-  // A hero's picture behind its text covers the band, the window's width; beside it, half the content area less half
-  // the column gap, out to the window's edge where it bleeds, and above the text on a window up to 40rem, as wide as
-  // the content area or, bleeding, the window (hero.css). With no picture in the design, a hero's picture stands at
-  // the end (directives.md, hero).
-  hero: (r, px) => {
-    const half = (whole) => whole / 2 - fluid(r.space.roles['column-gap'], px) / 2;
-    if (r.hero.picture === 'behind') return px;
-    if (r.hero.picture.endsWith('-bleed')) return px > 40 * 16 ? half(px) : px;
-    return px > 40 * 16 ? half(contentArea(r, px)) : contentArea(r, px);
-  },
+  // A hero's picture where the design puts it, a picture of 16:9 cropped to cover its box at the design's height in a
+  // window `high` tall (the owner, 2026-11-26): behind its text the band, the window's width; beside it, half the
+  // content area less half the column gap, out to the window's edge where it bleeds, and above the text on a window up
+  // to 40rem, as wide as the content area or, bleeding, the window (hero.css); each as wide as its height makes a
+  // picture of 16:9 where that is wider. With no picture in the design, a hero's picture stands at the end
+  // (directives.md, hero).
+  hero: (r, px, high = 900) => heroCovered(r, px, high, 16 / 9),
   // A card in a series across the content area, each at least 15rem, the column gap apart (cards.css).
   card: (r, px) => widestOfSeries(contentArea(r, px), 15 * 16, fluid(r.space.roles['column-gap'], px)),
 };
@@ -148,37 +145,57 @@ test('fromDesign\'s contexts give a body\'s image the reading column\'s width, N
   assert.equal(body.ratio, undefined, 'a body\'s image is drawn whole');
 });
 
+// The windows' heights a context's drawing is held at: the hero's grows with the window's height, the others do not.
+const HEIGHTS = { hero: [420, 900, 1600] };
 test('each context\'s sizes is the width the design draws its image at, at every window from a phone to a wide screen', () => {
   for (const [name, inputs] of Object.entries(DESIGNS)) {
     const r = design(inputs);
     const contexts = imageContexts(r);
     for (const [context, drawn] of Object.entries(DRAWN)) {
-      for (let px = 320; px <= 3200; px += 0.25) {
-        const said = sizesAt(contexts[context].sizes, px);
-        const why = `${name}, ${context} at ${px}px: sizes says ${said}, the design draws ${drawn(r, px)}`;
-        assert.ok(said > drawn(r, px) - 0.05, why);
-        // Where the drawing jumps, as a series changes its columns, the CSS's rounded numbers and the words' exact ones
-        // may part by a hair, and there the wider of the two holds.
-        const jumps = Math.abs(drawn(r, px - 0.1) - drawn(r, px + 0.1)) > 1;
-        if (!jumps) assert.ok(said < drawn(r, px) + 0.05, why);
+      for (const high of HEIGHTS[context] ?? [900]) {
+        for (let px = 320; px <= 3200; px += 0.25) {
+          const said = sizesAt(contexts[context].sizes, px, high);
+          const why = `${name}, ${context} at ${px} × ${high}px: sizes says ${said}, the design draws ${drawn(r, px, high)}`;
+          assert.ok(said > drawn(r, px, high) - 0.05, why);
+          // Where the drawing jumps, as a series changes its columns, the CSS's rounded numbers and the words' exact
+          // ones may part by a hair, and there the wider of the two holds.
+          const jumps = Math.abs(drawn(r, px - 0.1, high) - drawn(r, px + 0.1, high)) > 1;
+          if (!jumps) assert.ok(said < drawn(r, px, high) + 0.05, why);
+        }
       }
     }
   }
 });
 
+// The hero context counts a picture of 16:9, cropped to cover the hero's box at the design's height, as an article's
+// opening draws one (the owner, 2026-11-26), so a hero the core draws loads a version that covers any picture no wider.
+test('the hero context says how wide a picture of 16:9 is drawn, cropped to cover the hero\'s box at the design\'s height', () => {
+  const r = design({});
+  // Behind the text, half the window high: on a phone 390 × 844 the picture is drawn 750 px wide, nearly twice the
+  // band's width, and on a wide screen 1440 × 900 as wide as the band.
+  const { hero: context } = imageContexts(r);
+  assert.equal(context.sizes, 'max(100vw, 88.8889vh)');
+  assert.equal(Math.round(sizesAt(context.sizes, 390, 844)), 750);
+  assert.equal(sizesAt(context.sizes, 1440, 900), 1440);
+  assert.deepEqual(context, heroPictureOf(r, { ratio: 16 / 9 }));
+  for (const name of ['other', 'small', 'large', 'none']) assert.deepEqual(imageContexts(design(DESIGNS[name])).hero, heroPictureOf(design(DESIGNS[name]), { ratio: 16 / 9 }), name);
+});
+
 // The presentation tells a reader how wide each context's picture is drawn on a phone and on a wide screen, from the
-// same derivation as its sizes, so the two never disagree.
+// same derivation as its sizes, so the two never disagree; the hero's at the window's height too.
 test('the width each context draws its picture at in a window is the width the specs\' words make it', () => {
   const whole = (widths) => Object.fromEntries(Object.entries(widths).map(([context, px]) => [context, Math.round(px)]));
-  assert.deepEqual(whole(drawnWidths(design({}), 390)), { body: 354, gallery: 354, lightbox: 390, hero: 390, card: 354 });
-  assert.deepEqual(whole(drawnWidths(design({}), 1440)), { body: 720, gallery: 350, lightbox: 1440, hero: 1440, card: 575 });
+  assert.deepEqual(whole(drawnWidths(design({}), 390, 844)), { body: 354, gallery: 354, lightbox: 390, hero: 750, card: 354 });
+  assert.deepEqual(whole(drawnWidths(design({}), 1440, 900)), { body: 720, gallery: 350, lightbox: 1440, hero: 1440, card: 575 });
   for (const [name, inputs] of Object.entries(DESIGNS)) {
     const r = design(inputs);
-    for (let px = 320; px <= 3200; px += 3.25) {
-      const widths = drawnWidths(r, px);
-      for (const [context, drawn] of Object.entries(DRAWN)) {
-        const jumps = Math.abs(drawn(r, px - 0.1) - drawn(r, px + 0.1)) > 1;
-        if (!jumps) assert.ok(Math.abs(widths[context] - drawn(r, px)) < 0.05, `${name}, ${context} at ${px}px: ${widths[context]}, the design draws ${drawn(r, px)}`);
+    for (const high of [420, 900, 1600]) {
+      for (let px = 320; px <= 3200; px += 3.25) {
+        const widths = drawnWidths(r, px, high);
+        for (const [context, drawn] of Object.entries(DRAWN)) {
+          const jumps = Math.abs(drawn(r, px - 0.1, high) - drawn(r, px + 0.1, high)) > 1;
+          if (!jumps) assert.ok(Math.abs(widths[context] - drawn(r, px, high)) < 0.05, `${name}, ${context} at ${px} × ${high}px: ${widths[context]}, the design draws ${drawn(r, px, high)}`);
+        }
       }
     }
   }
@@ -202,17 +219,16 @@ test('a card\'s, a hero\'s and the lightbox\'s pictures are cropped to no ratio,
   assert.match(read('../src/components/cards.css'), /\.kn-cards\[data-kn-picture="behind"\] \.kn-card > \.kn-card-picture \{ aspect-ratio: auto; \}/);
   assert.match(read('../src/components/band.css'), /\.kn-cards\[data-kn-picture="behind"\] \.kn-card > \.kn-card-picture \{ z-index: -2; max-inline-size: none; object-fit: cover; object-position: center; \}/);
   assert.equal(lightbox.sizes, '100vw');
-  // The context names no picture's proportions, so it says the box's width, the band's; a band as tall as its text says
-  // the same, which is all a sizes can know of it.
-  assert.equal(opening.sizes, '100vw');
-  assert.equal(bandPictureSizes(), opening.sizes);
+  // The context counts a picture of 16:9 behind the text, the band's width or as wide as half the window's height makes
+  // it, as a Hero of that height says for one (the owner, 2026-11-26).
+  assert.equal(opening.sizes, bandPictureSizes({ height: 'half', ratio: 16 / 9 }));
   // Up to the cap, the master's longest side, which a hero across a wide, dense screen gets and no more.
   assert.deepEqual(lightbox.widths, [360, 509, 720, 1018, 1440, 2036, 2520]);
   assert.deepEqual(opening.widths, lightbox.widths);
   // Two columns of the content area at the most, 575 px on a wide window, so 1150 at density 2.
   assert.deepEqual(card.widths, [360, 509, 720, 1018, 1440]);
-  // Beside the text, the picture's widest is above it on a window of 40rem, the content area there, 590 px.
-  assert.deepEqual(imageContexts(design(DESIGNS.none)).hero.widths, [360, 509, 720, 1018, 1440]);
+  // Beside the text too, a picture of 16:9 grows with the window's height, up to the cap.
+  assert.deepEqual(imageContexts(design(DESIGNS.none)).hero.widths, lightbox.widths);
 });
 
 test('a sizes says its windows by min-width alone, which every engine reads and which holds no angle bracket for a reader of the HTML to stop at', () => {
@@ -295,10 +311,12 @@ test('every context\'s widths cover it from the narrowest window at density 1 to
     assert.equal(all.at(-1), WIDEST, `${name}: the cap is the widest`);
     for (const [context, drawn] of Object.entries(DRAWN)) {
       const { widths } = contexts[context];
-      const narrowest = drawn(r, 320);
+      // At its narrowest on the narrowest window, and the lowest, where a hero's picture is drawn as wide as its box;
+      // growing with the window's width or, a hero's, its height, up to the cap.
+      const narrowest = drawn(r, 320, 0);
       let widest = 0;
       for (let px = 320; px <= 3200; px += 1) widest = Math.max(widest, drawn(r, px));
-      const growing = drawn(r, 3200) > drawn(r, 3100);
+      const growing = drawn(r, 3200) > drawn(r, 3100) || drawn(r, 3200, 1e4) > drawn(r, 3200, 900);
       const most = growing ? WIDEST : Math.min(2 * widest, WIDEST);
       const why = `${name}, ${context}: ${widths} for ${narrowest} at the narrowest and ${most} at the most`;
       assert.ok(widths[0] >= narrowest && all.filter((one) => one < widths[0]).every((one) => one < narrowest), why);
@@ -415,6 +433,28 @@ test('a series of three or four in a band across a wide window says about as wid
 // its largest.
 const headerMost = (r) => Math.max(64, Math.max(r.header['logo-height'], 0.66 * scaleSize(r, 'heading-5', 1e5), 0.66 * scaleSize(r, 'small', 1e5)) + 24) + 1;
 
+// A hero's picture beside its text at `place`, of proportions `ratio`, by the hero's share of the window's height, in a
+// window `px` wide and `high` tall, as tall as its media: past 40rem the hero less its band space, and bleeding the hero
+// and the header; above the text, at least 16:9 of its width, and the hero less its band space and the column gap, or
+// bleeding, less one band space and with the header; the hero's text none (hero.css).
+function heroBesideAt(r, place, share, ratio, px, high) {
+  const bleed = place.endsWith('-bleed');
+  const whole = bleed ? px : contentArea(r, px);
+  const header = bleed ? headerMost(r) : 0;
+  const { column } = gaps(r, px);
+  const band = fluid(r.space.roles.band, px);
+  if (px > 40 * 16) return Math.max(whole / 2 - column / 2, ratio * (bleed ? share * high + (1 - share) * header : share * high - 2 * band));
+  return Math.max(whole, ratio * Math.max(whole * 9 / 16 + header, share * high - (bleed ? band - header : 2 * band) - column));
+}
+// A hero's picture where the design puts it, of proportions `ratio`, cropped to cover its box at the design's height:
+// behind its text the band, the window's width and at least its share of the window's height, the header's not taken
+// off; beside it as heroBesideAt() says, at the end where the design has no picture.
+function heroCovered(r, px, high, ratio) {
+  const share = HERO_HEIGHTS[r.hero.height] ?? 0;
+  if (r.hero.picture === 'behind') return Math.max(px, share * high * ratio);
+  return heroBesideAt(r, r.hero.picture === 'none' ? 'end' : r.hero.picture, share, ratio, px, high);
+}
+
 // How wide the package's CSS draws each other picture it draws from a body, from the specs' words, in a window `px`
 // wide and `high` tall: { picture, options, drawn }. `ratio` is a picture's width over its height. A picture cropped to
 // cover its box is drawn as wide as the box, or as its height times the picture's proportions where that is wider: a
@@ -428,19 +468,7 @@ function otherPictures(r) {
   // A hero's text beside its picture, and the picture, from a window past 40rem (hero.css).
   const heroHalf = (px, whole) => (px > 40 * 16 ? whole / 2 - column(px) / 2 : whole);
   const side = r.section['picture-side'];
-  const band = (px) => fluid(r.space.roles.band, px);
-  // A hero's picture beside its text, by the hero's share of the window's height, as tall as its media: past 40rem the
-  // hero less its band space, and bleeding the hero and the header; above the text, at least 16:9 of its width, and
-  // the hero less its band space and the column gap, or bleeding, less one band space and with the header.
-  const heroBeside = (place, share, ratio) => (px, high) => {
-    const bleed = place.endsWith('-bleed');
-    const whole = bleed ? px : area(px);
-    const header = bleed ? headerMost(r) : 0;
-    const box = heroHalf(px, whole);
-    if (px > 40 * 16) return Math.max(box, ratio * (bleed ? share * high + (1 - share) * header : share * high - 2 * band(px)));
-    const above = Math.max(whole * 9 / 16 + header, share * high - (bleed ? band(px) - header : 2 * band(px)) - column(px));
-    return Math.max(box, ratio * above);
-  };
+  const heroBeside = (place, share, ratio) => (px, high) => heroBesideAt(r, place, share, ratio, px, high);
   const cropped = (ratio) => (px, high) => {
     if (!sideBySide(px)) return side === 'corners-bleed' ? px : area(px);
     if (side === 'corners') return Math.max(area(px) / 2, 0.85 * high * ratio);
@@ -1040,12 +1068,13 @@ const said = (tab, all, engine) => tab.evaluate(async ([all, engine]) => {
   return widths;
 }, [all, engine]);
 
-// The widths the CSS draws each context's picture at. A hero's, the box it covers, beside the text its media and behind
-// it the band, since the context names no picture's proportions, by which the picture is drawn wider where the box is
-// taller than they are (konzilo.md, Images; the pictures the package draws itself say that, below).
+// The widths the CSS draws each context's picture at. A hero's, a picture of 16:9, which the context counts (the owner,
+// 2026-11-26), cropped to cover the box its picture fills, beside the text its media and behind it the band: as wide as
+// the box, or as the box's height makes it where that is wider.
 const drawn = (tab) => tab.evaluate(() => {
   const width = (selector) => document.querySelector(selector).getBoundingClientRect().width;
-  const hero = width(document.querySelector('#hero .kn-hero-media img') ? '#hero .kn-hero-media img' : '#hero > .kn-band-picture');
+  const box = document.querySelector('#hero .kn-hero-media img') ?? document.querySelector('#hero > .kn-band-picture');
+  const hero = Math.max(box.getBoundingClientRect().width, box.getBoundingClientRect().height * 16 / 9);
   const lightbox = document.querySelector('#lightbox');
   lightbox.showModal();
   const whole = width('#whole');
@@ -1073,7 +1102,13 @@ for (const name of ['default', 'other', 'small', 'large']) {
         const [is, says] = [await drawn(tab), await said(tab, sizes, engine)];
         const where = (context) => `${engine}, ${name}, ${context} at ${px}px: drawn ${is[context]}, sizes says ${says[context]}`;
         const near = engine === 'chromium' ? 1 : 0.6;
-        for (const context of ['body', 'gallery', 'hero', 'card']) assert.ok(Math.abs(is[context] - says[context]) <= near, where(context));
+        for (const context of ['body', 'gallery', 'card']) assert.ok(Math.abs(is[context] - says[context]) <= near, where(context));
+        // A hero's picture is cropped to cover a box as tall as a share of the window, whose layout's rounding a picture
+        // of 16:9 takes 16/9 times; beside the text above it on a phone, or bleeding, the sizes says no less than is
+        // drawn, by the text's height or the header's, which it cannot know (konzilo.md, Images).
+        const nearHero = engine === 'chromium' ? 1 + 6 / 64 : 0.6;
+        if (atLeast(r, 'hero-picture', px)) assert.ok(says.hero >= is.hero - nearHero, where('hero'));
+        else assert.ok(Math.abs(is.hero - says.hero) <= nearHero, where('hero'));
         // A gallery of three or four, and a series of three, have narrower columns than the widest a sizes says.
         for (const [context, more] of [['gallery', 'gallery3'], ['gallery', 'gallery4'], ['card', 'card3']]) assert.ok(is[more] <= says[context] + near, where(more));
         // The core's lightbox leaves room for its arrows beside the picture on a wide window.
