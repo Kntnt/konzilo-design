@@ -145,7 +145,11 @@ them, Pictures the design draws from a body, each `sizes` the design's own parts
 picture they draw from a body, from `bodyPictures(resolved)` (issue #38, under the owner's
 triage of 2026-11-26): a card's picture by its number of cards, a section's photo and a figure
 in its body by the section's layout, a hero's picture beside its text, and a logo, a badge and
-a symbol at their widest. The Media page's words stay as they are. The
+a symbol at their widest; and under them, Teasers in a list of posts, the widths and `sizes` the
+design's presentations of a post list make each teaser's picture in, from `teaserRows(resolved)`
+(issue #39, under the owner's triage of 2026-11-26): in cards and filtered by the number of
+posts, a lone teaser in cards, and featured's latest post and the others, with a word that an
+article's opening takes the hero context's. The Media page's words stay as they are. The
 widths drawn come from `drawnWidths(resolved, px)` in `src/konzilo/images.js`, the drawings
 the `sizes` come from, so the two never disagree; `test/image-sizes.test.js` holds it to the
 specs' words, and `test/presentation.test.js` holds both pages to it for three designs, one

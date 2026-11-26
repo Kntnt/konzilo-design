@@ -1039,8 +1039,8 @@ function webpSize(bytes) {
 }
 
 // A picture an article shows in its body and a list shows as its teaser, the same master, is made once at each width
-// the two share: the teaser's widths are the body's ladder, and the core's image service names a version by its master,
-// width and quality alone (issue #39).
+// the two share: the teaser's widths are the body's ladder, and Astro names a version by the options it is made with,
+// which the core's image service makes the same for both, WebP at the core's quality (issue #39).
 test('in a designed site built by the core, a picture shown both in an article\'s body and as its teaser is made once at each width the two share', { skip: why ?? false, timeout: 600000 }, async () => {
   if (!existsSync(join(site, 'dist/pages/journal/index.html'))) {
     const built = await build('dist');

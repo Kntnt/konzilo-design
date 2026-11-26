@@ -1190,7 +1190,7 @@ The core lists the posts at each build and gives them to the presentation the si
 
 A teaser card is a link as a whole, so it takes `surfaceOf('link-card', ground)`; a post of a type with no address is an open card, its headline no link.
 
-- **Its parts** (the assistant's choices, 2026-11-12): the picture is the post's teaser image, else its featured image, made by Astro's `getImage()` at three widths with `srcset` and `sizes`; the label is the name of its category, else its eyebrow; the headline is its teaser headline, else its main headline, else its title; the text is the core's `ownSummary()`: its excerpt, else its teaser's text, else its standfirst.
+- **Its parts** (the assistant's choices, 2026-11-12): the picture is the post's teaser image, else its featured image, made by Astro's `getImage()` with `srcset` and `sizes`, in the widths and with the `sizes` of where the design draws it in its presentation, by the number of posts the list draws (konzilo.md, Images, A post list's teasers; issue #39, 2026-11-26); the label is the name of its category, else its eyebrow; the headline is its teaser headline, else its main headline, else its title; the text is the core's `ownSummary()`: its excerpt, else its teaser's text, else its standfirst.
 - **One root.** Each presentation writes one `div.kn-post-list`, with its mark in the live preview. The core's pager, where the list has pages of its own, stands last in it, after the cards, as the core's `Pager.astro` writes it, from the pager's data. A list that matches nothing writes the list's text in it, `<p>`, and nothing else.
 
 **Markdown,** the core's own: the presentation by its name, and its options after the list's attributes:
@@ -1225,7 +1225,7 @@ A teaser card is a link as a whole, so it takes `surfaceOf('link-card', ground)`
 </div>
 ```
 
-**Read from content.** *(CSS)* The first large, the next two small beside it; any further posts follow as the small ones. **Behaviour.** None. **Component.** Post List.
+**Read from content.** *(CSS)* The first large, the next two small beside it; any further posts follow as the small ones. The columns follow the list's own width: one under 32rem, two from 32rem, the latest across both, and three from 50rem, the latest over two columns and two rows. The latest post's picture and the others' are made in widths and `sizes` of their own, the widest each is drawn in any place a list stands in (konzilo.md, Images, A post list's teasers). **Behaviour.** None. **Component.** Post List.
 
 ### `presentation="filtered"`
 
@@ -1310,7 +1310,7 @@ An article's page is laid out by its fields, not by directives: an opening, the 
 </section>
 ```
 
-- Where the design puts the picture behind the text, the main image is the band's `<img class="kn-band-picture">` after `.kn-band-content`, with the `srcset` and `sizes` `pictureOf()` in `teasers.js` makes it with through Astro's `getImage()`, its alt text and `loading="eager"`, as the `hero` directive draws its picture behind.
+- Where the design puts the picture behind the text, the main image is the band's `<img class="kn-band-picture">` after `.kn-band-content`, with the `srcset` and `sizes` it is made with, its alt text and `loading="eager"`, as the `hero` directive draws its picture behind. Behind the text or beside it, `openingPicture()` in `parts.js` makes the main image through Astro's `getImage()` in the `hero` context's widths and `sizes`, which follow where the design puts the picture (konzilo.md, Images, An article's opening; issue #39, 2026-11-26).
 - The headline is in up to three parts: the eyebrow above the main headline, and the subheadline under it.
 - The category stands over the headline as its label, unless the article has an eyebrow.
 - **The meta line** (***decided* by the owner, 2026-11-12**, in his words for an article, its own names left out, "By [the author] • Published [the date] in [the category] • [THE TOPIC]", the author's name and the category as links and the topic as a pill; replacing three spans the design parted, which did not match the sentence the core writes) is two parts in `p.kn-article-meta`:
@@ -1374,7 +1374,7 @@ An article's page is laid out by its fields, not by directives: an opening, the 
 </section>
 ```
 
-**Read from content.** *(CSS)* As a section and its series: a lone card keeps its column, and the action shows more of the series. **Behaviour.** None. **Component.** Section, Cards and Actions.
+**Read from content.** *(CSS)* As a section and its series: a lone card keeps its column, and the action shows more of the series. Each teaser's picture is made in the widths and `sizes` of an item of a series of so many where a list of posts stands (konzilo.md, Images, A post list's teasers). **Behaviour.** None. **Component.** Section, Cards and Actions.
 
 ## Open
 
