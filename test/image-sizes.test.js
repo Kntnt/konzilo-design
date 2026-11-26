@@ -82,17 +82,16 @@ function sizesAt(sizes, px) {
     throw new Error(`not a length a context's sizes holds: ${text}`);
   };
   for (const size of sizes.split(', ')) {
-    const condition = /^\(width (>=|>) ([\d.]+)rem\) (.+)$/.exec(size);
+    const condition = /^\(min-width: ([\d.]+)rem\) (.+)$/.exec(size);
     if (!condition) return length(size);
-    const edge = Number(condition[2]) * 16;
-    if (condition[1] === '>=' ? px >= edge : px > edge) return length(condition[3]);
+    if (px >= Number(condition[1]) * 16) return length(condition[2]);
   }
   throw new Error(`${sizes} says nothing for a window ${px}px wide`);
 }
 
 test('fromDesign\'s contexts give a body\'s image the reading column\'s width, Narrow on a wide window', () => {
   const { body } = imageContexts(design({}));
-  assert.equal(body.sizes, '(width >= 48.6363rem) 45rem, calc(94.2858vw - 0.8572rem)');
+  assert.equal(body.sizes, '(min-width: 48.6363rem) 45rem, calc(94.2858vw - 0.8572rem)');
   assert.equal(body.ratio, undefined, 'a body\'s image is drawn whole');
 });
 
@@ -116,8 +115,8 @@ test('each context\'s sizes is the width the design draws its image at, at every
 
 test('a gallery\'s pictures are drawn in its widest columns, cropped to 4:3, as the design crops them', () => {
   const { gallery } = imageContexts(design({}));
-  // One column up to a window of 27.5585rem, then two, until the column is Narrow, and the gap still grows to 90rem.
-  assert.equal(gallery.sizes, '(width >= 89.9776rem) 21.875rem, (width >= 48.6363rem) calc(21.9553rem - 0.0893vw), (width > 27.5585rem) calc(47.0536vw - 0.9733rem), calc(94.2858vw - 0.8572rem)');
+  // One column up to a window of 27.5585rem, then two, from a 32nd of a pixel on, which every engine tells apart, until the column is Narrow, and the gap still grows to 90rem.
+  assert.equal(gallery.sizes, '(min-width: 89.9776rem) 21.875rem, (min-width: 48.6363rem) calc(21.9553rem - 0.0893vw), (min-width: 27.5604rem) calc(47.0536vw - 0.9733rem), calc(94.2858vw - 0.8572rem)');
   assert.equal(gallery.ratio, '4:3');
   assert.deepEqual(gallery.widths, [360, 509, 720, 1018]);
 });
@@ -137,10 +136,16 @@ test('a card\'s picture is cropped to 16:9 and a hero\'s and the lightbox\'s are
   assert.deepEqual(imageContexts(design(DESIGNS.none)).hero.widths, [360, 509, 720, 1018, 1440]);
 });
 
+test('a sizes says its windows by min-width alone, which every engine reads and which holds no angle bracket for a reader of the HTML to stop at', () => {
+  for (const [name, inputs] of Object.entries(DESIGNS)) {
+    for (const [context, { sizes }] of Object.entries(imageContexts(design(inputs)))) assert.doesNotMatch(sizes, /[<>]/, `${name}, ${context}: ${sizes}`);
+  }
+});
+
 test('a sizes has no stretch of windows narrower than a hundredth of a rem, where two of the design\'s clamps end together', () => {
   for (const [name, inputs] of Object.entries(DESIGNS)) {
     for (const [context, { sizes }] of Object.entries(imageContexts(design(inputs)))) {
-      const edges = [...sizes.matchAll(/\(width >?=? ?([\d.]+)rem\)/g)].map((match) => Number(match[1]));
+      const edges = [...sizes.matchAll(/\(min-width: ([\d.]+)rem\)/g)].map((match) => Number(match[1]));
       edges.forEach((edge, i) => assert.ok(i === 0 || edges[i - 1] - edge >= 0.01, `${name}, ${context}: ${sizes}`));
     }
   }
@@ -261,7 +266,7 @@ for (const name of ['default', 'other', 'small', 'large']) {
     const r = design(DESIGNS[name]);
     const contexts = imageContexts(r);
     const sizes = Object.fromEntries(Object.entries(contexts).map(([context, { sizes: text }]) => [context, text]));
-    const edges = Object.values(sizes).flatMap((text) => [...text.matchAll(/\(width >?=? ?([\d.]+)rem\)/g)].map((match) => Number(match[1]) * 16));
+    const edges = Object.values(sizes).flatMap((text) => [...text.matchAll(/\(min-width: ([\d.]+)rem\)/g)].map((match) => Number(match[1]) * 16));
     const windows = [...new Set([320, 360, 390, 430, 600, 768, 1024, 1280, 1440, 1920, 2560, ...edges.flatMap((edge) => [Math.floor(edge) - 1, Math.floor(edge), Math.ceil(edge) + 1])])].sort((a, b) => a - b);
     const html = await page(r);
     for (const [engine, browser] of browsers) {

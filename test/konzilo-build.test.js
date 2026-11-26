@@ -10,11 +10,14 @@
 import test, { after, before } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync, spawnSync } from 'node:child_process';
-import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync, symlinkSync, writeFileSync } from 'node:fs';
+import { createServer } from 'node:http';
 import { tmpdir } from 'node:os';
-import { dirname, join, resolve } from 'node:path';
+import { dirname, extname, join, normalize, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { chromium, firefox, webkit } from 'playwright-core';
 import { defaultInputs, resolve as resolveDesign, DESIGN_FORMAT } from '../src/generator/index.js';
+import { imageContexts } from '../src/konzilo/index.js';
 
 const repo = fileURLToPath(new URL('..', import.meta.url));
 const core = process.env.KONZILO_CORE ? resolve(process.env.KONZILO_CORE.replace(/^~(?=\/)/, process.env.HOME ?? '~')) : null;
@@ -31,7 +34,7 @@ const description = {
   componentChecks: '@kntnt/konzilo-design/directives/checks',
   types: {
     page: { collection: 'pages', hierarchical: true, address: '/pages/{path}/', elements: ELEMENTS },
-    article: { collection: 'articles', address: '/articles/{slug}/', elements: ['paragraph', 'heading', 'list', 'aside'] },
+    article: { collection: 'articles', address: '/articles/{slug}/', elements: ['paragraph', 'heading', 'list', 'aside', 'image', 'gallery'] },
   },
   taxonomies: { category: { address: '/category/{slug}/' }, topics: { address: '/topic/{slug}/' } },
   search: { address: '/search/' },
@@ -477,8 +480,8 @@ Words.
   for (const [path, text] of [
     article('soil', { headline: 'Know your soil', category: 'guides', topics: ['soil'], day: '05', body: SOIL }),
     article('tools', { headline: 'The right tools', category: 'guides', topics: ['tools', 'soil'], day: '04' }),
-    article('water', { headline: 'Water early', category: 'news', topics: ['water'], day: '03' }),
-    article('seeds', { headline: 'Seeds that last', category: 'news', topics: ['soil'], day: '02' }),
+    article('water', { headline: 'Water early', category: 'news', topics: ['water'], day: '03', body: `Words on water.\n\n![A watering can](../media/${PICTURE})\n\nMore words on water.` }),
+    article('seeds', { headline: 'Seeds that last', category: 'news', topics: ['soil'], day: '02', body: `Words on seeds.\n\n![A packet of seeds](../media/${PICTURE})\n![A tray of seedlings](../media/${PICTURE})\nA spring.` }),
   ]) write(path, text);
   for (const [path, name] of [['authors/a-writer', 'A. Writer'], ['categories/guides', 'Guides'], ['categories/news', 'News'], ['topics/soil', 'Soil'], ['topics/tools', 'Tools'], ['topics/water', 'Water']]) {
     write(`content/${path}.json`, JSON.stringify({ name, description: `On ${name.toLowerCase()}.` }));
@@ -646,4 +649,112 @@ test('the core\'s body check reads the package\'s declarations and runs its chec
   assert.match(reasons(':::section{align="middle"}\n\nWords.\n\n:::').join(), /A section's alignment is start or center, and start where this is left out, not middle\./);
   assert.deepEqual(reasons(':::section{align="center"}\n\n## Ready?\n\nTell us where you live.\n\n::form{name="contact"}\n\n:::'), []);
   assert.deepEqual(reasons(':::section{align="center"}\n\n## Our story\n\nOne.\n\nTwo.\n\n:::'), ['A section with a heading and paragraphs alone sets the paragraphs beside the heading, so it cannot be centred. Leave out align="center".']);
+});
+
+// The built site's pages, served as a host would serve them, with each image's type.
+function serve(root) {
+  const TYPES = { '.html': 'text/html', '.css': 'text/css', '.js': 'text/javascript', '.webp': 'image/webp', '.svg': 'image/svg+xml', '.png': 'image/png', '.woff2': 'font/woff2', '.json': 'application/json', '.xml': 'application/xml', '.txt': 'text/plain' };
+  const server = createServer((request, response) => {
+    let path = normalize(join(root, decodeURIComponent(new URL(request.url, 'http://localhost').pathname)));
+    if (!path.startsWith(root)) path = join(root, '404.html');
+    if (existsSync(path) && statSync(path).isDirectory()) path = join(path, 'index.html');
+    if (!existsSync(path)) path = join(root, '404.html');
+    response.writeHead(path.endsWith('404.html') ? 404 : 200, { 'content-type': TYPES[extname(path)] ?? 'application/octet-stream' });
+    response.end(readFileSync(path));
+  });
+  return new Promise((done) => server.listen(0, '127.0.0.1', () => done({ origin: `http://127.0.0.1:${server.address().port}`, close: () => new Promise((closed) => server.close(closed)) })));
+}
+
+// A body's image drawn by the package's article body in a site the core builds, at a phone's width: a browser loads the
+// version of it that covers the width the design draws it at, at the screen's density, and no other (issue #36; the
+// core's ADR 0022 measured the same of its own defaults).
+const ENGINES = Object.entries({ firefox, webkit, chromium }).filter(([, type]) => existsSync(type.executablePath()));
+test('in a designed site built by the core, a body\'s image at a phone\'s width loads the version that covers how wide the design draws it, and about twice as wide at density 2', { skip: why ?? false, timeout: 600000 }, async (t) => {
+  if (!existsSync(join(site, 'dist/articles/water/index.html'))) {
+    const built = await build('dist');
+    assert.equal(built.status, 0, built.output);
+  }
+  const { body } = imageContexts(JSON.parse(readFileSync(join(site, 'design/site.design.json'), 'utf8')).resolved);
+  const html = readFileSync(join(site, 'dist/articles/water/index.html'), 'utf8');
+  const img = /<div class="kn-reading-area-flow kn-body-text">[\s\S]*?<figure><button class="konzilo-lightbox-open"[^>]*><img ([^>]*)>/.exec(html)?.[1];
+  assert.ok(img, 'the article\'s body draws its image');
+  const entities = { amp: '&', lt: '<', gt: '>', quot: '"', '#38': '&', '#39': "'" };
+  const attribute = (name) => new RegExp(`\\b${name}="([^"]*)"`).exec(img)?.[1].replace(/&(amp|lt|gt|quot|#38|#39);/g, (_, entity) => entities[entity]);
+  assert.equal(attribute('sizes'), body.sizes, 'the core writes the design\'s sizes');
+  const candidates = attribute('srcset').split(', ').map((candidate) => {
+    const [url, w] = candidate.trim().split(/\s+/);
+    return { url, width: Number(w.slice(0, -1)) };
+  });
+  // The master is 1600 px wide, so each of the body's and the lightbox's widths up to it, and the master's own in place
+  // of those wider and of 1440, within a tenth of it (the core's ADR 0022).
+  assert.deepEqual(candidates.map(({ width }) => width), [360, 509, 720, 1018, 1600]);
+  const server = await serve(join(site, 'dist'));
+  try {
+    for (const [engine, type] of ENGINES) {
+      const browser = await type.launch();
+      const loaded = {};
+      for (const density of [1, 2]) {
+        const context = await browser.newContext({ viewport: { width: 400, height: 800 }, deviceScaleFactor: density });
+        const tab = await context.newPage();
+        const requested = new Set();
+        tab.on('request', (request) => requested.add(new URL(request.url()).pathname));
+        await tab.goto(`${server.origin}/articles/water/`);
+        const figure = tab.locator('.kn-reading-area-flow figure img').first();
+        await figure.scrollIntoViewIfNeeded();
+        await tab.waitForFunction(() => { const image = document.querySelector('.kn-reading-area-flow figure img'); return image.complete && image.naturalWidth > 0; });
+        const { drawn, current, elsewhere } = await figure.evaluate((image) => ({
+          drawn: image.getBoundingClientRect().width,
+          current: new URL(image.currentSrc).pathname,
+          // The same master's versions other parts of the page draw, as the article's opening draws its own.
+          elsewhere: [...document.querySelectorAll('[style*="url("]')].map((element) => /url\(["']?([^"')]+)/.exec(element.getAttribute('style'))[1]),
+        }));
+        const where = `${engine} at density ${density}: drawn ${drawn} px, ${current} loaded of ${candidates.map(({ width }) => width)}`;
+        const chosen = candidates.find(({ url }) => url === current);
+        assert.ok(chosen, where);
+        // The narrowest version at least as wide as the image is drawn at this density, or the one under it, which
+        // Chromium takes where it is near enough: never one wider than covers it.
+        const need = drawn * density;
+        const covering = candidates.find(({ width }) => width >= need);
+        const under = candidates.filter(({ width }) => width < need).at(-1);
+        assert.ok(chosen === covering || chosen === under, where);
+        assert.deepEqual([...requested].filter((path) => candidates.some(({ url }) => url === path) && !elsewhere.includes(path)), [current], `${where}: no other version of it is loaded`);
+        loaded[density] = chosen.width;
+        t.diagnostic(`${engine}, density ${density}: drawn ${drawn} px, loaded the ${chosen.width} px version`);
+        await context.close();
+      }
+      assert.ok(loaded[2] / loaded[1] >= 1.4 && loaded[2] / loaded[1] <= 2.9, `${engine}: ${loaded[1]} px at density 1 and ${loaded[2]} px at density 2`);
+      await browser.close();
+    }
+  } finally {
+    await server.close();
+  }
+});
+
+// The design crops a gallery's pictures to 4:3, so it names the ratio, and the core makes each version of the crop alone
+// around the picture's focal point, while the lightbox shows the whole picture (the core's ADR 0022).
+test('in a designed site built by the core, a gallery\'s pictures are versions of their crop to the design\'s ratio, and its lightbox shows them whole', { skip: why ?? false, timeout: 600000 }, async () => {
+  if (!existsSync(join(site, 'dist/articles/seeds/index.html'))) {
+    const built = await build('dist');
+    assert.equal(built.status, 0, built.output);
+  }
+  const { gallery, lightbox } = imageContexts(JSON.parse(readFileSync(join(site, 'design/site.design.json'), 'utf8')).resolved);
+  const html = readFileSync(join(site, 'dist/articles/seeds/index.html'), 'utf8').replaceAll('&gt;', '>').replaceAll('&lt;', '<');
+  const figure = /<figure class="konzilo-gallery">[\s\S]*?<\/figure>\s*<dialog/.exec(html)?.[0];
+  assert.ok(figure, 'the article\'s body draws its gallery');
+  assert.doesNotMatch(figure, /data-konzilo-whole/, 'the hidden whole picture is the lightbox\'s, out of the gallery\'s figures');
+  const widths = (srcset) => srcset.split(', ').map((candidate) => Number(candidate.trim().split(/\s+/)[1].slice(0, -1)));
+  const shown = [...figure.matchAll(/<img ([^>]*?)>/g)].map(([, attributes]) => attributes);
+  assert.equal(shown.length, 2);
+  for (const attributes of shown) {
+    assert.equal(/\bsizes="([^"]*)"/.exec(attributes)[1], gallery.sizes);
+    // The 1600 × 1000 master cropped to 4:3 is 1333 × 1000, wider than every width the gallery asks for.
+    assert.deepEqual(widths(/\bsrcset="([^"]*)"/.exec(attributes)[1]), gallery.widths);
+    // Its size its widest version's, 1018 × 764, 4:3 to the pixel.
+    assert.ok(Math.abs(Number(/\bwidth="(\d+)"/.exec(attributes)[1]) / Number(/\bheight="(\d+)"/.exec(attributes)[1]) - 4 / 3) < 0.005, attributes);
+  }
+  const dialog = /<dialog class="konzilo-modal konzilo-lightbox"[\s\S]*?<\/dialog>/.exec(html.slice(html.indexOf(figure) + figure.length - '<dialog'.length))[0];
+  for (const [, attributes] of dialog.matchAll(/<img ([^>]*?)>/g)) {
+    assert.deepEqual(widths(/\bsrcset="([^"]*)"/.exec(attributes)[1]), [...lightbox.widths.filter((width) => width < 1440), 1600], 'the whole picture, up to its master');
+    assert.ok(Math.abs(Number(/\bwidth="(\d+)"/.exec(attributes)[1]) / Number(/\bheight="(\d+)"/.exec(attributes)[1]) - 1.6) < 0.005, attributes);
+  }
 });

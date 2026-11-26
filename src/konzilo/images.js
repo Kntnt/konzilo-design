@@ -80,21 +80,25 @@ function lengthOf({ slope, intercept }) {
 
 const at = ({ slope, intercept }, v) => slope * v + intercept;
 const floor = (x) => Math.floor(x * 1e4) / 1e4;
-const ceil = (x) => Math.ceil(x * 1e4) / 1e4;
 
-// A width as a `sizes`, its widest windows first. Where the rounded edge of a stretch falls short of the exact one, the
-// windows between take whichever of the two stretches is the wider there, so a `sizes` never says less than is drawn.
+// A width as a `sizes`, its widest windows first, each stretch from its window on by `min-width`, which every engine
+// reads in a `sizes`, where a range such as `(width >= 40rem)` Safari has read only since 16.4, and whose text holds no
+// angle bracket for a reader of the HTML to stop at. A stretch that goes on from the one before starts at its edge; one
+// that starts wider or narrower than it, as a series' second column or a hero's picture beside its text past the window
+// it stands above it on, starts APART on the side where the wider of the two holds, so a `sizes` never says less than
+// is drawn.
 function sizesOf(of) {
   const found = stretches(of);
   return found.map((stretch, i) => {
     if (i === 0) return lengthOf(stretch);
-    const before = found[i - 1];
-    const condition = at(stretch, stretch.from) >= at(before, stretch.from) - 1e-9
-      ? `(width >= ${number(floor(stretch.from))}rem)`
-      : `(width > ${number(ceil(stretch.from))}rem)`;
-    return `${condition} ${lengthOf(stretch)}`;
+    const [after, before] = [at(stretch, stretch.from), at(found[i - 1], stretch.from)];
+    const edge = floor(stretch.from) + (Math.abs(after - before) < 1e-6 ? 0 : after > before ? -APART : APART);
+    return `(min-width: ${number(edge)}rem) ${lengthOf(stretch)}`;
   }).reverse().join(', ');
 }
+// Chromium and WebKit tell a media query's length apart from a window's to about a 64th of a pixel, so the next window
+// they all tell from an edge is a 32nd of a pixel past it, in rem.
+const APART = 0.002;
 
 // What the design's CSS draws by lengths of its own, not of the design file: a gallery's least column, and the aspect
 // ratio it crops its pictures to (konzilo.css).

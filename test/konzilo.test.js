@@ -177,7 +177,7 @@ test('fromDesign gives the core the widths and sizes of every context it names, 
     assert.ok(!('ratio' in images.lightbox));
     const narrow = inputs.layout.narrow / 16;
     // Narrow on a wide window, and on a phone the window less its side margins, as the CSS draws a body's figure.
-    assert.match(images.body.sizes, new RegExp(`^\\(width >= [\\d.]+rem\\) ${narrow}rem, calc\\(94\\.2858vw - 0\\.8572rem\\)$`));
+    assert.match(images.body.sizes, new RegExp(`^\\(min-width: [\\d.]+rem\\) ${narrow}rem, calc\\(94\\.2858vw - 0\\.8572rem\\)$`));
     assert.ok(images.body.widths.includes(inputs.layout.narrow) && images.body.widths.includes(2 * inputs.layout.narrow), 'a wide screen gets a body\'s image at its width, at density 1 and 2');
   }
 });
