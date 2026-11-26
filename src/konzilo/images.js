@@ -103,8 +103,9 @@ const APART = 0.002;
 // What the design's CSS draws by lengths of its own, not of the design file: a gallery's least column, and the aspect
 // ratio it crops its pictures to (konzilo.css).
 export const GALLERY = Object.freeze({ minimum: 12, ratio: '4:3' });
-// A series of cards' least column and the ratio a card crops its picture to (cards.css, card.css).
-export const CARD = Object.freeze({ minimum: 15, ratio: '16:9' });
+// A series of cards' least column (cards.css). A card's picture has no one ratio: 16:9, a person's square, and behind
+// the text as tall as the card (card.css, cards.css), so the card crops it, and the core does not.
+export const CARD = Object.freeze({ minimum: 15 });
 // The factor by which a series' CSS turns a length into a switch (cards.css, konzilo.css).
 export const SWITCH = 999;
 // The widest window, in rem, on which a hero's picture beside its text stands above it instead (hero.css).
@@ -174,7 +175,7 @@ export function imageContexts(r) {
     // The core's lightbox, which fits each picture whole in the window, so at most the window's width.
     lightbox: context(WINDOW),
     hero: context(heroPicture(r.hero?.picture, contentArea, columnGap)),
-    // A card in a series across the content area, at its widest column, its picture cropped to its ratio.
-    card: { ...context(widestOfSeries(contentArea, CARD.minimum, columnGap)), ratio: CARD.ratio },
+    // A card in a series across the content area, at its widest column.
+    card: context(widestOfSeries(contentArea, CARD.minimum, columnGap)),
   };
 }

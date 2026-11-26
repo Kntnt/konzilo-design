@@ -121,10 +121,14 @@ test('a gallery\'s pictures are drawn in its widest columns, cropped to 4:3, as 
   assert.deepEqual(gallery.widths, [360, 509, 720, 1018]);
 });
 
-test('a card\'s picture is cropped to 16:9 and a hero\'s and the lightbox\'s are drawn whole, the lightbox\'s and a hero\'s behind its text across the window', () => {
+test('a card\'s, a hero\'s and the lightbox\'s pictures are cropped to no ratio, the lightbox\'s and a hero\'s behind its text across the window', () => {
   const { lightbox, hero: opening, card } = imageContexts(design({}));
-  assert.equal(card.ratio, '16:9');
   assert.ok(!('ratio' in lightbox) && !('ratio' in opening), 'the core takes no ratio for the lightbox, and none means the image\'s own');
+  // A card crops its picture to 16:9, but a person's card to a square and a card with its picture behind to the card's
+  // own height, so a crop to any one ratio would be cropped again, and a square lose its sides.
+  assert.ok(!('ratio' in card), 'a card\'s picture is cropped by its card alone');
+  assert.match(read('../src/components/card.css'), /\.kn-card\[data-kn-variant="person"\] > \.kn-card-picture \{ aspect-ratio: 1; \}/);
+  assert.match(read('../src/components/cards.css'), /\.kn-cards\[data-kn-picture="behind"\] \.kn-card > \.kn-card-picture \{[^}]*aspect-ratio: auto; object-fit: cover; \}/);
   assert.equal(lightbox.sizes, '100vw');
   assert.equal(opening.sizes, '100vw');
   // Up to the cap, the master's longest side, which a hero across a wide, dense screen gets and no more.
@@ -161,7 +165,6 @@ test('the lengths the CSS draws by, not the design file, are the CSS\'s own', ()
   assert.match(gallery, new RegExp(`\\.konzilo-gallery \\{\\n\\s+--kn-series-minimum: ${GALLERY.minimum}rem;`));
   assert.match(gallery, new RegExp(`\\.konzilo-gallery > figure img \\{[^}]*aspect-ratio: ${GALLERY.ratio.replace(':', ' / ')};[^}]*object-fit: cover;`));
   assert.match(read('../src/components/cards.css'), new RegExp(`:is\\(\\.kn-card-grid\\.kn-cards, \\.kn-timeline, \\.kn-reasons\\) \\{\\n\\s+--kn-series-minimum: ${CARD.minimum}rem;`));
-  assert.match(read('../src/components/card.css'), new RegExp(`\\.kn-card-picture \\{[^}]*aspect-ratio: ${CARD.ratio.replace(':', ' / ')};[^}]*object-fit: cover;`));
   for (const file of ['../src/konzilo/konzilo.css', '../src/components/cards.css']) {
     assert.ok(read(file).includes(`min(100%, (2 * var(--kn-series-minimum) + var(--kn-series-gap) - 100%) * ${SWITCH})`), file);
   }
