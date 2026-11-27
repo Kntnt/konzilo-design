@@ -4,14 +4,15 @@ import type { Surface } from './frame-types';
 import Band from './Band.astro';
 import HeadingGroup from './HeadingGroup.astro';
 import { heroAttributes } from './hero-attributes.js';
-import { bandPictureSizes } from '../konzilo/images.js';
+import { bandPictureRatio, bandPictureSizes } from '../konzilo/images.js';
 // The page's opening, or an ordinary section further down. Its background and its heading's size are free choices of their
 // own: no surface lets what lies beneath show, a picture Surface lays the picture behind, and any other picture stands on
 // the side named by side, inside the content width or, with -bleed, out to the window's edge and the hero's top and bottom.
 // A page's first heading is its H1, so the hero that opens a page has level 1, or false where the H1 stands under it, and one
 // further down has level 2. The slot before holds the trail, where the H1 is the hero's: it stands above the eyebrow.
 // A picture behind is the band's, with its alt text, empty where it is left out, its srcset, and its own width and height,
-// by which, and the hero's height, it works out its sizes where none is given (Band.astro; konzilo.md, Images).
+// which a srcset requires, by which, and the hero's height, it works out its sizes where none is given (Band.astro;
+// konzilo.md, Images).
 interface Props extends HTMLAttributes<'section'> {
   heading: string;
   eyebrow?: string;
@@ -35,7 +36,7 @@ const { heading, eyebrow, deck, level = 1, type = 'heading-1', surface, picture,
 const behind = surface?.startsWith('picture-');
 const beside = picture && !behind;
 if (beside && alt === undefined) throw new TypeError('A picture beside a Hero requires alternative text');
-const ratio = pictureWidth > 0 && pictureHeight > 0 ? pictureWidth / pictureHeight : undefined;
+const ratio = bandPictureRatio('Hero', { srcset, pictureWidth, pictureHeight });
 const drawn = sizes ?? (srcset ? bandPictureSizes({ height, ratio }) : undefined);
 ---
 <Band {...attributes} {...heroAttributes({ side: beside ? side : undefined, height, place, align })} class:list={['kn-hero', className]} contentClass="kn-hero-content" surface={surface} {...(behind && picture ? { picture, alt, srcset, sizes: drawn, pictureWidth, pictureHeight } : {})}>

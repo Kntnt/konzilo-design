@@ -876,10 +876,12 @@ test('in a designed site built by the core, a hero\'s picture behind its text at
   }
 });
 
-// A card's picture in a series of three across a band, in a site the core builds, at a phone's width and a wide window:
-// a browser loads the narrowest version that covers the width the design draws it at, by the number of cards, where it
-// loaded the body's, Narrow's on a wide window (issue #38).
-test('in a designed site built by the core, a card\'s picture in :::cards loads the version that covers how wide its series draws it, on a phone and a wide screen, at density 1 and 2', { skip: why ?? false, timeout: 600000 }, async (t) => {
+// A card's picture in a series of three across a band, in a site the core builds, at a phone's width, a 64rem window
+// and a wide one: a browser loads the narrowest version that covers the width the design draws it at, by the number of
+// cards, where it loaded the body's, Narrow's on a wide window (issue #38); and on the 64rem window, where the widest of
+// every place a series stands in is a narrower row's one column, 31.11rem, the band's own, 17.9rem, 360 px at density 1
+// and 720 px at density 2, where it loaded 509 and 1018 px (issue #44).
+test('in a designed site built by the core, a card\'s picture in :::cards loads the version that covers how wide its series draws it, on a phone, a 64rem window and a wide screen, at density 1 and 2', { skip: why ?? false, timeout: 600000 }, async (t) => {
   if (!existsSync(join(site, 'dist/pages/beds/index.html'))) {
     const built = await build('dist');
     assert.equal(built.status, 0, built.output);
@@ -888,8 +890,8 @@ test('in a designed site built by the core, a card\'s picture in :::cards loads 
   const html = readFileSync(join(site, 'dist/pages/beds/index.html'), 'utf8');
   const pictures = [...html.matchAll(/<img class="kn-card-picture" ([^>]*)>/g)].map(([, attributes]) => attributes);
   assert.equal(pictures.length, 3, 'the series draws its three pictures');
-  // A picture of 16:10 in a crop of 16:9 is as wide as its card.
-  for (const img of pictures) assert.equal(attributeOf(img, 'sizes'), seriesPicture(resolved, 3, { ratio: 1.6 }).sizes, 'a series of three\'s sizes, in place of the body\'s');
+  // A picture of 16:10 in a crop of 16:9 is as wide as its card, in the band its section's layout puts it across.
+  for (const img of pictures) assert.equal(attributeOf(img, 'sizes'), seriesPicture(resolved, 3, { ratio: 1.6, place: 'across' }).sizes, 'a series of three\'s sizes across a band, in place of the body\'s');
   const candidates = candidatesOf(pictures[0]);
   // The core's body's and lightbox's widths, up to the master's 1600 px.
   assert.deepEqual(candidates.map(({ width }) => width), [360, 509, 720, 1018, 1600]);
@@ -898,7 +900,7 @@ test('in a designed site built by the core, a card\'s picture in :::cards loads 
     for (const [engine, type] of ENGINES) {
       const browser = await type.launch();
       try {
-        for (const [width, height] of [[390, 844], [1440, 900]]) {
+        for (const [width, height] of [[390, 844], [1024, 768], [1440, 900]]) {
           for (const density of [1, 2]) {
             const context = await browser.newContext({ viewport: { width, height }, deviceScaleFactor: density });
             const tab = await context.newPage();
@@ -915,6 +917,7 @@ test('in a designed site built by the core, a card\'s picture in :::cards loads 
             // The narrowest version at least as wide as the picture is drawn at this density, which all three engines
             // take here; with the body's sizes a wide window loaded the 720 px version, and 1600 px at density 2.
             assert.equal(chosen, candidates.find(({ width: w }) => w >= drawn * density), where);
+            if (width === 1024) assert.equal(chosen.width, [360, 720][density - 1], `${where}: across a band on a 64rem window`);
             assert.deepEqual([...requested].filter((path) => candidates.some(({ url }) => url === path)), [current], `${where}: the three cards load that version alone`);
             t.diagnostic(`${engine}, ${width} px, density ${density}: drawn ${drawn} px, loaded the ${chosen.width} px version`);
             await context.close();
@@ -936,6 +939,12 @@ const listsOf = (html) => html.split('<div class="kn-post-list"').slice(1).map((
   presentation: /^[^>]*data-kn-presentation="(\w+)"/.exec(chunk)[1],
   pictures: [...chunk.split('</section>')[0].matchAll(/<img class="kn-card-picture" ([^>]*)>/g)].map(([, attributes]) => attributes),
 }));
+// A picture of the fixture's master, 1600 px wide, has no version above it or within a tenth below it, such as 1440 px
+// (issue #42).
+function noNearDuplicate(img, what) {
+  const widths = candidatesOf(img).map(({ width }) => width);
+  assert.ok(widths.every((width) => width < 0.9 * 1600 || width === 1600), `${what}: ${widths}`);
+}
 
 test('in a designed site built by the core, each teaser\'s picture and an article opening\'s carry the widths and sizes of where the design draws them', { skip: why ?? false, timeout: 600000 }, async () => {
   if (!existsSync(join(site, 'dist/pages/journal/index.html'))) {
@@ -943,29 +952,42 @@ test('in a designed site built by the core, each teaser\'s picture and an articl
     assert.equal(built.status, 0, built.output);
   }
   const resolved = JSON.parse(readFileSync(join(site, 'design/site.design.json'), 'utf8')).resolved;
-  // The master is 1600 px wide, so the core's image service makes each width asked for, and where one is wider than the
-  // master, the master's own in place of those wider and of one within a tenth below it (its versionWidths(), ADR 0022).
-  const made = (widths) => (widths.every((width) => width <= 1600) ? widths : [...widths.filter((width) => width < 0.9 * 1600), 1600]);
-  // A section's featured and filtered lists, which stand at Narrow beside its form, and a lone teaser beside a quotation.
-  const garden = listsOf(readFileSync(join(site, 'dist/pages/garden/index.html'), 'utf8'));
+  // The master is 1600 px wide, so each picture is made in the widths asked for below 1440 px, a tenth below the master,
+  // and the master's own in place of those from 1440 px up, whether or not one asked for is wider than it: the package
+  // asks for them so, and the core makes them so where one is wider (its versionWidths(), ADR 0022; the owner,
+  // 2026-11-26).
+  const ofMaster = (widths) => (widths.every((width) => width < 0.9 * 1600) ? widths : [...widths.filter((width) => width < 0.9 * 1600), 1600]);
+  // A section's featured and filtered lists, which stand at Narrow beside its form, and a lone teaser beside a quotation,
+  // which fills its column.
+  const garden = listsOf(readFileSync(join(site, 'dist/pages/garden/index.html'), 'utf8')).map((list, at) => ({ ...list, place: ['narrow', 'narrow', 'columns'][at] }));
   assert.deepEqual(garden.map(({ presentation }) => presentation), ['featured', 'filtered', 'cards']);
   // A term's page, a list across a band of its own; an article's "Other articles", a list a template places in a section.
-  const term = listsOf(readFileSync(join(site, 'dist/category/guides/index.html'), 'utf8'));
+  const term = listsOf(readFileSync(join(site, 'dist/category/guides/index.html'), 'utf8')).map((list) => ({ ...list, place: 'across' }));
   const soil = readFileSync(join(site, 'dist/articles/soil/index.html'), 'utf8');
-  for (const { presentation, pictures } of [...garden, ...term, ...listsOf(soil)]) {
-    const expected = teaserPictures(resolved, presentation, pictures.length);
+  for (const { presentation, pictures, place } of [...garden, ...term, ...listsOf(soil).map((list) => ({ ...list, place: 'across' }))]) {
+    // Each of the master, 1600 × 1000: made in the widths of the widest place a list stands in, since a presentation
+    // cannot know where the core draws it, and given by the section around it the sizes of where it stands (issue #44).
+    const ratios = Array(pictures.length).fill(1.6);
+    const [made, said] = [teaserPictures(resolved, presentation, pictures.length, ratios), teaserPictures(resolved, presentation, pictures.length, ratios, { place })];
     assert.ok(pictures.length > 0, presentation);
     pictures.forEach((img, at) => {
-      assert.equal(attributeOf(img, 'sizes'), expected[at].sizes, `${presentation} of ${pictures.length}, teaser ${at}`);
-      assert.deepEqual(candidatesOf(img).map(({ width }) => width), made(expected[at].widths), `${presentation} of ${pictures.length}, teaser ${at}`);
+      const what = `${presentation} of ${pictures.length} ${place}, teaser ${at}`;
+      assert.equal(attributeOf(img, 'sizes'), said[at].sizes, what);
+      assert.deepEqual(candidatesOf(img).map(({ width }) => width), ofMaster(made[at].widths), what);
+      noNearDuplicate(img, what);
     });
   }
   assert.equal(garden[2].pictures.length, 1, 'one teaser beside the quotation');
-  // "Read more", a series of its related posts across a band, where a list of posts stands.
+  // "Read more", a series of its related posts across a band, where it always stands, so it is made in the widths of an
+  // item there too.
   const more = /<h2 class="kn-heading-group-heading" data-kn-type="heading-2">Read more<\/h2>[\s\S]*?<\/section>/.exec(soil)[0];
   const related = [...more.matchAll(/<img class="kn-card-picture" ([^>]*)>/g)].map(([, attributes]) => attributes);
   assert.ok(related.length > 0);
-  for (const img of related) assert.equal(attributeOf(img, 'sizes'), seriesPicture(resolved, related.length, { list: true }).sizes);
+  const across = seriesPicture(resolved, related.length, { list: true, ratio: 1.6, place: 'across' });
+  for (const img of related) {
+    assert.equal(attributeOf(img, 'sizes'), across.sizes);
+    assert.deepEqual(candidatesOf(img).map(({ width }) => width), ofMaster(across.widths));
+  }
   // The opening's main image behind its text, as the default design puts it, across the band and as tall as the hero, by
   // the picture's proportions, 1600 × 1000.
   const opening = /<section class="kn-band kn-hero kn-article-opening"[\s\S]*?<img class="kn-band-picture" ([^>]*)><\/section>/.exec(soil)?.[1];
@@ -973,12 +995,14 @@ test('in a designed site built by the core, each teaser\'s picture and an articl
   const hero = heroPictureOf(resolved, { ratio: 1.6 });
   assert.equal(attributeOf(opening, 'sizes'), hero.sizes);
   assert.equal(hero.sizes, 'max(100vw, 80vh)');
-  assert.deepEqual(candidatesOf(opening).map(({ width }) => width), made(hero.widths));
+  assert.deepEqual(candidatesOf(opening).map(({ width }) => width), ofMaster(hero.widths));
+  noNearDuplicate(opening, 'the opening');
 });
 
-// A teaser card's picture in a list of three across a band, at a phone's width and a wide window: a browser loads the
-// narrowest version that covers the width the design draws it at, where the hand-set sizes loaded wider (issue #39).
-test('in a designed site built by the core, a teaser card\'s picture loads the version that covers how wide it is drawn, on a phone and a wide screen, at density 1 and 2', { skip: why ?? false, timeout: 600000 }, async (t) => {
+// A teaser card's picture in a list of three across a band, at a phone's width, a 64rem window and a wide one: a browser
+// loads the narrowest version that covers the width the design draws it at, where the hand-set sizes loaded wider
+// (issue #39), and on the 64rem window, by the band's own width, 360 px at density 1 and 720 px at density 2 (issue #44).
+test('in a designed site built by the core, a teaser card\'s picture loads the version that covers how wide it is drawn, on a phone, a 64rem window and a wide screen, at density 1 and 2', { skip: why ?? false, timeout: 600000 }, async (t) => {
   if (!existsSync(join(site, 'dist/pages/journal/index.html'))) {
     const built = await build('dist');
     assert.equal(built.status, 0, built.output);
@@ -986,17 +1010,17 @@ test('in a designed site built by the core, a teaser card\'s picture loads the v
   const resolved = JSON.parse(readFileSync(join(site, 'design/site.design.json'), 'utf8')).resolved;
   const [list] = listsOf(readFileSync(join(site, 'dist/pages/journal/index.html'), 'utf8'));
   assert.equal(list.pictures.length, 3, 'the list draws three teasers');
-  for (const img of list.pictures) assert.equal(attributeOf(img, 'sizes'), teaserPictures(resolved, 'cards', 3)[0].sizes);
+  for (const img of list.pictures) assert.equal(attributeOf(img, 'sizes'), teaserPictures(resolved, 'cards', 3, [1.6, 1.6, 1.6], { place: 'across' })[0].sizes);
   const candidates = candidatesOf(list.pictures[0]);
   // The ladder's steps from the one that covers it on the narrowest window to the one that covers it at its widest on a
-  // dense screen, all narrower than the 1600 px master.
-  assert.deepEqual(candidates.map(({ width }) => width), [360, 509, 720, 1018, 1440]);
+  // dense screen, 1440 px, which is within a tenth below the 1600 px master, so made at the master's width instead.
+  assert.deepEqual(candidates.map(({ width }) => width), [360, 509, 720, 1018, 1600]);
   const server = await serve(join(site, 'dist'));
   try {
     for (const [engine, type] of ENGINES) {
       const browser = await type.launch();
       try {
-        for (const [width, height] of [[390, 844], [1440, 900]]) {
+        for (const [width, height] of [[390, 844], [1024, 768], [1440, 900]]) {
           for (const density of [1, 2]) {
             const context = await browser.newContext({ viewport: { width, height }, deviceScaleFactor: density });
             const tab = await context.newPage();
@@ -1012,6 +1036,7 @@ test('in a designed site built by the core, a teaser card\'s picture loads the v
             assert.ok(chosen, where);
             // The narrowest version at least as wide as the picture is drawn at this density.
             assert.equal(chosen, candidates.find(({ width: w }) => w >= drawn * density), where);
+            if (width === 1024) assert.equal(chosen.width, [360, 720][density - 1], `${where}: across a band on a 64rem window`);
             assert.deepEqual([...requested].filter((path) => candidates.some(({ url }) => url === path)), [current], `${where}: the three teasers load that version alone`);
             t.diagnostic(`${engine}, ${width} px, density ${density}: drawn ${drawn} px, loaded the ${chosen.width} px version`);
             await context.close();
@@ -1052,10 +1077,12 @@ test('in a designed site built by the core, a picture shown both in an article\'
   assert.ok(teaser, 'the list draws the article\'s teaser with its picture');
   const [inBody, asTeaser] = [body, teaser].map((img) => new Map(candidatesOf(img).map(({ width, url }) => [width, url])));
   // The body's are the body's and the lightbox's widths, up to the master's 1600 px in place of 1440 and those wider; the
-  // teaser's go up to 1440, narrower than the master, which the core makes as asked.
+  // teaser's go up to 1440, which is within a tenth below the master, so it asks for the master's 1600 px in its place,
+  // as the body's does (the owner, 2026-11-26), and shares every version it has.
   const shared = [...asTeaser.keys()].filter((width) => inBody.has(width));
-  assert.deepEqual([[...inBody.keys()], [...asTeaser.keys()]], [[360, 509, 720, 1018, 1600], [360, 509, 720, 1018, 1440]]);
-  assert.deepEqual(shared, [360, 509, 720, 1018]);
+  assert.deepEqual([[...inBody.keys()], [...asTeaser.keys()]], [[360, 509, 720, 1018, 1600], [360, 509, 720, 1018, 1600]]);
+  assert.deepEqual(shared, [...asTeaser.keys()]);
+  noNearDuplicate(teaser, 'the teaser');
   // The build's files of the master, by their size: each version of the whole picture, 1600 × 1000, once.
   const assets = join(site, 'dist/_astro');
   const files = readdirSync(assets).filter((name) => name.startsWith(PICTURE.replace(/\.webp$/, '')) && name.endsWith('.webp'));

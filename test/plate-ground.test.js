@@ -48,7 +48,11 @@ let css, names;
 const browsers = [];
 before(async () => {
   css = `${core}${await componentsCss()}`;
-  assert.doesNotMatch(css.slice(core.length), /--kn-surface-kind/, 'no component reads the kind');
+  // No component reads the kind or sets one. A part that takes its page's colours in print, a band, a card or a header
+  // with a picture behind its text, hands the kind back to its ground with the rest of its Surface, so that what stands
+  // in it finds the ground it is printed on (plates.md, What it leaves alone).
+  const named = [...css.slice(core.length).matchAll(/--kn-surface-kind[^;)]*[;)]/g)].map(([found]) => found);
+  assert.deepEqual(named.filter((found) => found !== '--kn-surface-kind: inherit;'), [], 'no component reads the kind or sets one');
   names = [...new Set([...core.matchAll(/(--kn-[\w-]+)\s*:/g)].map(([, name]) => name))];
   for (const [name, type] of ENGINES) browsers.push([name, await type.launch()]);
 }, { timeout: 120000 });

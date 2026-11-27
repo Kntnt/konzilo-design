@@ -347,6 +347,16 @@ summary + *, .reference > h2 + * {
   display: block;
   white-space: nowrap;
 }
+/* Cards and teasers in other places: each place a row, what differs there under it, each name over its sizes. */
+[data-series-places] :is(th, td) {
+  vertical-align: top;
+}
+[data-series-places] dl, [data-series-places] dd {
+  margin: 0;
+}
+[data-series-places] dd + dt, [data-series-places] div + div {
+  margin-block-start: 0.5rem;
+}
 table {
   width: 100%;
   border-collapse: collapse;

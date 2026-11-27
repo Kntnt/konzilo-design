@@ -58,10 +58,14 @@ const fromWindow = (rem, then, otherwise, options) => switched(WINDOW, fixed(rem
 // 2026-11-10): two for two; three for one, three, and 5, 6 or 9 more than a multiple of 12; four and then two for 4 more
 // than a multiple of 6, which leaves no lone item where three would; four and then three for any other; and last one.
 function columnSteps(count) {
-  if (!Number.isInteger(count) || count < 1) throw new Error(`a series of at least one item, not ${count}`);
+  requireCount(count);
   if (count === 2) return [2, 1];
   if (count === 1 || count === 3 || [5, 6, 9].includes(count % 12)) return [3, 2, 1];
   return count % 6 === 4 ? [4, 2, 1] : [4, 3, 2, 1];
+}
+// A series has a whole number of items, at least one.
+function requireCount(count) {
+  if (!Number.isInteger(count) || count < 1) throw new Error(`a series of at least one item, not ${count}`);
 }
 // A k-th of a row `row` wide, its items `gap` apart.
 const shareOf = (row, gap, k) => times(sum(row, times(gap, -(k - 1))), 1 / k);
@@ -96,11 +100,24 @@ function seriesItemWithin(room, gap, count) {
 // most `cap`, which is NONE where nothing caps it and 0 on windows where the CSS does not crop the picture.
 const NONE = 1e5;
 const isNone = (length) => length >= NONE / 100;
-// A picture whose proportions are not known, as a Band's given no width and height, is taken as 16:9: as wide as a
-// camera's 3:2, a phone's 4:3 and the usual wide photograph, of which only a panorama is drawn wider (the assistant's
-// choice, 2026-11-26).
-export const FALLBACK_RATIO = 16 / 9;
-const ratioOr = (ratio) => (ratio > 0 && Number.isFinite(ratio) ? ratio : FALLBACK_RATIO);
+// The picture's proportions, which every picture the package crops so has, and none is guessed (the owner, 2026-11-26):
+// one from a body by the width and height the core writes on every raster image it makes, one made through getImage()
+// by its master's, and a Band's or a Hero's by the width and height it requires with its versions.
+const isRatio = (ratio) => ratio > 0 && Number.isFinite(ratio);
+/**
+ * A picture's proportions, its width over its height, from the two as an image's attributes, a component's props or a
+ * master give them, numbers or their text; undefined where either is missing or not more than nothing.
+ * @param {number | string | undefined} wide @param {number | string | undefined} high
+ * @returns {number | undefined}
+ */
+export function ratioFrom(wide, high) {
+  const [w, h] = [Number(wide), Number(high)];
+  return w > 0 && h > 0 ? w / h : undefined;
+}
+function proportions(ratio) {
+  if (isRatio(ratio)) return ratio;
+  throw new TypeError(`A picture the CSS crops to cover its box needs its proportions, its width over its height, to say how wide it is drawn, not ${ratio}`);
+}
 function covering(box, ratio, { vh = 0, base = fixed(0), cap = fixed(NONE) } = {}) {
   return { box, tall: { vh: vh * ratio, base: times(base, ratio), cap: times(cap, ratio) } };
 }
@@ -235,6 +252,25 @@ function ladder(anchor) {
 }
 const ladderOf = (r) => ladder(Math.min(r.layout.narrow, r.layout.wide));
 
+/**
+ * The widths a picture made through Astro's getImage() asks for of a master `own` px wide, by the core's rule against
+ * near duplicates (Kntnt/konzilo `src/astro/image-versions.js`, its versionWidths() and NEAR_DUPLICATE; ADR 0022): none
+ * wider than the master, or than the cap where the master is wider, and in place of each width wider than it or within
+ * a tenth below it, the master's own width, or the cap, once. The core applies the tenth only where a width asked for
+ * is wider than the master, which a body's image always asks for, with the lightbox's widths; this applies it whether
+ * or not, so a teaser or an opening asks for the versions the core makes of the same master in a body, and shares its
+ * files (the owner, 2026-11-26). Where the master's width is not known, the widths as given.
+ * @param {number[]} widths @param {number | undefined} own
+ * @returns {number[]}
+ */
+export function masterWidths(widths, own) {
+  if (!(own > 0)) return [...widths];
+  const widest = Math.min(Math.round(own), WIDEST);
+  const asked = [...new Set(widths.map(Math.round))].sort((a, b) => a - b);
+  const kept = asked.filter((one) => one < widest * NEAR);
+  return kept.length === asked.length ? kept : [...kept, widest];
+}
+
 // The widths of a picture drawn so: from the step that covers its box at the narrowest window at density 1 to the step
 // that covers its widest drawing at density 2, or the cap, which a drawing that grows with the window's height, or
 // past the widest window, takes.
@@ -277,14 +313,26 @@ function measures(r) {
 // Half a row less half the gap, as two columns of it are, and as a hero's or a section's picture beside its text is.
 const halfOf = (row, gap) => shareOf(row, gap, 2);
 
-// A hero's picture where the design puts it (hero.css): behind the text it covers the band, the window's width; beside
-// it, half the content area less half the column gap, or from the middle to the window's edge where it bleeds; and on a
-// window up to 40rem above the text, the content area's width or, bleeding, the window's. A design with no picture in
-// its hero puts one a page gives at the end (directives.md, hero). The box's width, which the context says.
+// The box of a hero's picture where the design puts it (hero.css): behind the text it covers the band, the window's
+// width; beside it, half the content area less half the column gap, or from the middle to the window's edge where it
+// bleeds; and on a window up to 40rem above the text, the content area's width or, bleeding, the window's. A design with
+// no picture in its hero puts one a page gives at the end (directives.md, hero).
 function heroPicture(place = 'behind', contentArea, columnGap) {
   if (place === 'behind') return WINDOW;
   const whole = place.endsWith('-bleed') ? WINDOW : contentArea;
   return fromWindow(HERO_STACKED, halfOf(whole, columnGap), whole, { strict: true });
+}
+
+// The proportions the `hero` context counts its picture at: 16:9, cropped to cover the hero's box at the design's
+// height, as an article's opening draws one, so a hero the core draws loads a version that covers any picture no wider
+// than 16:9, and at worst, for a photo of 3:2, one a step of the ladder wider than it needs (the owner, 2026-11-26).
+export const HERO_CONTEXT_RATIO = 16 / 9;
+
+// A hero's picture where the design puts it, of proportions `ratio`, cropped to cover its box at the design's height:
+// behind its text as the band's, beside it as the hero's, at the end where the design's hero has no picture.
+function heroDrawing(r, ratio) {
+  const { picture = 'behind', height } = r.hero ?? {};
+  return picture === 'behind' ? bandDrawing({ height, ratio }) : heroBeside(r, picture === 'none' ? 'end' : picture, { height, ratio });
 }
 
 // How wide the design draws a picture in each context, as a function of the window.
@@ -298,7 +346,8 @@ function drawings(r) {
     gallery: seriesItem(column, componentGap, 2, GALLERY.minimum),
     // The core's lightbox, which fits each picture whole in the window, so at most the window's width.
     lightbox: WINDOW,
-    hero: heroPicture(r.hero?.picture, contentArea, columnGap),
+    // A hero's picture where the design puts it, of 16:9.
+    hero: heroDrawing(r, HERO_CONTEXT_RATIO),
     // A card in a series across the content area, at its widest column.
     card: seriesItem(contentArea, columnGap, 2),
   };
@@ -316,15 +365,24 @@ export function imageContexts(r) {
   return contexts;
 }
 
+// How wide a drawing is drawn in a window `v` rem wide and `h` rem high, as its sizes says it (sizeOf()): its box's
+// width, or where it covers its box, as wide as its height makes the picture where that is wider.
+function drawnAt(drawing, v, h) {
+  const { box, tall } = drawingOf(drawing);
+  return tall ? Math.max(box.at(v), Math.min(tall.cap.at(v), tall.vh / 100 * h + tall.base.at(v))) : box.at(v);
+}
+
 /**
- * How wide a resolved design draws a picture in each of the core's contexts in a window `px` wide, in px at the default
- * text size, a gallery's and a card's at the widest column of a series; what the presentation tells a reader.
+ * How wide a resolved design draws a picture in each of the core's contexts in a window `px` wide and `high` tall, in
+ * px at the default text size, a gallery's and a card's at the widest column of a series, and a hero's of 16:9, which
+ * the window's height may draw wider than its box; what the presentation tells a reader.
  * @param {object} r A design file's `resolved`.
- * @param {number} px The window's width.
+ * @param {number} px The window's width. @param {number} high The window's height.
  * @returns {Record<'body' | 'gallery' | 'lightbox' | 'hero' | 'card', number>}
  */
-export function drawnWidths(r, px) {
-  return Object.fromEntries(Object.entries(drawings(r)).map(([name, drawn]) => [name, drawn.at(px / 16) * 16]));
+export function drawnWidths(r, px, high) {
+  if (!(high >= 0)) throw new TypeError(`drawnWidths() needs the window's height, by which a hero's picture is drawn, not ${high}`);
+  return Object.fromEntries(Object.entries(drawings(r)).map(([name, drawn]) => [name, drawnAt(drawn, px / 16, high / 16) * 16]));
 }
 
 // ---------- The pictures the package draws itself (issues #38, #39, #40; konzilo.md, Images) ----------
@@ -351,39 +409,68 @@ const besideCorners = (area, gap) => sum(times(area, 1 / 2), times(gap, -1));
 // body="columns").
 const inColumns = (area, gap) => switched(area, sum(fixed(2 * SECTION.columns), gap), halfOf(area, gap), area);
 
-// The places a series of the directives stands in, each its row and its gap: across a band's content area, the place
-// the criteria hold exactly; in a section's body beside its picture, beside a heading with a form right after it, at
-// Narrow, as a centred section's or one with a form or a choice, and as an article's reading column is, and in two
-// columns; and in an accordion across a band or beside its head, whose series takes the component gap. A renderer does
-// not know which it stands in, so a series' picture says the widest it is drawn in any of them. A post list stands only
-// directly in a section, which the checks hold it to, since a part drawn from its tree cannot draw one (directives.md,
-// What only the core can draw), so never in an accordion (`list`).
-function seriesPlaces(r, { list = false } = {}) {
-  const { contentArea: area, narrow, columnGap: gap, componentGap, body } = measures(r);
+// The rows a series stands in at the top of a section's body, by the body's layout (sectionLayout()): `across` the
+// content area, as "Read more" and a page's loose blocks stand too; `beside` the photo, half the content area less half
+// the column gap from 48rem; `corners`, beside a photo corner to corner, half the content area less the column gap;
+// `form`, after a form beside the heading, three fifths of the content area less the column gap from 48rem; `narrow`, at
+// Narrow, as a centred section's or one with a form or a choice and an article's reading column; `columns`, a column of
+// a body in two, body="columns"; and `head`, where an accordion stands alone beside the section's head, three fifths from
+// 60rem (section.css, rules 1 to 4).
+export const SERIES_ROWS = Object.freeze(['across', 'beside', 'corners', 'form', 'narrow', 'columns', 'head']);
+function bodyRow(r, layout) {
+  const { contentArea: area, narrow, columnGap: gap } = measures(r);
   const share = times(sum(area, times(gap, -1)), SECTION.share);
-  const accordion = (row) => [ACCORDION.padding, ACCORDION.questions].map((padding) => [sum(row, times(body, -padding)), componentGap]);
-  const places = [
-    [area, gap],
-    [fromWindow(SECTION.beside, halfOf(area, gap), area), gap],
-    [fromWindow(SECTION.beside, share, area), gap],
-    [least(area, narrow), gap],
-    [inColumns(area, gap), gap],
-    ...(list ? [] : [...accordion(area), ...accordion(fromWindow(SECTION.wide, share, area))]),
-  ];
-  // Corner to corner, the text beside a picture the section crops stands in half the content area less the column gap.
-  if (cornerToCorner(r)) places.push([fromWindow(SECTION.beside, besideCorners(area, gap), area), gap]);
-  return places;
+  switch (layout) {
+    case 'across': return area;
+    case 'beside': return fromWindow(SECTION.beside, halfOf(area, gap), area);
+    case 'corners': return fromWindow(SECTION.beside, besideCorners(area, gap), area);
+    case 'form': return fromWindow(SECTION.beside, share, area);
+    case 'narrow': return least(area, narrow);
+    case 'columns': return inColumns(area, gap);
+    case 'head': return fromWindow(SECTION.wide, share, area);
+    default: throw new Error(`a series stands in no place ${layout}: it stands ${SERIES_ROWS.join(', ')}, or in an accordion in one of them`);
+  }
+}
+// A place a series stands in as its row and its gap: a place is one of SERIES_ROWS, or `{ accordion, questions }` in an
+// accordion standing in one, whose answer stands 1.5em in from its edges, or 2.5em where it is of questions, and whose
+// series takes the component gap (accordion.css, cards.css).
+function rowAndGap(r, place) {
+  const { columnGap, componentGap, body } = measures(r);
+  if (!place?.accordion) return [bodyRow(r, place), columnGap];
+  const padding = place.questions ? ACCORDION.questions : ACCORDION.padding;
+  return [sum(bodyRow(r, place.accordion), times(body, -padding)), componentGap];
+}
+// The rows of SERIES_ROWS a series itself stands in, in a design: every one but `head`, beside which only an accordion
+// stands, and `corners` only where the design sets a section's cropped photo corner to corner, the text beside it in
+// half the content area less the column gap.
+const rowsIn = (r) => SERIES_ROWS.filter((row) => row !== 'head' && (row !== 'corners' || cornerToCorner(r)));
+
+// The places a series of the directives may stand in: each row a series stands in (rowsIn()), across a band's content
+// area, in a section's body beside its picture, corner to corner, beside a heading with a form right after it, at
+// Narrow, as a centred section's or one with a form or a choice, and as an article's reading column is, and in two
+// columns; and an accordion in each but a body in columns, which holds none, and alone beside a section's head, of plain
+// answers and of questions. Where nothing says which it stands in, a series' picture says the widest it is drawn in any
+// of them, so it never says less than is drawn (the owner, 2026-11-26, issue #44). A post list stands only directly in
+// a section, which the checks hold it to, since a part drawn from its tree cannot draw one (directives.md, What only the
+// core can draw), so never in an accordion (`list`).
+function seriesPlaces(r, { list = false } = {}) {
+  const rows = rowsIn(r);
+  if (list) return rows;
+  const accordions = [...rows.filter((row) => row !== 'columns'), 'head'].flatMap((accordion) => [{ accordion }, { accordion, questions: true }]);
+  return [...rows, ...accordions];
 }
 
 // Whether a part stands where the places above are counted, `within` the parts it stands in from the outermost in: at
 // the top of a section's body or a page's, or in an accordion that stands there.
 const counted = (within) => within.length === 0 || (within.length === 1 && within[0] === 'accordion');
 
-// The widest an item of a series of `count` items is drawn: in any place a series, or a post list, stands in; and
-// within a part deeper than those, whose place a renderer does not know, in any row the part leaves room for, at either
-// gap, as an upper bound (the assistant's choice, 2026-11-26).
-function seriesDrawn(r, count, { list = false, within = [] } = {}) {
-  if (counted(within)) return greatest(...seriesPlaces(r, { list }).map(([row, gap]) => seriesItem(row, gap, count)));
+// How wide an item of a series of `count` items is drawn: in its `place`, where the part around it knows it (issue #44,
+// the owner's decision of 2026-11-26: exact where the package can know the place); else the widest in any place a
+// series, or a post list, stands in; and within a part deeper than those, whose place a renderer does not know, in any
+// row the part leaves room for, at either gap, as an upper bound (the assistant's choice, 2026-11-26).
+function seriesDrawn(r, count, { list = false, within = [], place } = {}) {
+  if (place !== undefined) return seriesItem(...rowAndGap(r, place), count);
+  if (counted(within)) return greatest(...seriesPlaces(r, { list }).map((one) => seriesItem(...rowAndGap(r, one), count)));
   const room = roomOf(r, within);
   const { columnGap, componentGap } = measures(r);
   return greatest(seriesItemWithin(room, columnGap, count), seriesItemWithin(room, componentGap, count));
@@ -450,7 +537,7 @@ function headerMost(r) {
 // that share of the window's height, so as wide as its proportions make that where they are wider than the band's.
 function bandDrawing({ height, ratio } = {}) {
   const share = HERO_HEIGHTS[height];
-  return share ? covering(WINDOW, ratioOr(ratio), { vh: 100 * share }) : WINDOW;
+  return share ? covering(WINDOW, proportions(ratio), { vh: 100 * share }) : WINDOW;
 }
 
 // A hero's picture beside its text covers its media (hero.css), as wide as heroPicture() says. On a window past 40rem
@@ -464,7 +551,7 @@ function heroBeside(r, side, { height, ratio } = {}) {
   const { contentArea, columnGap, band } = measures(r);
   const bleed = side.endsWith('-bleed');
   const whole = bleed ? WINDOW : contentArea;
-  const a = ratioOr(ratio);
+  const a = proportions(ratio);
   const share = HERO_HEIGHTS[height] ?? 0;
   const header = fixed(bleed ? headerMost(r) : 0);
   const stacked = (then, otherwise) => fromWindow(HERO_STACKED, otherwise, then, { strict: true });
@@ -477,7 +564,7 @@ function heroBeside(r, side, { height, ratio } = {}) {
 // How wide the package's CSS draws each picture it draws from a body or a teaser, and whether that is at most the
 // picture's own width, its display width where the editor gave it one (`capped`), or stretched to its box whatever that
 // is.
-function pictureDrawing(r, picture, { layout, side, ratio, height, count, behind = false, list = false, within = [] } = {}) {
+function pictureDrawing(r, picture, { layout, side, ratio, height, count, behind = false, list = false, within = [], place } = {}) {
   const { contentArea: area, narrow, columnGap: gap } = measures(r);
   const beside = (then, otherwise = area) => fromWindow(SECTION.beside, then, otherwise);
   const half = halfOf(area, gap);
@@ -493,7 +580,7 @@ function pictureDrawing(r, picture, { layout, side, ratio, height, count, behind
     case 'section-photo': {
       if (layout === 'offered') return { drawn: beside(least(half, fixed(OFFER.wide)), least(area, fixed(OFFER.narrow))), capped: true };
       if (layout !== 'cropped') return { drawn: beside(half) };
-      const a = ratioOr(ratio);
+      const a = proportions(ratio);
       const crop = (box, cap) => covering(box, a, { vh: 100 * SECTION.most, cap: beside(cap, fixed(0)) });
       if (pictureSide(r) === 'corners') return { drawn: crop(beside(times(area, 1 / 2)), fixed(NONE)) };
       if (pictureSide(r) === 'corners-bleed') return { drawn: crop(beside(times(WINDOW, 1 / 2), WINDOW), fixed(NONE)) };
@@ -519,8 +606,8 @@ function pictureDrawing(r, picture, { layout, side, ratio, height, count, behind
     // A card's picture fills its item of a series of `count`: cropped to 16:9 of its width, or behind its text, to the
     // card, at least 20rem high (card.css, cards.css).
     case 'series': {
-      const item = seriesDrawn(r, count, { list, within });
-      const a = ratioOr(ratio);
+      const item = seriesDrawn(r, count, { list, within, place });
+      const a = proportions(ratio);
       return { drawn: behind ? greatest(item, fixed(CARD.behind * a)) : times(item, Math.max(1, a * CARD.box)) };
     }
     // A hero's picture beside its text fills its media (hero.css).
@@ -578,14 +665,15 @@ export function displayWidthOf(sizes) {
  * text, the parts it stands `within`, and `list` for a post list's teaser; `hero`, a hero's picture beside its text, by
  * its `side` and the hero's `height`; `hero-logo` and `badge`, by the picture's `ratio` and, for a logo, whether the hero
  * has a picture at its `side`; `logo`, in a list of logos, by its `ratio`; and `symbol`, a card's, by its `layout`, `item`
- * or `heading`. A picture the CSS crops to cover its box says how wide its `ratio` makes it there. A picture with a
- * display width says each size no wider where the CSS draws it no wider than its own width.
+ * or `heading`. A picture the CSS crops to cover its box says how wide its `ratio` makes it there, which it requires:
+ * `band` in a hero of a height, `section-photo` `cropped`, `series` and `hero`. A picture with a display width says each
+ * size no wider where the CSS draws it no wider than its own width.
  * @param {object} r A design file's `resolved`.
  * @param {string} picture
  * @param {{ layout?: string, side?: string, ratio?: number, height?: string, count?: number, behind?: boolean,
  *   list?: boolean, within?: (string | { series: number })[], display?: number | null }} [options] `ratio` its width
- *   over its height, the widest the CSS allows where it shows the picture whole and it is not known, and 16:9 where it
- *   crops it (FALLBACK_RATIO); `display` the editor's display width in px.
+ *   over its height, required where the CSS crops the picture, and where it shows it whole and it is not known, the
+ *   widest the CSS allows; `display` the editor's display width in px.
  * @returns {string}
  */
 export function pictureSizes(r, picture, { display = null, ...options } = {}) {
@@ -597,53 +685,69 @@ export function pictureSizes(r, picture, { display = null, ...options } = {}) {
 /**
  * The sizes of the width the design draws a picture at, as an image's attributes, in place of the body's the core gives
  * every image in a body (konzilo.md, Images): pictureSizes() with the picture's proportions from its width and height,
- * and its display width from the core's sizes. Nothing for a picture with no versions, such as an SVG, which the core
- * keeps as it is, and which keeps what it wrote.
+ * and its display width from the core's sizes, which writes both on every raster image it makes. Nothing for a picture
+ * with no versions, such as an SVG, which the core keeps as it is, and which keeps what it wrote.
  * @param {Record<string, string> | undefined} image The image's attributes, as the directives' renderers read them.
  * @param {object} r A design file's `resolved`. @param {string} picture @param {object} [options] As pictureSizes()'s.
  * @returns {{ sizes?: string }}
  */
 export function imageSizes(image, r, picture, options = {}) {
-  const { srcset, sizes, width: wide, height: high } = image ?? {};
+  const { srcset, sizes, width, height } = image ?? {};
   if (!srcset) return {};
-  const ratio = Number(wide) > 0 && Number(high) > 0 ? Number(wide) / Number(high) : undefined;
-  return { sizes: pictureSizes(r, picture, { ...options, ratio, display: displayWidthOf(sizes) }) };
+  return { sizes: pictureSizes(r, picture, { ...options, ratio: ratioFrom(width, height), display: displayWidthOf(sizes) }) };
 }
 
 /**
  * The `sizes` of a picture behind a band's text, whatever the design: the band's width, the window's, and in a hero of
  * a `height` as wide as its `ratio` makes that share of the window's height where that is wider (konzilo.md, Images).
  * @param {{ height?: string, ratio?: number }} [options] The hero's height, `third`, `half`, `two-thirds` or `full`, none
- *   for a band as tall as its text; the picture's width over its height, 16:9 where it is not known.
+ *   for a band as tall as its text; the picture's width over its height, which a hero of a height requires.
  * @returns {string}
  */
 export const bandPictureSizes = (options) => sizesOf(bandDrawing(options));
 
 /**
+ * The proportions of the picture a `Band` or a `Hero` is given versions of, its width over its height, from the width
+ * and height it requires with a `srcset` (the owner, 2026-11-26): its sizes follows them where the band is taller than
+ * they are. None without a `srcset`.
+ * @param {'Band' | 'Hero'} component
+ * @param {{ srcset?: string, pictureWidth?: number, pictureHeight?: number }} props
+ * @returns {number | undefined}
+ */
+export function bandPictureRatio(component, { srcset, pictureWidth, pictureHeight }) {
+  if (!srcset) return undefined;
+  const ratio = ratioFrom(pictureWidth, pictureHeight);
+  if (ratio !== undefined) return ratio;
+  throw new TypeError(`A ${component} given a srcset requires pictureWidth and pictureHeight, its picture's own width and height, by which it works out the picture's sizes: give them from Astro's getImage(), as image.attributes.width and image.attributes.height`);
+}
+
+/**
  * The widths and sizes of a picture that fills an item of a series of `count` items, as a card's picture in `:::cards`,
  * or a post list's teaser: the widest its item is drawn in any place a series stands in, at each window, as wide as its
  * `ratio` makes its crop, and the ladder's steps that cover it from the narrowest window at density 1 to its widest at
- * density 2 (konzilo.md, Images).
+ * density 2 (konzilo.md, Images). None where its `ratio` is not given: a picture made through getImage() is a master,
+ * whose proportions Astro's import gives, and one that is not is made in no versions and written as given.
  * @param {object} r A design file's `resolved`.
  * @param {number} count The number of items the series draws, at least one.
  * @param {{ list?: boolean, ratio?: number, behind?: boolean, within?: (string | { series: number })[] }} [options]
  *   `list`: a post list's, in the places a post list stands in, which leave out an accordion's.
- * @returns {{ widths: number[], sizes: string }}
+ * @returns {{ widths: number[], sizes: string } | null}
  */
-export const seriesPicture = (r, count, options = {}) => drawnPicture(r, pictureDrawing(r, 'series', { ...options, count }).drawn);
+export function seriesPicture(r, count, options = {}) {
+  requireCount(count);
+  return isRatio(options.ratio) ? drawnPicture(r, pictureDrawing(r, 'series', { ...options, count }).drawn) : null;
+}
 
 /**
  * The widths and sizes of a hero's picture where the design puts it, made through Astro's getImage(), as an article's
  * opening makes its main image: behind its text as the band's, beside it as the hero's, by the design's hero height and
- * the picture's `ratio` (konzilo.md, Images).
+ * the picture's `ratio` (konzilo.md, Images); none where it is not given, as seriesPicture().
  * @param {object} r A design file's `resolved`.
  * @param {{ ratio?: number }} [options]
- * @returns {{ widths: number[], sizes: string }}
+ * @returns {{ widths: number[], sizes: string } | null}
  */
 export function heroPictureOf(r, { ratio } = {}) {
-  const { picture = 'behind', height } = r.hero ?? {};
-  const drawn = picture === 'behind' ? bandDrawing({ height, ratio }) : heroBeside(r, picture === 'none' ? 'end' : picture, { height, ratio });
-  return drawnPicture(r, drawn);
+  return isRatio(ratio) ? drawnPicture(r, heroDrawing(r, ratio)) : null;
 }
 
 // ---------- A post list's teasers (issue #39; konzilo.md, Images) ----------
@@ -663,26 +767,37 @@ function featuredItem(row, gap, first) {
  * `cards` and `filtered` an item of a series of `count`, every teaser counted, the ones a filtered list's pills hide too,
  * as the series' rule counts them; but a lone teaser of `cards` fills its column beside a quotation (section.css,
  * body="columns"); and in `featured` the latest post and the others by the list's own columns. Each is cropped to 16:9
- * of its width, so as wide as its picture's proportions, `ratios`, make that.
+ * of its width, so as wide as its picture's proportions, `ratios`, make that; none for a teaser whose picture's are not
+ * given, as seriesPicture(). Where the list's `place` is known, as a section knows its body's (issue #44), each says
+ * the width it is drawn at there: a lone teaser of `cards` fills its column only in `columns`.
  * @param {object} r A design file's `resolved`.
  * @param {'cards' | 'featured' | 'filtered'} presentation
  * @param {number} count The number of posts the list draws.
- * @param {(number | undefined)[]} [ratios] Each teaser's picture's width over its height, 16:9 where it is not known.
- * @returns {{ widths: number[], sizes: string }[]} One for each teaser, in order.
+ * @param {(number | undefined)[]} [ratios] Each teaser's picture's width over its height.
+ * @param {{ place?: string }} [options] Where the list stands, one of SERIES_ROWS but `head`, as seriesPicture() takes it.
+ * @returns {({ widths: number[], sizes: string } | null)[]} One for each teaser, in order.
  */
-export function teaserPictures(r, presentation, count, ratios = []) {
+export function teaserPictures(r, presentation, count, ratios = [], { place } = {}) {
   if (count < 1) return [];
-  const { contentArea, columnGap } = measures(r);
-  const crop = (drawn, at) => drawnPicture(r, times(drawn, Math.max(1, ratioOr(ratios[at]) * CARD.box)));
+  const { columnGap } = measures(r);
+  const crop = (drawn, at) => (isRatio(ratios[at]) ? drawnPicture(r, times(drawn, Math.max(1, ratios[at] * CARD.box))) : null);
   if (presentation === 'featured') {
-    const rows = seriesPlaces(r, { list: true }).map(([row]) => row);
+    const rows = (place === undefined ? seriesPlaces(r, { list: true }) : [place]).map((one) => rowAndGap(r, one)[0]);
     const [first, other] = [true, false].map((latest) => greatest(...rows.map((row) => featuredItem(row, columnGap, latest))));
     return Array.from({ length: count }, (_, at) => crop(at === 0 ? first : other, at));
   }
   if (!['cards', 'filtered'].includes(presentation)) throw new Error(`the package has no post-list presentation ${presentation}`);
-  const series = seriesDrawn(r, count, { list: true });
-  const drawn = presentation === 'cards' && count === 1 ? greatest(series, inColumns(contentArea, columnGap)) : series;
+  const drawn = teaserDrawn(r, presentation, count, place);
   return Array.from({ length: count }, (_, at) => crop(drawn, at));
+}
+// How wide a teaser of `cards` or `filtered` is drawn: as an item of its series, but a lone teaser of `cards`, which fills
+// a column of a body in two, in that place, and where its place is not known, the wider of the two.
+function teaserDrawn(r, presentation, count, place) {
+  const series = seriesDrawn(r, count, { list: true, place });
+  if (presentation !== 'cards' || count !== 1) return series;
+  const [column] = rowAndGap(r, 'columns');
+  if (place === undefined) return greatest(series, column);
+  return place === 'columns' ? column : series;
 }
 
 // ---------- In the presentation ----------
@@ -690,31 +805,32 @@ export function teaserPictures(r, presentation, count, ratios = []) {
 // A ratio a picture the Details page lists has where its sizes follows its proportions: a camera's 3:2.
 const SHOWN_RATIO = 3 / 2;
 
-// The numbers of cards or posts from one to eight, those whose pictures have the same sizes together, each
-// { counts, ...picture(count) } in order of their first number.
-function byCounts(picture) {
+// The numbers of cards or posts from one to eight, those whose pictures have the same sizes and widths together, each
+// { counts, ...picture(count) } in order of their first number; those for which `skip(count, picture)` holds left out.
+function byCounts(picture, skip = () => false) {
   const found = new Map();
   for (let count = 1; count <= 8; count++) {
     const made = picture(count);
-    const same = found.get(made.sizes);
-    found.set(made.sizes, { ...made, counts: [...(same?.counts ?? []), count] });
+    if (skip(count, made)) continue;
+    const key = `${made.sizes} ${made.widths ?? ''}`;
+    found.set(key, { ...made, counts: [...(found.get(key)?.counts ?? []), count] });
   }
   return [...found.values()];
 }
 
 /**
  * Every sizes a resolved design writes on a picture its parts draw from a body, for the presentation's Details page
- * (tool.md, Pictures at the right size): a card's picture by the number of cards, from one to eight, those of the same
- * sizes together, and so behind its text; a section's photo and a figure in its body by the section's layout, corner to
- * corner where the design sets its pictures so; a hero's picture behind its text or beside it, where the design puts it;
- * and a logo, a badge and a symbol at their widest, a narrower one by its proportions. A picture the CSS crops to cover
- * its box says how wide a picture of 3:2 is drawn there.
+ * (tool.md, Pictures at the right size): a card's picture across a band by the number of cards, from one to eight, those
+ * of the same sizes together, and so behind its text (its other places are placeRows()'); a section's photo and a figure
+ * in its body by the section's layout, corner to corner where the design sets its pictures so; a hero's picture behind
+ * its text or beside it, where the design puts it; and a logo, a badge and a symbol at their widest, a narrower one by
+ * its proportions. A picture the CSS crops to cover its box says how wide a picture of 3:2 is drawn there.
  * @param {object} r A design file's `resolved`.
  * @returns {{ key: string, picture: string, layout?: string, counts?: number[], sizes: string }[]}
  */
 export function bodyPictures(r) {
   const row = (picture, layout, options = {}) => ({ key: layout ? `${picture}-${layout}` : picture, picture, layout, sizes: pictureSizes(r, picture, { layout, ratio: SHOWN_RATIO, ...options }) });
-  const series = (behind) => byCounts((count) => ({ sizes: pictureSizes(r, 'series', { count, behind, ratio: SHOWN_RATIO }) }))
+  const series = (behind) => byCounts((count) => ({ sizes: pictureSizes(r, 'series', { count, behind, ratio: SHOWN_RATIO, place: 'across' }) }))
     .map(({ counts, sizes }) => ({ key: `series${behind ? '-behind' : ''}-${counts.join('-')}`, picture: behind ? 'series-behind' : 'series', counts, sizes }));
   const { picture: place = 'behind', height } = r.hero ?? {};
   return [
@@ -728,17 +844,67 @@ export function bodyPictures(r) {
   ];
 }
 
+// The places besides across a band a series may stand in, as the Details page lists them (seriesPlaces()), and none,
+// where no part says.
+const otherPlaces = (r) => [...seriesPlaces(r).filter((place) => place !== 'across'), undefined];
+// A place's name for the Details page's HTML: its row, `accordion-<row>`, with `-questions` for one of questions, for an
+// accordion standing there, and `unknown` where no part says.
+function placeKey(place) {
+  if (place === undefined) return 'unknown';
+  return place.accordion ? `accordion-${place.accordion}${place.questions ? '-questions' : ''}` : place;
+}
+
+/**
+ * What a resolved design writes on a card's or a teaser's picture in each place besides across a band, where it differs
+ * from across a band, for the presentation's Details page (tool.md, Pictures at the right size; the assistant's choice,
+ * 2026-11-26, issue #44): a row for each place where anything differs, `place` the place, as seriesPicture() takes it,
+ * none where no part says where a series stands, and `key` its name in the page's HTML, `accordion-<row>`, with
+ * `-questions` for one of questions, for an accordion standing there, and `unknown` where no part says; its `entries` a
+ * card's picture by its number of cards, from one to eight, those of one sizes together, which a
+ * teaser in `cards` and `filtered` takes too, and where a list may stand, `featured`'s latest post and the others; and
+ * where no part says, a list's teasers by their number, which differ there from a card's. Each for a photo of 3:2.
+ * @param {object} r A design file's `resolved`.
+ * @returns {{ key: string, place?: string | object, entries: { key: string, picture: string, counts?: number[], sizes: string }[] }[]}
+ */
+export function placeRows(r) {
+  const card = (count, place) => pictureSizes(r, 'series', { count, ratio: SHOWN_RATIO, place });
+  const teasers = (presentation, count, place) => teaserPictures(r, presentation, count, Array(count).fill(SHOWN_RATIO), { place });
+  return otherPlaces(r).map((place) => {
+    const entries = byCounts((count) => ({ sizes: card(count, place) }), (count, made) => made.sizes === card(count, 'across'))
+      .map(({ counts, sizes }) => ({ key: `series-${counts.join('-')}`, picture: 'series', counts, sizes }));
+    if (place === undefined) {
+      entries.push(...byCounts((count) => ({ sizes: teasers('filtered', count)[0].sizes }), (count, made) => made.sizes === card(count, place))
+        .map(({ counts, sizes }) => ({ key: `teaser-${counts.join('-')}`, picture: 'teaser', counts, sizes })));
+    }
+    if (!place?.accordion) {
+      const [across, here] = [teasers('featured', 2, 'across'), teasers('featured', 2, place)];
+      ['featured-first', 'featured-other'].forEach((picture, at) => {
+        if (here[at].sizes !== across[at].sizes) entries.push({ key: picture, picture, sizes: here[at].sizes });
+      });
+    }
+    return { key: placeKey(place), place, entries };
+  }).filter(({ entries }) => entries.length > 0);
+}
+
 /**
  * Every teaser's picture a resolved design makes in its post-list presentations, its widths and its sizes, for the
  * presentation's Details page (tool.md, Pictures at the right size): in `cards` and `filtered` by the number of posts,
- * from one to eight, those of the same sizes together; a lone teaser of `cards`; and the latest post of `featured` and
- * another.
+ * from one to eight, those of the same sizes together, and the latest post of `featured` and another, across a band; and
+ * a lone teaser of `cards` beside a quotation, where it fills its column. Each is made in the widths of the widest place
+ * a list may stand in, which a presentation cannot know, and the section around it writes its sizes there (issue #44);
+ * the other places are placeRows()'. Each for a photo of 3:2, which its 16:9 crop draws as wide as its card.
  * @param {object} r A design file's `resolved`.
  * @returns {{ key: string, picture: string, counts?: number[], widths: number[], sizes: string }[]}
  */
 export function teaserRows(r) {
-  const rows = byCounts((count) => teaserPictures(r, 'filtered', count)[0]).map(({ counts, widths, sizes }) => ({ key: `teaser-${counts.join('-')}`, picture: 'teaser', counts, widths, sizes }));
-  const [first, other] = teaserPictures(r, 'featured', 2);
-  rows.push({ key: 'teaser-lone', picture: 'teaser-lone', ...teaserPictures(r, 'cards', 1)[0] }, { key: 'featured-first', picture: 'featured-first', ...first }, { key: 'featured-other', picture: 'featured-other', ...other });
+  // Each teaser's picture with the sizes of `place` and the widths of the widest place, in which the presentation makes it.
+  const inPlace = (presentation, count, place) => {
+    const photos = Array(count).fill(SHOWN_RATIO);
+    const widest = teaserPictures(r, presentation, count, photos);
+    return teaserPictures(r, presentation, count, photos, { place }).map(({ sizes }, at) => ({ widths: widest[at].widths, sizes }));
+  };
+  const rows = byCounts((count) => inPlace('filtered', count, 'across')[0]).map(({ counts, widths, sizes }) => ({ key: `teaser-${counts.join('-')}`, picture: 'teaser', counts, widths, sizes }));
+  const [first, other] = inPlace('featured', 2, 'across');
+  rows.push({ key: 'teaser-lone', picture: 'teaser-lone', ...inPlace('cards', 1, 'columns')[0] }, { key: 'featured-first', picture: 'featured-first', ...first }, { key: 'featured-other', picture: 'featured-other', ...other });
   return rows;
 }

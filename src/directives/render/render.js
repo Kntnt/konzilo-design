@@ -23,23 +23,24 @@ import { surfaceOf } from '../surfaces.js';
 import { RANK_KINDS } from '../../generator/surface.js';
 import { breadcrumbProps } from '../../components/design-props.js';
 import { heroAttributes } from '../../components/hero-attributes.js';
-import { cornerToCorner, imageSizes } from '../../konzilo/images.js';
+import { cornerToCorner, imageSizes, ratioFrom, teaserPictures } from '../../konzilo/images.js';
+import { DESIGN_PRESENTATIONS } from '../../konzilo/directives.js';
 import {
   BLOCK, attributesFrom, attributesOf, blocksOf, directiveOf, escapeAttribute, escapeText, inner, isElement, isHeading,
   levelOf, markOf, outer, tag, textOf, voidTag, walk,
 } from './html.js';
-import { allElements, retagged, topElements } from './scan.js';
+import { allElements, childElements, hasClass, retagged, topElements } from './scan.js';
 import components from '../components.json' with { type: 'json' };
 
 // The twelve directives this package draws, by their names.
 export const DIRECTIVES = Object.freeze(['hero', 'section', 'aside', 'list', 'cards', 'accordion', 'tabs', 'toc', 'choice', 'eyebrow', 'small', 'breadcrumbs']);
 
 const within = (ctx, ground) => ({ ...ctx, ground });
-// What a part draws from its tree stands in it, `part`, besides the parts around it, from the outermost in: a name, or
-// `{ series: count }` for a card's, a step's or a reason's words, by which the pictures in it take their sizes.
-const placed = (ctx, part) => ({ ...ctx, place: [...(ctx.place ?? []), part] });
-// The sizes of a picture the package draws, by its attributes, where the design draws it, in the parts it stands in.
-const drawnSizes = (image, ctx, picture, options = {}) => imageSizes(image, ctx.design.resolved, picture, { within: ctx.place ?? [], ...options });
+// What a part draws from its tree stands in it, `part`, besides the parts around it, `ctx.parts`, from the outermost in: a
+// name, or `{ series: count }` for a card's, a step's or a reason's words, by which the pictures in it take their sizes.
+const placed = (ctx, part) => ({ ...ctx, parts: [...(ctx.parts ?? []), part] });
+// The sizes of a picture the package draws, by its attributes, where the design draws it, `within` the parts it stands in.
+const drawnSizes = (image, ctx, picture, options = {}) => imageSizes(image, ctx.design.resolved, picture, { within: ctx.parts ?? [], ...options });
 
 // ---------- Reading blocks ----------
 
@@ -61,22 +62,105 @@ export function pictureOf(node) {
 
 /**
  * HTML of a section's body with each figure of one picture at its top, as the core draws one, given the sizes of the
- * width the section's body draws it at; a gallery, an embed and the lightbox's dialog keep theirs.
+ * width the section's body draws it at; a gallery, an embed and the lightbox's dialog keep theirs. Each series at its
+ * top, and in an accordion at its top, takes the sizes of the place the section's layout gives it (withSeriesSizes()).
  * @param {string} html @param {object} ctx The page's context.
- * @param {string} layout The body's, as sectionLayout() gives it.
+ * @param {{ body: string, head?: boolean, columns?: boolean }} layout The section's, as sectionLayout() gives it.
  */
 export function withBodySizes(html, ctx, layout) {
-  let out = html;
-  for (const element of topElements(html).toReversed()) {
-    const classes = String(element.attributes.class ?? '').split(/\s+/);
-    if (element.name !== 'figure' || classes.includes('konzilo-gallery') || classes.includes('konzilo-embed')) continue;
+  const edits = [];
+  for (const element of topElements(html)) {
+    if (element.name !== 'figure' || hasClass(element, 'konzilo-gallery') || hasClass(element, 'konzilo-embed')) continue;
     const images = allElements(html.slice(element.open.end, element.end), element.open.end).filter((one) => one.name === 'img');
     if (images.length !== 1) continue;
     const [image] = images;
-    const { sizes } = drawnSizes(image.attributes, ctx, 'section-body', { layout });
-    if (sizes !== undefined) out = `${out.slice(0, image.open.start)}${retagged(html, image, { set: { sizes } })}${out.slice(image.open.end)}`;
+    const { sizes } = drawnSizes(image.attributes, ctx, 'section-body', { layout: layout.body });
+    if (sizes !== undefined) edits.push({ image, sizes });
+  }
+  const out = withImageSizes(html, edits);
+  return withSeriesSizes(out, ctx, placesInBody(out, layout));
+}
+
+// HTML with each image's `sizes` written in its start tag, each `{ image, sizes }` an <img> as allElements() and its kin
+// find it in `html`, from the end, so that the places before stay.
+function withImageSizes(html, edits) {
+  let out = html;
+  for (const { image, sizes } of edits.toSorted((a, b) => b.image.start - a.image.start)) {
+    out = `${out.slice(0, image.open.start)}${retagged(html, image, { set: { sizes } })}${out.slice(image.open.end)}`;
   }
   return out;
+}
+
+// ---------- The place a series stands in (issue #44) ----------
+
+// Where a series and an accordion at the top of a section's body stand (section.css): a series in the body's row, or in
+// a column of it where the body stands in two across the content area, and in no place known where it stands in two
+// otherwise; an accordion beside the section's head from 60rem where it is the body's one element and the section has a
+// head and no picture (rule 4), centred or not, and else in the body's row.
+function placesInBody(html, { body, head = false, columns = false }) {
+  const elements = topElements(html);
+  const alone = head && !['beside', 'corners'].includes(body) && elements.length === 1 && elements[0].name === 'div' && hasClass(elements[0], ACCORDION_MARKUP.accordion);
+  return {
+    series: columns ? (body === 'across' ? 'columns' : undefined) : body,
+    accordion: alone ? 'head' : columns ? undefined : body,
+  };
+}
+
+// A series at the top of some HTML, `element` an element there: a :::cards' series, one of navigation, or a post list a
+// presentation of this package's drew, each card's picture, its <img class="kn-card-picture">, or null, and whether its
+// pictures stand behind the text. Every card counts towards its columns, as the series' CSS counts its items.
+function seriesAt(html, element) {
+  let series = null;
+  let list;
+  if (element.name === 'div' && hasClass(element, 'kn-card-grid') && hasClass(element, 'kn-cards')) series = element;
+  else if (element.name === 'nav' && hasClass(element, 'kn-cards-nav')) series = childElements(html, element).find((one) => hasClass(one, 'kn-cards')) ?? null;
+  else if (element.name === 'div' && hasClass(element, 'kn-post-list') && Object.hasOwn(DESIGN_PRESENTATIONS, element.attributes['data-kn-presentation'])) {
+    list = element.attributes['data-kn-presentation'];
+    series = childElements(html, element).find((one) => hasClass(one, 'kn-cards') || hasClass(one, 'kn-featured')) ?? null;
+  }
+  if (!series) return null;
+  const cards = childElements(html, series).map((item) => (item.name === 'li' ? childElements(html, item).find((one) => hasClass(one, 'kn-card')) : item));
+  const pictures = cards.map((card) => (card ? childElements(html, card).find((one) => one.name === 'img' && hasClass(one, 'kn-card-picture')) ?? null : null));
+  return { list, behind: series.attributes['data-kn-picture'] === 'behind', pictures };
+}
+
+// The sizes of each picture of a series in `place`: a card's by its series' number of cards, behind the text or not, and
+// a teaser's by its presentation, as the presentation works them out, each by its own proportions, from its width and
+// height; none for a picture with no versions, which keeps what it has.
+function seriesSizes({ list, behind, pictures }, r, place) {
+  const count = pictures.length;
+  if (!list) return pictures.map((image) => (image ? imageSizes(image.attributes, r, 'series', { count, behind, place }).sizes : undefined));
+  const drawn = teaserPictures(r, list, count, pictures.map((image) => ratioFrom(image?.attributes.width, image?.attributes.height)), { place });
+  return pictures.map((image, at) => (image?.attributes.srcset && drawn[at] ? drawn[at].sizes : undefined));
+}
+
+/**
+ * HTML of a body with the pictures of each series at its top, and in an accordion at its top, given the sizes of the
+ * place it stands in, where the part around the body knows it (konzilo.md, Images, The place a series stands in): a
+ * card's picture in :::cards, of navigation and behind its text, and a teaser's of the package's presentations. A
+ * series anywhere else, or where its place is not known, keeps what it has: the widest of every place, or within a part,
+ * the room's upper bound.
+ * @param {string} html @param {object} ctx The page's context.
+ * @param {{ series?: string, accordion?: string }} places Where a series and an accordion at the top stand, each one of
+ *   SERIES_ROWS in src/konzilo/images.js, or undefined where it is not known.
+ */
+export function withSeriesSizes(html, ctx, { series, accordion } = {}) {
+  const r = ctx.design.resolved;
+  const edits = [];
+  const write = (found, place) => {
+    if (found) seriesSizes(found, r, place).forEach((sizes, at) => sizes !== undefined && edits.push({ image: found.pictures[at], sizes }));
+  };
+  for (const element of topElements(html)) {
+    if (series !== undefined) write(seriesAt(html, element), series);
+    if (accordion === undefined || element.name !== 'div' || !hasClass(element, ACCORDION_MARKUP.accordion)) continue;
+    const questions = Object.hasOwn(element.attributes, ACCORDION_MARKUP.questions);
+    for (const item of childElements(html, element).filter((one) => hasClass(one, ACCORDION_MARKUP.item))) {
+      for (const answer of childElements(html, item).filter((one) => hasClass(one, ACCORDION_MARKUP.answer))) {
+        for (const one of childElements(html, answer)) write(seriesAt(html, one), { accordion, questions });
+      }
+    }
+  }
+  return withImageSizes(html, edits);
 }
 
 // A block's picture as an <img> of the design's: the core's attributes, a class of the design's first, and the block's
@@ -207,7 +291,7 @@ function headingGroup(eyebrows, heading) {
 // the sizes of the room the parts it stands in leave it, in place of the body's, since a tab, an answer or a panel may
 // stand wider than the reading column (konzilo.md, Images).
 function passed(node, ctx) {
-  const image = ctx.place?.length ? pictureOf(node) : null;
+  const image = ctx.parts?.length ? pictureOf(node) : null;
   const { sizes } = image ? drawnSizes(attributesFrom(image), ctx, 'figure') : {};
   if (sizes !== undefined) image.properties.sizes = sizes;
   return outer(node);
@@ -388,7 +472,7 @@ function section(attrs, blocks, ctx, { body } = {}) {
       head.filter(isActions).map((node) => renderNested(node, band))));
   }
   const grouped = parts.media.length + parts.head.length;
-  const rest = withBodySizes(body === undefined ? renderBlocks(blocks.slice(grouped), band) : groupEyebrows(bodyFromSlot(body, blocks, grouped, band)).trim(), ctx, layout.body);
+  const rest = withBodySizes(body === undefined ? renderBlocks(blocks.slice(grouped), band) : groupEyebrows(bodyFromSlot(body, blocks, grouped, band)).trim(), ctx, layout);
   if (rest !== '') out.push(tag('div', { class: 'kn-section-body kn-body-text' }, rest));
   return tag('section', sectionAttributes({ anchor: attrs.anchor, surface, body: attrs.body, align: attrs.align }), tag('div', { class: 'kn-band-content' }, out));
 }
@@ -565,18 +649,22 @@ function card(item, { behind, symbol, navigation, actionCards, count }, ctx) {
 
 // ---------- accordion, tabs, toc, choice ----------
 
+// What withSeriesSizes() reads of the accordion's markup, which accordion() writes: its root's class and its mark of an
+// accordion of questions, and each item's and its answer's class.
+const ACCORDION_MARKUP = Object.freeze({ accordion: 'kn-accordion', questions: 'data-kn-questions', item: 'kn-accordion-item', answer: 'kn-accordion-content' });
+
 function accordion(attrs, blocks, ctx) {
   const { intro, items } = itemsOf(blocks);
   const single = attrs.expand === 'one';
   const name = single ? ctx.id('accordion') : undefined;
   return renderBlocks(intro, ctx) + tag('div', {
-    class: 'kn-accordion', 'data-kn-accordion-mode': single ? 'single' : 'multiple',
-    'data-kn-questions': allQuestions(items.map((item) => textOf(item.heading))) ? '' : undefined,
-  }, items.map((item, index) => tag('details', { class: 'kn-accordion-item', name, open: attrs.first === 'open' && index === 0 },
+    class: ACCORDION_MARKUP.accordion, 'data-kn-accordion-mode': single ? 'single' : 'multiple',
+    [ACCORDION_MARKUP.questions]: allQuestions(items.map((item) => textOf(item.heading))) ? '' : undefined,
+  }, items.map((item, index) => tag('details', { class: ACCORDION_MARKUP.item, name, open: attrs.first === 'open' && index === 0 },
     tag('summary', { class: 'kn-accordion-summary' },
       tag(item.heading.tagName, { class: 'kn-accordion-label', 'data-kn-type': 'heading-6', ...headingAttributes(item.heading) }, inner(item.heading)),
       iconHtml('chevron-down', 'kn-accordion-chevron')),
-    tag('div', { class: 'kn-body-text kn-accordion-content' }, renderBlocks(item.blocks, placed(ctx, 'accordion'))))));
+    tag('div', { class: `kn-body-text ${ACCORDION_MARKUP.answer}` }, renderBlocks(item.blocks, placed(ctx, 'accordion'))))));
 }
 
 function tabs(attrs, blocks, ctx) {

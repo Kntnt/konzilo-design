@@ -7,6 +7,9 @@ import { fluidLine, readingColumnWindows } from '../../src/generator/layout.js';
 
 // The windows drawn: the tool's desktop end, and the report's Phone.
 export const SKETCH_WINDOWS = [['wide', 1440], ['phone', 390]];
+// Their heights, which a picture cropped to cover a box as tall as a share of the window is drawn by, as the Media page
+// tells of a hero's: a wide screen's 1440 × 900 and a common phone's 390 × 844 (konzilo.md, Images).
+export const SKETCH_HEIGHTS = Object.freeze({ wide: 900, phone: 844 });
 
 // The widths in a window `width` px wide, in px at the default text size, as the CSS gives them.
 export function pageWidths(resolved, width) {

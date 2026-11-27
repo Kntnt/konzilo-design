@@ -439,7 +439,7 @@ function sharedRules(r, assets) {
 - **Motion:** colour and hover changes and small turns take ${r.duration.feedback}ms; slides, panels opening and folding take ${r.duration.movement}ms; both ease with \`${r.easing.standard}\`. Under \`prefers-reduced-motion: reduce\` everything changes at once.
 - **Targets:** controls are at least 2.75rem tall; the header's icon controls are 2.5rem square.
 - **Right to left:** every recipe is in logical terms, start and end, so it mirrors, and arrows turn round.
-- **Print:** the header and footer stay in the flow, without their interactive parts or shadows, and a block formula shows whole and is kept on one page, its box not scrolling.
+- **Print:** the header and footer stay in the flow, without their interactive parts or shadows; a picture behind a band's or a card's text prints as an ordinary picture above all the text, a band's whole, as wide as the content area and at most half the page high, centred, a card's cropped to 16:9 of the card's width, with no scrim or fade, and the band or card in the colours of what it stands on and only as tall as its picture and text, so nothing printed depends on a background; and a block formula shows whole and is kept on one page, its box not scrolling.
 
 ### Icons
 

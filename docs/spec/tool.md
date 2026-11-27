@@ -130,7 +130,9 @@ switches do not change it; on the Media page, which holds Figure. A table has a 
 the core's five contexts, a picture in body text, in a gallery, opened large in the lightbox, in
 an opening and on a card: how wide the design draws it on a phone and on a wide screen, at 390
 and 1440 px as the Page page's drawing, a gallery's and a card's "up to" the widest of a row of
-two; whether the design crops it, the gallery to its ratio around the point the editor marks,
+two, and an opening's for a wide photo, 16:9, which the hero context counts, on a phone 844 px
+tall and a wide screen 900 px tall (`SKETCH_HEIGHTS`, the heights the assistant's choice), which a
+note under the table says (the owner, 2026-11-26, issue #42); whether the design crops it, the gallery to its ratio around the point the editor marks,
 the others made whole and cropped, where they are, by their own CSS, an opening's shown wider
 than its place where the opening is taller in its shape than the picture, as on a phone, and
 loaded for that width (konzilo.md, A picture cropped to cover its box); and the widths a site
@@ -145,15 +147,24 @@ the reference values for those who build the site, has a disclosure, Image width
 with each context's widths, `sizes` and ratio as `fromDesign` hands them to the core, and under
 them, Pictures the design draws from a body, each `sizes` the design's own parts write on a
 picture they draw from a body, from `bodyPictures(resolved)` (issue #38, under the owner's
-triage of 2026-11-26): a card's picture by its number of cards, and so behind its text, a
-section's photo and a figure in its body by the section's layout, a hero's picture behind its
-text or beside it, and a logo, a badge and a symbol at their widest, a picture the CSS crops to
-cover its box for a photo of 3:2, as its note says; and under them, Teasers in a list of posts, the widths and `sizes` the
+triage of 2026-11-26): a card's picture across a band by its number of cards, and so behind its
+text, a section's photo and a figure in its body by the section's layout, a hero's picture behind
+its text or beside it, and a logo, a badge and a symbol at their widest, a picture the CSS crops to
+cover its box for a photo of 3:2, as its note says; under them, Cards and teasers in other places,
+from `placeRows(resolved)` (the assistant's form, 2026-11-26, issue #44): a row for each place
+where a card's or a teaser's `sizes` differ from across a band, a section's layouts, an accordion
+in them and beside a section's head, and where no part says where it stands, each row what
+differs there, a card's by its number of cards and featured's two, a place where nothing differs
+left out; and under them, Teasers in a list of posts, the widths and `sizes` the
 design's presentations of a post list make each teaser's picture in, from `teaserRows(resolved)`
-(issue #39, under the owner's triage of 2026-11-26): in cards and filtered by the number of
-posts, a lone teaser in cards, and featured's latest post and the others, with a word that an
-article's opening takes the hero context's. The Media page's words stay as they are. The
-widths drawn come from `drawnWidths(resolved, px)` in `src/konzilo/images.js`, the drawings
+(issue #39, under the owner's triage of 2026-11-26): the widths of the widest place a list stands
+in, which a presentation cannot know, and the `sizes` across a band in cards and filtered by the
+number of posts and of featured's latest post and the others, and a lone teaser in cards beside a
+quotation, where it fills its column, for a photo of 3:2,
+with a word that a width within a tenth below the uploaded picture's own is made at its own
+width, and that an article's opening takes a hero's picture's; the contexts' note says a hero's
+are for a picture of 16:9. The widths drawn come from `drawnWidths(resolved, px, high)` in
+`src/konzilo/images.js`, the drawings
 the `sizes` come from, so the two never disagree; `test/image-sizes.test.js` holds it to the
 specs' words, and `test/presentation.test.js` holds both pages to it for three designs, one
 with its opening's picture beside the text.
